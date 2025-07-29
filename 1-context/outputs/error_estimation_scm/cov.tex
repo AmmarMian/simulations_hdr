@@ -1,0 +1,105 @@
+% This file was created with matplot2tikz v0.4.0.
+\begin{tikzpicture}
+
+\definecolor{darkgray176}{RGB}{176,176,176}
+\definecolor{steelblue31119180}{RGB}{31,119,180}
+
+\begin{axis}[
+log basis x={10},
+tick align=outside,
+tick pos=left,
+title={Error of mean estimation with 10000 Monte-carlo trials},
+x grid style={darkgray176},
+xlabel={\(\displaystyle N\)},
+xmin=6.30957344480193, xmax=158489.319246111,
+xmode=log,
+xtick style={color=black},
+y grid style={darkgray176},
+ylabel={\(\displaystyle \|\hat{\boldsymbol{\Sigma}}\_\mathcal{X} - \boldsymbol{\Sigma}\_\mathcal{X}\|\_2\)},
+ymin=-0.127260336177782, ymax=3.11940555009591,
+ytick style={color=black},
+ytick={-0.5,0,0.5,1,1.5,2,2.5,3,3.5},
+yticklabels={
+  \(\displaystyle {\ensuremath{-}0.5}\),
+  \(\displaystyle {0.0}\),
+  \(\displaystyle {0.5}\),
+  \(\displaystyle {1.0}\),
+  \(\displaystyle {1.5}\),
+  \(\displaystyle {2.0}\),
+  \(\displaystyle {2.5}\),
+  \(\displaystyle {3.0}\),
+  \(\displaystyle {3.5}\)
+}
+]
+\addplot [draw=black, mark=o, only marks]
+table{%
+x  y
+10 2.44072523109371
+46 1.10069743754449
+215 0.506884713198411
+1000 0.234944057794452
+4641 0.108869774502371
+21544 0.0505533878482305
+100000 0.0234667111401301
+};
+\path [draw=steelblue31119180, semithick]
+(axis cs:10,1.90962063419485)
+--(axis cs:10,2.97182982799256);
+
+\path [draw=steelblue31119180, semithick]
+(axis cs:46,0.930952322916203)
+--(axis cs:46,1.27044255217278);
+
+\path [draw=steelblue31119180, semithick]
+(axis cs:215,0.436953455256256)
+--(axis cs:215,0.576815971140567);
+
+\path [draw=steelblue31119180, semithick]
+(axis cs:1000,0.203166964237385)
+--(axis cs:1000,0.26672115135152);
+
+\path [draw=steelblue31119180, semithick]
+(axis cs:4641,0.0942266444391823)
+--(axis cs:4641,0.123512904565559);
+
+\path [draw=steelblue31119180, semithick]
+(axis cs:21544,0.0437670177115175)
+--(axis cs:21544,0.0573397579849433);
+
+\path [draw=steelblue31119180, semithick]
+(axis cs:100000,0.0203153859255676)
+--(axis cs:100000,0.0266180363546926);
+
+\addplot [semithick, steelblue31119180, mark=-, mark size=5, mark options={solid}, only marks]
+table {%
+10 1.90962064266205
+46.0000038146973 0.930952310562134
+215 0.43695342540741
+1000 0.203166961669922
+4641.0009765625 0.094226598739624
+21544 0.043766975402832
+100000 0.020315408706665
+};
+\addplot [semithick, steelblue31119180, mark=-, mark size=5, mark options={solid}, only marks]
+table {%
+10 2.97182989120483
+46.0000038146973 1.27044260501862
+215 0.576815962791443
+1000 0.266721129417419
+4641.0009765625 0.123512864112854
+21544 0.0573397874832153
+100000 0.0266180038452148
+};
+\addplot [semithick, steelblue31119180]
+table {%
+10 2.44072532653809
+46.0000038146973 1.10069739818573
+215 0.506884694099426
+1000 0.234944105148315
+4641.0009765625 0.108869791030884
+21544 0.0505534410476685
+100000 0.0234667062759399
+};
+\end{axis}
+
+\end{tikzpicture}
