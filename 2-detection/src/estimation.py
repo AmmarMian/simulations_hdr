@@ -10,6 +10,7 @@ from .backend import (
     Array,
     get_backend_module,
     get_diagembed,
+    is_complex,
     make_writable_copy,
     expand_dims,
     get_data_on_device,
@@ -17,6 +18,7 @@ from .backend import (
     concatenate,
     normalize_covariance,
     create_scalar_array,
+    to_dtype,
 )
 from abc import ABC, abstractmethod
 from rich.progress import (
@@ -70,7 +72,7 @@ class SCMEstimator(Estimator):
     def compute(self, X: Array) -> Array:
         if not self.assume_centered:
             X = X - X.mean(axis=-1, keepdim=True)
-        return (1 / X.shape[-2]) * self.backend_module.swapaxes(X, -1, -2) @ X
+        return (1 / X.shape[-2]) * self.backend_module.swapaxes(X, -1, -2).conj() @ X
 
 
 # -----------------------------------------------------------------------
@@ -184,6 +186,9 @@ def invsqrtm(X: Array, backend_name: str = "numpy") -> Array:
     backend_module = get_backend_module(backend_name)
     eigenvalues, eigenvectors = batched_eigh(backend_name, X)
     inv_sqrt_eigvals = 1.0 / backend_module.sqrt(eigenvalues)
+    if is_complex(backend_name, X):
+        inv_sqrt_eigvals = inv_sqrt_eigvals + 0j
+
     return backend_module.einsum(
         "...ab,...bc,...cd->...ad",
         backend_module.swapaxes(eigenvectors, -1, -2).conj(),
@@ -197,6 +202,7 @@ def _compute_covariance_update(
     cov_batch: Array,
     m_estimator_function: Callable,
     backend_name: str,
+    debug: bool = False,
     **kwargs,
 ) -> tuple[Array, Array]:
     """Compute covariance update for a batch of matrices.
@@ -211,6 +217,8 @@ def _compute_covariance_update(
         M-estimator function
     backend_name : str
         Name of the backend. Choices are: numpy, torch-cpu, torch-cuda
+    debug : bool, optional
+        Print debug information, by default False
     **kwargs : dict
         Additional arguments for m_estimator_function
 
@@ -222,22 +230,49 @@ def _compute_covariance_update(
     backend_module = get_backend_module(backend_name)
 
     # Compute new covariance estimates
-    temp = invsqrtm(cov_batch, backend_name) @ backend_module.swapaxes(X_batch, -1, -2)
+    if debug:
+        print(
+            f"    cov_batch eigenvalues (sample 0): {backend_module.linalg.eigvalsh(cov_batch[0])}"
+        )
+
+    inv_sqrt_cov = invsqrtm(cov_batch, backend_name)
+    if debug:
+        print(f"    invsqrtm any NaN: {backend_module.isnan(inv_sqrt_cov).any()}")
+
+    temp = inv_sqrt_cov @ backend_module.swapaxes(X_batch, -1, -2)
+    if debug:
+        print(
+            f"    temp shape: {temp.shape}, any NaN: {backend_module.isnan(temp).any()}"
+        )
+
     quadratic = backend_module.einsum(
         "...ij,...ji->...i", backend_module.swapaxes(temp, -1, -2).conj(), temp
     )
+    if debug:
+        print(
+            f"    quadratic shape: {quadratic.shape}, any NaN: {backend_module.isnan(quadratic).any()}"
+        )
+        print(
+            f"    quadratic range: min={backend_module.real(quadratic).min():.4e}, max={backend_module.real(quadratic).max():.4e}"
+        )
+
     # Add backend_name to kwargs for m-estimator functions that need it (e.g., Huber)
     kwargs_with_backend = {**kwargs, "backend_name": backend_name}
     weights = m_estimator_function(
         backend_module.real(quadratic), **kwargs_with_backend
     )
+    if debug:
+        print(f"    weights any NaN: {backend_module.isnan(weights).any()}")
+        print(f"    weights range: min={weights.min():.4e}, max={weights.max():.4e}")
 
     # Expand weights dimensions for broadcasting: (..., n_samples) -> (..., 1, n_samples)
     weights_expanded = expand_dims(backend_name, backend_module.sqrt(weights), axis=-2)
     temp = backend_module.swapaxes(X_batch, -1, -2) * weights_expanded
     cov_new_batch = (
-        (1 / X_batch.shape[-2]) * temp @ backend_module.swapaxes(temp, -1, -2)
+        (1 / X_batch.shape[-2]) * temp @ backend_module.swapaxes(temp, -1, -2).conj()
     )
+    if debug:
+        print(f"    cov_new_batch any NaN: {backend_module.isnan(cov_new_batch).any()}")
 
     # Condition for stopping
     err_batch = backend_module.linalg.norm(
@@ -307,8 +342,7 @@ def fixed_point_m_estimation_centered(
     """
 
     # Get backend module
-    backend_basename = backend_name.split("-")[0]
-    backend_module = get_backend_module(backend_basename)
+    backend_module = get_backend_module(backend_name)
 
     # Initialisation
     if init is None:
@@ -318,6 +352,7 @@ def fixed_point_m_estimation_centered(
         eye_matrix = get_data_on_device(eye_matrix, backend_name)
         eye_broadcasted = backend_module.broadcast_to(eye_matrix, cov_shape)
         covariances = make_writable_copy(backend_name, eye_broadcasted)
+        del eye_matrix, eye_broadcasted
     else:
         if init.ndim == 2:
             cov_shape = X.shape[:-2] + (X.shape[-1], X.shape[-1])
@@ -344,9 +379,9 @@ def fixed_point_m_estimation_centered(
     batch_shape = covariances.shape[:-2]
     # Ensure err is at least a 0-d array, not a scalar
     if len(batch_shape) == 0:
-        err = create_scalar_array(backend_module.inf, X.dtype, backend_name)
+        err = create_scalar_array(backend_module.inf, float, backend_name)
     else:
-        err = backend_module.inf * backend_module.ones(batch_shape, dtype=X.dtype)
+        err = backend_module.inf * backend_module.ones(batch_shape)
         err = get_data_on_device(err, backend_name)
 
     iteration = 0
@@ -398,7 +433,12 @@ def fixed_point_m_estimation_centered(
                     cov_chunk = cov_batch[chunk_start:chunk_end]
 
                     cov_new_chunk, err_chunk = _compute_covariance_update(
-                        X_chunk, cov_chunk, m_estimator_function, backend_name, **kwargs
+                        X_chunk,
+                        cov_chunk,
+                        m_estimator_function,
+                        backend_name,
+                        debug=debug,
+                        **kwargs,
                     )
 
                     cov_new_batch_list.append(cov_new_chunk)
@@ -410,7 +450,12 @@ def fixed_point_m_estimation_centered(
             else:
                 # Process all at once (no chunking)
                 cov_new_batch, err_batch = _compute_covariance_update(
-                    X_batch, cov_batch, m_estimator_function, backend_name, **kwargs
+                    X_batch,
+                    cov_batch,
+                    m_estimator_function,
+                    backend_name,
+                    debug=debug,
+                    **kwargs,
                 )
 
             iteration += 1
@@ -423,7 +468,7 @@ def fixed_point_m_estimation_centered(
 
             # Updating covariances and err
             covariances[mask_notconverged] = cov_new_batch
-            err[mask_notconverged] = err_batch
+            err[mask_notconverged] = to_dtype(err_batch, err.dtype, backend_name)
 
             # Apply normalization if specified
             if normalization is not None:

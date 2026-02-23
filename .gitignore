@@ -1,7 +1,11 @@
 # Various exports
 **/export/
 
-# Mac os
+# Output plots
+*.png
+
+# Mac os thumbnails
+._*
 ._.DS_Store
 .DS_Store
 

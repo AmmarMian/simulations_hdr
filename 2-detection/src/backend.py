@@ -33,7 +33,9 @@ def get_backend_module(backend_name: str) -> ModuleType:
         Module of wanted backend (numpy or torch)
     """
     # Handle both "torch" and "torch-cpu"/"torch-cuda" formats
-    backend_basename = backend_name.split("-")[0] if "-" in backend_name else backend_name
+    backend_basename = (
+        backend_name.split("-")[0] if "-" in backend_name else backend_name
+    )
     assert backend_basename in ["numpy", "torch"], (
         f"Backend basename {backend_basename} unknown."
     )
@@ -315,6 +317,29 @@ def batched_det(backend_name: str, X: Array) -> Array:
     return backend_module.linalg.det(X)
 
 
+def is_complex(backend_name: str, X: Array) -> bool:
+    """Compute trace of batched matrices.
+
+    Parameters
+    ----------
+    backend_name: str
+        Name of the backend. Choices are: numpy, torch-cpu, torch-cuda
+
+    X: Array
+        input matrices of shape (..., n, n)
+
+    Returns
+    -------
+    Array
+        traces of shape (...,)
+    """
+    backend_module = get_backend_module(backend_name)
+    if backend_module is np:
+        return np.iscomplex(X).all()
+    else:
+        return torch.is_complex(X.flatten()[0]) if X.numel() > 0 else False
+
+
 def create_scalar_array(value, dtype, backend_name: str) -> Array:
     """Create a 0-dimensional array with a single value.
 
@@ -338,6 +363,59 @@ def create_scalar_array(value, dtype, backend_name: str) -> Array:
     else:
         result = backend_module.tensor(value, dtype=dtype)
     return get_data_on_device(result, backend_name)
+
+
+def to_dtype(X: Array, dtype, backend_name: str) -> Array:
+    """Convert array to target dtype, handling both numpy and torch dtypes.
+
+    Parameters
+    ----------
+    X: Array
+        input array
+
+    dtype : np.dtype or torch.dtype
+        Target data type. Can be a numpy dtype (e.g., np.float32) or
+        torch dtype (e.g., torch.float32). Function handles conversion
+        automatically based on the backend.
+
+    backend_name: str
+        Name of the backend. Choices are: numpy, torch-cpu, torch-cuda
+
+    Returns
+    -------
+    Array
+        array converted to target dtype on appropriate backend
+    """
+    backend_module = get_backend_module(backend_name)
+
+    if backend_module is np:
+        # For numpy, convert torch dtypes to numpy dtypes if needed
+        if isinstance(dtype, torch.dtype):
+            dtype_map = {
+                torch.float32: np.float32,
+                torch.float64: np.float64,
+                torch.float16: np.float16,
+                torch.complex64: np.complex64,
+                torch.complex128: np.complex128,
+                torch.int32: np.int32,
+                torch.int64: np.int64,
+            }
+            dtype = dtype_map.get(dtype, dtype)
+        return X.astype(dtype)
+    else:
+        # For torch, convert numpy dtypes to torch dtypes if needed
+        if isinstance(dtype, np.dtype):
+            dtype_map = {
+                np.float32: torch.float32,
+                np.float64: torch.float64,
+                np.float16: torch.float16,
+                np.complex64: torch.complex64,
+                np.complex128: torch.complex128,
+                np.int32: torch.int32,
+                np.int64: torch.int64,
+            }
+            dtype = dtype_map.get(dtype, dtype)
+        return X.to(dtype=dtype)
 
 
 def normalize_covariance(
@@ -368,19 +446,19 @@ def normalize_covariance(
     Array
         normalized covariance matrices of shape (..., n_features, n_features)
     """
-    if normalization is None or normalization == 'none':
+    if normalization is None or normalization == "none":
         return cov
 
     backend_module = get_backend_module(backend_name)
 
-    if normalization == 'diag':
+    if normalization == "diag":
         # Normalize so first diagonal element = 1
         scale = cov[..., 0, 0]
-    elif normalization == 'trace':
+    elif normalization == "trace":
         # Normalize so trace = n_features
         trace = batched_trace(backend_name, cov)
         scale = trace / n_features
-    elif normalization == 'det':
+    elif normalization == "det":
         # Normalize so det = 1
         det = batched_det(backend_name, cov)
         if backend_module is np:
