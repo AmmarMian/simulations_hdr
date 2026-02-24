@@ -137,7 +137,7 @@ class ImageGPURessourceManager(ImageRessourceManager):
 
         super().__init__(
             image_data, window_size, stride, process_one_split,
-            backend_name="torch-cuda", splitting=splitting, verbose=verbose,
+            backend="torch-cuda", splitting=splitting, verbose=verbose,
         )
 
 
