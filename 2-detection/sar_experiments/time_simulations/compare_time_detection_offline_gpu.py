@@ -18,8 +18,9 @@ from detection import GaussianGLRT, DeterministicCompoundGaussianGLRT
 from wavelets import apply_wavelet_to_sits
 
 import argparse
+from datetime import datetime
 from src.backend import get_backend_module, get_data_on_device
-from src.gpu_ressources import ImageGPURessourceManager
+from src.hardware_ressources import ImageGPURessourceManager
 
 
 if __name__ == "__main__":
@@ -31,11 +32,12 @@ if __name__ == "__main__":
     )
     parser.add_argument("window_size", type=int, help="Sliding window size.")
     parser.add_argument("--export", action="store_true", help="Save plots of CD maps.")
+    parser.add_argument("--export-tikz", action="store_true", help="Also save plots as TikZ (.tex) files.")
     parser.add_argument(
         "--export-path",
         type=str,
-        default=".",
-        help="Directory where exported plots are saved (default: current directory).",
+        default="./exports",
+        help="Directory where exported plots are saved (default: ./exports).",
     )
     parser.add_argument(
         "--debug", action="store_true", help="Crop data to smaller size to debug."
@@ -62,11 +64,24 @@ if __name__ == "__main__":
         "--iteration-chunk", type=int, default=4096,
         help="Chunk size for DCG detector iterations (default 4096).",
     )
+    parser.add_argument(
+        "--detectors",
+        nargs="+",
+        choices=["gaussian", "dcg"],
+        default=["gaussian", "dcg"],
+        help="Which detectors to run (default: both).",
+    )
     args = parser.parse_args()
 
     export_path = Path(args.export_path)
-    if args.export:
+    if args.export or args.export_tikz:
         export_path.mkdir(parents=True, exist_ok=True)
+
+    if args.export_tikz:
+        import matplot2tikz
+
+    data_stem = Path(args.data_path).stem
+    run_ts = datetime.now().strftime("%Y%m%d_%H%M%S")
 
     assert torch.cuda.is_available(), "Cannot run if no GPU available"
     be = get_backend_module("torch-cuda")
@@ -92,51 +107,56 @@ if __name__ == "__main__":
     print(f"Image size: {sits_data.shape[-2]}x{sits_data.shape[-1]}, "
           f"Time steps: {sits_data.shape[0]}, Splitting: {splitting[0]}x{splitting[1]}")
 
-    def _save(results, name):
-        if args.export:
-            plt.figure(dpi=150)
+    def _save(results, name, elapsed):
+        if args.export or args.export_tikz:
+            base = name.lower().replace(' ', '_') + "_gpu"
+            full_stem = f"{base}_{data_stem}_{run_ts}"
+            fig = plt.figure(dpi=150)
             plt.imshow(results, aspect="auto")
             plt.colorbar()
-            plt.title(name)
-            plt.savefig(export_path / f"{name.lower().replace(' ', '_')}_gpu.png")
-            plt.close()
+            plt.title(f"{name} ({elapsed:.2f}s)")
+            if args.export:
+                fig.savefig(export_path / f"{full_stem}.png")
+            if args.export_tikz:
+                matplot2tikz.save(str(export_path / f"{full_stem}.tex"), figure=fig)
+            plt.close(fig)
 
-    # Compute GaussianGLRT
-    print("\nComputing Gaussian GLRT")
-    gaussian_detector = GaussianGLRT("torch-cuda")
-    try:
-        gpu_manager = ImageGPURessourceManager(
-            sits_data, args.window_size, 1, gaussian_detector.compute,
-            splitting=splitting, verbose=1,
-        )
-        start = perf_counter()
-        gaussian_results = gpu_manager.process_all_data()
-        end = perf_counter()
-        print(f"Took {end - start:.2f} seconds.")
-        _save(gaussian_results, "Gaussian GLRT")
-    except torch.cuda.OutOfMemoryError:
-        print("ERROR: CUDA out of memory for Gaussian GLRT. "
-              "Try increasing --splitting (e.g. --splitting '(8,8)').")
+    if "gaussian" in args.detectors:
+        print("\nComputing Gaussian GLRT")
+        gaussian_detector = GaussianGLRT("torch-cuda")
+        try:
+            gpu_manager = ImageGPURessourceManager(
+                sits_data, args.window_size, 1, gaussian_detector.compute,
+                splitting=splitting, verbose=1,
+            )
+            start = perf_counter()
+            gaussian_results = gpu_manager.process_all_data()
+            elapsed = perf_counter() - start
+            print(f"Took {elapsed:.2f} seconds.")
+            _save(gaussian_results, "Gaussian GLRT", elapsed)
+        except torch.cuda.OutOfMemoryError:
+            print("ERROR: CUDA out of memory for Gaussian GLRT. "
+                  "Try increasing --splitting (e.g. --splitting '(8,8)').")
 
-    # Compute Deterministic Compound Gaussian GLRT
-    print("\nComputing Deterministic Compound Gaussian GLRT")
-    dcg_detector = DeterministicCompoundGaussianGLRT(
-        backend_name="torch-cuda",
-        verbosity=False,
-        iter_max=10,
-        iteration_chunk_size=args.iteration_chunk,
-    )
-    try:
-        gpu_manager = ImageGPURessourceManager(
-            sits_data, args.window_size, 1, dcg_detector.compute,
-            splitting=splitting, verbose=1,
+    if "dcg" in args.detectors:
+        print("\nComputing Deterministic Compound Gaussian GLRT")
+        dcg_detector = DeterministicCompoundGaussianGLRT(
+            backend_name="torch-cuda",
+            verbosity=False,
+            iter_max=10,
+            iteration_chunk_size=args.iteration_chunk,
         )
-        start = perf_counter()
-        dcg_results = gpu_manager.process_all_data()
-        end = perf_counter()
-        print(f"Took {end - start:.2f} seconds.")
-        _save(dcg_results, "DCG GLRT")
-    except torch.cuda.OutOfMemoryError:
-        print("ERROR: CUDA out of memory for DCG GLRT. "
-              "Try increasing --splitting (e.g. --splitting '(8,8)') "
-              "or decreasing --iteration-chunk.")
+        try:
+            gpu_manager = ImageGPURessourceManager(
+                sits_data, args.window_size, 1, dcg_detector.compute,
+                splitting=splitting, verbose=1,
+            )
+            start = perf_counter()
+            dcg_results = gpu_manager.process_all_data()
+            elapsed = perf_counter() - start
+            print(f"Took {elapsed:.2f} seconds.")
+            _save(dcg_results, "DCG GLRT", elapsed)
+        except torch.cuda.OutOfMemoryError:
+            print("ERROR: CUDA out of memory for DCG GLRT. "
+                  "Try increasing --splitting (e.g. --splitting '(8,8)') "
+                  "or decreasing --iteration-chunk.")

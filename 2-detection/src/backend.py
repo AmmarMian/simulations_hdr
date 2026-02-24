@@ -7,6 +7,7 @@ from typing import Optional
 import numpy as np
 import numpy.typing as npt
 import torch
+from torch.nn import Unfold
 
 
 # Common types for type annotations
@@ -478,3 +479,51 @@ def normalize_covariance(
         scale_expanded = scale.unsqueeze(-1).unsqueeze(-1)
 
     return cov / scale_expanded
+
+
+class Unfold2D:
+    """Backend-agnostic 2D sliding window extractor.
+
+    Extracts local patches from a 4D array and returns them in a format
+    compatible with the detection pipeline.
+
+    Input shape:  (n_times, n_channels, height, width)
+    Output shape: (n_windows, n_times, kernel_size², n_channels)
+
+    Uses torch.nn.Unfold for torch backends and numpy.lib.stride_tricks
+    for numpy.
+    """
+
+    def __init__(self, kernel_size: int, stride: int = 1) -> None:
+        self.kernel_size = kernel_size
+        self.stride = stride
+        self._torch_unfold = Unfold(kernel_size=kernel_size, stride=stride)
+
+    def __call__(self, data: Array, backend_name: str) -> Array:
+        if "torch" in backend_name:
+            return self._call_torch(data)
+        return self._call_numpy(data)
+
+    def _call_torch(self, data: torch.Tensor) -> torch.Tensor:
+        T, C, _, _ = data.shape
+        k = self.kernel_size
+        patches = self._torch_unfold(data)  # (T, C*k², L)
+        return (
+            patches.view(T, C, k * k, -1)  # (T, C, k², L)
+            .permute(3, 0, 2, 1)           # (L, T, k², C)
+            .contiguous()
+        )
+
+    def _call_numpy(self, data: np.ndarray) -> np.ndarray:
+        patches = np.lib.stride_tricks.sliding_window_view(
+            data, (self.kernel_size, self.kernel_size), axis=(2, 3)
+        )
+        # (T, C, out_h, out_w, k, k)
+        if self.stride > 1:
+            patches = patches[:, :, :: self.stride, :: self.stride]
+        T, C, out_h, out_w, k, _ = patches.shape
+        return (
+            patches.transpose(2, 3, 0, 4, 5, 1)
+            .reshape(out_h * out_w, T, k * k, C)
+            .copy()
+        )
