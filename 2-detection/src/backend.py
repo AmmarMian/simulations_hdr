@@ -2,8 +2,9 @@
 # Author: Ammar Mian
 # Date: 21/10/2025
 
+from dataclasses import dataclass
 from types import ModuleType
-from typing import Optional
+from typing import Optional, Literal, Union
 import numpy as np
 import numpy.typing as npt
 import torch
@@ -19,79 +20,127 @@ type Array = npt.NDArray | torch.Tensor
 BACKEND_TYPES = {"numpy": np.ndarray, "torch": torch.Tensor}
 
 
-def get_backend_module(backend_name: str) -> ModuleType:
-    """Return backend module from string.
+# Backend class
+@dataclass(frozen=True)
+class Backend:
+    """Hardware/library backend descriptor.
+
+    Decouples library (numpy vs torch) from device (cpu vs cuda).
 
     Parameters
     ----------
-    backend_name: str
-        Name of the backend. Can be 'numpy', 'torch', 'torch-cpu', or 'torch-cuda'.
-        If device info is included (e.g., 'torch-cuda'), only the base name is used.
+    lib : Literal["numpy", "torch"]
+        The library backend
+    device : torch.device
+        The device (only used if lib="torch")
+
+    Raises
+    ------
+    ValueError
+        If lib="numpy" and device is not CPU
+    """
+    lib: Literal["numpy", "torch"]
+    device: torch.device = torch.device("cpu")
+
+    def __post_init__(self):
+        if self.lib == "numpy" and self.device.type != "cpu":
+            raise ValueError("numpy backend only supports CPU")
+
+    @staticmethod
+    def numpy() -> "Backend":
+        return Backend("numpy")
+
+    @staticmethod
+    def torch_cpu() -> "Backend":
+        return Backend("torch")
+
+    @staticmethod
+    def torch_cuda() -> "Backend":
+        return Backend("torch", torch.device("cuda"))
+
+    @property
+    def is_torch(self) -> bool:
+        return self.lib == "torch"
+
+    @property
+    def is_cuda(self) -> bool:
+        return self.lib == "torch" and self.device.type == "cuda"
+
+    @classmethod
+    def from_str(cls, s: str) -> "Backend":
+        """Parse legacy string format for backward compatibility."""
+        if s == "numpy":
+            return cls.numpy()
+        elif s == "torch-cpu":
+            return cls.torch_cpu()
+        elif s == "torch-cuda":
+            return cls.torch_cuda()
+        raise ValueError(f"Unknown backend string: {s!r}")
+
+    def __str__(self) -> str:
+        if self.lib == "numpy":
+            return "numpy"
+        return f"torch-{self.device.type}"
+
+
+def _normalize_backend(backend: Union[str, Backend]) -> Backend:
+    """Convert string or Backend to Backend object."""
+    if isinstance(backend, Backend):
+        return backend
+    return Backend.from_str(backend)
+
+
+def get_backend_module(backend: Union[str, Backend]) -> ModuleType:
+    """Return backend module from string or Backend.
+
+    Parameters
+    ----------
+    backend: str or Backend
+        Backend specification. Can be a string ('numpy', 'torch-cpu', 'torch-cuda')
+        or a Backend object.
 
     Returns
     -------
     ModuleType
         Module of wanted backend (numpy or torch)
     """
-    # Handle both "torch" and "torch-cpu"/"torch-cuda" formats
-    backend_basename = (
-        backend_name.split("-")[0] if "-" in backend_name else backend_name
-    )
-    assert backend_basename in ["numpy", "torch"], (
-        f"Backend basename {backend_basename} unknown."
-    )
-    if backend_basename == "numpy":
-        return np
-    else:
-        return torch
+    b = _normalize_backend(backend)
+    return np if b.lib == "numpy" else torch
 
 
-def get_data_on_device(data: Array, backend_name: str) -> Array:
-    """Get data on desired backend by converting when need and also
-    loading into torch device as needed.
+def get_data_on_device(data: Array, backend: Union[str, Backend]) -> Array:
+    """Get data on desired backend by converting when needed and loading
+    into torch device as needed.
 
     Parameters
     -----------
     data: Array
         The data to load onto device.
 
-    backend_name: str
-        Name of the backend. Choices are : numpy, torch-cpu, torch-cuda
+    backend: str or Backend
+        Backend specification. Can be a string ('numpy', 'torch-cpu', 'torch-cuda')
+        or a Backend object.
 
     Returns
     -------
     Array
         data on desired backend
     """
-    assert backend_name in ["numpy", "torch-cpu", "torch-cuda"], (
-        f"Backend name {backend_name} unknown."
-    )
+    b = _normalize_backend(backend)
 
-    # Process device if needed
-    if "torch" in backend_name:
-        backend_basename, device = backend_name.split("-")
-        if device == "cuda":
-            assert torch.cuda.is_available(), "Device cuda is not available"
-
-    else:
-        backend_basename = "numpy"
-        device = None
-
-    # Treat data conversion
-    if not isinstance(data, BACKEND_TYPES[backend_basename]):
-        if backend_basename == "numpy" and isinstance(data, torch.Tensor):
+    if b.lib == "numpy":
+        if isinstance(data, torch.Tensor):
             return data.detach().cpu().numpy()
-        else:
-            return torch.from_numpy(data).to(device=device)
-    else:
-        # Data is already correct type, but may need device transfer for torch
-        if backend_basename == "torch" and device is not None:
-            return data.to(device=device)
         return data
+    else:  # torch
+        if isinstance(data, np.ndarray):
+            return torch.from_numpy(data).to(device=b.device)
+        else:
+            return data.to(device=b.device)
 
 
 def sample_standard_normal(
-    n_samples: int, data_shape: list[int], backend_name: str, seed: Optional[int] = None
+    n_samples: int, data_shape: list[int], backend: Union[str, Backend], seed: Optional[int] = None
 ) -> Array:
     """Sample normal data given backend. Always use numpy for easier behavior management.
 
@@ -103,8 +152,9 @@ def sample_standard_normal(
     data_shape: list[int]
         shape of one data sample
 
-    backend_name: str
-        Name of the backend. Choices are : numpy, torch-cpu, torch-cuda
+    backend: str or Backend
+        Backend specification. Can be a string ('numpy', 'torch-cpu', 'torch-cuda')
+        or a Backend object.
 
     seed: int
         seed for rng. By default None.
@@ -117,16 +167,17 @@ def sample_standard_normal(
     """
     rng = np.random.default_rng(seed)
     shape = (n_samples,) + tuple(data_shape)
-    return get_data_on_device(rng.standard_normal(shape), backend_name)
+    return get_data_on_device(rng.standard_normal(shape), backend)
 
 
-def expand_dims(backend_name: str, x: Array, axis: int) -> Array:
+def expand_dims(backend: Union[str, Backend], x: Array, axis: int) -> Array:
     """Add a new axis to an array that works for both numpy and torch.
 
     Parameters
     ----------
-    backend_name: str
-        Name of the backend. Choices are: numpy, torch-cpu, torch-cuda
+    backend: str or Backend
+        Backend specification. Can be a string ('numpy', 'torch-cpu', 'torch-cuda')
+        or a Backend object.
 
     x: Array
         input array
@@ -139,19 +190,19 @@ def expand_dims(backend_name: str, x: Array, axis: int) -> Array:
     Array
         array with expanded dimensions
     """
-    backend_module = get_backend_module(backend_name)
+    backend_module = get_backend_module(backend)
     if backend_module is np:
         return backend_module.expand_dims(x, axis=axis)
     else:
         return x.unsqueeze(dim=axis)
 
 
-def make_writable_copy(backend_name: str, x: Array) -> Array:
+def make_writable_copy(backend: Union[str, Backend], x: Array) -> Array:
     """Make a writable copy of an array that works for both numpy and torch.
 
     Parameters
     ----------
-    backend_name: str
+    backend: Union[str, Backend]
         Name of the backend. Choices are: numpy, torch-cpu, torch-cuda
 
     x: Array
@@ -162,7 +213,7 @@ def make_writable_copy(backend_name: str, x: Array) -> Array:
     Array
         writable copy of input array
     """
-    backend_module = get_backend_module(backend_name)
+    backend_module = get_backend_module(backend)
     if backend_module is np:
         return backend_module.array(x)
     else:
@@ -170,13 +221,13 @@ def make_writable_copy(backend_name: str, x: Array) -> Array:
 
 
 def batched_eigh(
-    backend_name: str, X: Array, max_batch_size: int = 16000
+    backend: Union[str, Backend], X: Array, max_batch_size: int = 16000
 ) -> tuple[Array, Array]:
     """Compute eigenvalue decomposition with automatic chunking for large CUDA batches.
 
     Parameters
     ----------
-    backend_name: str
+    backend: Union[str, Backend]
         Name of the backend. Choices are: numpy, torch-cpu, torch-cuda
 
     X: Array
@@ -190,7 +241,7 @@ def batched_eigh(
     tuple[Array, Array]
         eigenvalues and eigenvectors
     """
-    backend_module = get_backend_module(backend_name)
+    backend_module = get_backend_module(backend)
 
     # For large batches with CUDA, process in chunks to avoid cusolver limits
     if backend_module is torch and X.is_cuda:
@@ -222,12 +273,12 @@ def batched_eigh(
     return backend_module.linalg.eigh(X)
 
 
-def concatenate(backend_name: str, arrays: list[Array], axis: int = 0) -> Array:
+def concatenate(backend: Union[str, Backend], arrays: list[Array], axis: int = 0) -> Array:
     """Concatenate arrays along an axis, works for both numpy and torch.
 
     Parameters
     ----------
-    backend_name: str
+    backend: Union[str, Backend]
         Name of the backend. Choices are: numpy, torch-cpu, torch-cuda
 
     arrays: list[Array]
@@ -241,19 +292,19 @@ def concatenate(backend_name: str, arrays: list[Array], axis: int = 0) -> Array:
     Array
         concatenated array
     """
-    backend_module = get_backend_module(backend_name)
+    backend_module = get_backend_module(backend)
     if backend_module is torch:
         return backend_module.cat(arrays, dim=axis)
     else:
         return backend_module.concatenate(arrays, axis=axis)
 
 
-def get_diagembed(backend_name: str, x: Array) -> Array:
+def get_diagembed(backend: Union[str, Backend], x: Array) -> Array:
     """Get diagonal matrices out of a batch of vectors.
 
     Parameters
     ----------
-    backend_name: str
+    backend: Union[str, Backend]
         Name of the backend. Choices are: numpy, torch-cpu, torch-cuda
 
     x: Array
@@ -264,7 +315,7 @@ def get_diagembed(backend_name: str, x: Array) -> Array:
     Array
         output data of shape (..., n, n) with diagonal embedding of last dimension of x.
     """
-    backend_module = get_backend_module(backend_name)
+    backend_module = get_backend_module(backend)
     if backend_module is np:
         eye_matrix = backend_module.eye(x.shape[-1])
         target_shape = x.shape + (x.shape[-1],)
@@ -275,12 +326,12 @@ def get_diagembed(backend_name: str, x: Array) -> Array:
         return backend_module.diag_embed(x)
 
 
-def batched_trace(backend_name: str, X: Array) -> Array:
+def batched_trace(backend: Union[str, Backend], X: Array) -> Array:
     """Compute trace of batched matrices.
 
     Parameters
     ----------
-    backend_name: str
+    backend: Union[str, Backend]
         Name of the backend. Choices are: numpy, torch-cpu, torch-cuda
 
     X: Array
@@ -291,19 +342,19 @@ def batched_trace(backend_name: str, X: Array) -> Array:
     Array
         traces of shape (...,)
     """
-    backend_module = get_backend_module(backend_name)
+    backend_module = get_backend_module(backend)
     if backend_module is np:
         return backend_module.diagonal(X, axis1=-2, axis2=-1).sum(axis=-1)
     else:
         return backend_module.diagonal(X, dim1=-2, dim2=-1).sum(dim=-1)
 
 
-def batched_det(backend_name: str, X: Array) -> Array:
+def batched_det(backend: Union[str, Backend], X: Array) -> Array:
     """Compute determinant of batched matrices.
 
     Parameters
     ----------
-    backend_name: str
+    backend: Union[str, Backend]
         Name of the backend. Choices are: numpy, torch-cpu, torch-cuda
 
     X: Array
@@ -314,16 +365,16 @@ def batched_det(backend_name: str, X: Array) -> Array:
     Array
         determinants of shape (...,)
     """
-    backend_module = get_backend_module(backend_name)
+    backend_module = get_backend_module(backend)
     return backend_module.linalg.det(X)
 
 
-def is_complex(backend_name: str, X: Array) -> bool:
+def is_complex(backend: Union[str, Backend], X: Array) -> bool:
     """Compute trace of batched matrices.
 
     Parameters
     ----------
-    backend_name: str
+    backend: Union[str, Backend]
         Name of the backend. Choices are: numpy, torch-cpu, torch-cuda
 
     X: Array
@@ -334,14 +385,14 @@ def is_complex(backend_name: str, X: Array) -> bool:
     Array
         traces of shape (...,)
     """
-    backend_module = get_backend_module(backend_name)
+    backend_module = get_backend_module(backend)
     if backend_module is np:
         return np.iscomplex(X).all()
     else:
         return torch.is_complex(X.flatten()[0]) if X.numel() > 0 else False
 
 
-def create_scalar_array(value, dtype, backend_name: str) -> Array:
+def create_scalar_array(value, dtype, backend: Union[str, Backend]) -> Array:
     """Create a 0-dimensional array with a single value.
 
     Parameters
@@ -350,23 +401,24 @@ def create_scalar_array(value, dtype, backend_name: str) -> Array:
         The scalar value to wrap in an array
     dtype : dtype
         Data type for the array
-    backend_name : str
-        Name of the backend. Choices are: numpy, torch-cpu, torch-cuda
+    backend : str or Backend
+        Backend specification. Can be a string ('numpy', 'torch-cpu', 'torch-cuda')
+        or a Backend object.
 
     Returns
     -------
     Array
         0-dimensional array containing the value
     """
-    backend_module = get_backend_module(backend_name)
+    backend_module = get_backend_module(backend)
     if backend_module is np:
         result = backend_module.array(value, dtype=dtype)
     else:
         result = backend_module.tensor(value, dtype=dtype)
-    return get_data_on_device(result, backend_name)
+    return get_data_on_device(result, backend)
 
 
-def to_dtype(X: Array, dtype, backend_name: str) -> Array:
+def to_dtype(X: Array, dtype, backend: Union[str, Backend]) -> Array:
     """Convert array to target dtype, handling both numpy and torch dtypes.
 
     Parameters
@@ -379,7 +431,7 @@ def to_dtype(X: Array, dtype, backend_name: str) -> Array:
         torch dtype (e.g., torch.float32). Function handles conversion
         automatically based on the backend.
 
-    backend_name: str
+    backend: Union[str, Backend]
         Name of the backend. Choices are: numpy, torch-cpu, torch-cuda
 
     Returns
@@ -387,7 +439,7 @@ def to_dtype(X: Array, dtype, backend_name: str) -> Array:
     Array
         array converted to target dtype on appropriate backend
     """
-    backend_module = get_backend_module(backend_name)
+    backend_module = get_backend_module(backend)
 
     if backend_module is np:
         # For numpy, convert torch dtypes to numpy dtypes if needed
@@ -420,7 +472,7 @@ def to_dtype(X: Array, dtype, backend_name: str) -> Array:
 
 
 def normalize_covariance(
-    cov: Array, normalization: Optional[str], backend_name: str, n_features: int
+    cov: Array, normalization: Optional[str], backend: Union[str, Backend], n_features: int
 ) -> Array:
     """Normalize covariance matrices according to specified method.
 
@@ -436,7 +488,7 @@ def normalize_covariance(
         - 'trace': normalize so trace(cov) = n_features
         - 'det': normalize so det(cov) = 1
 
-    backend_name: str
+    backend: Union[str, Backend]
         Name of the backend. Choices are: numpy, torch-cpu, torch-cuda
 
     n_features: int
@@ -450,18 +502,18 @@ def normalize_covariance(
     if normalization is None or normalization == "none":
         return cov
 
-    backend_module = get_backend_module(backend_name)
+    backend_module = get_backend_module(backend)
 
     if normalization == "diag":
         # Normalize so first diagonal element = 1
         scale = cov[..., 0, 0]
     elif normalization == "trace":
         # Normalize so trace = n_features
-        trace = batched_trace(backend_name, cov)
+        trace = batched_trace(backend, cov)
         scale = trace / n_features
     elif normalization == "det":
         # Normalize so det = 1
-        det = batched_det(backend_name, cov)
+        det = batched_det(backend, cov)
         if backend_module is np:
             scale = backend_module.power(det, 1.0 / n_features)
         else:
@@ -499,8 +551,9 @@ class Unfold2D:
         self.stride = stride
         self._torch_unfold = Unfold(kernel_size=kernel_size, stride=stride)
 
-    def __call__(self, data: Array, backend_name: str) -> Array:
-        if "torch" in backend_name:
+    def __call__(self, data: Array, backend: Union[str, Backend]) -> Array:
+        b = _normalize_backend(backend)
+        if b.is_torch:
             return self._call_torch(data)
         return self._call_numpy(data)
 

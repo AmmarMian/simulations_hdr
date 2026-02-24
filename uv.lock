@@ -418,7 +418,7 @@ wheels = [
 
 [[package]]
 name = "matplot2tikz"
-version = "0.4.1"
+version = "0.5.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "matplotlib" },
@@ -427,9 +427,9 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "webcolors" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/66/8b/32af6f4fcbf0ba3b4a4c92e7664cb2cddf64eda2150b6cdc3a03ec6d0758/matplot2tikz-0.4.1.tar.gz", hash = "sha256:159e35f34f43f5038a6012819606567c65ac3b18ad1e85c5af2231a76afb6014", size = 157913, upload-time = "2025-07-07T07:18:42.485Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/06/3d/0674031de9c643b270a7262d4430c988be7cc70e56b25a1a84eeaaf4d2ac/matplot2tikz-0.5.3.tar.gz", hash = "sha256:52fa76e6ec7d83fc88a6a51e4d0baa2c273f6487db1051cf98ea37589210dbfb", size = 163082, upload-time = "2026-02-04T13:46:09.654Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/84/03/e6cd992b6dd72012fab3d189915e192f0c525923be4b30291ab976e92341/matplot2tikz-0.4.1-py3-none-any.whl", hash = "sha256:49ffd84cd36a27ba8b1918d4a7be0c1a0ff3136c5e6457ec0093ca1a1bea9da3", size = 60140, upload-time = "2025-07-07T07:18:40.904Z" },
+    { url = "https://files.pythonhosted.org/packages/68/2f/3a8f2b40fca5e4f7f5b75ca933bc6cda5f57371762f66c9711303ead629b/matplot2tikz-0.5.3-py3-none-any.whl", hash = "sha256:835c4cdfeae9e5162819362c08c12c5eb0a585c44fc2580c0bd6b2a8d169f491", size = 61225, upload-time = "2026-02-04T13:46:08.267Z" },
 ]
 
 [[package]]
@@ -1155,7 +1155,7 @@ dependencies = [
 requires-dist = [
     { name = "ipdb", specifier = ">=0.13.13" },
     { name = "ipython", specifier = ">=9.4.0" },
-    { name = "matplot2tikz", specifier = ">=0.4.1" },
+    { name = "matplot2tikz", specifier = ">=0.5.3" },
     { name = "matplotlib", specifier = ">=3.10.3" },
     { name = "numpy", specifier = ">=2.3.2" },
     { name = "pandas", specifier = ">=2.3.1" },
@@ -1309,9 +1309,9 @@ wheels = [
 
 [[package]]
 name = "webcolors"
-version = "24.11.1"
+version = "25.10.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/7b/29/061ec845fb58521848f3739e466efd8250b4b7b98c1b6c5bf4d40b419b7e/webcolors-24.11.1.tar.gz", hash = "sha256:ecb3d768f32202af770477b8b65f318fa4f566c22948673a977b00d589dd80f6", size = 45064, upload-time = "2024-11-11T07:43:24.224Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/1d/7a/eb316761ec35664ea5174709a68bbd3389de60d4a1ebab8808bfc264ed67/webcolors-25.10.0.tar.gz", hash = "sha256:62abae86504f66d0f6364c2a8520de4a0c47b80c03fc3a5f1815fedbef7c19bf", size = 53491, upload-time = "2025-10-31T07:51:03.977Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/60/e8/c0e05e4684d13459f93d312077a9a2efbe04d59c393bc2b8802248c908d4/webcolors-24.11.1-py3-none-any.whl", hash = "sha256:515291393b4cdf0eb19c155749a096f779f7d909f7cceea072791cb9095b92e9", size = 14934, upload-time = "2024-11-11T07:43:22.529Z" },
+    { url = "https://files.pythonhosted.org/packages/e2/cc/e097523dd85c9cf5d354f78310927f1656c422bd7b2613b2db3e3f9a0f2c/webcolors-25.10.0-py3-none-any.whl", hash = "sha256:032c727334856fc0b968f63daa252a1ac93d33db2f5267756623c210e57a4f1d", size = 14905, upload-time = "2025-10-31T07:51:01.778Z" },
 ]

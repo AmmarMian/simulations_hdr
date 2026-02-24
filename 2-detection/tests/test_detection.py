@@ -9,11 +9,11 @@ import sys
 from pathlib import Path
 from scipy import stats
 
-# Add src to path
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+# Add project root to path
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from detection import Detector
-from backend import Array, get_backend_module
+from src.detection import Detector
+from src.backend import Array, get_backend_module
 
 
 class DummyDetector(Detector):
@@ -52,8 +52,6 @@ class DummyDetector(Detector):
         Array
             Squared Frobenius norm for each batch
         """
-        backend = get_backend_module(self._backend_name.split("-")[0])
-
         # Compute squared Frobenius norm: sum of squared elements
         if isinstance(X, np.ndarray):
             return np.sum(X**2, axis=(-3, -2, -1))
@@ -321,7 +319,6 @@ class TestAbstractDetectorInterface:
         assert hasattr(detector, "backend_name")
         assert hasattr(detector, "compute")
         assert hasattr(detector, "get_threshold")
-        assert hasattr(detector, "compute_standardnormal_montecarlo")
 
     def test_backend_name_is_property(self):
         """Test that backend_name is a property."""

@@ -7,7 +7,7 @@ requires-python = ">=3.11"
 dependencies = [
     "ipdb>=0.13.13",
     "ipython>=9.4.0",
-    "matplot2tikz>=0.4.1",
+    "matplot2tikz>=0.5.3",
     "matplotlib>=3.10.3",
     "numpy>=2.3.2",
     "pandas>=2.3.1",

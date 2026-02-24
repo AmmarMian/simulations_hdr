@@ -1,8 +1,9 @@
 # Various exports
 **/export/
 
-# Output plots
+# Output plots and benchmark results
 *.png
+**/benchmark_results/
 
 # Mac os thumbnails
 ._*
@@ -20,5 +21,3 @@ wheels/
 # Virtual environments
 .venv
 
-# LateX exports
-*.tex

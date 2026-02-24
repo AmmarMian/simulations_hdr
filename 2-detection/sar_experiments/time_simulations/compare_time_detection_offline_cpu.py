@@ -19,7 +19,7 @@ from wavelets import apply_wavelet_to_sits
 
 import argparse
 from datetime import datetime
-from src.backend import get_data_on_device
+from src.backend import Backend, get_data_on_device
 from src.hardware_ressources import ImageCPURessourceManager
 
 
@@ -79,6 +79,7 @@ if __name__ == "__main__":
         help="Which detectors to run (default: both).",
     )
     args = parser.parse_args()
+    backend = Backend.from_str(args.backend)
 
     export_path = Path(args.export_path)
     if args.export or args.export_tikz:
@@ -123,10 +124,10 @@ if __name__ == "__main__":
 
     if "gaussian" in args.detectors:
         print("\nComputing Gaussian GLRT")
-        gaussian_detector = GaussianGLRT(args.backend)
+        gaussian_detector = GaussianGLRT(backend)
         cpu_manager = ImageCPURessourceManager(
             sits_data, args.window_size, 1, gaussian_detector.compute,
-            backend_name=args.backend, splitting=splitting, verbose=1,
+            backend=backend, splitting=splitting, verbose=1,
         )
         start = perf_counter()
         gaussian_results = cpu_manager.process_all_data()
@@ -142,11 +143,11 @@ if __name__ == "__main__":
     if "dcg" in args.detectors:
         print("\nComputing Deterministic Compound Gaussian GLRT")
         dcg_detector = DeterministicCompoundGaussianGLRT(
-            args.backend, verbosity=True, iteration_chunk_size=args.iteration_chunk
+            backend, verbosity=True, iteration_chunk_size=args.iteration_chunk
         )
         cpu_manager = ImageCPURessourceManager(
             sits_data, args.window_size, 1, dcg_detector.compute,
-            backend_name=args.backend, splitting=splitting, verbose=1,
+            backend=backend, splitting=splitting, verbose=1,
         )
         start = perf_counter()
         dcg_results = cpu_manager.process_all_data()

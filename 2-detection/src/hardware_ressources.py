@@ -7,7 +7,7 @@ import torch
 from torch.cuda import mem_get_info
 from rich.progress import track
 
-from .backend import Array, get_data_on_device, Unfold2D
+from .backend import Array, Backend, get_data_on_device, Unfold2D
 
 
 class ImageRessourceManager:
@@ -29,7 +29,7 @@ class ImageRessourceManager:
         window_size: int,
         stride: int,
         process_one_split: Callable,
-        backend_name: str,
+        backend: str | Backend,
         splitting: Tuple[int, int] = (1, 1),
         verbose: Optional[int] = 1,
     ) -> None:
@@ -41,7 +41,7 @@ class ImageRessourceManager:
         self.window_size = window_size
         self.stride = stride
         self.process_one_split = process_one_split
-        self.backend_name = backend_name
+        self.backend = Backend.from_str(backend) if isinstance(backend, str) else backend
         self.verbose = verbose
         self.n_rows, self.n_cols = splitting
         self._unfold2d = Unfold2D(window_size, stride)
@@ -54,19 +54,20 @@ class ImageRessourceManager:
         row_min, row_max, col_min, col_max = self.splits_coordinates[split_no]
         return get_data_on_device(
             self.image_data[..., row_min:row_max, col_min:col_max],
-            self.backend_name,
+            self.backend,
         )
 
     def _unfold(self, split_data: Array) -> Array:
-        return self._unfold2d(split_data, self.backend_name)
+        return self._unfold2d(split_data, self.backend)
 
     def _delete_temp(self, data) -> None:
         del data
-        if self.backend_name == "torch-cuda":
+        if self.backend.is_cuda:
             torch.cuda.empty_cache()
 
     def _finalize_result(self, result: Array, output_shape) -> np.ndarray:
-        return get_data_on_device(result, "numpy").reshape(output_shape).copy()
+        numpy_result = get_data_on_device(result, "numpy")
+        return numpy_result.reshape(output_shape).copy()
 
     def process_all_data(self, *args, **kwargs) -> np.ndarray:
         """Process all splits sequentially and merge results."""
@@ -91,11 +92,10 @@ class ImageRessourceManager:
 
                 output_h = (split_h - self.window_size) // self.stride + 1
                 output_w = (split_w - self.window_size) // self.stride + 1
-                output_shape = (
-                    (output_h, output_w)
-                    if result.ndim == 2
-                    else (output_h, output_w) + result.shape[2:]
-                )
+                if result.ndim == 2:
+                    output_shape = (output_h, output_w)
+                else:
+                    output_shape = (output_h, output_w) + tuple(result.shape[2:])
 
                 result_row.append(self._finalize_result(result, output_shape))
                 self._delete_temp(result)
@@ -155,13 +155,13 @@ class ImageCPURessourceManager(ImageRessourceManager):
         window_size: int,
         stride: int,
         process_one_split: Callable,
-        backend_name: str = "torch-cpu",
+        backend: str | Backend = "torch-cpu",
         splitting: Tuple[int, int] = (1, 1),
         verbose: Optional[int] = 1,
     ) -> None:
         super().__init__(
             image_data, window_size, stride, process_one_split,
-            backend_name=backend_name, splitting=splitting, verbose=verbose,
+            backend=backend, splitting=splitting, verbose=verbose,
         )
 
 

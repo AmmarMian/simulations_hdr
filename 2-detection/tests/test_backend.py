@@ -37,17 +37,17 @@ class TestGetBackendModule:
 
     def test_get_torch_backend(self):
         """Test getting torch backend module."""
-        backend = get_backend_module("torch")
+        backend = get_backend_module("torch-cpu")
         assert backend is torch
 
     def test_invalid_backend_raises_assertion(self):
-        """Test that invalid backend name raises AssertionError."""
-        with pytest.raises(AssertionError, match="Backend basename .* unknown"):
+        """Test that invalid backend name raises ValueError."""
+        with pytest.raises(ValueError):
             get_backend_module("invalid")
 
     def test_case_sensitive(self):
         """Test that backend names are case sensitive."""
-        with pytest.raises(AssertionError):
+        with pytest.raises(ValueError):
             get_backend_module("NumPy")
 
     def test_torch_with_device_suffix(self):
@@ -59,9 +59,9 @@ class TestGetBackendModule:
         assert backend_cuda is torch
 
     def test_torch_without_device(self):
-        """Test that plain 'torch' also works."""
-        backend = get_backend_module("torch")
-        assert backend is torch
+        """Test that plain 'torch' (without device suffix) now raises ValueError."""
+        with pytest.raises(ValueError):
+            get_backend_module("torch")
 
 
 class TestGetDataOnDevice:
@@ -100,8 +100,8 @@ class TestGetDataOnDevice:
         assert result.device.type == "cuda"
 
     def test_invalid_backend_raises_assertion(self, numpy_sample_data):
-        """Test that invalid backend name raises AssertionError."""
-        with pytest.raises(AssertionError, match="Backend name .* unknown"):
+        """Test that invalid backend name raises ValueError."""
+        with pytest.raises(ValueError):
             get_data_on_device(numpy_sample_data, "invalid")
 
     def test_preserves_shape(self, numpy_sample_data):

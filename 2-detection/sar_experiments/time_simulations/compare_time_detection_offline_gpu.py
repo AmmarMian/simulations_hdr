@@ -19,7 +19,7 @@ from wavelets import apply_wavelet_to_sits
 
 import argparse
 from datetime import datetime
-from src.backend import get_backend_module, get_data_on_device
+from src.backend import Backend, get_data_on_device
 from src.hardware_ressources import ImageGPURessourceManager
 
 
@@ -84,7 +84,7 @@ if __name__ == "__main__":
     run_ts = datetime.now().strftime("%Y%m%d_%H%M%S")
 
     assert torch.cuda.is_available(), "Cannot run if no GPU available"
-    be = get_backend_module("torch-cuda")
+    backend = Backend.torch_cuda()
 
     # Load data
     if not os.path.exists(args.data_path):
@@ -123,7 +123,7 @@ if __name__ == "__main__":
 
     if "gaussian" in args.detectors:
         print("\nComputing Gaussian GLRT")
-        gaussian_detector = GaussianGLRT("torch-cuda")
+        gaussian_detector = GaussianGLRT(backend)
         try:
             gpu_manager = ImageGPURessourceManager(
                 sits_data, args.window_size, 1, gaussian_detector.compute,
@@ -141,7 +141,7 @@ if __name__ == "__main__":
     if "dcg" in args.detectors:
         print("\nComputing Deterministic Compound Gaussian GLRT")
         dcg_detector = DeterministicCompoundGaussianGLRT(
-            backend_name="torch-cuda",
+            backend,
             verbosity=False,
             iter_max=10,
             iteration_chunk_size=args.iteration_chunk,
