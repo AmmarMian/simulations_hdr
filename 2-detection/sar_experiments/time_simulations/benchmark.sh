@@ -43,9 +43,9 @@ run_benchmark() {
 #
 # run_benchmark "cpu_dcg_no_wavelet" \
 #   "uv run ${CPU_SCRIPT} ${DATA} ${WINDOW_SIZE} --backend torch-cpu --detectors dcg --iteration-chunk 512"
-
+#
 run_benchmark "cpu_dcg_wavelet" \
-  "uv run ${CPU_SCRIPT} ${DATA} ${WINDOW_SIZE} --backend torch-cpu --detectors dcg --wavelet --iteration-chunk 128"
+  "uv run ${CPU_SCRIPT} ${DATA} ${WINDOW_SIZE} --backend torch-cpu --detectors dcg --wavelet --iteration-chunk 512 --splitting '(3,4)'"
 
 # GPU benchmarks
 # run_benchmark "gpu_gaussian_no_wavelet" \
@@ -58,7 +58,7 @@ run_benchmark "cpu_dcg_wavelet" \
 #   "uv run ${GPU_SCRIPT} ${DATA} ${WINDOW_SIZE} --detectors dcg --splitting '(15,15)' --iteration-chunk 512"
 
 run_benchmark "gpu_dcg_wavelet" \
-  "uv run ${GPU_SCRIPT} ${DATA} ${WINDOW_SIZE} --detectors dcg --wavelet --splitting '(63,63)' --iteration-chunk 128"
+  "uv run ${GPU_SCRIPT} ${DATA} ${WINDOW_SIZE} --detectors dcg --wavelet --splitting '(31,31)' --iteration-chunk 512"
 
 echo ""
 echo "All benchmarks done. Aggregating results and generating chart..."
@@ -107,39 +107,44 @@ with open(csv_path, "w", newline="") as f:
     writer.writerows(rows)
 print(f"\nCSV saved to {csv_path}")
 
-# Bar chart
-fig, ax = plt.subplots(figsize=(12, 5))
-x = np.arange(len(rows))
-means = [r["mean_s"] for r in rows]
-stds  = [r["std_s"]  for r in rows]
-tick_labels = [r["label"] for r in rows]
-
-# Color by backend
-colors = ["steelblue" if r["label"].startswith("cpu") else "darkorange" for r in rows]
-
-bars = ax.bar(x, means, yerr=stds, capsize=4, color=colors, edgecolor="black", linewidth=0.6)
-ax.set_xticks(x)
-ax.set_xticklabels(tick_labels, rotation=30, ha="right", fontsize=8)
-ax.set_ylabel("Time (s)")
-ax.set_title("Detection time benchmark (mean ± std, 5 runs)")
-
-# Legend
 from matplotlib.patches import Patch
-ax.legend(handles=[
-    Patch(color="steelblue",  label="CPU"),
-    Patch(color="darkorange", label="GPU"),
-])
 
-fig.tight_layout()
-chart_path = results_dir / "benchmark_chart.png"
-fig.savefig(chart_path, dpi=150)
-print(f"Chart saved to {chart_path}")
+def make_chart(rows, detector_name, results_dir):
+    if not rows:
+        print(f"  No data for {detector_name}, skipping chart.")
+        return
+    fig, ax = plt.subplots(figsize=(8, 5))
+    x = np.arange(len(rows))
+    means = [r["mean_s"] for r in rows]
+    stds  = [r["std_s"]  for r in rows]
+    tick_labels = [r["label"] for r in rows]
+    colors = ["steelblue" if r["label"].startswith("cpu") else "darkorange" for r in rows]
 
-tikz_path = results_dir / "benchmark_chart.tex"
-matplot2tikz.save(str(tikz_path))
-print(f"TikZ saved to {tikz_path}")
+    ax.bar(x, means, yerr=stds, capsize=4, color=colors, edgecolor="black", linewidth=0.6)
+    ax.set_xticks(x)
+    ax.set_xticklabels(tick_labels, rotation=30, ha="right", fontsize=9)
+    ax.set_ylabel("Time (s)")
+    ax.set_title(f"{detector_name} detection time (mean ± std)")
+    ax.legend(handles=[
+        Patch(color="steelblue",  label="CPU"),
+        Patch(color="darkorange", label="GPU"),
+    ])
+    fig.tight_layout()
 
-plt.close(fig)
+    stem = f"benchmark_{detector_name.lower()}"
+    png_path = results_dir / f"{stem}.png"
+    tex_path = results_dir / f"{stem}.tex"
+    fig.savefig(png_path, dpi=150)
+    print(f"Chart saved to {png_path}")
+    matplot2tikz.save(str(tex_path))
+    print(f"TikZ saved to {tex_path}")
+    plt.close(fig)
+
+gaussian_rows = [r for r in rows if "gaussian" in r["label"]]
+dcg_rows      = [r for r in rows if "dcg"      in r["label"]]
+
+make_chart(gaussian_rows, "Gaussian", results_dir)
+make_chart(dcg_rows,      "DCG",      results_dir)
 EOF
 
 echo "Done. Results in ${RESULTS_DIR}/"
