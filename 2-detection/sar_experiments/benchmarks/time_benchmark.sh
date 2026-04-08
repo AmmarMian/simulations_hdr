@@ -34,27 +34,27 @@ run_benchmark() {
 }
 
 # CPU benchmarks
-# run_benchmark "cpu_gaussian_no_wavelet" \
-#   "uv run ${COMPUTE_SCRIPT} ${DATA} ${WINDOW_SIZE} --backend torch-cpu --detectors gaussian --quiet"
-#
-# run_benchmark "cpu_gaussian_wavelet" \
-#   "uv run ${COMPUTE_SCRIPT} ${DATA} ${WINDOW_SIZE} --backend torch-cpu --detectors gaussian --wavelet --quiet"
-#
+run_benchmark "cpu_gaussian_no_wavelet" \
+  "uv run ${COMPUTE_SCRIPT} ${DATA} ${WINDOW_SIZE} --backend torch-cpu --detectors gaussian --quiet"
+
+run_benchmark "cpu_gaussian_wavelet" \
+  "uv run ${COMPUTE_SCRIPT} ${DATA} ${WINDOW_SIZE} --backend torch-cpu --detectors gaussian --wavelet --quiet"
+
 run_benchmark "cpu_dcg_no_wavelet" \
   "uv run ${COMPUTE_SCRIPT} ${DATA} ${WINDOW_SIZE} --backend torch-cpu --detectors dcg --iteration-chunk 512 --quiet"
-#
-# run_benchmark "cpu_dcg_wavelet" \
-#   "uv run ${COMPUTE_SCRIPT} ${DATA} ${WINDOW_SIZE} --backend torch-cpu --detectors dcg --wavelet --iteration-chunk 512 --splitting '(3,4)' --quiet"
+
+run_benchmark "cpu_dcg_wavelet" \
+  "uv run ${COMPUTE_SCRIPT} ${DATA} ${WINDOW_SIZE} --backend torch-cpu --detectors dcg --wavelet --iteration-chunk 512 --splitting '(3,4)' --quiet"
 
 # GPU benchmarks
-# run_benchmark "gpu_gaussian_no_wavelet" \
-#   "uv run ${COMPUTE_SCRIPT} ${DATA} ${WINDOW_SIZE} --backend torch-cuda --detectors gaussian --splitting '(3,3)' --quiet"
-#
-# run_benchmark "gpu_gaussian_wavelet" \
-#   "uv run ${COMPUTE_SCRIPT} ${DATA} ${WINDOW_SIZE} --backend torch-cuda --detectors gaussian --wavelet --splitting '(15,15)' --quiet"
-#
-# run_benchmark "gpu_dcg_no_wavelet" \
-#   "uv run ${COMPUTE_SCRIPT} ${DATA} ${WINDOW_SIZE} --backend torch-cuda --detectors dcg --splitting '(15,15)' --iteration-chunk 512 --quiet"
+run_benchmark "gpu_gaussian_no_wavelet" \
+  "uv run ${COMPUTE_SCRIPT} ${DATA} ${WINDOW_SIZE} --backend torch-cuda --detectors gaussian --splitting '(3,3)' --quiet"
+
+run_benchmark "gpu_gaussian_wavelet" \
+  "uv run ${COMPUTE_SCRIPT} ${DATA} ${WINDOW_SIZE} --backend torch-cuda --detectors gaussian --wavelet --splitting '(15,15)' --quiet"
+
+run_benchmark "gpu_dcg_no_wavelet" \
+  "uv run ${COMPUTE_SCRIPT} ${DATA} ${WINDOW_SIZE} --backend torch-cuda --detectors dcg --splitting '(15,15)' --iteration-chunk 512 --quiet"
 
 run_benchmark "gpu_dcg_wavelet" \
   "uv run ${COMPUTE_SCRIPT} ${DATA} ${WINDOW_SIZE} --backend torch-cuda --detectors dcg --wavelet --splitting '(31,31)' --iteration-chunk 512 --quiet"
