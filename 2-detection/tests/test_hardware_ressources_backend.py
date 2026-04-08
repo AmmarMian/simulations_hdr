@@ -54,7 +54,7 @@ class TestImageCPURessourceManagerWithBackend:
         )
 
         result = manager.process_all_data()
-        assert isinstance(result, np.ndarray)
+        assert isinstance(result, torch.Tensor)
         assert result.shape == (6, 6)  # (8-3)//1 + 1 for both dims
 
     def test_manager_with_string_backend(self, sample_data_torch_cpu):
@@ -72,7 +72,7 @@ class TestImageCPURessourceManagerWithBackend:
         )
 
         result = manager.process_all_data()
-        assert isinstance(result, np.ndarray)
+        assert isinstance(result, torch.Tensor)
 
     def test_manager_splitting_with_backend_object(self, sample_data_torch_cpu):
         """Test ImageCPURessourceManager with splitting and Backend object."""
@@ -90,7 +90,7 @@ class TestImageCPURessourceManagerWithBackend:
         )
 
         result = manager.process_all_data()
-        assert isinstance(result, np.ndarray)
+        assert isinstance(result, torch.Tensor)
         assert result.shape == (6, 6)
 
     def test_manager_backend_stored_as_backend_object(self, sample_data_torch_cpu):
@@ -217,7 +217,7 @@ class TestBackendPropertiesInResourceManager:
 
         # Process should work without CUDA empty_cache being called
         result = manager.process_all_data()
-        assert isinstance(result, np.ndarray)
+        assert isinstance(result, torch.Tensor)
 
 
 class TestBackendConsistency:

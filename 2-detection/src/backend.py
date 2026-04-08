@@ -142,12 +142,12 @@ def get_data_on_device(data: Array, backend: Union[str, Backend]) -> Array:
 def sample_standard_normal(
     n_samples: int, data_shape: list[int], backend: Union[str, Backend], seed: Optional[int] = None
 ) -> Array:
-    """Sample normal data given backend. Always use numpy for easier behavior management.
+    """Sample standard normal data on the given backend.
 
     Parameters
     ----------
-    n_trials: int
-        number of trials to do.
+    n_samples: int
+        number of samples to draw.
 
     data_shape: list[int]
         shape of one data sample
@@ -159,15 +159,21 @@ def sample_standard_normal(
     seed: int
         seed for rng. By default None.
 
-
     Returns
     -------
     Array
         sampled data on desired backend
     """
-    rng = np.random.default_rng(seed)
+    b = _normalize_backend(backend)
     shape = (n_samples,) + tuple(data_shape)
-    return get_data_on_device(rng.standard_normal(shape), backend)
+    if b.is_torch:
+        gen = torch.Generator(device=b.device)
+        if seed is not None:
+            gen.manual_seed(seed)
+        return torch.randn(*shape, generator=gen, device=b.device)
+    else:
+        rng = np.random.default_rng(seed)
+        return rng.standard_normal(shape)
 
 
 def expand_dims(backend: Union[str, Backend], x: Array, axis: int) -> Array:
@@ -370,7 +376,7 @@ def batched_det(backend: Union[str, Backend], X: Array) -> Array:
 
 
 def is_complex(backend: Union[str, Backend], X: Array) -> bool:
-    """Compute trace of batched matrices.
+    """Check whether an array contains complex-valued data.
 
     Parameters
     ----------
@@ -378,12 +384,12 @@ def is_complex(backend: Union[str, Backend], X: Array) -> bool:
         Name of the backend. Choices are: numpy, torch-cpu, torch-cuda
 
     X: Array
-        input matrices of shape (..., n, n)
+        input array
 
     Returns
     -------
-    Array
-        traces of shape (...,)
+    bool
+        True if the array has a complex dtype, False otherwise
     """
     backend_module = get_backend_module(backend)
     if backend_module is np:
@@ -469,6 +475,24 @@ def to_dtype(X: Array, dtype, backend: Union[str, Backend]) -> Array:
             }
             dtype = dtype_map.get(dtype, dtype)
         return X.to(dtype=dtype)
+
+
+def dtype_itemsize(dtype) -> int:
+    """Return the size in bytes of one element for a numpy or torch dtype.
+
+    Parameters
+    ----------
+    dtype : np.dtype or torch.dtype
+        Data type to query.
+
+    Returns
+    -------
+    int
+        Number of bytes per element.
+    """
+    if isinstance(dtype, torch.dtype):
+        return torch.empty(0, dtype=dtype).element_size()
+    return np.dtype(dtype).itemsize
 
 
 def normalize_covariance(

@@ -7,7 +7,7 @@ import torch
 from torch.cuda import mem_get_info
 from rich.progress import track
 
-from .backend import Array, Backend, get_data_on_device, Unfold2D
+from .backend import Array, Backend, get_data_on_device, Unfold2D, concatenate, make_writable_copy, dtype_itemsize
 
 
 class ImageRessourceManager:
@@ -20,7 +20,7 @@ class ImageRessourceManager:
     backend_name so no subclass overrides are needed for the processing loop.
 
     Image data must be shaped (n_times, n_channels, height, width).
-    Results are always returned as numpy arrays.
+    Results are returned on the same backend as specified.
     """
 
     def __init__(
@@ -41,7 +41,9 @@ class ImageRessourceManager:
         self.window_size = window_size
         self.stride = stride
         self.process_one_split = process_one_split
-        self.backend = Backend.from_str(backend) if isinstance(backend, str) else backend
+        self.backend = (
+            Backend.from_str(backend) if isinstance(backend, str) else backend
+        )
         self.verbose = verbose
         self.n_rows, self.n_cols = splitting
         self._unfold2d = Unfold2D(window_size, stride)
@@ -65,11 +67,11 @@ class ImageRessourceManager:
         if self.backend.is_cuda:
             torch.cuda.empty_cache()
 
-    def _finalize_result(self, result: Array, output_shape) -> np.ndarray:
-        numpy_result = get_data_on_device(result, "numpy")
-        return numpy_result.reshape(output_shape).copy()
+    def _finalize_result(self, result: Array, output_shape) -> Array:
+        result = get_data_on_device(result, self.backend)
+        return make_writable_copy(self.backend, result.reshape(output_shape))
 
-    def process_all_data(self, *args, **kwargs) -> np.ndarray:
+    def process_all_data(self, *args, **kwargs) -> Array:
         """Process all splits sequentially and merge results."""
         rows_range = range(self.n_rows)
         if self.verbose:
@@ -102,8 +104,10 @@ class ImageRessourceManager:
 
             results_to_merge.append(result_row)
 
-        return np.concatenate(
-            [np.concatenate(row, axis=1) for row in results_to_merge], axis=0
+        return concatenate(
+            self.backend,
+            [concatenate(self.backend, row, axis=1) for row in results_to_merge],
+            axis=0,
         )
 
 
@@ -130,14 +134,19 @@ class ImageGPURessourceManager(ImageRessourceManager):
         self.vram = vram or mem_get_info(device=device)[0] / (1024 * 1024)
 
         if splitting == "auto":
-            n_times, n_channels, height, width = image_data.shape
+            _, n_channels, height, width = image_data.shape
             splitting = compute_splits_auto(
                 height, width, self.dtype, self.vram, window_size, stride, n_channels
             )
 
         super().__init__(
-            image_data, window_size, stride, process_one_split,
-            backend="torch-cuda", splitting=splitting, verbose=verbose,
+            image_data,
+            window_size,
+            stride,
+            process_one_split,
+            backend="torch-cuda",
+            splitting=splitting,
+            verbose=verbose,
         )
 
 
@@ -160,8 +169,13 @@ class ImageCPURessourceManager(ImageRessourceManager):
         verbose: Optional[int] = 1,
     ) -> None:
         super().__init__(
-            image_data, window_size, stride, process_one_split,
-            backend=backend, splitting=splitting, verbose=verbose,
+            image_data,
+            window_size,
+            stride,
+            process_one_split,
+            backend=backend,
+            splitting=splitting,
+            verbose=verbose,
         )
 
 
@@ -180,21 +194,21 @@ def compute_splitting_coordinates(
     splits_list = []
     for i_row in range(n_rows):
         index_row_start = (
-            0 if i_row == 0
-            else int(height / n_rows) * i_row - int(windows_size / 2)
+            0 if i_row == 0 else int(height / n_rows) * i_row - int(windows_size / 2)
         )
         index_row_end = (
-            height if i_row == n_rows - 1
+            height
+            if i_row == n_rows - 1
             else int(height / n_rows) * (i_row + 1) + int(windows_size / 2)
         )
 
         for i_col in range(n_cols):
             index_column_start = (
-                0 if i_col == 0
-                else int(width / n_cols) * i_col - int(windows_size / 2)
+                0 if i_col == 0 else int(width / n_cols) * i_col - int(windows_size / 2)
             )
             index_column_end = (
-                width if i_col == n_cols - 1
+                width
+                if i_col == n_cols - 1
                 else int(width / n_cols) * (i_col + 1) + int(windows_size / 2)
             )
 
@@ -208,7 +222,7 @@ def compute_splitting_coordinates(
 def compute_splits_auto(
     height: int,
     width: int,
-    dtype: torch.dtype,
+    dtype,
     vram: float,
     window_size: int,
     stride: int,
@@ -218,19 +232,13 @@ def compute_splits_auto(
 
     Uses 20% of available VRAM to account for simultaneous allocations,
     PyTorch memory overhead, and other GPU consumers.
+
+    dtype accepts both numpy and torch dtypes.
     """
-    n_bytes_per_element = {
-        torch.float32: 4,
-        torch.float64: 8,
-        torch.float16: 2,
-        torch.complex64: 8,
-        torch.complex128: 16,
-    }
-    assert dtype in n_bytes_per_element, f"dtype {dtype} not supported"
     n_windows = ((height - window_size) // stride + 1) * (
         (width - window_size) // stride + 1
     )
-    n_elements = (vram * 0.2 * 1024 * 1024) / n_bytes_per_element[dtype]
+    n_elements = (vram * 0.2 * 1024 * 1024) / dtype_itemsize(dtype)
     n_elements_needed = n_windows * n_channels * window_size * window_size
     n_splits = int(n_elements_needed / n_elements) + 1
     n_rows = int(sqrt(n_splits))

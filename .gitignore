@@ -1,5 +1,8 @@
-# Various exports
+# Various exports and data
 **/export/
+**/data/
+**/dev/
+**/exports/
 
 # Output plots and benchmark results
 *.png

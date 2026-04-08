@@ -15,6 +15,7 @@ if _project_root not in sys.path:
 from src.backend import get_backend_module, get_data_on_device, batched_trace, make_writable_copy, Array
 from src.detection import Detector
 from src.estimation import SCMEstimator, TylerEstimator, StudentTEstimator
+from src.estimation_kronecker import kronecker_mm_h0, kronecker_mm_h1
 
 
 # Gaussian GLRT
@@ -476,4 +477,99 @@ class DeterministicCompoundGaussianGLRT(Detector):
             - n_samples * log_det_Sigma_t.sum(-1)
             + n_times * n_features * log_tau_0_sum
             - n_features * log_tau_t_sum
+        )
+
+
+# Scale-and-Shape Kronecker GLRT
+# --------------------------------
+class ScaleAndShapeKroneckerGLRT(Detector):
+    def __init__(
+        self,
+        a: int,
+        b: int,
+        backend_name: str = "numpy",
+        tol: float = 1e-4,
+        iter_max: int = 30,
+        verbosity: bool = False,
+    ) -> None:
+        """GLRT for testing a change in scale or shape in a deterministic SIRV
+        model with Kronecker-structured covariance kron(A, B).
+
+        Under H0 a single (A_0, B_0) is shared across all T dates with
+        per-sample textures tau_n. Under H1 each date has its own (A_t, B_t)
+        and per-sample textures tau_{t,n}.
+
+        The log-statistic exploits log|kron(A,B)| = b*log|A| + a*log|B| to
+        avoid ever materialising the full p×p Kronecker product.
+
+        Reference: Mian et al., based on Sun/Babu/Palomar MM algorithm,
+        IEEE TSP 2016.
+
+        Parameters
+        ----------
+        a, b : int
+            Sizes of the Kronecker factors (p = a*b).
+        backend_name : str
+            Backend to use. Choices are: numpy, torch-cpu, torch-cuda.
+        tol : float
+            Convergence tolerance for the MM algorithms. Default 1e-4.
+        iter_max : int
+            Maximum MM iterations. Default 30.
+        verbosity : bool
+            Print progress. Default False.
+        """
+        self.a = a
+        self.b = b
+        self.backend_name = backend_name
+        self.be = get_backend_module(backend_name)
+        self.tol = tol
+        self.iter_max = iter_max
+        self.verbosity = verbosity
+
+    def compute(self, X: Array, *args, **kwargs) -> Array:
+        """Compute the Kronecker GLRT statistic.
+
+        Parameters
+        ----------
+        X : Array of shape (..., T, N, p) where p = a*b
+
+        Returns
+        -------
+        Array of shape (...,)
+            Log-likelihood ratio statistic per batch element.
+        """
+        X = get_data_on_device(X, self.backend_name)
+        n_times, n_samples, p = X.shape[-3], X.shape[-2], X.shape[-1]
+        a, b = self.a, self.b
+
+        if self.verbosity:
+            print("Estimating H0 (joint Kronecker MM)...")
+        A0, B0, tau0 = kronecker_mm_h0(
+            X, a, b, self.tol, self.iter_max, self.backend_name
+        )  # A0: (..., a, a), B0: (..., b, b), tau0: (..., N)
+
+        if self.verbosity:
+            print("Estimating H1 (per-date Kronecker MM)...")
+        At, Bt, tau_t = kronecker_mm_h1(
+            X, a, b, self.tol, self.iter_max, self.backend_name
+        )  # At: (..., T, a, a), Bt: (..., T, b, b), tau_t: (..., T, N)
+
+        # log|kron(A,B)| = b*log|A| + a*log|B|  (avoids forming p×p matrix)
+        log_det_A0 = self.be.real(self.be.linalg.slogdet(A0)[1])   # (...,)
+        log_det_B0 = self.be.real(self.be.linalg.slogdet(B0)[1])   # (...,)
+        log_det_At = self.be.real(self.be.linalg.slogdet(At)[1])   # (..., T)
+        log_det_Bt = self.be.real(self.be.linalg.slogdet(Bt)[1])   # (..., T)
+        log_det_Sigma0 = b * log_det_A0 + a * log_det_B0           # (...,)
+        log_det_Sigma_t = b * log_det_At + a * log_det_Bt          # (..., T)
+
+        # Texture log-sum terms
+        log_tau0_sum = self.be.log(self.be.abs(tau0)).sum(-1)            # (...,)
+        log_tau_t_sum = self.be.log(self.be.abs(tau_t)).sum(-1).sum(-1)  # (...,)
+
+        # λ = T*N*log|Σ0| - N*Σ_t log|Σ_t| + T*p*Σ_n log(τ0_n) - p*Σ_{n,t} log(τ_{t,n})
+        return (
+            n_times * n_samples * log_det_Sigma0
+            - n_samples * log_det_Sigma_t.sum(-1)
+            + n_times * p * log_tau0_sum
+            - p * log_tau_t_sum
         )
