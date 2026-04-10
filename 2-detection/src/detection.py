@@ -4,6 +4,7 @@
 
 
 from abc import ABC, abstractmethod
+from typing import Any, Tuple
 from .backend import Array
 
 
@@ -14,7 +15,7 @@ class Detector(ABC):
     backend_name: str
 
     @abstractmethod
-    def compute(self, X, *args, **kwargs) -> Array:
+    def compute(self, X: Array, *args, **kwargs) -> Array:
         """Compute the test statistic without thresholding.
 
         Parameters
@@ -51,3 +52,26 @@ class Detector(ABC):
             thresholding to apply to get desired pfa.
         """
         raise NotImplementedError()
+
+
+class OnlineDetector(ABC):
+    """Abstract class for online detectors that are detectors saving some state and iterating
+    over time to compute the result."""
+
+    backend_name: str
+
+    def save_state(self, state: Any) -> None:
+        """Save state after computation of one time"""
+        self.state = state
+
+    @abstractmethod
+    def compute(
+        self, past_value: Array, X: Array, state: Any, *args, **kwargs
+    ) -> Tuple[Array, Any]:
+        pass
+
+    def update(self, past_value: Array, X: Array, *args, **kwargs) -> Array:
+        """Compute the statistic with new data and current state"""
+        res, new_state = self.compute(past_value, X, self.state)
+        self.save_state(new_state)
+        return res

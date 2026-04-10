@@ -2,8 +2,7 @@
 
 import sys
 from pathlib import Path
-import os
-from typing import Optional
+from typing import Optional, Any, Tuple, Dict
 
 from torch import slogdet
 
@@ -12,8 +11,14 @@ _project_root = str(Path(__file__).parent.parent)
 if _project_root not in sys.path:
     sys.path.insert(0, _project_root)
 
-from src.backend import get_backend_module, get_data_on_device, batched_trace, make_writable_copy, Array
-from src.detection import Detector
+from src.backend import (
+    get_backend_module,
+    get_data_on_device,
+    batched_trace,
+    make_writable_copy,
+    Array,
+)
+from src.detection import Detector, OnlineDetector
 from src.estimation import SCMEstimator, TylerEstimator, StudentTEstimator
 from src.estimation_kronecker import kronecker_mm_h0, kronecker_mm_h1
 
@@ -66,6 +71,72 @@ class GaussianGLRT(Detector):
                 log_det_cov_t = self.be.linalg.slogdet(cov_t)[1]
                 res -= log_det_cov_t
         return res
+
+
+class OnlineGaussianGLRT(OnlineDetector):
+    def __init__(self, backend_name: str = "numpy", state: Dict = {}) -> None:
+        self.backend_name = backend_name
+        self.be = get_backend_module(backend_name)
+        self.state = state
+
+    def compute_intial_state(self, X: Array) -> Array:
+        """To start the detection, we need to compute state over two first dates."""
+        assert X.shape[-3] == 2, "Only two dates to initialize state"
+        S_matrices = self.be.einsum(
+            "...ab,...bc->...ac", self.be.swapaxes(X, -1, -2).conj(), X
+        )
+        sum_St = self.be.sum(S_matrices, axis=-3)
+        logdet_sum_St = self.be.linalg.slogdet(sum_St)[1]
+        res = (
+            2 * logdet_sum_St
+            - self.be.linalg.slogdet(S_matrices[..., 0, :, :])[1]
+            - self.be.linalg.slogdet(S_matrices[..., 1, :, :])[1]
+        )
+
+        self.state = {
+            "sum_St": sum_St,
+            "logdet_sum_St": logdet_sum_St,
+            "n_times": 2,
+        }
+
+        return res
+
+    def compute(
+        self, past_value: Array, X: Array, state: Any, *args, **kwargs
+    ) -> Tuple[Array, Any]:
+        """
+        Parameters
+        ----------
+        past_value: Array
+            past values of test statistic of shape (...), where ... are batches dimensions
+
+        X: Array (torch or numpy)
+            data to compute statistic on. Shape (..., n_samples, n_features),
+            where ... are batches dimensions. This is the data for 1 time only
+
+        Returns
+        -------
+        Array (torch or numpy)
+            result of test statistic over all batches dimensions.
+
+        """
+        S_Tplusone = self.be.einsum(
+            "...ab,...bc->...ac", self.be.swapaxes(X, -1, -2).conj(), X
+        )
+        sum_STplusone = state["sum_St"] + S_Tplusone
+        logdet_sum_STplusone = self.be.linalg.slogdet(sum_STplusone)[1]
+        T = state["n_times"]
+        new_T = T + 1
+        return (
+            past_value
+            + new_T * logdet_sum_STplusone
+            - T * state["logdet_sum_St"]
+            - self.be.linalg.slogdet(S_Tplusone)[1]
+        ), {
+            "sum_St": sum_STplusone,
+            "logdet_sum_St": logdet_sum_STplusone,
+            "n_times": new_T,
+        }
 
 
 # 2-step Detectors
@@ -331,7 +402,7 @@ def _tyler_matandtext_fixed_point(
         # Shared textures: τ_n = sum_t x_{n,t}^H Σ^{-1} x_{n,t}
         # iSigma is (batch..., p, p); insert T dim to broadcast with X (batch..., T, N, p)
         temp = X.conj() @ iSigma[..., None, :, :]  # (batch..., T, N, p)
-        tau = be.real(temp * X).sum(-1).sum(-2)     # sum over p then T → (batch..., N)
+        tau = be.real(temp * X).sum(-1).sum(-2)  # sum over p then T → (batch..., N)
 
         # X_scaled[:,n,:] = X[:,n,:] / sqrt(τ_n), broadcast over T and p
         X_scaled = X / be.sqrt(tau)[..., None, :, None]  # (batch..., T, N, p)
@@ -449,26 +520,30 @@ class DeterministicCompoundGaussianGLRT(Detector):
 
         # Texture under H0: τ_0n = (1/T) * sum_t x_{n,t}^H Σ_0^{-1} x_{n,t}
         # iSigma_0 is (batch..., p, p); insert T dim to broadcast with X (batch..., T, N, p)
-        temp_0 = X.conj() @ iSigma_0[..., None, :, :]           # (batch..., T, N, p)
+        temp_0 = X.conj() @ iSigma_0[..., None, :, :]  # (batch..., T, N, p)
         tau_0 = self.be.real(temp_0 * X).sum(-1).sum(-2) / n_times  # (batch..., N)
 
-        log_det_Sigma_0 = self.be.real(self.be.linalg.slogdet(Sigma_0)[1])  # (batch...,)
+        log_det_Sigma_0 = self.be.real(
+            self.be.linalg.slogdet(Sigma_0)[1]
+        )  # (batch...,)
 
         # --- H1: Standard Tyler per date ---
         if self.verbosity:
             print("Computing Σ_t via standard Tyler (H1)...")
-        Sigma_t = self.tyler_estimator.compute(X)   # (batch..., T, p, p)
-        iSigma_t = self.be.linalg.inv(Sigma_t)      # (batch..., T, p, p)
+        Sigma_t = self.tyler_estimator.compute(X)  # (batch..., T, p, p)
+        iSigma_t = self.be.linalg.inv(Sigma_t)  # (batch..., T, p, p)
 
         # Texture under H1: τ_{t,n} = x_{n,t}^H Σ_t^{-1} x_{n,t}
         # (batch..., T, N, p) @ (batch..., T, p, p) → (batch..., T, N, p)
         temp_t = X.conj() @ iSigma_t
         tau_t = self.be.real(temp_t * X).sum(-1)  # (batch..., T, N)
 
-        log_det_Sigma_t = self.be.real(self.be.linalg.slogdet(Sigma_t)[1])  # (batch..., T)
+        log_det_Sigma_t = self.be.real(
+            self.be.linalg.slogdet(Sigma_t)[1]
+        )  # (batch..., T)
 
         # --- Log-quadratic terms ---
-        log_tau_0_sum = self.be.log(self.be.abs(tau_0)).sum(-1)          # (batch...,)
+        log_tau_0_sum = self.be.log(self.be.abs(tau_0)).sum(-1)  # (batch...,)
         log_tau_t_sum = self.be.log(self.be.abs(tau_t)).sum(-1).sum(-1)  # (batch...,)
 
         # λ = T·N·log|Σ_0| - N·Σ_t log|Σ_t| + T·p·Σ_n log(τ_0n) - p·Σ_t Σ_n log(τ_tn)
@@ -555,15 +630,15 @@ class ScaleAndShapeKroneckerGLRT(Detector):
         )  # At: (..., T, a, a), Bt: (..., T, b, b), tau_t: (..., T, N)
 
         # log|kron(A,B)| = b*log|A| + a*log|B|  (avoids forming p×p matrix)
-        log_det_A0 = self.be.real(self.be.linalg.slogdet(A0)[1])   # (...,)
-        log_det_B0 = self.be.real(self.be.linalg.slogdet(B0)[1])   # (...,)
-        log_det_At = self.be.real(self.be.linalg.slogdet(At)[1])   # (..., T)
-        log_det_Bt = self.be.real(self.be.linalg.slogdet(Bt)[1])   # (..., T)
-        log_det_Sigma0 = b * log_det_A0 + a * log_det_B0           # (...,)
-        log_det_Sigma_t = b * log_det_At + a * log_det_Bt          # (..., T)
+        log_det_A0 = self.be.real(self.be.linalg.slogdet(A0)[1])  # (...,)
+        log_det_B0 = self.be.real(self.be.linalg.slogdet(B0)[1])  # (...,)
+        log_det_At = self.be.real(self.be.linalg.slogdet(At)[1])  # (..., T)
+        log_det_Bt = self.be.real(self.be.linalg.slogdet(Bt)[1])  # (..., T)
+        log_det_Sigma0 = b * log_det_A0 + a * log_det_B0  # (...,)
+        log_det_Sigma_t = b * log_det_At + a * log_det_Bt  # (..., T)
 
         # Texture log-sum terms
-        log_tau0_sum = self.be.log(self.be.abs(tau0)).sum(-1)            # (...,)
+        log_tau0_sum = self.be.log(self.be.abs(tau0)).sum(-1)  # (...,)
         log_tau_t_sum = self.be.log(self.be.abs(tau_t)).sum(-1).sum(-1)  # (...,)
 
         # λ = T*N*log|Σ0| - N*Σ_t log|Σ_t| + T*p*Σ_n log(τ0_n) - p*Σ_{n,t} log(τ_{t,n})

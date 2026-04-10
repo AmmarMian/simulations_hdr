@@ -54,7 +54,7 @@ def sqrtm_psd(X: Array, backend_name: str = "numpy") -> Array:
     )
 
 
-def _invsqrtm_psd(X: Array, backend_name: str) -> Array:
+def invsqrtm_psd(X: Array, backend_name: str) -> Array:
     """Numerically stable invsqrtm: V @ diag(1/sqrt(|λ|)) @ V^H."""
     be = get_backend_module(backend_name)
     eigenvalues, eigenvectors = _eigh_psd(X, backend_name)
@@ -67,6 +67,40 @@ def _invsqrtm_psd(X: Array, backend_name: str) -> Array:
         get_diagembed(backend_name, inv_sqrt_eigvals),
         be.swapaxes(eigenvectors, -1, -2).conj(),
     )
+
+
+def _inv_sqrtm_invsqrtm_psd(X: Array, backend_name: str) -> Tuple[Array, Array, Array]:
+    """Compute inv, sqrtm and invsqrtm without computing EVD two times"""
+    be = get_backend_module(backend_name)
+    eigenvalues, eigenvectors = _eigh_psd(X, backend_name)
+    sqrt_eigvals = be.sqrt(be.abs(eigenvalues))
+    inv_sqrt_eigvals = 1.0 / be.sqrt(be.abs(eigenvalues))
+    inv_eigvals = 1.0 / be.abs(eigenvalues)
+    if is_complex(backend_name, X):
+        inv_sqrt_eigvals = inv_sqrt_eigvals + 0j
+        sqrt_eigvals = sqrt_eigvals + 0j
+        inv_eigvals = inv_eigvals + 0j
+
+    inv = be.einsum(
+        "...ab,...bc,...cd->...ad",
+        eigenvectors,
+        get_diagembed(backend_name, inv_eigvals),
+        be.swapaxes(eigenvectors, -1, -2).conj(),
+    )
+    sqrtm = be.einsum(
+        "...ab,...bc,...cd->...ad",
+        eigenvectors,
+        get_diagembed(backend_name, sqrt_eigvals),
+        be.swapaxes(eigenvectors, -1, -2).conj(),
+    )
+
+    invsqrtm = be.einsum(
+        "...ab,...bc,...cd->...ad",
+        eigenvectors,
+        get_diagembed(backend_name, inv_sqrt_eigvals),
+        be.swapaxes(eigenvectors, -1, -2).conj(),
+    )
+    return inv, sqrtm, invsqrtm
 
 
 def _kronecker_quadratic_forms(
@@ -135,17 +169,17 @@ def _kronecker_mm_step(
     """
     be = get_backend_module(backend_name)
 
-    iA = be.linalg.inv(A)  # (..., a, a)
-    iB = be.linalg.inv(B)  # (..., b, b)
+    # iA = be.linalg.inv(A)  # (..., a, a)
+    # iB = be.linalg.inv(B)  # (..., b, b)
+    iA, sqrtm_A, isqrtm_A = _inv_sqrtm_invsqrtm_psd(A, backend_name)
+    iB, sqrtm_B, isqrtm_B = _inv_sqrtm_invsqrtm_psd(B, backend_name)
 
     # M_num_A[n] = M_i[n]^H @ iB @ M_i[n]: (..., N_eff, a, a)
-    iB_M = iB[..., None, :, :] @ M_i                          # (..., N_eff, b, a)
-    M_num_A = be.swapaxes(M_i, -1, -2).conj() @ iB_M          # (..., N_eff, a, a)
+    iB_M = iB[..., None, :, :] @ M_i  # (..., N_eff, b, a)
+    M_num_A = be.swapaxes(M_i, -1, -2).conj() @ iB_M  # (..., N_eff, a, a)
 
     # denominators[n] = Re(trace(iA @ M_num_A[n])): (..., N_eff)
-    denominators = be.real(
-        batched_trace(backend_name, iA[..., None, :, :] @ M_num_A)
-    )
+    denominators = be.real(batched_trace(backend_name, iA[..., None, :, :] @ M_num_A))
 
     # M_A = (a / N_eff) * sum_n M_num_A[n] / denom[n]: (..., a, a)
     M_A = (a / N_eff) * (M_num_A / denominators[..., None, None]).sum(-3)
@@ -155,12 +189,7 @@ def _kronecker_mm_step(
     M_B = (b / N_eff) * (M_num_B / denominators[..., None, None]).sum(-3)
 
     # Geodesic update: A_new = sqrtm(A) @ sqrtm(isqrtm(A) @ M_A @ isqrtm(A)) @ sqrtm(A)
-    sqrtm_A = sqrtm_psd(A, backend_name)
-    isqrtm_A = _invsqrtm_psd(A, backend_name)
     A_new = sqrtm_A @ sqrtm_psd(isqrtm_A @ M_A @ isqrtm_A, backend_name) @ sqrtm_A
-
-    sqrtm_B = sqrtm_psd(B, backend_name)
-    isqrtm_B = _invsqrtm_psd(B, backend_name)
     B_new = sqrtm_B @ sqrtm_psd(isqrtm_B @ M_B @ isqrtm_B, backend_name) @ sqrtm_B
 
     return A_new, B_new
@@ -213,8 +242,12 @@ def kronecker_mm_h1(
     for _ in range(iter_max):
         A_new, B_new = _kronecker_mm_step(M_i, A, B, N, a, b, backend_name)
 
-        delta_A = be.linalg.norm(A_new - A, axis=(-2, -1)) / be.linalg.norm(A, axis=(-2, -1))
-        delta_B = be.linalg.norm(B_new - B, axis=(-2, -1)) / be.linalg.norm(B, axis=(-2, -1))
+        delta_A = be.linalg.norm(A_new - A, axis=(-2, -1)) / be.linalg.norm(
+            A, axis=(-2, -1)
+        )
+        delta_B = be.linalg.norm(B_new - B, axis=(-2, -1)) / be.linalg.norm(
+            B, axis=(-2, -1)
+        )
         A, B = A_new, B_new
 
         if bool(be.all(delta_A <= tol)) and bool(be.all(delta_B <= tol)):
@@ -277,8 +310,12 @@ def kronecker_mm_h0(
     for _ in range(iter_max):
         A_new, B_new = _kronecker_mm_step(M_i_flat, A, B, T * N, a, b, backend_name)
 
-        delta_A = be.linalg.norm(A_new - A, axis=(-2, -1)) / be.linalg.norm(A, axis=(-2, -1))
-        delta_B = be.linalg.norm(B_new - B, axis=(-2, -1)) / be.linalg.norm(B, axis=(-2, -1))
+        delta_A = be.linalg.norm(A_new - A, axis=(-2, -1)) / be.linalg.norm(
+            A, axis=(-2, -1)
+        )
+        delta_B = be.linalg.norm(B_new - B, axis=(-2, -1)) / be.linalg.norm(
+            B, axis=(-2, -1)
+        )
         A, B = A_new, B_new
 
         if bool(be.all(delta_A <= tol)) and bool(be.all(delta_B <= tol)):

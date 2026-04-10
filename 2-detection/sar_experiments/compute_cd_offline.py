@@ -24,9 +24,7 @@ from src.hardware_ressources import ImageCPURessourceManager, ImageGPURessourceM
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        "Offline change detection on CPU or GPU backend."
-    )
+    parser = argparse.ArgumentParser("Offline change detection on CPU or GPU backend.")
     parser.add_argument(
         "data_path", type=str, help="Path to the numpy stored data (.npy file)"
     )
@@ -74,6 +72,12 @@ if __name__ == "__main__":
         type=int,
         default=2,
         help="Number of azimuth sub-bands for wavelet decomposition (default 2).",
+    )
+    parser.add_argument(
+        "--iter_max",
+        type=int,
+        default=10,
+        help="Maximum iterations for fixed point.",
     )
     parser.add_argument(
         "--iteration-chunk",
@@ -199,9 +203,9 @@ if __name__ == "__main__":
             print("\nComputing Deterministic Compound Gaussian GLRT")
         dcg_detector = DeterministicCompoundGaussianGLRT(
             backend,
-            verbosity=False if args.quiet else True,
+            verbosity=False,
             iteration_chunk_size=args.iteration_chunk,
-            iter_max=10,
+            iter_max=args.iter_max,
         )
         manager_kwargs = {
             "image_data": sits_data,

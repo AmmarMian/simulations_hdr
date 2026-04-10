@@ -72,10 +72,10 @@ if __name__ == "__main__":
         help="Number of azimuth sub-bands for wavelet decomposition (default 2).",
     )
     parser.add_argument(
-        "--iter-max",
+        "--iter_max",
         type=int,
-        default=5,
-        help="Maximum MM iterations for Kronecker estimator (default 30).",
+        default=10,
+        help="Maximum MM iterations for Kronecker estimator (default 10).",
     )
     parser.add_argument(
         "--tol",
@@ -183,7 +183,7 @@ if __name__ == "__main__":
         backend_name=backend_name,
         tol=args.tol,
         iter_max=args.iter_max,
-        verbosity=True,
+        verbosity=False,
     )
 
     # Create resource manager and process
