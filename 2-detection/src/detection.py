@@ -4,15 +4,15 @@
 
 
 from abc import ABC, abstractmethod
-from typing import Any, Tuple
-from .backend import Array
+from typing import Any, Tuple, Union
+from .backend import Array, Backend
 
 
 class Detector(ABC):
     """Abstract class for detectors over data that implement a
     thresholding w.r.t to false alarm probabilitiy."""
 
-    backend_name: str
+    backend_name: Union[str, Backend]
 
     @abstractmethod
     def compute(self, X: Array, *args, **kwargs) -> Array:
@@ -58,16 +58,25 @@ class OnlineDetector(ABC):
     """Abstract class for online detectors that are detectors saving some state and iterating
     over time to compute the result."""
 
-    backend_name: str
+    backend_name: Union[str, Backend]
 
     def save_state(self, state: Any) -> None:
         """Save state after computation of one time"""
         self.state = state
 
+    def reset_state(self) -> None:
+        """Reset detector state. Call before processing a new sequence."""
+        self.state = None
+
     @abstractmethod
     def compute(
         self, past_value: Array, X: Array, state: Any, *args, **kwargs
     ) -> Tuple[Array, Any]:
+        pass
+
+    @abstractmethod
+    def initialize(self, X: Array) -> Array:
+        """Initialize detector state and compute initial result for a new sequence."""
         pass
 
     def update(self, past_value: Array, X: Array, *args, **kwargs) -> Array:

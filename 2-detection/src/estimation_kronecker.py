@@ -2,10 +2,11 @@
 # Reference: Sun, Babu, Palomar, IEEE TSP 2016
 # Author: Ammar Mian
 
-from typing import Tuple
+from typing import Tuple, Union
 
 from .backend import (
     Array,
+    Backend,
     get_backend_module,
     get_data_on_device,
     batched_eigh,
@@ -14,6 +15,7 @@ from .backend import (
     make_writable_copy,
     batched_trace,
 )
+from .manifolds import sqrtm_psd, invsqrtm_psd
 
 
 def _eigh_psd(X: Array, backend_name: str):
@@ -21,52 +23,6 @@ def _eigh_psd(X: Array, backend_name: str):
     be = get_backend_module(backend_name)
     X = 0.5 * (X + be.swapaxes(X, -1, -2).conj())
     return batched_eigh(backend_name, X)
-
-
-def sqrtm_psd(X: Array, backend_name: str = "numpy") -> Array:
-    """Matrix square root for Hermitian PSD matrices via eigendecomposition.
-
-    Computes X^{1/2} = V @ diag(sqrt(|λ|)) @ V^H where V, λ come from eigh.
-
-    Parameters
-    ----------
-    X : Array of shape (..., n, n)
-        Hermitian PSD matrix/matrices.
-    backend_name : str, optional
-        Backend to use. By default "numpy".
-
-    Returns
-    -------
-    Array of shape (..., n, n)
-        Matrix square root X^{1/2}.
-    """
-    be = get_backend_module(backend_name)
-    eigenvalues, eigenvectors = _eigh_psd(X, backend_name)
-    sqrt_eigvals = be.sqrt(be.abs(eigenvalues))
-    if is_complex(backend_name, X):
-        sqrt_eigvals = sqrt_eigvals + 0j
-    # V @ D @ V^H  (correct formula: A = V diag(λ) V^H → A^{1/2} = V diag(√λ) V^H)
-    return be.einsum(
-        "...ab,...bc,...cd->...ad",
-        eigenvectors,
-        get_diagembed(backend_name, sqrt_eigvals),
-        be.swapaxes(eigenvectors, -1, -2).conj(),
-    )
-
-
-def invsqrtm_psd(X: Array, backend_name: str) -> Array:
-    """Numerically stable invsqrtm: V @ diag(1/sqrt(|λ|)) @ V^H."""
-    be = get_backend_module(backend_name)
-    eigenvalues, eigenvectors = _eigh_psd(X, backend_name)
-    inv_sqrt_eigvals = 1.0 / be.sqrt(be.abs(eigenvalues))
-    if is_complex(backend_name, X):
-        inv_sqrt_eigvals = inv_sqrt_eigvals + 0j
-    return be.einsum(
-        "...ab,...bc,...cd->...ad",
-        eigenvectors,
-        get_diagembed(backend_name, inv_sqrt_eigvals),
-        be.swapaxes(eigenvectors, -1, -2).conj(),
-    )
 
 
 def _inv_sqrtm_invsqrtm_psd(X: Array, backend_name: str) -> Tuple[Array, Array, Array]:

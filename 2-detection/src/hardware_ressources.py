@@ -7,7 +7,7 @@ import torch
 from torch.cuda import mem_get_info
 from rich.progress import track
 
-from .backend import Array, Backend, get_data_on_device, Unfold2D, concatenate, make_writable_copy, dtype_itemsize
+from .backend import Array, Backend, get_data_on_device, get_backend_module, Unfold2D, concatenate, make_writable_copy, dtype_itemsize
 
 
 class ImageRessourceManager:
@@ -174,6 +174,152 @@ class ImageCPURessourceManager(ImageRessourceManager):
             stride,
             process_one_split,
             backend=backend,
+            splitting=splitting,
+            verbose=verbose,
+        )
+
+
+class OnlineImageResourceManager(ImageRessourceManager):
+    """Online streaming version for temporal processing.
+
+    Processes each spatial split through all time steps sequentially,
+    maintaining state per split. Memory-efficient for large images.
+
+    Instead of process_one_split, uses an on_line detector with
+    initialize() and compute() methods.
+    """
+
+    def __init__(
+        self,
+        image_data: Array,
+        window_size: int,
+        stride: int,
+        detector,
+        backend: str | Backend = "numpy",
+        splitting: Tuple[int, int] = (1, 1),
+        verbose: Optional[int] = 1,
+    ) -> None:
+        self.detector = detector
+        self.n_times = image_data.shape[0]
+
+        super().__init__(
+            image_data,
+            window_size,
+            stride,
+            process_one_split=None,
+            backend=backend,
+            splitting=splitting,
+            verbose=verbose,
+        )
+
+    def process_all_data(self, *args, **kwargs) -> Array:
+        """Process all splits sequentially with temporal streaming."""
+        rows_range = range(self.n_rows)
+        if self.verbose:
+            print("Starting online processing")
+            rows_range = track(rows_range, description="Processing rows")
+
+        results_to_merge = []
+        for row in rows_range:
+            result_row = []
+            for col in range(self.n_cols):
+                split_no = row * self.n_cols + col
+                result = self._process_split_temporal(split_no)
+                result_row.append(result)
+
+            results_to_merge.append(result_row)
+
+        return concatenate(
+            self.backend,
+            [concatenate(self.backend, row, axis=1) for row in results_to_merge],
+            axis=0,
+        )
+
+    def _process_split_temporal(self, split_no: int) -> Array:
+        """Process one spatial split through all time steps.
+
+        Returns
+        -------
+        Array of shape (output_h, output_w) [+ extra dims if detector outputs them]
+        """
+        # Get split spatial boundaries
+        row_min, row_max, col_min, col_max = self.splits_coordinates[split_no]
+        split_h = row_max - row_min
+        split_w = col_max - col_min
+        output_h = (split_h - self.window_size) // self.stride + 1
+        output_w = (split_w - self.window_size) // self.stride + 1
+
+        # Reset detector state for this new sequence
+        self.detector.reset_state()
+
+        # Initialize with t=0, 1
+        split_data_init = get_data_on_device(
+            self.image_data[:2, :, row_min:row_max, col_min:col_max],
+            self.backend,
+        )
+        sliding_windows_init = self._unfold(split_data_init)  # (n_windows, 2, k², C)
+        self._delete_temp(split_data_init)
+
+        res = self.detector.initialize(sliding_windows_init)
+        self._delete_temp(sliding_windows_init)
+
+        # Stream through remaining dates
+        for t in range(2, self.n_times):
+            split_data_t = get_data_on_device(
+                self.image_data[t : t + 1, :, row_min:row_max, col_min:col_max],
+                self.backend,
+            )
+            sliding_windows_t = self._unfold(split_data_t)  # (n_windows, 1, k², C)
+            self._delete_temp(split_data_t)
+
+            # Squeeze time dimension: (n_windows, 1, k², C) → (n_windows, k², C)
+            sliding_windows_t = sliding_windows_t[:, 0, :, :]
+
+            res = self.detector.update(res, sliding_windows_t)
+            self._delete_temp(sliding_windows_t)
+
+        # Reshape result to spatial grid
+        if res.ndim == 1:
+            output_shape = (output_h, output_w)
+        else:
+            output_shape = (output_h, output_w) + tuple(res.shape[1:])
+
+        return self._finalize_result(res, output_shape)
+
+
+class OnlineImageGPURessourceManager(OnlineImageResourceManager):
+    """GPU-backed online streaming manager.
+
+    Resolves device, queries VRAM, and supports automatic splitting.
+    """
+
+    def __init__(
+        self,
+        image_data: Array,
+        window_size: int,
+        stride: int,
+        detector,
+        device: Optional[torch.device] = torch.device("cuda"),
+        splitting: Union[str, Tuple[int, int]] = "auto",
+        vram: Optional[float] = None,
+        verbose: Optional[int] = 1,
+    ) -> None:
+        self.device = device
+        self.dtype = image_data.dtype
+        self.vram = vram or mem_get_info(device=device)[0] / (1024 * 1024)
+
+        if splitting == "auto":
+            _, n_channels, height, width = image_data.shape
+            splitting = compute_splits_auto(
+                height, width, self.dtype, self.vram, window_size, stride, n_channels
+            )
+
+        super().__init__(
+            image_data,
+            window_size,
+            stride,
+            detector,
+            backend="torch-cuda",
             splitting=splitting,
             verbose=verbose,
         )

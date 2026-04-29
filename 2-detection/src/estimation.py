@@ -3,10 +3,10 @@
 # Date: 22/10/2025
 
 from types import ModuleType
-from typing import Callable, Optional
+from typing import Callable, Optional, Union
 
-from mpmath.libmp import backend
 from .backend import (
+    Backend,
     Array,
     get_backend_module,
     get_diagembed,
@@ -20,6 +20,7 @@ from .backend import (
     create_scalar_array,
     to_dtype,
 )
+from .manifolds import invsqrtm_psd
 from abc import ABC, abstractmethod
 from rich.progress import (
     Progress,
@@ -38,7 +39,7 @@ from rich.progress import (
 class Estimator(ABC):
     """Abstract class for estimators over data."""
 
-    backend_name: str
+    backend_name: Union[str, Backend]
 
     @abstractmethod
     def compute(self, X: Array) -> Array:
@@ -64,7 +65,7 @@ class Estimator(ABC):
 # SCM-estimators
 # -----------------------------------------------------------------------
 class SCMEstimator(Estimator):
-    def __init__(self, assume_centered: bool = True, backend_name: str = "numpy"):
+    def __init__(self, assume_centered: bool = True, backend_name: Union[str, Backend] = "numpy"):
         self.assume_centered = assume_centered
         self.backend_name = backend_name
         self.backend_module = get_backend_module(self.backend_name)
@@ -105,7 +106,7 @@ def _huber_m_estimator_function(
     x: Array,
     lbda: float = float("inf"),
     beta: float = 1,
-    backend_name: str = "numpy",
+    backend_name: Union[str, Backend] = "numpy",
     **kwargs,
 ):
     """Huber M-estimator function as defined for example in
@@ -127,8 +128,9 @@ def _huber_m_estimator_function(
         By default inf.
     beta : float, optional
         a tuning parameter. By default, 1.
-    backend_name : str, optional
-        Name of the backend. Choices are: numpy, torch-cpu, torch-cuda. By default "numpy"
+    backend_name : str or Backend, optional
+        Backend specification. Can be a string ('numpy', 'torch-cpu', 'torch-cuda')
+        or a Backend object. By default "numpy"
 
     Returns
     -------
@@ -166,42 +168,15 @@ def _tyler_m_estimator_function(x, n_features=1, **kwargs):
     return n_features / x
 
 
-# Copy paste to adapt with backend and rich progress bar and batch dimensions
-def invsqrtm(X: Array, backend_name: str = "numpy") -> Array:
-    """Compute the inverse square root of a SPD matric by applying invsqrt to each eigenvalue.
-
-    Parameters
-    ----------
-    X : Array of shape (..., n_features, n_features)
-        input SPD matrices, where ... are batch dimensions.
-
-    backend_name : str, optional
-        Name of the backend. Choices are: numpy, torch-cpu, torch-cuda. By default "numpy"
-
-    Returns
-    -------
-    Array of shape (..., n_features, n_features)
-        inverse square root of input matrices
-    """
-    backend_module = get_backend_module(backend_name)
-    eigenvalues, eigenvectors = batched_eigh(backend_name, X)
-    inv_sqrt_eigvals = 1.0 / backend_module.sqrt(eigenvalues)
-    if is_complex(backend_name, X):
-        inv_sqrt_eigvals = inv_sqrt_eigvals + 0j
-
-    return backend_module.einsum(
-        "...ab,...bc,...cd->...ad",
-        backend_module.swapaxes(eigenvectors, -1, -2).conj(),
-        get_diagembed(backend_name, inv_sqrt_eigvals),
-        eigenvectors,
-    )
+# Alias for backward compatibility: use invsqrtm_psd from manifolds
+invsqrtm = invsqrtm_psd
 
 
 def _compute_covariance_update(
     X_batch: Array,
     cov_batch: Array,
     m_estimator_function: Callable,
-    backend_name: str,
+    backend_name: Union[str, Backend],
     debug: bool = False,
     **kwargs,
 ) -> tuple[Array, Array]:
@@ -215,8 +190,9 @@ def _compute_covariance_update(
         Current covariance estimates of shape (n_batch, n_features, n_features)
     m_estimator_function : Callable
         M-estimator function
-    backend_name : str
-        Name of the backend. Choices are: numpy, torch-cpu, torch-cuda
+    backend_name : str or Backend
+        Backend specification. Can be a string ('numpy', 'torch-cpu', 'torch-cuda')
+        or a Backend object.
     debug : bool, optional
         Print debug information, by default False
     **kwargs : dict
@@ -289,7 +265,7 @@ def fixed_point_m_estimation_centered(
     tol: float = 1e-4,
     iter_max: int = 10,
     verbosity: bool = False,
-    backend_name: str = "numpy",
+    backend_name: Union[str, Backend] = "numpy",
     debug: bool = False,
     iteration_chunk_size: Optional[int] = None,
     normalization: Optional[str] = None,
@@ -318,8 +294,9 @@ def fixed_point_m_estimation_centered(
         number of maximum iterations, by default 10.
     verbosity : bool, optional
         show progress of algorithm at each iteration, by default False
-    backend_name : str, optional
-        Which backend to use. Choices are: numpy, torch-cpu, torch-cuda. By default "numpy"
+    backend_name : str or Backend, optional
+        Backend specification. Can be a string ('numpy', 'torch-cpu', 'torch-cuda')
+        or a Backend object. By default "numpy"
     debug : bool, optional
         Print debug information during iterations, by default False
     iteration_chunk_size : int, optional
@@ -564,7 +541,7 @@ class TylerEstimator(Estimator):
     def __init__(
         self,
         normalization: str = "trace",
-        backend_name: str = "numpy",
+        backend_name: Union[str, Backend] = "numpy",
         tol: float = 1e-4,
         iter_max: int = 50,
         verbosity: bool = False,
@@ -639,9 +616,9 @@ class StudentTEstimator(Estimator):
         is optional for Student-t. Options: 'trace', 'det', 'diag', or None.
         By default None.
 
-    backend_name : str, optional
-        Backend to use. Choices are: 'numpy', 'torch-cpu', 'torch-cuda'.
-        By default 'numpy'.
+    backend_name : str or Backend, optional
+        Backend specification. Can be a string ('numpy', 'torch-cpu', 'torch-cuda')
+        or a Backend object. By default 'numpy'.
 
     tol : float, optional
         Convergence tolerance for the fixed-point algorithm. By default 1e-4.
@@ -681,7 +658,7 @@ class StudentTEstimator(Estimator):
         self,
         df: float = 3,
         normalization: Optional[str] = None,
-        backend_name: str = "numpy",
+        backend_name: Union[str, Backend] = "numpy",
         tol: float = 1e-4,
         iter_max: int = 50,
         verbosity: bool = False,
@@ -759,9 +736,9 @@ class HuberEstimator(Estimator):
         Normalization method to apply at each iteration. Options: 'trace', 'det',
         'diag', or None. By default None.
 
-    backend_name : str, optional
-        Backend to use. Choices are: 'numpy', 'torch-cpu', 'torch-cuda'.
-        By default 'numpy'.
+    backend_name : str or Backend, optional
+        Backend specification. Can be a string ('numpy', 'torch-cpu', 'torch-cuda')
+        or a Backend object. By default 'numpy'.
 
     tol : float, optional
         Convergence tolerance for the fixed-point algorithm. By default 1e-4.
@@ -802,7 +779,7 @@ class HuberEstimator(Estimator):
         lbda: float = float("inf"),
         beta: float = 1.0,
         normalization: Optional[str] = None,
-        backend_name: str = "numpy",
+        backend_name: Union[str, Backend] = "numpy",
         tol: float = 1e-4,
         iter_max: int = 50,
         verbosity: bool = False,
