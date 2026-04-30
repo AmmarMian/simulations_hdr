@@ -3,45 +3,24 @@
 # Ported from older pymanopt-based code to backend-agnostic patterns
 
 from abc import ABC, abstractmethod
-from typing import Optional, Union, Tuple, List
-import numpy as np
+from typing import Union, Tuple, List, Optional
 
 from .backend import (
     Backend,
     Array,
     get_backend_module,
-    get_data_on_device,
     batched_eigh,
     batched_trace,
-    batched_det,
     get_diagembed,
-    make_writable_copy,
-    expand_dims,
     is_complex,
+    sample_standard_normal,
+    sample_uniform,
 )
 
 
 # ============================================================================
 # Helper Functions (Module-level)
 # ============================================================================
-
-
-def _randn(be, shape):
-    """Generate standard normal random array on backend."""
-    if hasattr(be, "randn"):  # torch
-        return be.randn(*shape)
-    else:  # numpy
-        return be.random.standard_normal(shape)
-
-
-def _rand(be, shape):
-    """Generate uniform [0,1) random array on backend."""
-    if hasattr(be, "rand"):  # torch
-        return be.rand(*shape)
-    else:  # numpy
-        return be.random.uniform(0, 1, shape)
-
-
 def multiherm(A: Array, backend: Union[str, Backend]) -> Array:
     """Hermitian symmetrization: (A + A^H) / 2
 
@@ -59,6 +38,79 @@ def multiherm(A: Array, backend: Union[str, Backend]) -> Array:
     """
     be = get_backend_module(backend)
     return 0.5 * (A + be.swapaxes(A, -1, -2).conj())
+
+
+def eigh_psd(X: Array, backend_name: Union[str, Backend]):
+    """Symmetrize then eigh. Returns (eigenvalues, eigenvectors)."""
+    be = get_backend_module(backend_name)
+    X = 0.5 * (X + be.swapaxes(X, -1, -2).conj())
+    return batched_eigh(backend_name, X)
+
+
+def sqrtm_invsqrtm_psd(
+    X: Array, backend_name: Union[str, Backend]
+) -> Tuple[Array, Array]:
+    """Compute inv, sqrtm and invsqrtm without computing EVD two times"""
+    be = get_backend_module(backend_name)
+    eigenvalues, eigenvectors = eigh_psd(X, backend_name)
+    sqrt_eigvals = be.sqrt(be.abs(eigenvalues))
+    inv_sqrt_eigvals = 1.0 / be.sqrt(be.abs(eigenvalues))
+    inv_eigvals = 1.0 / be.abs(eigenvalues)
+    if is_complex(backend_name, X):
+        inv_sqrt_eigvals = inv_sqrt_eigvals + 0j
+        sqrt_eigvals = sqrt_eigvals + 0j
+        inv_eigvals = inv_eigvals + 0j
+
+    sqrtm = be.einsum(
+        "...ab,...bc,...cd->...ad",
+        eigenvectors,
+        get_diagembed(backend_name, sqrt_eigvals),
+        be.swapaxes(eigenvectors, -1, -2).conj(),
+    )
+
+    invsqrtm = be.einsum(
+        "...ab,...bc,...cd->...ad",
+        eigenvectors,
+        get_diagembed(backend_name, inv_sqrt_eigvals),
+        be.swapaxes(eigenvectors, -1, -2).conj(),
+    )
+    return sqrtm, invsqrtm
+
+
+def inv_sqrtm_invsqrtm_psd(
+    X: Array, backend_name: Union[str, Backend]
+) -> Tuple[Array, Array, Array]:
+    """Compute inv, sqrtm and invsqrtm without computing EVD three times"""
+    be = get_backend_module(backend_name)
+    eigenvalues, eigenvectors = eigh_psd(X, backend_name)
+    sqrt_eigvals = be.sqrt(be.abs(eigenvalues))
+    inv_sqrt_eigvals = 1.0 / be.sqrt(be.abs(eigenvalues))
+    inv_eigvals = 1.0 / be.abs(eigenvalues)
+    if is_complex(backend_name, X):
+        inv_sqrt_eigvals = inv_sqrt_eigvals + 0j
+        sqrt_eigvals = sqrt_eigvals + 0j
+        inv_eigvals = inv_eigvals + 0j
+
+    inv = be.einsum(
+        "...ab,...bc,...cd->...ad",
+        eigenvectors,
+        get_diagembed(backend_name, inv_eigvals),
+        be.swapaxes(eigenvectors, -1, -2).conj(),
+    )
+    sqrtm = be.einsum(
+        "...ab,...bc,...cd->...ad",
+        eigenvectors,
+        get_diagembed(backend_name, sqrt_eigvals),
+        be.swapaxes(eigenvectors, -1, -2).conj(),
+    )
+
+    invsqrtm = be.einsum(
+        "...ab,...bc,...cd->...ad",
+        eigenvectors,
+        get_diagembed(backend_name, inv_sqrt_eigvals),
+        be.swapaxes(eigenvectors, -1, -2).conj(),
+    )
+    return inv, sqrtm, invsqrtm
 
 
 def sqrtm_psd(X: Array, backend: Union[str, Backend]) -> Array:
@@ -83,7 +135,11 @@ def sqrtm_psd(X: Array, backend: Union[str, Backend]) -> Array:
     eigenvalues, eigenvectors = batched_eigh(backend, X)
     sqrt_eigvals = be.sqrt(be.abs(eigenvalues))
     if is_complex(backend, X):
-        sqrt_eigvals = sqrt_eigvals.astype(eigenvectors.dtype) if hasattr(sqrt_eigvals, 'astype') else sqrt_eigvals + 0j
+        sqrt_eigvals = (
+            sqrt_eigvals.astype(eigenvectors.dtype)
+            if hasattr(sqrt_eigvals, "astype")
+            else sqrt_eigvals + 0j
+        )
     diag_sqrt = get_diagembed(backend, sqrt_eigvals)
 
     return be.einsum(
@@ -116,7 +172,11 @@ def invsqrtm_psd(X: Array, backend: Union[str, Backend]) -> Array:
     eigenvalues, eigenvectors = batched_eigh(backend, X)
     inv_sqrt_eigvals = 1.0 / be.sqrt(be.abs(eigenvalues))
     if is_complex(backend, X):
-        inv_sqrt_eigvals = inv_sqrt_eigvals.astype(eigenvectors.dtype) if hasattr(inv_sqrt_eigvals, 'astype') else inv_sqrt_eigvals + 0j
+        inv_sqrt_eigvals = (
+            inv_sqrt_eigvals.astype(eigenvectors.dtype)
+            if hasattr(inv_sqrt_eigvals, "astype")
+            else inv_sqrt_eigvals + 0j
+        )
     diag_inv_sqrt = get_diagembed(backend, inv_sqrt_eigvals)
 
     return be.einsum(
@@ -149,7 +209,11 @@ def logm_psd(X: Array, backend: Union[str, Backend]) -> Array:
     eigenvalues, eigenvectors = batched_eigh(backend, X)
     log_eigvals = be.log(be.abs(eigenvalues))
     if is_complex(backend, X):
-        log_eigvals = log_eigvals.astype(eigenvectors.dtype) if hasattr(log_eigvals, 'astype') else log_eigvals + 0j
+        log_eigvals = (
+            log_eigvals.astype(eigenvectors.dtype)
+            if hasattr(log_eigvals, "astype")
+            else log_eigvals + 0j
+        )
     diag_log = get_diagembed(backend, log_eigvals)
 
     return be.einsum(
@@ -163,8 +227,6 @@ def logm_psd(X: Array, backend: Union[str, Backend]) -> Array:
 # ============================================================================
 # Base Class
 # ============================================================================
-
-
 class Manifold(ABC):
     """Abstract base class for Riemannian manifolds.
 
@@ -299,42 +361,23 @@ class Manifold(ABC):
         be = get_backend_module(self.backend_name)
         return be.sqrt(self.inner(x, u, u))
 
+    @abstractmethod
     def zerovec(self, x: Array) -> Array:
-        """Zero tangent vector at point x.
+        """Zero tangent vector at point x."""
+        pass
 
-        Parameters
-        ----------
-        x : Array
-            Point on manifold
-
-        Returns
-        -------
-        Array
-            Zero vector with shape matching tangent space
-        """
-        be = get_backend_module(self.backend_name)
-        return be.zeros_like(x)
-
+    @abstractmethod
     def randvec(self, x: Array) -> Array:
-        """Random unit tangent vector at point x.
+        """Random unit tangent vector at point x."""
+        pass
 
-        Parameters
-        ----------
-        x : Array
-            Point on manifold
+    def retr(self, x: Array, u: Array) -> Array:
+        """Retraction: approximate exponential map (cheaper, manifold-specific).
 
-        Returns
-        -------
-        Array
-            Random tangent vector with unit norm
+        Defaults to NotImplementedError; override in subclasses where a
+        cheaper retraction than exp is available.
         """
-        be = get_backend_module(self.backend_name)
-        if is_complex(self.backend_name, x):
-            u = _randn(be, x.shape) + 1j * _randn(be, x.shape)
-        else:
-            u = _randn(be, x.shape)
-        u = self.proj(x, u)
-        return u / self.norm(x, u)
+        raise NotImplementedError()
 
     def egrad2rgrad(self, x: Array, egrad: Array) -> Array:
         """Convert Euclidean gradient to Riemannian gradient.
@@ -399,8 +442,6 @@ class Manifold(ABC):
 # ============================================================================
 # Hermitian Positive Definite Manifold
 # ============================================================================
-
-
 class HermitianPositiveDefinite(Manifold):
     """Manifold of Hermitian positive definite matrices.
 
@@ -477,8 +518,7 @@ class HermitianPositiveDefinite(Manifold):
 
     def log(self, x: Array, y: Array) -> Array:
         """Matrix logarithm: log_x(y) = sqrtm(x) log(X^{-1/2} Y X^{-1/2}) sqrtm(x)"""
-        x_sqrt = sqrtm_psd(x, self.backend_name)
-        x_isqrt = invsqrtm_psd(x, self.backend_name)
+        x_sqrt, x_isqrt = sqrtm_invsqrtm_psd(x, self.backend_name)
 
         # Argument for logarithm
         log_arg = x_isqrt @ y @ x_isqrt
@@ -492,7 +532,9 @@ class HermitianPositiveDefinite(Manifold):
         """Riemannian distance via Cholesky + logarithm"""
         c = self.be.linalg.cholesky(x)
         c_inv = self.be.linalg.inv(c)
-        logm = logm_psd(c_inv @ y @ self.be.swapaxes(c_inv, -1, -2).conj(), self.backend_name)
+        logm = logm_psd(
+            c_inv @ y @ self.be.swapaxes(c_inv, -1, -2).conj(), self.backend_name
+        )
         return self.be.linalg.norm(logm, axis=(-2, -1))
 
     def rand(self, batch_shape: Tuple = ()) -> Array:
@@ -501,26 +543,42 @@ class HermitianPositiveDefinite(Manifold):
         Generates Q from QR of random complex Gaussian, then X = Q @ diag(1+rand) @ Q^H.
         """
         # Eigenvalues uniformly in [1, 2]
-        d_shape = batch_shape + (self.n, 1)
-        d = self.be.ones(d_shape) + _rand(self.be, d_shape)
+        d_shape = batch_shape + (self.n,)
+        r = sample_uniform(1, list(d_shape), self.backend_name, low=1.0, high=2.0)[0]
+        # r shape is now d_shape, values in [1, 2]
 
         # Random orthogonal matrix via QR
         z_shape = batch_shape + (self.n, self.n)
-        z = _randn(self.be, z_shape) + 1j * _randn(self.be, z_shape)
+        z = sample_standard_normal(1, list(z_shape), self.backend_name)[0]
         q, _ = self.be.linalg.qr(z)
 
-        # X = Q @ diag(d) @ Q^H
+        # X = Q @ diag(r) @ Q^H
         return self.be.einsum(
             "...ab,...bc,...cd->...ad",
             q,
-            get_diagembed(self.backend_name, d[..., :, 0]),
+            get_diagembed(self.backend_name, r),
             self.be.swapaxes(q, -1, -2).conj(),
         )
 
+    def zerovec(self, x: Array) -> Array:
+        """Zero tangent vector at point x."""
+        return self.be.zeros_like(x)
+
+    def randvec(self, x: Array) -> Array:
+        """Random unit tangent vector at point x."""
+        u = sample_standard_normal(1, list(x.shape), self.backend_name)[0]
+        u = multiherm(
+            u + 0j if is_complex(self.backend_name, x) else u, self.backend_name
+        )
+        u = u / self.norm(x, u)
+        return u
+
+    def retr(self, x: Array, u: Array) -> Array:
+        """Second-order retraction: x + u + (1/2) u x^{-1} u"""
+        return x + u + 0.5 * u @ self.be.linalg.solve(x, u)
+
     def transp(self, x1: Array, x2: Array, d: Array) -> Array:
         """Parallel transport via scaled geodesic (not standard)."""
-        # Solve for M such that M @ x1 = x2 (may not exist exactly)
-        # A simple transport is to project back to tangent space
         return self.proj(x2, d)
 
 
@@ -598,6 +656,24 @@ class SpecialHermitianPositiveDefinite(Manifold):
         scale = self.be.exp(-det_val / self.n)
         return scale[..., None, None] * x
 
+    def zerovec(self, x: Array) -> Array:
+        """Zero tangent vector at point x."""
+        return self.be.zeros_like(x)
+
+    def randvec(self, x: Array) -> Array:
+        """Random unit tangent vector at point x."""
+        u = sample_standard_normal(1, list(x.shape), self.backend_name)[0]
+        u = u + 0j if is_complex(self.backend_name, x) else u
+        u = self.proj(x, u)
+        u = u / self.norm(x, u)
+        return u
+
+    def retr(self, x: Array, u: Array) -> Array:
+        """Retraction: HPD second-order retr, then det-normalize."""
+        r = self._hpd.retr(x, u)
+        det_val = self.be.real(self.be.linalg.det(r))
+        return r / det_val[..., None, None] ** (1.0 / self.n)
+
     def transp(self, x1: Array, x2: Array, d: Array) -> Array:
         """Transport with projection back to SHPD tangent space."""
         transp_d = self._hpd.transp(x1, x2, d)
@@ -662,7 +738,23 @@ class StrictlyPositiveVectors(Manifold):
     def rand(self, batch_shape: Tuple = ()) -> Array:
         """Random strictly positive vector: exp(randn)"""
         z_shape = batch_shape + (self.n,)
-        return self.be.exp(_randn(self.be, z_shape))
+        return self.be.exp(
+            sample_standard_normal(1, list(z_shape), self.backend_name)[0]
+        )
+
+    def zerovec(self, x: Array) -> Array:
+        """Zero tangent vector at point x."""
+        return self.be.zeros_like(x)
+
+    def randvec(self, x: Array) -> Array:
+        """Random unit tangent vector at point x."""
+        u = sample_standard_normal(1, list(x.shape), self.backend_name)[0]
+        u = u / self.norm(x, u)
+        return u
+
+    def retr(self, x: Array, u: Array) -> Array:
+        """Retraction: same as exp (x * exp(u/x)), always positive."""
+        return self.exp(x, u)
 
 
 # ============================================================================
@@ -670,7 +762,7 @@ class StrictlyPositiveVectors(Manifold):
 # ============================================================================
 
 
-class ProductManifold(Manifold):
+class ProductManifold(ABC):
     """Product of multiple manifolds.
 
     Points are tuples of points, one from each component manifold.
@@ -703,7 +795,9 @@ class ProductManifold(Manifold):
     def norm(self, x: List[Array], u: List[Array]) -> Array:
         """Norm: sqrt(sum of component norms squared)"""
         norms = [m.norm(x[i], u[i]) for i, m in enumerate(self.manifolds)]
-        return self.be.sqrt(self.be.sum(self.be.stack([n**2 for n in norms], axis=-1), axis=-1))
+        return self.be.sqrt(
+            self.be.sum(self.be.stack([n**2 for n in norms], axis=-1), axis=-1)
+        )
 
     def proj(self, x: List[Array], u: List[Array]) -> List[Array]:
         """Project each component"""
@@ -713,6 +807,10 @@ class ProductManifold(Manifold):
         """Exponential map: apply component-wise"""
         return [m.exp(x[i], u[i]) for i, m in enumerate(self.manifolds)]
 
+    def retr(self, x: List[Array], u: List[Array]) -> List[Array]:
+        """Retraction: apply component-wise"""
+        return [m.retr(x[i], u[i]) for i, m in enumerate(self.manifolds)]
+
     def log(self, x: List[Array], y: List[Array]) -> List[Array]:
         """Logarithmic map: apply component-wise"""
         return [m.log(x[i], y[i]) for i, m in enumerate(self.manifolds)]
@@ -720,7 +818,9 @@ class ProductManifold(Manifold):
     def dist(self, x: List[Array], y: List[Array]) -> Array:
         """Distance: sqrt(sum of component distances squared)"""
         dists = [m.dist(x[i], y[i]) for i, m in enumerate(self.manifolds)]
-        return self.be.sqrt(self.be.sum(self.be.stack([d**2 for d in dists], axis=-1), axis=-1))
+        return self.be.sqrt(
+            self.be.sum(self.be.stack([d**2 for d in dists], axis=-1), axis=-1)
+        )
 
     def rand(self, batch_shape: Tuple = ()) -> List[Array]:
         """Random point: sample each component"""
@@ -746,8 +846,6 @@ class ProductManifold(Manifold):
 # ============================================================================
 # Weighted Product Manifold
 # ============================================================================
-
-
 class WeightedProductManifold(ProductManifold):
     """Product manifold with weighted metrics.
 
@@ -804,8 +902,6 @@ class WeightedProductManifold(ProductManifold):
 # ============================================================================
 # Concrete Product Manifolds
 # ============================================================================
-
-
 class ScaledGaussianFIM(WeightedProductManifold):
     """Product of SHPD_d and StrictlyPositiveVectors_n for scaled Gaussian with Fisher metric.
 

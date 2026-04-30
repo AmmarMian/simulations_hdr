@@ -39,6 +39,7 @@ class Backend:
     ValueError
         If lib="numpy" and device is not CPU
     """
+
     lib: Literal["numpy", "torch"]
     device: torch.device = torch.device("cpu")
 
@@ -140,7 +141,10 @@ def get_data_on_device(data: Array, backend: Union[str, Backend]) -> Array:
 
 
 def sample_standard_normal(
-    n_samples: int, data_shape: list[int], backend: Union[str, Backend], seed: Optional[int] = None
+    n_samples: int,
+    data_shape: list[int],
+    backend: Union[str, Backend],
+    seed: Optional[int] = None,
 ) -> Array:
     """Sample standard normal data on the given backend.
 
@@ -174,6 +178,55 @@ def sample_standard_normal(
     else:
         rng = np.random.default_rng(seed)
         return rng.standard_normal(shape)
+
+
+def sample_uniform(
+    n_samples: int,
+    data_shape: list[int],
+    backend: Union[str, Backend],
+    seed: Optional[int] = None,
+    low: float = 0.0,
+    high: float = 1.0,
+) -> Array:
+    """Sample uniform data on the given backend.
+
+    Parameters
+    ----------
+    n_samples: int
+        number of samples to draw.
+
+    data_shape: list[int]
+        shape of one data sample
+
+    backend: str or Backend
+        Backend specification.
+
+    seed: int
+        seed for rng. By default None.
+
+    low: float
+        lower bound of uniform distribution
+
+    high: float
+        upper bound of uniform distribution
+
+    Returns
+    -------
+    Array
+        sampled data on desired backend
+    """
+    b = _normalize_backend(backend)
+    shape = (n_samples,) + tuple(data_shape)
+
+    if b.is_torch:
+        gen = torch.Generator(device=b.device)
+        if seed is not None:
+            gen.manual_seed(seed)
+        # torch.rand gives [0, 1), so rescale
+        return low + (high - low) * torch.rand(*shape, generator=gen, device=b.device)
+    else:
+        rng = np.random.default_rng(seed)
+        return rng.uniform(low=low, high=high, size=shape)
 
 
 def expand_dims(backend: Union[str, Backend], x: Array, axis: int) -> Array:
@@ -279,7 +332,9 @@ def batched_eigh(
     return backend_module.linalg.eigh(X)
 
 
-def concatenate(backend: Union[str, Backend], arrays: list[Array], axis: int = 0) -> Array:
+def concatenate(
+    backend: Union[str, Backend], arrays: list[Array], axis: int = 0
+) -> Array:
     """Concatenate arrays along an axis, works for both numpy and torch.
 
     Parameters
@@ -477,6 +532,17 @@ def to_dtype(X: Array, dtype, backend: Union[str, Backend]) -> Array:
         return X.to(dtype=dtype)
 
 
+def to_scalar(x) -> float:
+    """Extract a Python float from a backend scalar (numpy or torch).
+
+    Uses .item() for torch tensors to avoid redundant device-to-host
+    synchronisation; falls back to float() for numpy scalars/arrays.
+    """
+    if isinstance(x, torch.Tensor):
+        return x.item()
+    return float(x)
+
+
 def dtype_itemsize(dtype) -> int:
     """Return the size in bytes of one element for a numpy or torch dtype.
 
@@ -496,7 +562,10 @@ def dtype_itemsize(dtype) -> int:
 
 
 def normalize_covariance(
-    cov: Array, normalization: Optional[str], backend: Union[str, Backend], n_features: int
+    cov: Array,
+    normalization: Optional[str],
+    backend: Union[str, Backend],
+    n_features: int,
 ) -> Array:
     """Normalize covariance matrices according to specified method.
 
@@ -587,7 +656,7 @@ class Unfold2D:
         patches = self._torch_unfold(data)  # (T, C*k², L)
         return (
             patches.view(T, C, k * k, -1)  # (T, C, k², L)
-            .permute(3, 0, 2, 1)           # (L, T, k², C)
+            .permute(3, 0, 2, 1)  # (L, T, k², C)
             .contiguous()
         )
 

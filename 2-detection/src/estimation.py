@@ -3,7 +3,7 @@
 # Date: 22/10/2025
 
 from types import ModuleType
-from typing import Callable, Optional, Union
+from typing import Callable, List, Optional, Tuple, Union
 
 from .backend import (
     Backend,
@@ -19,8 +19,9 @@ from .backend import (
     normalize_covariance,
     create_scalar_array,
     to_dtype,
+    to_scalar,
 )
-from .manifolds import invsqrtm_psd
+from .manifolds import invsqrtm_psd, ScaledGaussianFIM
 from abc import ABC, abstractmethod
 from rich.progress import (
     Progress,
@@ -65,7 +66,9 @@ class Estimator(ABC):
 # SCM-estimators
 # -----------------------------------------------------------------------
 class SCMEstimator(Estimator):
-    def __init__(self, assume_centered: bool = True, backend_name: Union[str, Backend] = "numpy"):
+    def __init__(
+        self, assume_centered: bool = True, backend_name: Union[str, Backend] = "numpy"
+    ):
         self.assume_centered = assume_centered
         self.backend_name = backend_name
         self.backend_module = get_backend_module(self.backend_name)
@@ -179,7 +182,7 @@ def _compute_covariance_update(
     backend_name: Union[str, Backend],
     debug: bool = False,
     **kwargs,
-) -> tuple[Array, Array]:
+) -> Tuple[Array, Array]:
     """Compute covariance update for a batch of matrices.
 
     Parameters
@@ -200,7 +203,7 @@ def _compute_covariance_update(
 
     Returns
     -------
-    tuple[Array, Array]
+    Tuple[Array, Array]
         New covariance estimates and errors
     """
     backend_module = get_backend_module(backend_name)
@@ -813,7 +816,6 @@ class HuberEstimator(Estimator):
         Array of shape (..., n_features, n_features)
             Estimated covariance matrices.
         """
-        n_features = X.shape[-1]
 
         return fixed_point_m_estimation_centered(
             X=X,
@@ -829,3 +831,523 @@ class HuberEstimator(Estimator):
             lbda=self.lbda,
             beta=self.beta,
         )
+
+
+# -----------------------------------------------------------------------
+# Scaled Gaussian Natural Gradient Estimator
+# -----------------------------------------------------------------------
+def _neg_log_likelihood_scaled_gaussian(
+    X: Array, Sigma: Array, tau: Array, be
+) -> float:
+    """Negative log-likelihood of scaled Gaussian (det-normalized Sigma).
+
+    L = (1/np) * sum_i [ p*log(tau_i) + x_i^H Sigma^{-1} x_i / tau_i ]
+    """
+    n, p = X.shape[-2], X.shape[-1]
+    i_Sigma = be.linalg.inv(Sigma)
+    q = be.real(be.einsum("ni,ij,jn->n", X.conj(), i_Sigma, be.swapaxes(X, -1, -2)))
+    tau_flat = tau.flatten()
+    L = p * be.log(tau_flat) + q / tau_flat
+    return to_scalar(be.real(be.sum(L))) / (n * p)
+
+
+def _rgrad_scaled_gaussian(
+    X: Array, Sigma: Array, tau: Array, manifold: ScaledGaussianFIM, be
+):
+    """Riemannian gradient of neg log-likelihood for scaled Gaussian model.
+
+    Parameters
+    ----------
+    X : Array of shape (n_samples, n_features)
+    Sigma : Array of shape (n_features, n_features), SHPD
+    tau : Array of shape (n_samples, 1), strictly positive
+    manifold : ScaledGaussianFIM
+    be : backend module
+
+    Returns
+    -------
+    r_Sigma : (n_features, n_features)  — normalised by n
+    r_tau   : (n_samples, 1)            — equals tau - q/p
+    """
+    n, p = X.shape[-2], X.shape[-1]
+    i_Sigma = be.linalg.inv(Sigma)
+    q = be.real(be.einsum("ni,ij,jn->n", X.conj(), i_Sigma, be.swapaxes(X, -1, -2)))
+    r_tau = tau - q.reshape(n, 1) / p
+    X_T = be.swapaxes(X, -1, -2)
+    temp = X_T / be.sqrt(tau.T)
+    S = temp @ be.swapaxes(temp, -1, -2).conj()
+    r_Sigma = -manifold.manifolds[0].proj(Sigma, S) / n
+    return r_Sigma, r_tau
+
+
+def _armijo_backtracking_scaled_gaussian(
+    X: Array,
+    Sigma: Array,
+    tau: Array,
+    r_Sigma: Array,
+    r_tau: Array,
+    manifold: ScaledGaussianFIM,
+    be,
+    alpha_0: float = 1.0,
+    c: float = 1e-4,
+    rho: float = 0.5,
+    max_backtracks: int = 30,
+):
+    """Armijo backtracking line search on ScaledGaussianFIM.
+
+    Finds step size satisfying sufficient decrease:
+        f(retr(x, -alpha*g)) <= f(x) - c * alpha * <g, g>_x
+    """
+    assert max_backtracks >= 1
+    f0 = _neg_log_likelihood_scaled_gaussian(X, Sigma, tau, be)
+    sq_grad_norm = abs(
+        be.real(
+            manifold.inner(
+                [Sigma, tau.flatten()],
+                [r_Sigma, r_tau.flatten()],
+                [r_Sigma, r_tau.flatten()],
+            )
+        )
+    )
+    alpha = alpha_0
+    for _ in range(max_backtracks):
+        Sigma_new, tau_new = manifold.retr(
+            [Sigma, tau], [-alpha * r_Sigma, -alpha * r_tau]
+        )
+        if (
+            _neg_log_likelihood_scaled_gaussian(X, Sigma_new, tau_new, be)
+            <= f0 - c * alpha * sq_grad_norm
+        ):
+            return alpha, Sigma_new, tau_new
+        alpha *= rho
+    return alpha, Sigma_new, tau_new
+
+
+def natural_gradient_scaled_gaussian(
+    X: Array,
+    tol: float = 1e-8,
+    iter_max: int = 200,
+    alpha_0: float = 1.0,
+    armijo_c: float = 1e-4,
+    armijo_rho: float = 0.5,
+    armijo_max_backtracks: int = 30,
+    init_Sigma: Optional[Array] = None,
+    init_tau: Optional[Array] = None,
+    verbosity: bool = False,
+    backend_name: Union[str, Backend] = "numpy",
+) -> Tuple[Array, Array]:
+    """Riemannian gradient descent for scaled Gaussian MLE.
+
+    Jointly estimates shape matrix Sigma (SHPD) and texture vector tau
+    via natural gradient descent with Armijo backtracking line search.
+
+    Model: x_i ~ CN(0, tau_i * Sigma), det(Sigma) = 1.
+
+    Parameters
+    ----------
+    X : Array of shape (..., n_samples, n_features)
+        Centered complex data. Batch dimensions are handled via loop.
+    tol : float
+        Convergence tolerance on the Riemannian gradient norm.
+    iter_max : int
+        Maximum number of gradient steps.
+    alpha_0 : float
+        Initial step size for Armijo backtracking.
+    armijo_c : float
+        Sufficient decrease constant (Armijo condition).
+    armijo_rho : float
+        Step reduction factor for backtracking.
+    armijo_max_backtracks : int
+        Maximum number of backtracking steps.
+    init_Sigma : Array or None
+        Initial shape matrix. Defaults to identity.
+    init_tau : Array or None
+        Initial texture vector. Defaults to ones.
+    verbosity : bool
+        Print convergence info.
+    backend_name : str or Backend
+        Backend specification.
+
+    Returns
+    -------
+    Sigma : Array of shape (..., n_features, n_features)
+    tau   : Array of shape (..., n_samples, 1)
+    """
+    be = get_backend_module(backend_name)
+
+    # Move data to target backend/device
+    X = get_data_on_device(X, backend_name)
+
+    # Handle batch dims by flattening to (batch, n_samples, n_features)
+    batch_shape = X.shape[:-2]
+    n_samples, n_features = X.shape[-2], X.shape[-1]
+    n_batch = 1
+    for s in batch_shape:
+        n_batch *= s
+    X_flat = X.reshape((n_batch, n_samples, n_features)) if batch_shape else X[None]
+
+    Sigmas = []
+    taus = []
+
+    pbar = None
+    if verbosity:
+        pbar = Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+            TaskProgressColumn(),
+            TimeElapsedColumn(),
+            TimeRemainingColumn(),
+        )
+        pbar.start()
+
+    for b in range(n_batch):
+        X_b = X_flat[b]
+        manifold = ScaledGaussianFIM(n_features, n_samples, backend_name=backend_name)
+
+        if init_Sigma is None:
+            Sigma = get_data_on_device(
+                be.eye(n_features, dtype=X_b.dtype), backend_name
+            )
+        else:
+            Sigma = make_writable_copy(backend_name, init_Sigma)
+
+        if init_tau is None:
+            tau = get_data_on_device(be.ones((n_samples, 1)), backend_name)
+        else:
+            tau = make_writable_copy(backend_name, init_tau)
+
+        task_id = None
+        if verbosity:
+            task_id = pbar.add_task(f"Batch {b}", total=iter_max)
+
+        for k in range(iter_max):
+            r_Sigma, r_tau = _rgrad_scaled_gaussian(X_b, Sigma, tau, manifold, be)
+            grad_norm = (
+                to_scalar(
+                    abs(
+                        be.real(
+                            manifold.inner(
+                                [Sigma, tau.flatten()],
+                                [r_Sigma, r_tau.flatten()],
+                                [r_Sigma, r_tau.flatten()],
+                            )
+                        )
+                    )
+                )
+                ** 0.5
+            )
+
+            if verbosity:
+                pbar.update(
+                    task_id,
+                    advance=1,
+                    description=f"Batch {b}, iter {k}, ||rg||={grad_norm:.2e}",
+                )
+
+            if grad_norm < tol:
+                break
+
+            _, Sigma, tau = _armijo_backtracking_scaled_gaussian(
+                X_b,
+                Sigma,
+                tau,
+                r_Sigma,
+                r_tau,
+                manifold,
+                be,
+                alpha_0=alpha_0,
+                c=armijo_c,
+                rho=armijo_rho,
+                max_backtracks=armijo_max_backtracks,
+            )
+
+        Sigmas.append(Sigma)
+        taus.append(tau)
+
+    if verbosity:
+        pbar.stop()
+
+    # Stack and restore batch shape
+    Sigma_out = be.stack(Sigmas, 0).reshape(batch_shape + (n_features, n_features))
+    tau_out = be.stack(taus, 0).reshape(batch_shape + (n_samples, 1))
+    # import numpy as _np
+    #
+    # try:
+    #     import torch as _torch
+    #
+    #     if isinstance(Sigmas[0], _torch.Tensor):
+    #         Sigma_out = _torch.stack(Sigmas, dim=0).reshape(
+    #             batch_shape + (n_features, n_features)
+    #         )
+    #         tau_out = _torch.stack(taus, dim=0).reshape(batch_shape + (n_samples, 1))
+    #         return Sigma_out, tau_out
+    # except ImportError:
+    #     pass
+    # Sigma_out = _np.stack(Sigmas, axis=0).reshape(
+    #     batch_shape + (n_features, n_features)
+    # )
+    # tau_out = _np.stack(taus, axis=0).reshape(batch_shape + (n_samples, 1))
+    return Sigma_out, tau_out
+
+
+class ScaledGaussianNaturalGradientEstimator(Estimator):
+    """MLE estimator for scaled Gaussian shape matrix via Riemannian gradient descent.
+
+    Jointly estimates shape matrix Sigma (SHPD, det=1) and texture vector tau
+    using natural gradient descent with Armijo backtracking.
+
+    Model: x_i ~ CN(0, tau_i * Sigma).
+
+    Parameters
+    ----------
+    tol : float
+        Convergence tolerance on Riemannian gradient norm. Default 1e-8.
+    iter_max : int
+        Maximum gradient steps per batch element. Default 200.
+    alpha_0 : float
+        Initial Armijo step size. Default 1.0.
+    armijo_c : float
+        Sufficient decrease constant. Default 1e-4.
+    armijo_rho : float
+        Backtracking reduction factor. Default 0.5.
+    armijo_max_backtracks : int
+        Max backtracking steps. Default 30.
+    init_Sigma : Array or None
+        Initial shape matrix. Default identity.
+    init_tau : Array or None
+        Initial texture vector. Default ones.
+    verbosity : bool
+        Show progress bar. Default False.
+    backend_name : str or Backend
+        Backend. Default "numpy".
+    """
+
+    def __init__(
+        self,
+        tol: float = 1e-8,
+        iter_max: int = 200,
+        alpha_0: float = 1.0,
+        armijo_c: float = 1e-4,
+        armijo_rho: float = 0.5,
+        armijo_max_backtracks: int = 30,
+        init_Sigma: Optional[Array] = None,
+        init_tau: Optional[Array] = None,
+        verbosity: bool = False,
+        backend_name: Union[str, Backend] = "numpy",
+    ):
+        self.tol = tol
+        self.iter_max = iter_max
+        self.alpha_0 = alpha_0
+        self.armijo_c = armijo_c
+        self.armijo_rho = armijo_rho
+        self.armijo_max_backtracks = armijo_max_backtracks
+        self.init_Sigma = init_Sigma
+        self.init_tau = init_tau
+        self.verbosity = verbosity
+        self.backend_name = backend_name
+
+    def compute(self, X: Array) -> Array:
+        """Compute shape matrix Sigma.
+
+        Parameters
+        ----------
+        X : Array of shape (..., n_samples, n_features)
+            Centered complex data.
+
+        Returns
+        -------
+        Array of shape (..., n_features, n_features)
+            Estimated shape matrices (det = 1).
+        """
+        Sigma, _ = self.compute_with_tau(X)
+        return Sigma
+
+    def compute_with_tau(self, X: Array) -> Tuple[Array, Array]:
+        """Compute shape matrix Sigma and texture vector tau.
+
+        Parameters
+        ----------
+        X : Array of shape (..., n_samples, n_features)
+
+        Returns
+        -------
+        Sigma : Array of shape (..., n_features, n_features)
+        tau   : Array of shape (..., n_samples, 1)
+        """
+        return natural_gradient_scaled_gaussian(
+            X,
+            tol=self.tol,
+            iter_max=self.iter_max,
+            alpha_0=self.alpha_0,
+            armijo_c=self.armijo_c,
+            armijo_rho=self.armijo_rho,
+            armijo_max_backtracks=self.armijo_max_backtracks,
+            init_Sigma=self.init_Sigma,
+            init_tau=self.init_tau,
+            verbosity=self.verbosity,
+            backend_name=self.backend_name,
+        )
+
+
+# -----------------------------------------------------------------------
+# Online Scaled Gaussian Natural Gradient Estimator
+# -----------------------------------------------------------------------
+def online_natural_gradient_scaled_gaussian(
+    X_batches: Array,
+    lr: float = 1.0,
+    step_fn=None,
+    verbosity: bool = False,
+    backend_name: Union[str, Backend] = "numpy",
+) -> Tuple[Array, Array, List]:
+    """Online Riemannian gradient descent for scaled Gaussian MLE.
+
+    Processes batches sequentially. The first batch is used to warm-start
+    (Sigma, tau) via the full batch estimator. Subsequent batches each
+    apply one Riemannian gradient step with decreasing step size so early
+    batches dominate and later ones refine the estimate.
+
+    Parameters
+    ----------
+    X_batches : Array of shape (n_batches, n_samples, n_features)
+        Sequence of data batches. Each batch shares the same n_samples
+        spatial positions (same tau profile across batches).
+    lr : float
+        Base learning rate. Step at batch t is step_fn(t) or lr/t
+        (1-indexed, since batch 0 is the warm-start).
+    step_fn : callable (int -> float) or None
+        Custom step size schedule. Receives 1-based batch index.
+        Default: lambda t: lr / t
+    verbosity : bool
+        Print per-batch info.
+    backend_name : str or Backend
+
+    Returns
+    -------
+    Sigma : Array of shape (n_features, n_features)
+    tau   : Array of shape (n_samples, 1)
+    history : list of (Sigma, tau) snapshots after each batch
+    """
+    be = get_backend_module(backend_name)
+    X_batches = get_data_on_device(X_batches, backend_name)
+    n_batches, n_samples, n_features = (
+        X_batches.shape[-3],
+        X_batches.shape[-2],
+        X_batches.shape[-1],
+    )
+
+    if step_fn is None:
+        step_fn = lambda t: lr / t
+
+    manifold = ScaledGaussianFIM(n_features, n_samples, backend_name=backend_name)
+
+    # Warm-start: run full batch estimator on first batch
+    Sigma, tau = natural_gradient_scaled_gaussian(
+        X_batches[0], backend_name=backend_name
+    )
+    history = [(Sigma, tau)]
+
+    if verbosity:
+        print("Warm-started from batch 0")
+        print(f"{'Batch':<7} {'step':<10} {'||rS||':<12} {'||rt||':<12}")
+        print("-" * 44)
+
+    for t in range(1, n_batches):
+        X_t = X_batches[t]
+        r_Sigma, r_tau = _rgrad_scaled_gaussian(X_t, Sigma, tau, manifold, be)
+        step = step_fn(t)
+        Sigma, tau = manifold.retr(
+            [Sigma, tau],
+            [-step * r_Sigma, -step * r_tau],
+        )
+        history.append((Sigma, tau))
+
+        if verbosity:
+            nrS = to_scalar(be.real(be.sum(r_Sigma * r_Sigma.conj()))) ** 0.5
+            nrt = to_scalar(be.real(be.sum(r_tau * r_tau))) ** 0.5
+            print(f"{t:<7} {step:<10.4f} {nrS:<12.4e} {nrt:<12.4e}")
+
+    return Sigma, tau, history
+
+
+class OnlineScaledGaussianEstimator:
+    """Stateful online estimator for scaled Gaussian model.
+
+    Maintains a running estimate of (Sigma, tau) updated each time a new
+    batch of data arrives via .update(). The first call to .update() runs
+    the full batch estimator to warm-start (Sigma, tau); subsequent calls
+    each apply one Riemannian gradient step with step lr/t.
+
+    Parameters
+    ----------
+    n_features : int
+        Dimension of each observation.
+    n_samples : int
+        Number of spatial positions per batch (fixed across all batches).
+    lr : float
+        Base learning rate. Step at call t (1-indexed) is step_fn(t) or lr/t.
+    step_fn : callable (int -> float) or None
+        Custom step size schedule. Receives 1-based batch index.
+    backend_name : str or Backend
+    """
+
+    def __init__(
+        self,
+        n_features: int,
+        n_samples: int,
+        lr: float = 1.0,
+        step_fn=None,
+        backend_name: Union[str, Backend] = "numpy",
+    ):
+        self.n_features = n_features
+        self.n_samples = n_samples
+        self.lr = lr
+        self.step_fn = step_fn if step_fn is not None else lambda t: lr / t
+        self.backend_name = backend_name
+        self.be = get_backend_module(backend_name)
+        self._manifold = ScaledGaussianFIM(
+            n_features, n_samples, backend_name=backend_name
+        )
+        self._t = 0
+        # self.Sigma = None
+        # self.tau = None
+
+    def update(self, X: Array) -> Tuple[Array, Array]:
+        """Update estimate with a new batch of data.
+
+        The first call warm-starts (Sigma, tau) from this batch using the
+        full batch estimator. Subsequent calls apply one gradient step.
+
+        Parameters
+        ----------
+        X : Array of shape (n_samples, n_features)
+
+        Returns
+        -------
+        Sigma : current shape estimate
+        tau   : current texture estimate
+        """
+        X = get_data_on_device(X, self.backend_name)
+        if self._t == 0:
+            self.Sigma, self.tau = natural_gradient_scaled_gaussian(
+                X, backend_name=self.backend_name
+            )
+            self._t = 1
+            return self.Sigma, self.tau
+
+        r_Sigma, r_tau = _rgrad_scaled_gaussian(
+            X, self.Sigma, self.tau, self._manifold, self.be
+        )
+        step = self.step_fn(self._t)
+        self.Sigma, self.tau = self._manifold.retr(
+            [self.Sigma, self.tau],
+            [-step * r_Sigma, -step * r_tau],
+        )
+        self._t += 1
+        return self.Sigma, self.tau
+
+    def reset(self):
+        """Reset to uninitialised state (next update will warm-start again)."""
+        self._t = 0
+        self.Sigma = None
+        self.tau = None

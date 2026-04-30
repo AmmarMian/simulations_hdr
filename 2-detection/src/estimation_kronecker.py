@@ -2,61 +2,16 @@
 # Reference: Sun, Babu, Palomar, IEEE TSP 2016
 # Author: Ammar Mian
 
-from typing import Tuple, Union
+from typing import Tuple
 
 from .backend import (
     Array,
-    Backend,
     get_backend_module,
     get_data_on_device,
-    batched_eigh,
-    get_diagembed,
-    is_complex,
     make_writable_copy,
     batched_trace,
 )
-from .manifolds import sqrtm_psd, invsqrtm_psd
-
-
-def _eigh_psd(X: Array, backend_name: str):
-    """Symmetrize then eigh. Returns (eigenvalues, eigenvectors)."""
-    be = get_backend_module(backend_name)
-    X = 0.5 * (X + be.swapaxes(X, -1, -2).conj())
-    return batched_eigh(backend_name, X)
-
-
-def _inv_sqrtm_invsqrtm_psd(X: Array, backend_name: str) -> Tuple[Array, Array, Array]:
-    """Compute inv, sqrtm and invsqrtm without computing EVD two times"""
-    be = get_backend_module(backend_name)
-    eigenvalues, eigenvectors = _eigh_psd(X, backend_name)
-    sqrt_eigvals = be.sqrt(be.abs(eigenvalues))
-    inv_sqrt_eigvals = 1.0 / be.sqrt(be.abs(eigenvalues))
-    inv_eigvals = 1.0 / be.abs(eigenvalues)
-    if is_complex(backend_name, X):
-        inv_sqrt_eigvals = inv_sqrt_eigvals + 0j
-        sqrt_eigvals = sqrt_eigvals + 0j
-        inv_eigvals = inv_eigvals + 0j
-
-    inv = be.einsum(
-        "...ab,...bc,...cd->...ad",
-        eigenvectors,
-        get_diagembed(backend_name, inv_eigvals),
-        be.swapaxes(eigenvectors, -1, -2).conj(),
-    )
-    sqrtm = be.einsum(
-        "...ab,...bc,...cd->...ad",
-        eigenvectors,
-        get_diagembed(backend_name, sqrt_eigvals),
-        be.swapaxes(eigenvectors, -1, -2).conj(),
-    )
-
-    invsqrtm = be.einsum(
-        "...ab,...bc,...cd->...ad",
-        eigenvectors,
-        get_diagembed(backend_name, inv_sqrt_eigvals),
-        be.swapaxes(eigenvectors, -1, -2).conj(),
-    )
-    return inv, sqrtm, invsqrtm
+from .manifolds import sqrtm_psd, inv_sqrtm_invsqrtm_psd
 
 
 def _kronecker_quadratic_forms(
@@ -127,8 +82,8 @@ def _kronecker_mm_step(
 
     # iA = be.linalg.inv(A)  # (..., a, a)
     # iB = be.linalg.inv(B)  # (..., b, b)
-    iA, sqrtm_A, isqrtm_A = _inv_sqrtm_invsqrtm_psd(A, backend_name)
-    iB, sqrtm_B, isqrtm_B = _inv_sqrtm_invsqrtm_psd(B, backend_name)
+    iA, sqrtm_A, isqrtm_A = inv_sqrtm_invsqrtm_psd(A, backend_name)
+    iB, sqrtm_B, isqrtm_B = inv_sqrtm_invsqrtm_psd(B, backend_name)
 
     # M_num_A[n] = M_i[n]^H @ iB @ M_i[n]: (..., N_eff, a, a)
     iB_M = iB[..., None, :, :] @ M_i  # (..., N_eff, b, a)
