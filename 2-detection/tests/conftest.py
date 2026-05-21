@@ -13,7 +13,16 @@ parent_path = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(parent_path))
 
 
-@pytest.fixture(params=["numpy", "torch-cpu"])
+@pytest.fixture(params=[
+    "numpy",
+    "torch-cpu",
+    pytest.param(
+        "torch-mps",
+        marks=pytest.mark.skipif(
+            not torch.backends.mps.is_available(), reason="MPS not available"
+        ),
+    ),
+])
 def backend_name(request):
     """Parametrized fixture for different backend names."""
     return request.param

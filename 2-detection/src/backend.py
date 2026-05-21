@@ -59,6 +59,10 @@ class Backend:
     def torch_cuda() -> "Backend":
         return Backend("torch", torch.device("cuda"))
 
+    @staticmethod
+    def torch_mps() -> "Backend":
+        return Backend("torch", torch.device("mps"))
+
     @property
     def is_torch(self) -> bool:
         return self.lib == "torch"
@@ -66,6 +70,10 @@ class Backend:
     @property
     def is_cuda(self) -> bool:
         return self.lib == "torch" and self.device.type == "cuda"
+
+    @property
+    def is_mps(self) -> bool:
+        return self.lib == "torch" and self.device.type == "mps"
 
     @classmethod
     def from_str(cls, s: str) -> "Backend":
@@ -76,6 +84,8 @@ class Backend:
             return cls.torch_cpu()
         elif s == "torch-cuda":
             return cls.torch_cuda()
+        elif s == "torch-mps":
+            return cls.torch_mps()
         raise ValueError(f"Unknown backend string: {s!r}")
 
     def __str__(self) -> str:
@@ -135,7 +145,11 @@ def get_data_on_device(data: Array, backend: Union[str, Backend]) -> Array:
         return data
     else:  # torch
         if isinstance(data, np.ndarray):
-            return torch.from_numpy(data).to(device=b.device)
+            tensor = torch.from_numpy(data)
+            # MPS does not support float64; downcast to float32 automatically
+            if b.is_mps and tensor.dtype == torch.float64:
+                tensor = tensor.float()
+            return tensor.to(device=b.device)
         else:
             return data.to(device=b.device)
 
@@ -171,10 +185,11 @@ def sample_standard_normal(
     b = _normalize_backend(backend)
     shape = (n_samples,) + tuple(data_shape)
     if b.is_torch:
-        gen = torch.Generator(device=b.device)
         if seed is not None:
+            gen = torch.Generator(device=b.device)
             gen.manual_seed(seed)
-        return torch.randn(*shape, generator=gen, device=b.device)
+            return torch.randn(*shape, generator=gen, device=b.device)
+        return torch.randn(*shape, device=b.device)
     else:
         rng = np.random.default_rng(seed)
         return rng.standard_normal(shape)
@@ -219,11 +234,11 @@ def sample_uniform(
     shape = (n_samples,) + tuple(data_shape)
 
     if b.is_torch:
-        gen = torch.Generator(device=b.device)
         if seed is not None:
+            gen = torch.Generator(device=b.device)
             gen.manual_seed(seed)
-        # torch.rand gives [0, 1), so rescale
-        return low + (high - low) * torch.rand(*shape, generator=gen, device=b.device)
+            return low + (high - low) * torch.rand(*shape, generator=gen, device=b.device)
+        return low + (high - low) * torch.rand(*shape, device=b.device)
     else:
         rng = np.random.default_rng(seed)
         return rng.uniform(low=low, high=high, size=shape)
@@ -301,6 +316,11 @@ def batched_eigh(
         eigenvalues and eigenvectors
     """
     backend_module = get_backend_module(backend)
+
+    # linalg.eigh is not implemented on MPS; fall back to CPU transparently
+    if backend_module is torch and X.is_mps:
+        eigvals, eigvecs = torch.linalg.eigh(X.cpu())
+        return eigvals.to(X.device), eigvecs.to(X.device)
 
     # For large batches with CUDA, process in chunks to avoid cusolver limits
     if backend_module is torch and X.is_cuda:

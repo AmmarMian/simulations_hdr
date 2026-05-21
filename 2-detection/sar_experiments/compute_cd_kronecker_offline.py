@@ -100,6 +100,10 @@ if __name__ == "__main__":
     else:
         use_gpu = args.device == "gpu"
 
+    if use_gpu and not torch.cuda.is_available():
+        print("ERROR: gpu device requested but CUDA is not available")
+        sys.exit(1)
+
     if use_gpu:
         backend_name = "torch-cuda"
         device = torch.device("cuda")
