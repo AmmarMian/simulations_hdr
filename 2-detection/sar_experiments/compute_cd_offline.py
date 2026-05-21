@@ -16,6 +16,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "."))
 
 from detection import GaussianGLRT, DeterministicCompoundGaussianGLRT
 from wavelets import apply_wavelet_to_sits
+from utils import require_time_first
 
 import argparse
 from datetime import datetime
@@ -35,6 +36,11 @@ if __name__ == "__main__":
         default="numpy",
         choices=["numpy", "torch-cpu", "torch-cuda"],
         help="Which backend to use for computations.",
+    )
+    parser.add_argument(
+        "--show_interactive",
+        action="store_true",
+        help="Whether to show plots with matplotlib.",
     )
     parser.add_argument("--export", action="store_true", help="Save plots of CD maps.")
     parser.add_argument(
@@ -135,29 +141,30 @@ if __name__ == "__main__":
             fig.savefig(export_path / f"{full_stem}.png")
         if args.export_tikz:
             matplot2tikz.save(str(export_path / f"{full_stem}.tex"), figure=fig)
-        plt.close(fig)
 
-    # Load data
-    if not os.path.exists(args.data_path):
-        raise FileNotFoundError(f"Data file not found: {args.data_path}")
+    # Load data — shape (n_times, n_rows, n_cols, n_features)
+    time_first_path = require_time_first(args.data_path)
     if not args.quiet:
         print("Reading data...")
-    sits_np = np.load(args.data_path)  # (n_rows, n_cols, n_features, n_times)
+    sits_np = np.load(time_first_path)  # (n_times, n_rows, n_cols, n_features)
     if args.debug:
-        sits_np = sits_np[:100, :100]
+        sits_np = sits_np[:, :100, :100, :]
 
-    # Optional wavelet decomposition (applied on numpy data before torch conversion)
+    # Optional wavelet decomposition
     if args.wavelet:
         if not args.quiet:
             print(
                 f"Applying wavelet decomposition (R={args.wavelet_R}, L={args.wavelet_L})..."
             )
-        sits_np = apply_wavelet_to_sits(sits_np, R=args.wavelet_R, L=args.wavelet_L)
+        # apply_wavelet_to_sits expects (rows, cols, features, times)
+        sits_np = apply_wavelet_to_sits(
+            sits_np.transpose(1, 2, 3, 0), R=args.wavelet_R, L=args.wavelet_L
+        ).transpose(3, 0, 1, 2)
         if not args.quiet:
             print(f"  Shape after wavelet: {sits_np.shape}")
 
-    # Convert to torch tensor: (n_times, n_channels, height, width)
-    sits_data = torch.from_numpy(sits_np).moveaxis((0, 1, 3), (2, 3, 0))
+    # Convert to torch tensor: (n_times, n_features, n_rows, n_cols)
+    sits_data = torch.from_numpy(sits_np).moveaxis(3, 1)
     sits_np = None  # free memory
 
     splitting = eval(args.splitting)
@@ -193,12 +200,13 @@ if __name__ == "__main__":
         elapsed = perf_counter() - start
         if not args.quiet:
             print(f"Took {elapsed:.2f} seconds.")
-        if args.export or args.export_tikz:
+        if args.show_interactive or args.export or args.export_tikz:
             fig = plt.figure(dpi=150)
             plt.imshow(get_data_on_device(gaussian_results, "numpy"), aspect="auto")
             plt.colorbar()
             plt.title("Gaussian GLRT")
-            _save(fig, f"gaussian_{args.backend}", elapsed)
+            if args.export or args.export_tikz:
+                _save(fig, f"gaussian_{args.backend}", elapsed)
 
     if "dcg" in args.detectors:
         if not args.quiet:
@@ -229,12 +237,13 @@ if __name__ == "__main__":
             elapsed = perf_counter() - start
             if not args.quiet:
                 print(f"Took {elapsed:.2f} seconds.")
-            if args.export or args.export_tikz:
+            if args.show_interactive or args.export or args.export_tikz:
                 fig = plt.figure(dpi=150)
                 plt.imshow(get_data_on_device(dcg_results, "numpy"), aspect="auto")
                 plt.colorbar()
                 plt.title("DCG GLRT")
-                _save(fig, f"dcg_{args.backend}", elapsed)
+                if args.export or args.export_tikz:
+                    _save(fig, f"dcg_{args.backend}", elapsed)
         except torch.cuda.OutOfMemoryError:
             print(
                 "ERROR: CUDA out of memory for DCG GLRT. "
@@ -246,6 +255,9 @@ if __name__ == "__main__":
     if args.report_memory and is_gpu:
         peak_bytes = torch.cuda.max_memory_allocated()
         print(f"PEAK_GPU_MEMORY_BYTES={peak_bytes}")
+
+    if args.show_interactive:
+        plt.show()
 
     if not args.quiet:
         print("\nDone.")

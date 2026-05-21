@@ -4,13 +4,13 @@
 # Vectorized apply_wavelet_to_sits added for batch processing of SITS data.
 
 import numpy as np
-
+import matplotlib.pyplot as plt
 
 # Physical defaults for Sentinel-1 SLC 1x1 data (L-band)
-DEFAULT_CENTER_FREQUENCY = 1.26e9       # Hz
-DEFAULT_BANDWIDTH        = 80.0e6       # Hz
-DEFAULT_RANGE_RESOLUTION = 1.66551366   # m
-DEFAULT_AZIMUTH_RESOLUTION = 0.6        # m
+DEFAULT_CENTER_FREQUENCY = 1.26e9  # Hz
+DEFAULT_BANDWIDTH = 80.0e6  # Hz
+DEFAULT_RANGE_RESOLUTION = 1.66551366  # m
+DEFAULT_AZIMUTH_RESOLUTION = 0.6  # m
 
 
 def gbellmf(x, a, b, c):
@@ -36,9 +36,18 @@ def gbellmf(x, a, b, c):
 
 
 def decompose_image_wavelet(
-    image, bandwidth, range_resolution, azimuth_resolution,
-    center_frequency, R, L, d_1, d_2,
-    show_decomposition=False, dyn_dB=50, shift=True,
+    image,
+    bandwidth,
+    range_resolution,
+    azimuth_resolution,
+    center_frequency,
+    R,
+    L,
+    d_1,
+    d_2,
+    show_decomposition=False,
+    dyn_dB=50,
+    shift=True,
 ):
     """Wavelet decomposition of a single 2-D SAR image.
 
@@ -96,7 +105,6 @@ def decompose_image_wavelet(
     width_t = theta_B / L
 
     if show_decomposition:
-        import matplotlib.pyplot as plt
         fig_s, axes_s = plt.subplots(R, L, figsize=(20, 17))
         fig_i, axes_i = plt.subplots(R, L, figsize=(20, 17))
         fig_s.suptitle("Signal × wavelet", fontsize="x-large")
@@ -106,7 +114,9 @@ def decompose_image_wavelet(
         for n in range(L):
             c_k = kappa.min() + width_k / 2 + m * width_k
             c_t = theta.min() + width_t / 2 + n * width_t
-            H = gbellmf(kappa, width_k / 2, d_1, c_k) * gbellmf(theta, width_t / 2, d_2, c_t)
+            H = gbellmf(kappa, width_k / 2, d_1, c_k) * gbellmf(
+                theta, width_t / 2, d_2, c_t
+            )
             filtered = spectre * H
             if shift:
                 C[:, :, m * L + n] = np.fft.ifft2(np.fft.fftshift(filtered))
@@ -115,10 +125,14 @@ def decompose_image_wavelet(
 
             if show_decomposition:
                 tp = 20 * np.log10(np.abs(filtered))
-                axes_s[m, n].imshow(tp, cmap="gray", aspect="auto", vmin=tp.max() - dyn_dB)
+                axes_s[m, n].imshow(
+                    tp, cmap="gray", aspect="auto", vmin=tp.max() - dyn_dB
+                )
                 axes_s[m, n].set_axis_off()
                 tp = 20 * np.log10(np.abs(C[:, :, m * L + n]))
-                axes_i[m, n].imshow(tp, cmap="gray", aspect="auto", vmin=tp.max() - dyn_dB)
+                axes_i[m, n].imshow(
+                    tp, cmap="gray", aspect="auto", vmin=tp.max() - dyn_dB
+                )
                 axes_i[m, n].set_axis_off()
 
     return C
@@ -175,7 +189,6 @@ def apply_wavelet_to_sits(
         Each original polarisation i is expanded to R*L sub-bands placed at
         indices [i*R*L : (i+1)*R*L] in the feature dimension.
     """
-    import matplotlib.pyplot as plt
 
     n_rows, n_cols, p, T = sits_data.shape
     c = 3e8
@@ -198,9 +211,7 @@ def apply_wavelet_to_sits(
     width_t = theta_B / L
 
     # Single FFT over the full stack: (n_rows, n_cols, p, T)
-    spectre = np.fft.fftshift(
-        np.fft.fft2(sits_data, axes=(0, 1)), axes=(0, 1)
-    )
+    spectre = np.fft.fftshift(np.fft.fft2(sits_data, axes=(0, 1)), axes=(0, 1))
 
     # Output buffer: (n_rows, n_cols, p, R*L, T)
     result = np.zeros((n_rows, n_cols, p, R * L, T), dtype=complex)
@@ -217,9 +228,8 @@ def apply_wavelet_to_sits(
         for n in range(L):
             c_k = kappa.min() + width_k / 2 + m * width_k
             c_t = theta.min() + width_t / 2 + n * width_t
-            H = (
-                gbellmf(kappa, width_k / 2, d_1, c_k)
-                * gbellmf(theta, width_t / 2, d_2, c_t)
+            H = gbellmf(kappa, width_k / 2, d_1, c_k) * gbellmf(
+                theta, width_t / 2, d_2, c_t
             )  # (n_rows, n_cols)
 
             # Broadcast H over p and T: (n_rows, n_cols, 1, 1)
@@ -230,11 +240,15 @@ def apply_wavelet_to_sits(
 
             if save_path is not None:
                 tp = 20 * np.log10(np.abs(spectre_00 * H) + 1e-12)
-                axes_s[m, n].imshow(tp, cmap="gray", aspect="auto", vmin=tp.max() - dyn_dB)
+                axes_s[m, n].imshow(
+                    tp, cmap="gray", aspect="auto", vmin=tp.max() - dyn_dB
+                )
                 axes_s[m, n].set_title(f"R={m} L={n}", fontsize=8)
                 axes_s[m, n].set_axis_off()
                 tp = 20 * np.log10(np.abs(result[:, :, 0, m * L + n, 0]) + 1e-12)
-                axes_i[m, n].imshow(tp, cmap="gray", aspect="auto", vmin=tp.max() - dyn_dB)
+                axes_i[m, n].imshow(
+                    tp, cmap="gray", aspect="auto", vmin=tp.max() - dyn_dB
+                )
                 axes_i[m, n].set_title(f"R={m} L={n}", fontsize=8)
                 axes_i[m, n].set_axis_off()
 
@@ -245,7 +259,9 @@ def apply_wavelet_to_sits(
         fig_i.savefig(f"{save_path}_decomposition.png", dpi=150)
         plt.close(fig_s)
         plt.close(fig_i)
-        print(f"  Saved wavelet debug plots: {save_path}_spectrum.png, {save_path}_decomposition.png")
+        print(
+            f"  Saved wavelet debug plots: {save_path}_spectrum.png, {save_path}_decomposition.png"
+        )
 
     # Merge p and R*L dims: (n_rows, n_cols, p, R*L, T) → (n_rows, n_cols, p*R*L, T)
     # Reshape preserves ordering: features for polarisation i at [i*R*L : (i+1)*R*L]

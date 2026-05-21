@@ -18,11 +18,15 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "."))
 
 from detection import OnlineGaussianGLRT
 from wavelets import apply_wavelet_to_sits
+from utils import require_time_first
 
 import argparse
 from datetime import datetime
 from src.backend import Backend, get_data_on_device
-from src.hardware_ressources import OnlineImageResourceManager, OnlineImageGPURessourceManager
+from src.hardware_ressources import (
+    OnlineImageResourceManager,
+    OnlineImageGPURessourceManager,
+)
 
 
 if __name__ == "__main__":
@@ -37,6 +41,11 @@ if __name__ == "__main__":
         default="numpy",
         choices=["numpy", "torch-cpu", "torch-cuda"],
         help="Which backend to use for computations.",
+    )
+    parser.add_argument(
+        "--show_interactive",
+        action="store_true",
+        help="Wheter to show plot with matplotlib.",
     )
     parser.add_argument("--export", action="store_true", help="Save plots of CD maps.")
     parser.add_argument(
@@ -118,61 +127,44 @@ if __name__ == "__main__":
             fig.savefig(export_path / f"{full_stem}.png")
         if args.export_tikz:
             matplot2tikz.save(str(export_path / f"{full_stem}.tex"), figure=fig)
-        plt.close(fig)
+        # plt.close(fig)
 
-    # Load data with memory mapping to avoid loading full dataset
-    if not os.path.exists(args.data_path):
-        raise FileNotFoundError(f"Data file not found: {args.data_path}")
+    # Load data as memmap — shape (n_times, n_rows, n_cols, n_features).
+    # Each time step is contiguous on disk so only active slices are paged in.
+    time_first_path = require_time_first(args.data_path)
     if not args.quiet:
         print("Loading data...")
-    sits_np = np.load(args.data_path, mmap_mode="r")  # (n_rows, n_cols, n_features, n_times)
+    sits_np = np.load(time_first_path, mmap_mode="r")  # (n_times, n_rows, n_cols, n_features)
     if args.debug:
-        sits_np = sits_np[:100, :100].copy()  # Make writable copy for debug
-    else:
-        # For torch compatibility, ensure array is writable (mmap is read-only)
-        sits_np = np.asarray(sits_np)
+        sits_np = np.ascontiguousarray(sits_np[:, :100, :100, :])
 
-    # Optional wavelet decomposition (applied on first 2 dates to minimize reads)
+    # Optional wavelet decomposition — loads all dates into RAM
     if args.wavelet:
         if not args.quiet:
             print(
                 f"Applying wavelet decomposition (R={args.wavelet_R}, L={args.wavelet_L})..."
             )
-        # For online processing, we apply wavelet per-date as it streams through
-        # For now, apply to a reference (could be optimized further)
-        sits_np_wavelet = apply_wavelet_to_sits(
-            sits_np[..., :2], R=args.wavelet_R, L=args.wavelet_L
-        )
-        n_features_wavelet = sits_np_wavelet.shape[2]
+        # apply_wavelet_to_sits expects (rows, cols, features, times)
+        sits_for_wavelet = np.asarray(sits_np).transpose(1, 2, 3, 0)
+        sits_wavelet = apply_wavelet_to_sits(
+            sits_for_wavelet, R=args.wavelet_R, L=args.wavelet_L
+        )  # (rows, cols, p*R*L, times)
         if not args.quiet:
-            print(f"  Shape after wavelet: {sits_np_wavelet.shape}")
-        # Create a new array with wavelet features for all dates
-        sits_np_full = np.zeros(
-            (sits_np.shape[0], sits_np.shape[1], n_features_wavelet, sits_np.shape[3]),
-            dtype=sits_np.dtype,
-        )
-        for t in range(sits_np.shape[3]):
-            sits_np_full[..., t] = apply_wavelet_to_sits(
-                sits_np[..., t : t + 1], R=args.wavelet_R, L=args.wavelet_L
-            )[..., 0]
-        sits_np = sits_np_full
-
-    # Convert to torch tensor: (n_times, n_channels, height, width)
-    sits_data = torch.from_numpy(sits_np).moveaxis((0, 1, 3), (2, 3, 0))
-    sits_np = None  # free mmap reference
+            print(f"  Shape after wavelet: {sits_wavelet.shape}")
+        sits_np = np.ascontiguousarray(sits_wavelet.transpose(3, 0, 1, 2))
 
     splitting = eval(args.splitting)
     if not args.quiet:
         print(
-            f"Image size: {sits_data.shape[-2]}x{sits_data.shape[-1]}, "
-            f"Time steps: {sits_data.shape[0]}, Splitting: {splitting[0]}x{splitting[1]}"
+            f"Image size: {sits_np.shape[1]}x{sits_np.shape[2]}, "
+            f"Time steps: {sits_np.shape[0]}, Splitting: {splitting[0]}x{splitting[1]}"
         )
 
     if not args.quiet:
         print("\nComputing Online Gaussian GLRT")
     gaussian_detector = OnlineGaussianGLRT(backend)
     manager_kwargs = {
-        "image_data": sits_data,
+        "image_data": sits_np,
         "window_size": 7,  # Standard window size
         "stride": 1,
         "detector": gaussian_detector,
@@ -196,16 +188,20 @@ if __name__ == "__main__":
     if not args.quiet:
         print(f"Took {elapsed:.2f} seconds.")
 
-    if args.export or args.export_tikz:
+    if args.show_interactive or args.export or args.export_tikz:
         fig = plt.figure(dpi=150)
         plt.imshow(get_data_on_device(gaussian_results, "numpy"), aspect="auto")
         plt.colorbar()
         plt.title("Gaussian GLRT (Online)")
-        _save(fig, f"gaussian_online_{args.backend}", elapsed)
+        if args.export or args.export_tikz:
+            _save(fig, f"gaussian_online_{args.backend}", elapsed)
 
     if args.report_memory and is_gpu:
         peak_bytes = torch.cuda.max_memory_allocated()
         print(f"PEAK_GPU_MEMORY_BYTES={peak_bytes}")
+
+    if args.show_interactive:
+        plt.show()
 
     if not args.quiet:
         print("\nDone.")

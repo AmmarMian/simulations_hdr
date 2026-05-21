@@ -179,19 +179,20 @@ class ImageCPURessourceManager(ImageRessourceManager):
         )
 
 
-class OnlineImageResourceManager(ImageRessourceManager):
+class OnlineImageResourceManager:
     """Online streaming version for temporal processing.
 
     Processes each spatial split through all time steps sequentially,
-    maintaining state per split. Memory-efficient for large images.
+    maintaining state per split. Reads one time step at a time from a
+    numpy memmap so only the active slice is paged into RAM.
 
-    Instead of process_one_split, uses an on_line detector with
-    initialize() and compute() methods.
+    image_data must be a numpy array (or memmap) shaped
+    (n_times, n_rows, n_cols, n_features).
     """
 
     def __init__(
         self,
-        image_data: Array,
+        image_data,
         window_size: int,
         stride: int,
         detector,
@@ -199,18 +200,41 @@ class OnlineImageResourceManager(ImageRessourceManager):
         splitting: Tuple[int, int] = (1, 1),
         verbose: Optional[int] = 1,
     ) -> None:
-        self.detector = detector
-        self.n_times = image_data.shape[0]
-
-        super().__init__(
-            image_data,
-            window_size,
-            stride,
-            process_one_split=None,
-            backend=backend,
-            splitting=splitting,
-            verbose=verbose,
+        assert image_data.ndim == 4, (
+            "Data must be 4D: (n_times, n_rows, n_cols, n_features)"
         )
+        self.memmap = image_data
+        self.n_times, self.height, self.width, self.n_channels = image_data.shape
+        self.window_size = window_size
+        self.stride = stride
+        self.detector = detector
+        self.backend = Backend.from_str(backend) if isinstance(backend, str) else backend
+        self.verbose = verbose
+        self.n_rows, self.n_cols = splitting
+        self._unfold2d = Unfold2D(window_size, stride)
+        self.splits_coordinates = compute_splitting_coordinates(
+            self.height, self.width, self.n_rows, self.n_cols, window_size
+        )
+
+    def _unfold(self, split_data: Array) -> Array:
+        return self._unfold2d(split_data, self.backend)
+
+    def _delete_temp(self, data) -> None:
+        del data
+        if self.backend.is_cuda:
+            torch.cuda.empty_cache()
+
+    def _finalize_result(self, result: Array, output_shape) -> Array:
+        result = get_data_on_device(result, self.backend)
+        return make_writable_copy(self.backend, result.reshape(output_shape))
+
+    def _get_slice(self, t_start: int, t_end: int, row_min: int, row_max: int, col_min: int, col_max: int) -> Array:
+        """Read a spatial+temporal crop from memmap and return as (t, features, h, w) tensor."""
+        # .copy() ensures a writable C-contiguous array even when the slice
+        # covers the full spatial extent (ascontiguousarray would return a view)
+        data = self.memmap[t_start:t_end, row_min:row_max, col_min:col_max, :].copy()  # (t, h, w, features)
+        tensor = torch.from_numpy(data).permute(0, 3, 1, 2)  # (t, features, h, w)
+        return get_data_on_device(tensor, self.backend)
 
     def process_all_data(self, *args, **kwargs) -> Array:
         """Process all splits sequentially with temporal streaming."""
@@ -252,29 +276,22 @@ class OnlineImageResourceManager(ImageRessourceManager):
         # Reset detector state for this new sequence
         self.detector.reset_state()
 
-        # Initialize with t=0, 1
-        split_data_init = get_data_on_device(
-            self.image_data[:2, :, row_min:row_max, col_min:col_max],
-            self.backend,
-        )
+        # Initialize with t=0, 1 — reads only 2 time slices from disk
+        split_data_init = self._get_slice(0, 2, row_min, row_max, col_min, col_max)
         sliding_windows_init = self._unfold(split_data_init)  # (n_windows, 2, k², C)
         self._delete_temp(split_data_init)
 
         res = self.detector.initialize(sliding_windows_init)
         self._delete_temp(sliding_windows_init)
 
-        # Stream through remaining dates
+        # Stream through remaining dates one at a time
         for t in range(2, self.n_times):
-            split_data_t = get_data_on_device(
-                self.image_data[t : t + 1, :, row_min:row_max, col_min:col_max],
-                self.backend,
-            )
+            split_data_t = self._get_slice(t, t + 1, row_min, row_max, col_min, col_max)
             sliding_windows_t = self._unfold(split_data_t)  # (n_windows, 1, k², C)
             self._delete_temp(split_data_t)
 
             # Squeeze time dimension: (n_windows, 1, k², C) → (n_windows, k², C)
             sliding_windows_t = sliding_windows_t[:, 0, :, :]
-
             res = self.detector.update(res, sliding_windows_t)
             self._delete_temp(sliding_windows_t)
 
@@ -291,11 +308,12 @@ class OnlineImageGPURessourceManager(OnlineImageResourceManager):
     """GPU-backed online streaming manager.
 
     Resolves device, queries VRAM, and supports automatic splitting.
+    image_data must be shaped (n_times, n_rows, n_cols, n_features).
     """
 
     def __init__(
         self,
-        image_data: Array,
+        image_data,
         window_size: int,
         stride: int,
         detector,
@@ -309,7 +327,7 @@ class OnlineImageGPURessourceManager(OnlineImageResourceManager):
         self.vram = vram or mem_get_info(device=device)[0] / (1024 * 1024)
 
         if splitting == "auto":
-            _, n_channels, height, width = image_data.shape
+            _, height, width, n_channels = image_data.shape
             splitting = compute_splits_auto(
                 height, width, self.dtype, self.vram, window_size, stride, n_channels
             )

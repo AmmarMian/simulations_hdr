@@ -16,6 +16,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "../"))
 
 from detection import ScaleAndShapeKroneckerGLRT
 from wavelets import apply_wavelet_to_sits
+from utils import require_time_first
 
 import argparse
 from datetime import datetime
@@ -32,11 +33,16 @@ if __name__ == "__main__":
     )
     parser.add_argument("window_size", type=int, help="Sliding window size.")
     parser.add_argument(
-        "--device",
+        "--backend",
         type=str,
-        default="cpu",
-        choices=["cpu", "gpu", "auto"],
-        help="Device to use: cpu, gpu, or auto-detect (default: cpu).",
+        default="numpy",
+        choices=["numpy", "torch-cpu", "torch-cuda"],
+        help="Which backend to use for computations.",
+    )
+    parser.add_argument(
+        "--show_interactive",
+        action="store_true",
+        help="Whether to show plots with matplotlib.",
     )
     parser.add_argument("--export", action="store_true", help="Save plots of CD maps.")
     parser.add_argument(
@@ -89,33 +95,31 @@ if __name__ == "__main__":
         default=None,
         help="Available VRAM in MB (for GPU auto-splitting; default: auto-detect).",
     )
+    parser.add_argument(
+        "--quiet",
+        action="store_true",
+        help="Suppress verbose output (useful for benchmarking).",
+    )
+    parser.add_argument(
+        "--report-memory",
+        action="store_true",
+        help="Print peak GPU memory usage at the end (torch-cuda only).",
+    )
     args = parser.parse_args()
 
-    # Wavelet decomposition is mandatory for Kronecker structure
-    print("Note: Wavelet decomposition is always applied for Kronecker structure.")
+    # Determine backend and set defaults
+    backend = Backend.from_str(args.backend)
+    is_gpu = args.backend == "torch-cuda"
 
-    # Determine device and backend
-    if args.device == "auto":
-        use_gpu = torch.cuda.is_available()
-    else:
-        use_gpu = args.device == "gpu"
-
-    if use_gpu and not torch.cuda.is_available():
-        print("ERROR: gpu device requested but CUDA is not available")
+    if is_gpu and not torch.cuda.is_available():
+        print("ERROR: torch-cuda backend requested but no GPU available")
         sys.exit(1)
 
-    if use_gpu:
-        backend_name = "torch-cuda"
-        device = torch.device("cuda")
-    else:
-        backend_name = "torch-cpu"
-        device = None
-
-    backend = Backend.from_str(backend_name)
+    device = torch.device("cuda") if is_gpu else None
 
     # Determine splitting
     if args.splitting == "auto":
-        splitting = (5, 5) if use_gpu else (1, 1)
+        splitting = (5, 5) if is_gpu else (1, 1)
     else:
         splitting = eval(args.splitting)
 
@@ -136,39 +140,44 @@ if __name__ == "__main__":
             fig.savefig(export_path / f"{full_stem}.png", dpi=150)
         if args.export_tikz:
             matplot2tikz.save(str(export_path / f"{full_stem}.tex"), figure=fig)
-        plt.close(fig)
 
-    # Load data
-    if not os.path.exists(args.data_path):
-        raise FileNotFoundError(f"Data file not found: {args.data_path}")
-    print("Reading data...")
-    sits_np = np.load(args.data_path)  # (n_rows, n_cols, n_features, n_times)
+    # Load data — shape (n_times, n_rows, n_cols, n_features)
+    time_first_path = require_time_first(args.data_path)
+    if not args.quiet:
+        print("Reading data...")
+    sits_np = np.load(time_first_path)  # (n_times, n_rows, n_cols, n_features)
     if args.debug:
-        sits_np = sits_np[:100, :100]
+        sits_np = sits_np[:, :100, :100, :]
 
     # Extract n_features before wavelet decomposition
-    n_features = sits_np.shape[2]
+    n_features = sits_np.shape[3]
 
     # Wavelet decomposition (mandatory for Kronecker structure)
-    print(f"Applying wavelet decomposition (R={args.wavelet_R}, L={args.wavelet_L})...")
-    sits_np = apply_wavelet_to_sits(sits_np, R=args.wavelet_R, L=args.wavelet_L)
-    print(f"  Shape after wavelet: {sits_np.shape}")
+    if not args.quiet:
+        print(f"Applying wavelet decomposition (R={args.wavelet_R}, L={args.wavelet_L})...")
+    # apply_wavelet_to_sits expects (rows, cols, features, times)
+    sits_np = apply_wavelet_to_sits(
+        sits_np.transpose(1, 2, 3, 0), R=args.wavelet_R, L=args.wavelet_L
+    ).transpose(3, 0, 1, 2)
+    if not args.quiet:
+        print(f"  Shape after wavelet: {sits_np.shape}")
 
     # Kronecker structure is defined by wavelet decomposition
     # a = n_features (original channels), b = R*L (wavelet sub-bands)
     a = n_features
     b = args.wavelet_R * args.wavelet_L
 
-    # Convert to torch tensor: (n_times, n_channels, height, width)
-    sits_data = torch.from_numpy(sits_np).moveaxis((0, 1, 3), (2, 3, 0))
+    # Convert to torch tensor: (n_times, n_features, n_rows, n_cols)
+    sits_data = torch.from_numpy(sits_np).moveaxis(3, 1)
     sits_np = None  # free memory
 
-    print(
-        f"Image size: {sits_data.shape[-2]}x{sits_data.shape[-1]}, "
-        f"Time steps: {sits_data.shape[0]}, "
-        f"Channels after wavelet: {sits_data.shape[1]}, "
-        f"Kronecker factors: a={a} (features), b={b} (R×L={args.wavelet_R}×{args.wavelet_L}), p={a * b}"
-    )
+    if not args.quiet:
+        print(
+            f"Image size: {sits_data.shape[-2]}x{sits_data.shape[-1]}, "
+            f"Time steps: {sits_data.shape[0]}, "
+            f"Channels after wavelet: {sits_data.shape[1]}, "
+            f"Kronecker factors: a={a} (features), b={b} (R×L={args.wavelet_R}×{args.wavelet_L}), p={a * b}"
+        )
 
     # Verify Kronecker structure
     p = sits_data.shape[1]
@@ -178,20 +187,21 @@ if __name__ == "__main__":
         )
 
     # Create detector
-    print(
-        f"\nComputing Kronecker GLRT (a={a}, b={b}, backend={backend_name}, device={device})..."
-    )
+    if not args.quiet:
+        print(
+            f"\nComputing Kronecker GLRT (a={a}, b={b}, backend={args.backend}, device={device})..."
+        )
     kronecker_detector = ScaleAndShapeKroneckerGLRT(
         a=a,
         b=b,
-        backend_name=backend_name,
+        backend_name=args.backend,
         tol=args.tol,
         iter_max=args.iter_max,
         verbosity=False,
     )
 
     # Create resource manager and process
-    if use_gpu:
+    if is_gpu:
         manager = ImageGPURessourceManager(
             sits_data,
             args.window_size,
@@ -200,7 +210,7 @@ if __name__ == "__main__":
             device=device,
             splitting=splitting,
             vram=args.vram,
-            verbose=1,
+            verbose=0 if args.quiet else 1,
         )
     else:
         manager = ImageCPURessourceManager(
@@ -208,25 +218,38 @@ if __name__ == "__main__":
             args.window_size,
             1,
             kronecker_detector.compute,
-            backend=backend_name,
+            backend=args.backend,
             splitting=splitting,
-            verbose=1,
+            verbose=0 if args.quiet else 1,
         )
 
+    if is_gpu:
+        torch.cuda.reset_peak_memory_stats()
     start = perf_counter()
     cd_results = manager.process_all_data()
     elapsed = perf_counter() - start
-    print(f"Took {elapsed:.2f} seconds.")
+    if not args.quiet:
+        print(f"Took {elapsed:.2f} seconds.")
 
-    # Export results
-    if args.export or args.export_tikz:
+    # Export / display results
+    if args.show_interactive or args.export or args.export_tikz:
         fig = plt.figure(dpi=150)
         plt.imshow(
             get_data_on_device(cd_results, "numpy"), aspect="auto", cmap="viridis"
         )
         plt.colorbar(label="Log-likelihood ratio")
         plt.title(f"Kronecker GLRT (a={a}, b={b})")
-        _save(fig, f"kronecker_a{a}b{b}_{backend_name}", elapsed)
-        print(f"Exported to {export_path}/")
+        if args.export or args.export_tikz:
+            _save(fig, f"kronecker_a{a}b{b}_{args.backend}", elapsed)
+            if not args.quiet:
+                print(f"Exported to {export_path}/")
 
-    print("\nDone.")
+    if args.report_memory and is_gpu:
+        peak_bytes = torch.cuda.max_memory_allocated()
+        print(f"PEAK_GPU_MEMORY_BYTES={peak_bytes}")
+
+    if args.show_interactive:
+        plt.show()
+
+    if not args.quiet:
+        print("\nDone.")
