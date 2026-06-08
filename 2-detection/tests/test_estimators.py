@@ -20,6 +20,7 @@ from src.estimation import (
     _student_t_m_estimator_function,
     _huber_m_estimator_function,
 )
+from src.estimation_online import OnlineScaledGaussianEstimator
 from src.backend import get_data_on_device
 
 
@@ -420,3 +421,178 @@ class TestEstimatorEdgeCases:
         # Check positive definiteness
         eigvals = np.linalg.eigvalsh(cov)
         assert np.all(eigvals > 0)
+
+
+# ============================================================================
+# Tests for Batched Natural Gradient Estimator
+# ============================================================================
+class TestNaturalGradientBatched:
+    """Tests for scaled Gaussian natural gradient with batch dimensions."""
+
+    def test_natural_gradient_scalar_shape(self):
+        """Natural gradient without batch dims should return (p, p) Sigma, (n, 1) tau."""
+        from src.estimation import natural_gradient_scaled_gaussian
+
+        np.random.seed(42)
+        X = np.random.randn(20, 6).astype(complex) / np.sqrt(2)
+
+        Sigma, tau = natural_gradient_scaled_gaussian(X, iter_max=5)
+
+        assert Sigma.shape == (6, 6), f"Expected (6, 6), got {Sigma.shape}"
+        assert tau.shape == (20, 1), f"Expected (20, 1), got {tau.shape}"
+
+    def test_natural_gradient_batched_shape(self):
+        """Natural gradient with batch dims should return correct batch shape."""
+        from src.estimation import natural_gradient_scaled_gaussian
+
+        np.random.seed(42)
+        X = np.random.randn(3, 2, 20, 6).astype(complex) / np.sqrt(2)
+
+        Sigma, tau = natural_gradient_scaled_gaussian(X, iter_max=5)
+
+        assert Sigma.shape == (3, 2, 6, 6), f"Expected (3, 2, 6, 6), got {Sigma.shape}"
+        assert tau.shape == (3, 2, 20, 1), f"Expected (3, 2, 20, 1), got {tau.shape}"
+
+    def test_natural_gradient_consistency(self):
+        """Batched result should match serial per-element result."""
+        from src.estimation import natural_gradient_scaled_gaussian
+
+        np.random.seed(42)
+        # Single batch element
+        X_single = np.random.randn(1, 20, 6).astype(complex) / np.sqrt(2)
+        Sigma_batch, tau_batch = natural_gradient_scaled_gaussian(X_single, iter_max=10)
+
+        # The same data processed as a scalar
+        X_scalar = X_single[0]
+        Sigma_scalar, tau_scalar = natural_gradient_scaled_gaussian(X_scalar, iter_max=10)
+
+        # Results should match
+        sigma_error = np.linalg.norm(Sigma_batch[0] - Sigma_scalar) / np.linalg.norm(Sigma_scalar)
+        tau_error = np.linalg.norm(tau_batch[0] - tau_scalar) / np.linalg.norm(tau_scalar)
+
+        assert sigma_error < 1e-12, f"Sigma error: {sigma_error}"
+        assert tau_error < 1e-12, f"Tau error: {tau_error}"
+
+
+# ============================================================================
+# Tests for Batched Gradient Functions
+# ============================================================================
+class TestRgradBatched:
+    """Tests for _rgrad_scaled_gaussian batched operations."""
+
+    def test_rgrad_shape_scalar(self):
+        """Gradient at scalar point should have correct shape."""
+        from src.estimation import _rgrad_scaled_gaussian
+        from src.manifolds import ScaledGaussianFIM
+        from src.backend import get_backend_module
+
+        be = get_backend_module("numpy")
+        manifold = ScaledGaussianFIM(6, 20, backend_name="numpy")
+
+        X = np.random.randn(20, 6).astype(complex) / np.sqrt(2)
+        Sigma = np.eye(6, dtype=complex)
+        tau = np.ones((20, 1), dtype=float)
+
+        r_Sigma, r_tau = _rgrad_scaled_gaussian(X, Sigma, tau, manifold, be)
+
+        assert r_Sigma.shape == (6, 6), f"Expected (6, 6), got {r_Sigma.shape}"
+        assert r_tau.shape == (20, 1), f"Expected (20, 1), got {r_tau.shape}"
+
+    def test_rgrad_shape_batched(self):
+        """Gradient at batched point should have correct shape."""
+        from src.estimation import _rgrad_scaled_gaussian
+        from src.manifolds import ScaledGaussianFIM
+        from src.backend import get_backend_module
+
+        be = get_backend_module("numpy")
+        manifold = ScaledGaussianFIM(6, 20, backend_name="numpy")
+
+        X = np.random.randn(3, 2, 20, 6).astype(complex) / np.sqrt(2)
+        Sigma = np.tile(np.eye(6, dtype=complex)[None, None, :, :], (3, 2, 1, 1))
+        tau = np.ones((3, 2, 20, 1), dtype=float)
+
+        r_Sigma, r_tau = _rgrad_scaled_gaussian(X, Sigma, tau, manifold, be)
+
+        assert r_Sigma.shape == (3, 2, 6, 6), f"Expected (3, 2, 6, 6), got {r_Sigma.shape}"
+        assert r_tau.shape == (3, 2, 20, 1), f"Expected (3, 2, 20, 1), got {r_tau.shape}"
+
+    def test_neg_loglik_shape(self):
+        """Negative log-likelihood should return (...,) for batched input."""
+        from src.estimation import _neg_log_likelihood_scaled_gaussian
+        from src.backend import get_backend_module
+
+        be = get_backend_module("numpy")
+
+        # Scalar case
+        X_scalar = np.random.randn(20, 6).astype(complex) / np.sqrt(2)
+        Sigma_scalar = np.eye(6, dtype=complex)
+        tau_scalar = np.ones((20, 1), dtype=float)
+
+        f = _neg_log_likelihood_scaled_gaussian(X_scalar, Sigma_scalar, tau_scalar, be)
+        assert np.isscalar(f) or f.shape == (), f"Expected scalar, got {f.shape}"
+
+        # Batched case
+        X_batched = np.random.randn(3, 2, 20, 6).astype(complex) / np.sqrt(2)
+        Sigma_batched = np.tile(np.eye(6, dtype=complex)[None, None, :, :], (3, 2, 1, 1))
+        tau_batched = np.ones((3, 2, 20, 1), dtype=float)
+
+        f_batch = _neg_log_likelihood_scaled_gaussian(X_batched, Sigma_batched, tau_batched, be)
+        assert f_batch.shape == (3, 2), f"Expected (3, 2), got {f_batch.shape}"
+
+
+# ============================================================================
+# Tests for Online Scaled Gaussian Estimator
+# ============================================================================
+class TestOnlineScaledGaussianBatched:
+    """Tests for online estimator with batched spatial dimensions."""
+
+    def test_online_estimator_scalar(self):
+        """Online estimator with scalar (no batch) spatial dims."""
+        np.random.seed(42)
+        estimator = OnlineScaledGaussianEstimator(
+            n_features=6, n_samples=20, backend_name="numpy"
+        )
+
+        # Three time steps of data
+        for t in range(3):
+            X = np.random.randn(20, 6).astype(complex) / np.sqrt(2)
+            Sigma, tau = estimator.update(X)
+
+            assert Sigma.shape == (6, 6), f"Step {t}: Expected (6, 6), got {Sigma.shape}"
+            assert tau.shape == (20, 1), f"Step {t}: Expected (20, 1), got {tau.shape}"
+
+    def test_online_estimator_batched(self):
+        """Online estimator with spatial batch dimensions."""
+        np.random.seed(42)
+        estimator = OnlineScaledGaussianEstimator(
+            n_features=6, n_samples=20, backend_name="numpy"
+        )
+
+        # Three time steps of batched data (spatial batch 2x2)
+        for t in range(3):
+            X = np.random.randn(2, 2, 20, 6).astype(complex) / np.sqrt(2)
+            Sigma, tau = estimator.update(X)
+
+            assert Sigma.shape == (2, 2, 6, 6), f"Step {t}: Expected (2, 2, 6, 6), got {Sigma.shape}"
+            assert tau.shape == (2, 2, 20, 1), f"Step {t}: Expected (2, 2, 20, 1), got {tau.shape}"
+
+    def test_online_estimator_reset(self):
+        """Online estimator reset should prepare for warm-start."""
+        np.random.seed(42)
+        estimator = OnlineScaledGaussianEstimator(n_features=6, n_samples=20)
+
+        X = np.random.randn(20, 6).astype(complex) / np.sqrt(2)
+        estimator.update(X)
+
+        assert hasattr(estimator, 'Sigma') and estimator.Sigma is not None
+        assert hasattr(estimator, 'tau') and estimator.tau is not None
+
+        # Reset
+        estimator.reset()
+        assert estimator._t == 0
+        assert estimator.Sigma is None
+        assert estimator.tau is None
+
+        # Next update should warm-start
+        estimator.update(X)
+        assert estimator._t == 1
