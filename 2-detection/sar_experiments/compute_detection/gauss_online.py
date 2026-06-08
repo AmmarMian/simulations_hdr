@@ -4,24 +4,19 @@
 
 import sys
 from pathlib import Path
-import os
 import torch
+import argparse
+from datetime import datetime
 import numpy as np
 from time import perf_counter
 import matplotlib.pyplot as plt
 
-_project_root = str(Path(__file__).parent.parent)
-if _project_root not in sys.path:
-    sys.path.insert(0, _project_root)
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-sys.path.append(os.path.join(os.path.dirname(__file__), "."))
+from sar_experiments.detection import OnlineGaussianGLRT
+from sar_experiments.wavelets import apply_wavelet_to_sits
+from sar_experiments.utils import require_time_first
 
-from detection import OnlineGaussianGLRT
-from wavelets import apply_wavelet_to_sits
-from utils import require_time_first
-
-import argparse
-from datetime import datetime
 from src.backend import Backend, get_data_on_device
 from src.hardware_ressources import (
     OnlineImageResourceManager,
@@ -134,7 +129,9 @@ if __name__ == "__main__":
     time_first_path = require_time_first(args.data_path)
     if not args.quiet:
         print("Loading data...")
-    sits_np = np.load(time_first_path, mmap_mode="r")  # (n_times, n_rows, n_cols, n_features)
+    sits_np = np.load(
+        time_first_path, mmap_mode="r"
+    )  # (n_times, n_rows, n_cols, n_features)
     if args.debug:
         sits_np = np.ascontiguousarray(sits_np[:, :100, :100, :])
 

@@ -13,7 +13,7 @@ RESULTS_DIR="${SCRIPT_DIR}/memory_results"
 
 mkdir -p "$RESULTS_DIR"
 
-COMPUTE_SCRIPT="${SCRIPT_DIR}/../compute_cd_offline.py"
+COMPUTE_SCRIPT="${SCRIPT_DIR}/../compute_detection/offline.py"
 
 TOTAL=8
 CURRENT=0
@@ -39,7 +39,7 @@ run_cpu_memory() {
   local peak
   peak=$(uv run memray stats "$bin" 2>/dev/null | grep -i "peak memory" | grep -oP '[\d.]+ \w+' | head -1 || echo "N/A")
   echo "  Peak memory: $peak"
-  echo "${label},${peak}" >> "${RESULTS_DIR}/memory_summary.csv"
+  echo "${label},${peak}" >>"${RESULTS_DIR}/memory_summary.csv"
 }
 
 # ── GPU: script prints PEAK_GPU_MEMORY_BYTES=<n>, we parse it ─────────────────
@@ -62,38 +62,38 @@ run_gpu_memory() {
     local peak_mb
     peak_mb=$(echo "scale=1; $peak_bytes / 1048576" | bc)
     echo "  Peak GPU memory: ${peak_mb} MB (${peak_bytes} bytes)"
-    echo "${label},${peak_mb} MB" >> "${RESULTS_DIR}/memory_summary.csv"
+    echo "${label},${peak_mb} MB" >>"${RESULTS_DIR}/memory_summary.csv"
   else
     echo "  Could not parse GPU memory."
-    echo "${label},N/A" >> "${RESULTS_DIR}/memory_summary.csv"
+    echo "${label},N/A" >>"${RESULTS_DIR}/memory_summary.csv"
   fi
 }
 
 # ── Init summary CSV ───────────────────────────────────────────────────────────
-echo "label,peak_memory" > "${RESULTS_DIR}/memory_summary.csv"
+echo "label,peak_memory" >"${RESULTS_DIR}/memory_summary.csv"
 
 # ── CPU benchmarks ─────────────────────────────────────────────────────────────
 run_cpu_memory "cpu_gaussian_no_wavelet" \
   "--backend torch-cpu --detectors gaussian"
 
-# run_cpu_memory "cpu_gaussian_wavelet" \
-#   "--backend torch-cpu --detectors gaussian --wavelet"
+run_cpu_memory "cpu_gaussian_wavelet" \
+  "--backend torch-cpu --detectors gaussian --wavelet"
 
 run_cpu_memory "cpu_dcg_no_wavelet" \
   "--backend torch-cpu --detectors dcg --iteration-chunk 512"
 
-# run_cpu_memory "cpu_dcg_wavelet" \
-#   "--backend torch-cpu --detectors dcg --wavelet --iteration-chunk 512 --splitting '(3,4)'"
+run_cpu_memory "cpu_dcg_wavelet" \
+  "--backend torch-cpu --detectors dcg --wavelet --iteration-chunk 512 --splitting '(3,4)'"
 
 # ── GPU benchmarks ─────────────────────────────────────────────────────────────
 run_gpu_memory "gpu_gaussian_no_wavelet" \
   "--detectors gaussian --splitting '(3,3)'"
 
-# run_gpu_memory "gpu_gaussian_wavelet" \
-#   "--detectors gaussian --wavelet --splitting '(15,15)'"
+run_gpu_memory "gpu_gaussian_wavelet" \
+  "--detectors gaussian --wavelet --splitting '(15,15)'"
 
-# run_gpu_memory "gpu_dcg_no_wavelet" \
-#   "--detectors dcg --splitting '(15,15)' --iteration-chunk 512"
+run_gpu_memory "gpu_dcg_no_wavelet" \
+  "--detectors dcg --splitting '(15,15)' --iteration-chunk 512"
 
 run_gpu_memory "gpu_dcg_wavelet" \
   "--detectors dcg --wavelet --splitting '(31,31)' --iteration-chunk 512"

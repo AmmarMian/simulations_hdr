@@ -14,7 +14,7 @@ WARMUP=2
 
 mkdir -p "$RESULTS_DIR"
 
-COMPUTE_SCRIPT="${SCRIPT_DIR}/../compute_cd_offline.py"
+COMPUTE_SCRIPT="${SCRIPT_DIR}/../compute_detection/offline.py"
 
 TOTAL=8
 CURRENT=0

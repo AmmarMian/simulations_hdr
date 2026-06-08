@@ -9,20 +9,17 @@ import torch
 import numpy as np
 from time import perf_counter
 import matplotlib.pyplot as plt
+import matplot2tikz
 
-_project_root = str(Path(__file__).parent.parent)
-if _project_root not in sys.path:
-    sys.path.insert(0, _project_root)
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-sys.path.append(os.path.join(os.path.dirname(__file__), "."))
-
-from src.backend import Backend, get_data_on_device
+from src.backend import Backend
 from src.detection_online import OnlineDCGDetector
 from src.hardware_ressources import (
     OnlineImageResourceManager,
     OnlineImageGPURessourceManager,
 )
-from wavelets import apply_wavelet_to_sits
+from sar_experiments.wavelets import apply_wavelet_to_sits
 
 import argparse
 from datetime import datetime
@@ -121,9 +118,6 @@ if __name__ == "__main__":
     export_path = Path(args.export_path)
     if args.export or args.export_tikz:
         export_path.mkdir(parents=True, exist_ok=True)
-
-    if args.export_tikz:
-        import matplot2tikz
 
     data_stem = Path(args.data_path).stem
     run_ts = datetime.now().strftime("%Y%m%d_%H%M%S")

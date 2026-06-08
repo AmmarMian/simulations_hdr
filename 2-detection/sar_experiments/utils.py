@@ -1,5 +1,9 @@
 # Utilities for SAR experiments
 
+import numpy as np
+from src.backend import Array
+import matplotlib.pyplot as plt
+from matplotlib.image import AxesImage
 import sys
 from pathlib import Path
 
@@ -37,11 +41,6 @@ def require_time_first(data_path: str) -> str:
         f"  uv run sar_experiments/prepare_data.py {data_path}\n"
     )
     sys.exit(1)
-
-import numpy as np
-from src.backend import get_backend_module, get_data_on_device, Array
-import matplotlib.pyplot as plt
-from matplotlib.image import AxesImage
 
 
 def plot_pauli(sar_data: Array) -> AxesImage:

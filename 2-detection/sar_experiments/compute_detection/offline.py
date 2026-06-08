@@ -2,21 +2,16 @@
 
 import sys
 from pathlib import Path
-import os
 import torch
 import numpy as np
 from time import perf_counter
 import matplotlib.pyplot as plt
 
-_project_root = str(Path(__file__).parent.parent)
-if _project_root not in sys.path:
-    sys.path.insert(0, _project_root)
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-sys.path.append(os.path.join(os.path.dirname(__file__), "."))
-
-from detection import GaussianGLRT, DeterministicCompoundGaussianGLRT
-from wavelets import apply_wavelet_to_sits
-from utils import require_time_first
+from sar_experiments.detection import GaussianGLRT, DeterministicCompoundGaussianGLRT
+from sar_experiments.wavelets import apply_wavelet_to_sits
+from sar_experiments.utils import require_time_first
 
 import argparse
 from datetime import datetime

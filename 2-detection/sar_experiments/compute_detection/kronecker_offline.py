@@ -2,21 +2,17 @@
 
 import sys
 from pathlib import Path
-import os
 import torch
 import numpy as np
 from time import perf_counter
 import matplotlib.pyplot as plt
+import matplot2tikz
 
-_project_root = str(Path(__file__).parent.parent)
-if _project_root not in sys.path:
-    sys.path.insert(0, _project_root)
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-sys.path.append(os.path.join(os.path.dirname(__file__), "../"))
-
-from detection import ScaleAndShapeKroneckerGLRT
-from wavelets import apply_wavelet_to_sits
-from utils import require_time_first
+from sar_experiments.detection import ScaleAndShapeKroneckerGLRT
+from sar_experiments.wavelets import apply_wavelet_to_sits
+from sar_experiments.utils import require_time_first
 
 import argparse
 from datetime import datetime
@@ -80,8 +76,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--iter_max",
         type=int,
-        default=10,
-        help="Maximum MM iterations for Kronecker estimator (default 10).",
+        default=5,
+        help="Maximum MM iterations for Kronecker estimator (default 5).",
     )
     parser.add_argument(
         "--tol",
@@ -127,9 +123,6 @@ if __name__ == "__main__":
     if args.export or args.export_tikz:
         export_path.mkdir(parents=True, exist_ok=True)
 
-    if args.export_tikz:
-        import matplot2tikz
-
     data_stem = Path(args.data_path).stem
     run_ts = datetime.now().strftime("%Y%m%d_%H%M%S")
 
@@ -154,7 +147,9 @@ if __name__ == "__main__":
 
     # Wavelet decomposition (mandatory for Kronecker structure)
     if not args.quiet:
-        print(f"Applying wavelet decomposition (R={args.wavelet_R}, L={args.wavelet_L})...")
+        print(
+            f"Applying wavelet decomposition (R={args.wavelet_R}, L={args.wavelet_L})..."
+        )
     # apply_wavelet_to_sits expects (rows, cols, features, times)
     sits_np = apply_wavelet_to_sits(
         sits_np.transpose(1, 2, 3, 0), R=args.wavelet_R, L=args.wavelet_L

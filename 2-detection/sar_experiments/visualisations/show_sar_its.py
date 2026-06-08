@@ -3,18 +3,13 @@
 import sys
 from pathlib import Path
 import os
-
-# Add project root to path so src module is accessible
-_project_root = str(Path(__file__).parent.parent.parent)
-if _project_root not in sys.path:
-    sys.path.insert(0, _project_root)
-
-sys.path.append(os.path.join(os.path.dirname(__file__), "../"))
 import argparse
 import numpy as np
+import matplotlib.pyplot as plt
+
+sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils import plot_pauli
 
-import matplotlib.pyplot as plt
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("SAR ITS visualization utility.")

@@ -49,6 +49,10 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
+    # Create output directory if not existing
+    if not os.path.exists(args.output_dir):
+        os.makedirs(args.output_dir)
+
     # Constants
     N = args.N
     d_vec = np.unique(np.logspace(0.5, 3, args.N, dtype=int))
