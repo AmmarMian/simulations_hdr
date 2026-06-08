@@ -35,6 +35,49 @@ def gbellmf(x, a, b, c):
     return 1.0 / (1.0 + np.abs((x - c) / a) ** (2 * b))
 
 
+# ---------------------------------------------------------------------------
+# Private helpers shared by computation and visualization
+# ---------------------------------------------------------------------------
+
+def _build_frequency_grids(
+    n_rows, n_cols, bandwidth, range_resolution, azimuth_resolution, center_frequency, R, L
+):
+    """Build wavenumber grids and filter-bank width parameters.
+
+    Returns
+    -------
+    kappa : ndarray, shape (n_rows, n_cols)
+    theta : ndarray, shape (n_rows, n_cols)
+    width_k : float   — per-sub-band width in the kappa direction
+    width_t : float   — per-sub-band width in the theta direction
+    """
+    c = 3e8
+    kappa_0 = 2 * center_frequency / c
+    k_range_vec = kappa_0 + (2 * bandwidth / c) * np.linspace(-0.5, 0.5, n_cols)
+    k_az_vec = np.linspace(
+        -1 / (2 * azimuth_resolution),
+        1 / (2 * azimuth_resolution) - 1 / (2 * n_rows * azimuth_resolution),
+        n_rows,
+    )
+    KX, KY = np.meshgrid(k_range_vec, k_az_vec)
+    kappa = np.sqrt(KX**2 + KY**2)
+    theta = np.arctan2(KY, KX)
+    width_k = (kappa.max() - kappa.min()) / R
+    width_t = (theta.max() - theta.min()) / L
+    return kappa, theta, width_k, width_t
+
+
+def _wavelet_filter(kappa, theta, m, n, width_k, width_t, d_1, d_2, L):
+    """Compute the (m, n) generalized-bell wavelet filter."""
+    c_k = kappa.min() + width_k / 2 + m * width_k
+    c_t = theta.min() + width_t / 2 + n * width_t
+    return gbellmf(kappa, width_k / 2, d_1, c_k) * gbellmf(theta, width_t / 2, d_2, c_t)
+
+
+# ---------------------------------------------------------------------------
+# Core computation
+# ---------------------------------------------------------------------------
+
 def decompose_image_wavelet(
     image,
     bandwidth,
@@ -45,8 +88,6 @@ def decompose_image_wavelet(
     L,
     d_1,
     d_2,
-    show_decomposition=False,
-    dyn_dB=50,
     shift=True,
 ):
     """Wavelet decomposition of a single 2-D SAR image.
@@ -67,10 +108,6 @@ def decompose_image_wavelet(
         Number of range / azimuth sub-bands.
     d_1, d_2 : float
         Shape parameters of the generalized bell filters.
-    show_decomposition : bool
-        Display intermediate spectra via matplotlib. Default False.
-    dyn_dB : float
-        Dynamic range (dB) for display. Default 50.
     shift : bool
         Use fftshift convention. Default True.
 
@@ -79,62 +116,21 @@ def decompose_image_wavelet(
     C : ndarray, shape (n_rows, n_cols, R*L), complex
         Wavelet decomposition into R*L sub-bands.
     """
-    n_rows, n_cols = image.shape[0], image.shape[1]
-    c = 3e8
-    kappa_0 = 2 * center_frequency / c
-
-    k_range_vec = kappa_0 + (2 * bandwidth / c) * np.linspace(-0.5, 0.5, n_cols)
-    k_az_vec = np.linspace(
-        -1 / (2 * azimuth_resolution),
-        1 / (2 * azimuth_resolution) - 1 / (2 * n_rows * azimuth_resolution),
-        n_rows,
+    n_rows, n_cols = image.shape[:2]
+    kappa, theta, width_k, width_t = _build_frequency_grids(
+        n_rows, n_cols, bandwidth, range_resolution, azimuth_resolution, center_frequency, R, L
     )
-    KX, KY = np.meshgrid(k_range_vec, k_az_vec)
-    kappa = np.sqrt(KX**2 + KY**2)
-    theta = np.arctan2(KY, KX)
-
-    if shift:
-        spectre = np.fft.fftshift(np.fft.fft2(image))
-    else:
-        spectre = np.fft.fft2(image)
+    spectre = np.fft.fftshift(np.fft.fft2(image)) if shift else np.fft.fft2(image)
 
     C = np.zeros((n_rows, n_cols, R * L), dtype=complex)
-    kappa_B = kappa.max() - kappa.min()
-    theta_B = theta.max() - theta.min()
-    width_k = kappa_B / R
-    width_t = theta_B / L
-
-    if show_decomposition:
-        fig_s, axes_s = plt.subplots(R, L, figsize=(20, 17))
-        fig_i, axes_i = plt.subplots(R, L, figsize=(20, 17))
-        fig_s.suptitle("Signal × wavelet", fontsize="x-large")
-        fig_i.suptitle("Wavelet decomposition", fontsize="x-large")
-
     for m in range(R):
         for n in range(L):
-            c_k = kappa.min() + width_k / 2 + m * width_k
-            c_t = theta.min() + width_t / 2 + n * width_t
-            H = gbellmf(kappa, width_k / 2, d_1, c_k) * gbellmf(
-                theta, width_t / 2, d_2, c_t
-            )
+            H = _wavelet_filter(kappa, theta, m, n, width_k, width_t, d_1, d_2, L)
             filtered = spectre * H
             if shift:
                 C[:, :, m * L + n] = np.fft.ifft2(np.fft.fftshift(filtered))
             else:
                 C[:, :, m * L + n] = np.fft.ifft2(filtered)
-
-            if show_decomposition:
-                tp = 20 * np.log10(np.abs(filtered))
-                axes_s[m, n].imshow(
-                    tp, cmap="gray", aspect="auto", vmin=tp.max() - dyn_dB
-                )
-                axes_s[m, n].set_axis_off()
-                tp = 20 * np.log10(np.abs(C[:, :, m * L + n]))
-                axes_i[m, n].imshow(
-                    tp, cmap="gray", aspect="auto", vmin=tp.max() - dyn_dB
-                )
-                axes_i[m, n].set_axis_off()
-
     return C
 
 
@@ -148,8 +144,6 @@ def apply_wavelet_to_sits(
     bandwidth=DEFAULT_BANDWIDTH,
     range_resolution=DEFAULT_RANGE_RESOLUTION,
     azimuth_resolution=DEFAULT_AZIMUTH_RESOLUTION,
-    save_path=None,
-    dyn_dB=50,
 ):
     """Apply wavelet decomposition to a full SITS (Satellite Image Time Series).
 
@@ -176,12 +170,6 @@ def apply_wavelet_to_sits(
         Range pixel spacing in metres. Default: Sentinel-1 SLC 1x1.
     azimuth_resolution : float
         Azimuth pixel spacing in metres. Default: Sentinel-1 SLC 1x1.
-    save_path : str or None
-        If given, save debug figures to ``{save_path}_spectrum.png`` and
-        ``{save_path}_decomposition.png`` using the first polarisation and
-        first date as a representative example. Default None (no saving).
-    dyn_dB : float
-        Dynamic range (dB) for debug figures. Default 50.
 
     Returns
     -------
@@ -189,80 +177,173 @@ def apply_wavelet_to_sits(
         Each original polarisation i is expanded to R*L sub-bands placed at
         indices [i*R*L : (i+1)*R*L] in the feature dimension.
     """
-
     n_rows, n_cols, p, T = sits_data.shape
-    c = 3e8
-    kappa_0 = 2 * center_frequency / c
-
-    # Build frequency grids (same for every polarisation and date)
-    k_range_vec = kappa_0 + (2 * bandwidth / c) * np.linspace(-0.5, 0.5, n_cols)
-    k_az_vec = np.linspace(
-        -1 / (2 * azimuth_resolution),
-        1 / (2 * azimuth_resolution) - 1 / (2 * n_rows * azimuth_resolution),
-        n_rows,
+    kappa, theta, width_k, width_t = _build_frequency_grids(
+        n_rows, n_cols, bandwidth, range_resolution, azimuth_resolution, center_frequency, R, L
     )
-    KX, KY = np.meshgrid(k_range_vec, k_az_vec)
-    kappa = np.sqrt(KX**2 + KY**2)
-    theta = np.arctan2(KY, KX)
-
-    kappa_B = kappa.max() - kappa.min()
-    theta_B = theta.max() - theta.min()
-    width_k = kappa_B / R
-    width_t = theta_B / L
 
     # Single FFT over the full stack: (n_rows, n_cols, p, T)
     spectre = np.fft.fftshift(np.fft.fft2(sits_data, axes=(0, 1)), axes=(0, 1))
 
     # Output buffer: (n_rows, n_cols, p, R*L, T)
     result = np.zeros((n_rows, n_cols, p, R * L, T), dtype=complex)
-
-    if save_path is not None:
-        fig_s, axes_s = plt.subplots(R, L, figsize=(4 * L, 4 * R))
-        fig_i, axes_i = plt.subplots(R, L, figsize=(4 * L, 4 * R))
-        fig_s.suptitle("Signal × wavelet (pol=0, t=0)", fontsize="x-large")
-        fig_i.suptitle("Wavelet decomposition (pol=0, t=0)", fontsize="x-large")
-        # Spectrum of the first image for display
-        spectre_00 = spectre[:, :, 0, 0]
-
     for m in range(R):
         for n in range(L):
-            c_k = kappa.min() + width_k / 2 + m * width_k
-            c_t = theta.min() + width_t / 2 + n * width_t
-            H = gbellmf(kappa, width_k / 2, d_1, c_k) * gbellmf(
-                theta, width_t / 2, d_2, c_t
-            )  # (n_rows, n_cols)
-
-            # Broadcast H over p and T: (n_rows, n_cols, 1, 1)
-            filtered = spectre * H[:, :, None, None]  # (n_rows, n_cols, p, T)
+            H = _wavelet_filter(kappa, theta, m, n, width_k, width_t, d_1, d_2, L)
+            filtered = spectre * H[:, :, None, None]  # broadcast over (p, T)
             result[:, :, :, m * L + n, :] = np.fft.ifft2(
                 np.fft.fftshift(filtered, axes=(0, 1)), axes=(0, 1)
             )
 
-            if save_path is not None:
-                tp = 20 * np.log10(np.abs(spectre_00 * H) + 1e-12)
-                axes_s[m, n].imshow(
-                    tp, cmap="gray", aspect="auto", vmin=tp.max() - dyn_dB
-                )
-                axes_s[m, n].set_title(f"R={m} L={n}", fontsize=8)
-                axes_s[m, n].set_axis_off()
-                tp = 20 * np.log10(np.abs(result[:, :, 0, m * L + n, 0]) + 1e-12)
-                axes_i[m, n].imshow(
-                    tp, cmap="gray", aspect="auto", vmin=tp.max() - dyn_dB
-                )
-                axes_i[m, n].set_title(f"R={m} L={n}", fontsize=8)
-                axes_i[m, n].set_axis_off()
+    # Merge p and R*L dims: (n_rows, n_cols, p, R*L, T) → (n_rows, n_cols, p*R*L, T)
+    return result.reshape(n_rows, n_cols, p * R * L, T)
+
+
+# ---------------------------------------------------------------------------
+# Visualization (separated from computation)
+# ---------------------------------------------------------------------------
+
+def plot_wavelet_decomposition(
+    image,
+    bandwidth,
+    range_resolution,
+    azimuth_resolution,
+    center_frequency,
+    R,
+    L,
+    d_1,
+    d_2,
+    dyn_dB=50,
+    shift=True,
+):
+    """Visualize the wavelet filter bank applied to a single SAR image.
+
+    Creates two figures: one showing each sub-band's filtered spectrum
+    (signal × wavelet), and one showing the spatial decomposition.
+
+    Parameters
+    ----------
+    image : ndarray, shape (n_rows, n_cols)
+    bandwidth, range_resolution, azimuth_resolution, center_frequency : float
+        Same as :func:`decompose_image_wavelet`.
+    R, L : int
+    d_1, d_2 : float
+    dyn_dB : float
+        Dynamic range in dB for display. Default 50.
+    shift : bool
+        FFT-shift convention. Default True.
+
+    Returns
+    -------
+    fig_spectrum : plt.Figure
+        R×L grid showing filtered spectra (signal × wavelet).
+    fig_decomposition : plt.Figure
+        R×L grid showing spatial sub-band images.
+    """
+    n_rows, n_cols = image.shape[:2]
+    kappa, theta, width_k, width_t = _build_frequency_grids(
+        n_rows, n_cols, bandwidth, range_resolution, azimuth_resolution, center_frequency, R, L
+    )
+    spectre = np.fft.fftshift(np.fft.fft2(image)) if shift else np.fft.fft2(image)
+
+    fig_s, axes_s = plt.subplots(R, L, figsize=(20, 17), squeeze=False)
+    fig_i, axes_i = plt.subplots(R, L, figsize=(20, 17), squeeze=False)
+    fig_s.suptitle("Signal × wavelet", fontsize="x-large")
+    fig_i.suptitle("Wavelet decomposition", fontsize="x-large")
+
+    for m in range(R):
+        for n in range(L):
+            H = _wavelet_filter(kappa, theta, m, n, width_k, width_t, d_1, d_2, L)
+            filtered = spectre * H
+            sub = np.fft.ifft2(np.fft.fftshift(filtered)) if shift else np.fft.ifft2(filtered)
+
+            tp = 20 * np.log10(np.abs(filtered) + 1e-12)
+            axes_s[m, n].imshow(tp, cmap="gray", aspect="auto", vmin=tp.max() - dyn_dB)
+            axes_s[m, n].set_axis_off()
+
+            tp = 20 * np.log10(np.abs(sub) + 1e-12)
+            axes_i[m, n].imshow(tp, cmap="gray", aspect="auto", vmin=tp.max() - dyn_dB)
+            axes_i[m, n].set_axis_off()
+
+    return fig_s, fig_i
+
+
+def plot_wavelet_to_sits_debug(
+    sits_data,
+    R,
+    L,
+    d_1=10.0,
+    d_2=10.0,
+    center_frequency=DEFAULT_CENTER_FREQUENCY,
+    bandwidth=DEFAULT_BANDWIDTH,
+    range_resolution=DEFAULT_RANGE_RESOLUTION,
+    azimuth_resolution=DEFAULT_AZIMUTH_RESOLUTION,
+    dyn_dB=50,
+    save_path=None,
+):
+    """Visualize and optionally save wavelet debug plots for a SITS.
+
+    Uses the first polarisation and first date as a representative example.
+
+    Parameters
+    ----------
+    sits_data : ndarray, shape (n_rows, n_cols, p, T)
+    R, L : int
+    d_1, d_2 : float
+    center_frequency, bandwidth, range_resolution, azimuth_resolution : float
+    dyn_dB : float
+    save_path : str or None
+        If given, saves to ``{save_path}_spectrum.png`` and
+        ``{save_path}_decomposition.png`` and closes the figures.
+
+    Returns
+    -------
+    fig_spectrum : plt.Figure
+    fig_decomposition : plt.Figure
+    """
+    n_rows, n_cols = sits_data.shape[:2]
+    kappa, theta, width_k, width_t = _build_frequency_grids(
+        n_rows, n_cols, bandwidth, range_resolution, azimuth_resolution, center_frequency, R, L
+    )
+    spectre_00 = np.fft.fftshift(np.fft.fft2(sits_data[:, :, 0, 0]))
+
+    fig_s, axes_s = plt.subplots(R, L, figsize=(4 * L, 4 * R), squeeze=False)
+    fig_i, axes_i = plt.subplots(R, L, figsize=(4 * L, 4 * R), squeeze=False)
+    fig_s.suptitle("Signal × wavelet (pol=0, t=0)", fontsize="x-large")
+    fig_i.suptitle("Wavelet decomposition (pol=0, t=0)", fontsize="x-large")
+
+    # Run wavelet to get sub-band images for pol=0, t=0
+    result = apply_wavelet_to_sits(
+        sits_data[:, :, :1, :1], R=R, L=L, d_1=d_1, d_2=d_2,
+        center_frequency=center_frequency, bandwidth=bandwidth,
+        range_resolution=range_resolution, azimuth_resolution=azimuth_resolution,
+    )  # (rows, cols, R*L, 1)
+
+    for m in range(R):
+        for n in range(L):
+            H = _wavelet_filter(kappa, theta, m, n, width_k, width_t, d_1, d_2, L)
+
+            tp = 20 * np.log10(np.abs(spectre_00 * H) + 1e-12)
+            axes_s[m, n].imshow(tp, cmap="gray", aspect="auto", vmin=tp.max() - dyn_dB)
+            axes_s[m, n].set_title(f"R={m} L={n}", fontsize=8)
+            axes_s[m, n].set_axis_off()
+
+            tp = 20 * np.log10(np.abs(result[:, :, m * L + n, 0]) + 1e-12)
+            axes_i[m, n].imshow(tp, cmap="gray", aspect="auto", vmin=tp.max() - dyn_dB)
+            axes_i[m, n].set_title(f"R={m} L={n}", fontsize=8)
+            axes_i[m, n].set_axis_off()
+
+    fig_s.tight_layout()
+    fig_i.tight_layout()
 
     if save_path is not None:
-        fig_s.tight_layout()
-        fig_i.tight_layout()
         fig_s.savefig(f"{save_path}_spectrum.png", dpi=150)
         fig_i.savefig(f"{save_path}_decomposition.png", dpi=150)
         plt.close(fig_s)
         plt.close(fig_i)
         print(
-            f"  Saved wavelet debug plots: {save_path}_spectrum.png, {save_path}_decomposition.png"
+            f"  Saved wavelet debug plots: "
+            f"{save_path}_spectrum.png, {save_path}_decomposition.png"
         )
 
-    # Merge p and R*L dims: (n_rows, n_cols, p, R*L, T) → (n_rows, n_cols, p*R*L, T)
-    # Reshape preserves ordering: features for polarisation i at [i*R*L : (i+1)*R*L]
-    return result.reshape(n_rows, n_cols, p * R * L, T)
+    return fig_s, fig_i
