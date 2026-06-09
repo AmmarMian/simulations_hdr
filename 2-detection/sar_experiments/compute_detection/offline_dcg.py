@@ -39,7 +39,7 @@ if __name__ == "__main__":
         help="Chunk size for DCG detector iterations (default 4096).",
     )
     args = parser.parse_args()
-    setup_logging(quiet=args.quiet)
+    setup_logging(quiet=args.quiet, debug=args.log_debug)
     logger = logging.getLogger(__name__)
     log_arguments(args)
 

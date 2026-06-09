@@ -945,15 +945,21 @@ def _armijo_backtracking_scaled_gaussian(
     sq_grad_norm = be.abs(be.real(manifold.inner(
         [Sigma, tau_v], [r_Sigma, r_tau_v], [r_Sigma, r_tau_v])))  # (...,)
     alpha = alpha_0
+    last_Sigma, last_tau = Sigma, tau  # fallback: current point if all retractions overflow
     for _ in range(max_backtracks):
         Sigma_new, tau_new_v = manifold.retr(
             [Sigma, tau_v], [-alpha * r_Sigma, -alpha * r_tau_v])
         tau_new = tau_new_v[..., None]  # (..., n, 1)
+        if (be.any(be.isnan(Sigma_new)) or be.any(be.isinf(Sigma_new))
+                or be.any(be.isnan(tau_new_v)) or be.any(be.isinf(tau_new_v))):
+            alpha *= rho
+            continue
+        last_Sigma, last_tau = Sigma_new, tau_new
         f_new = _neg_log_likelihood_scaled_gaussian(X, Sigma_new, tau_new, be)
         if be.all(f_new <= f0 - c * alpha * sq_grad_norm):
             return alpha, Sigma_new, tau_new
         alpha *= rho
-    return alpha, Sigma_new, tau_new
+    return alpha, last_Sigma, last_tau
 
 
 def natural_gradient_scaled_gaussian(

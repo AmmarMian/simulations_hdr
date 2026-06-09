@@ -36,8 +36,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--iter-max",
         type=int,
-        default=10,
-        help="Maximum iterations for H1 natural gradient estimator (default 10).",
+        default=5,
+        help="Maximum iterations for H1 natural gradient estimator (default 5).",
     )
     parser.add_argument(
         "--tol",
@@ -46,7 +46,7 @@ if __name__ == "__main__":
         help="Convergence tolerance for H1 estimator (default 1e-8).",
     )
     args = parser.parse_args()
-    setup_logging(quiet=args.quiet)
+    setup_logging(quiet=args.quiet, debug=args.log_debug)
     logger = logging.getLogger(__name__)
     log_arguments(args)
 
@@ -64,7 +64,6 @@ if __name__ == "__main__":
 
     detector = OnlineDCGDetector(
         backend_name=str(cfg.backend),
-        h0_lr=1.0,
         iter_max=args.iter_max,
         tol=args.tol,
     )
@@ -101,7 +100,9 @@ if __name__ == "__main__":
 
     glrt_map_np = get_data_on_device(glrt_map, "numpy")
 
-    exporter.save(glrt_map_np, "dcg_online", elapsed, title="Online DCG GLRT", cmap="jet")
+    exporter.save(
+        glrt_map_np, "dcg_online", elapsed, title="Online DCG GLRT", cmap="jet"
+    )
     if args.show_interactive:
         plot_glrt_map(glrt_map_np, "Online DCG GLRT", cmap="jet")
 

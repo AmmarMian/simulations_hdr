@@ -11,6 +11,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.image import AxesImage
 import torch
+import logging
 
 # Add project root to path so src module is accessible
 _project_root = str(Path(__file__).parent.parent)
@@ -26,6 +27,7 @@ try:
 except ImportError:
     _matplot2tikz = None
 
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # CLI helpers
@@ -131,6 +133,11 @@ def add_common_args(parser: argparse.ArgumentParser) -> None:
     )
     parser.add_argument("--quiet", action="store_true", help="Suppress verbose output.")
     parser.add_argument(
+        "--log-debug",
+        action="store_true",
+        help="Enable debug-level logging.",
+    )
+    parser.add_argument(
         "--report-memory",
         action="store_true",
         help="Print peak GPU memory at the end (torch-cuda only).",
@@ -170,10 +177,10 @@ def setup_run(args) -> RunConfig:
 
     # Availability checks per backend
     if args.backend in ("torch-cuda",) and not torch.cuda.is_available():
-        print("ERROR: torch-cuda backend requested but no CUDA GPU is available.")
+        logger.error("torch-cuda backend requested but no CUDA GPU is available.")
         sys.exit(1)
     if args.backend in ("torch-mps",) and not torch.backends.mps.is_available():
-        print("ERROR: torch-mps backend requested but MPS is not available.")
+        logger.error("torch-mps backend requested but MPS is not available.")
         sys.exit(1)
     if args.backend in ("cupy", "cupy-cuda"):
         try:
@@ -182,8 +189,8 @@ def setup_run(args) -> RunConfig:
             if not cupy.cuda.is_available():
                 raise RuntimeError
         except (ImportError, RuntimeError):
-            print(
-                "ERROR: cupy backend requested but CuPy/CUDA is not available. "
+            logger.error(
+                "cupy backend requested but CuPy/CUDA is not available. "
                 "Install it with: uv sync --extra cupy"
             )
             sys.exit(1)
@@ -191,20 +198,23 @@ def setup_run(args) -> RunConfig:
         try:
             import jax  # noqa: F401
         except ImportError:
-            print(
-                f"ERROR: {args.backend} backend requested but JAX is not installed. "
+            logger.error(
+                f"{args.backend} backend requested but JAX is not installed. "
                 "Install it with: uv sync --extra jax  (CPU/CUDA) or "
                 "uv sync --extra jax-metal  (Apple Silicon)"
             )
             sys.exit(1)
         if args.backend == "jax-cuda":
             import jax as _jax
-            gpu_devices = _jax.devices("gpu") if any(
-                d.platform == "gpu" for d in _jax.devices()
-            ) else []
+
+            gpu_devices = (
+                _jax.devices("gpu")
+                if any(d.platform == "gpu" for d in _jax.devices())
+                else []
+            )
             if not gpu_devices:
-                print(
-                    "ERROR: jax-cuda backend requested but no CUDA GPU is available to JAX. "
+                logger.error(
+                    "jax-cuda backend requested but no CUDA GPU is available to JAX. "
                     "A CUDA-enabled jaxlib is required. "
                     "Install it with: uv sync --extra jax-cuda"
                 )
@@ -244,19 +254,17 @@ def load_sits(args) -> np.ndarray:
         ``OnlineImageResourceManager``.
     """
     time_first_path = require_time_first(args.data_path)
-    if not args.quiet:
-        print("Loading data...")
+    logger.info("Loading data...")
     sits = np.load(time_first_path, mmap_mode="r")  # (T, rows, cols, features)
 
     if args.debug:
         sits = np.ascontiguousarray(sits[:, :100, :100, :])
 
     if args.wavelet:
-        if not args.quiet:
-            print(
-                f"Applying wavelet decomposition "
-                f"(R={args.wavelet_R}, L={args.wavelet_L})..."
-            )
+        logger.info(
+            f"Applying wavelet decomposition "
+            f"(R={args.wavelet_R}, L={args.wavelet_L})..."
+        )
         # apply_wavelet_to_sits expects (rows, cols, features, times)
         sits_wavelet = apply_wavelet_to_sits(
             np.asarray(sits).transpose(1, 2, 3, 0),
@@ -264,8 +272,7 @@ def load_sits(args) -> np.ndarray:
             L=args.wavelet_L,
         )  # (rows, cols, p*R*L, times)
         sits = np.ascontiguousarray(sits_wavelet.transpose(3, 0, 1, 2))
-        if not args.quiet:
-            print(f"  Shape after wavelet: {sits.shape}")
+        logger.info(f"  Shape after wavelet: {sits.shape}")
 
     return sits
 
@@ -443,9 +450,9 @@ def require_time_first(data_path: str) -> str:
     p = Path(data_path)
     time_first = p.with_stem(p.stem + "_time_first")
     if time_first.exists():
-        print(f"Note: using time-first dataset {time_first} instead of {p.name}")
+        logger.info(f"Note: using time-first dataset {time_first} instead of {p.name}")
         return str(time_first)
-    print(
+    logger.error(
         f"ERROR: time-first dataset not found: {time_first}\n"
         f"Please convert your data first by running:\n\n"
         f"  uv run sar_experiments/prepare_data.py {data_path}\n"

@@ -3,6 +3,7 @@
 from math import sqrt
 from typing import Callable, Optional, Tuple, List, Union
 from rich.progress import track
+import logging
 
 from .backend import (
     Array,
@@ -15,6 +16,8 @@ from .backend import (
     dtype_itemsize,
     empty_cache,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class ImageRessourceManager:
@@ -82,7 +85,7 @@ class ImageRessourceManager:
         """Process all splits sequentially and merge results."""
         rows_range = range(self.n_rows)
         if self.verbose:
-            print("Starting processing")
+            logger.info("Starting processing")
             rows_range = track(rows_range, description="Processing rows")
 
         results_to_merge = []
@@ -128,10 +131,12 @@ def _query_vram_mb(backend: Backend) -> float:
     """
     if backend.is_torch and backend.is_cuda:
         from torch.cuda import mem_get_info
+
         return mem_get_info(device=backend.torch_device)[0] / (1024 * 1024)
     if backend.is_cupy:
         try:
             import cupy
+
             free, _ = cupy.cuda.runtime.memGetInfo()
             return free / (1024 * 1024)
         except ImportError:
@@ -255,7 +260,9 @@ class OnlineImageResourceManager:
         self.window_size = window_size
         self.stride = stride
         self.detector = detector
-        self.backend = Backend.from_str(backend) if isinstance(backend, str) else backend
+        self.backend = (
+            Backend.from_str(backend) if isinstance(backend, str) else backend
+        )
         self.verbose = verbose
         self.n_rows, self.n_cols = splitting
         self._unfold2d = Unfold2D(window_size, stride)
@@ -300,7 +307,7 @@ class OnlineImageResourceManager:
         """Process all splits sequentially with temporal streaming."""
         rows_range = range(self.n_rows)
         if self.verbose:
-            print("Starting online processing")
+            logger.info("Starting online processing")
             rows_range = track(rows_range, description="Processing rows")
 
         results_to_merge = []

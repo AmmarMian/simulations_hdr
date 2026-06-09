@@ -64,15 +64,21 @@ class OnlineDCGDetector(OnlineDetector):
     def __init__(
         self,
         backend_name: Union[str, Backend] = "numpy",
-        h0_lr: float = 1.0,
+        h0_alpha_0: float = 0.1,
+        h0_max_backtracks: int = 5,
+        iter_max: int = 200,
+        tol: float = 1e-8,
         **h1_kwargs,
     ):
         self.backend_name = backend_name
         self.be = get_backend_module(backend_name)
-        self.h0_lr = h0_lr
+        self.h0_alpha_0 = h0_alpha_0
+        self.h0_max_backtracks = h0_max_backtracks
+        self.iter_max = iter_max
+        self.tol = tol
         self.state = None
         self._h1_estimator = ScaledGaussianNaturalGradientEstimator(
-            backend_name=backend_name, **h1_kwargs
+            backend_name=backend_name, iter_max=iter_max, tol=tol, **h1_kwargs
         )
 
     def initialize(self, X: Array) -> Array:
@@ -97,7 +103,12 @@ class OnlineDCGDetector(OnlineDetector):
 
         # H0: initialize and update with both dates
         h0_estimator = OnlineScaledGaussianEstimator(
-            n_features, n_samples, lr=self.h0_lr, backend_name=self.backend_name
+            n_features, n_samples,
+            alpha_0=self.h0_alpha_0,
+            armijo_max_backtracks=self.h0_max_backtracks,
+            iter_max=self.iter_max,
+            tol=self.tol,
+            backend_name=self.backend_name,
         )
         X_0 = X[..., 0, :, :]  # (..., n, p)
         Sigma_h0, tau_h0 = h0_estimator.update(X_0)

@@ -16,7 +16,7 @@ from argparse import Namespace
 from rich.logging import RichHandler
 
 
-def setup_logging(quiet: bool = False) -> None:
+def setup_logging(quiet: bool = False, debug: bool = False) -> None:
     """Configure the root logger with a RichHandler.
 
     Call **once** per process at script startup (e.g. inside ``setup_run``).
@@ -28,8 +28,15 @@ def setup_logging(quiet: bool = False) -> None:
     quiet : bool
         When True, sets the root level to WARNING so INFO/DEBUG messages
         are suppressed.  When False (default), sets the level to INFO.
+    debug : bool
+        When True, sets the root level to DEBUG. Overrides quiet=True.
     """
-    level = logging.WARNING if quiet else logging.INFO
+    if debug:
+        level = logging.DEBUG
+    elif quiet:
+        level = logging.WARNING
+    else:
+        level = logging.INFO
     logging.basicConfig(
         level=level,
         format="%(message)s",

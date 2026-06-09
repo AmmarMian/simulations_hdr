@@ -49,7 +49,7 @@ if __name__ == "__main__":
         help="Available VRAM in MB for GPU auto-splitting (default: auto-detect).",
     )
     args = parser.parse_args()
-    setup_logging(quiet=args.quiet)
+    setup_logging(quiet=args.quiet, debug=args.log_debug)
     logger = logging.getLogger(__name__)
     log_arguments(args)
 
