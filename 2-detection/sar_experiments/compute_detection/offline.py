@@ -6,7 +6,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 import argparse
-import torch
 import numpy as np
 import matplotlib.pyplot as plt
 from time import perf_counter
@@ -16,10 +15,10 @@ from sar_experiments.utils import (
     add_common_args,
     setup_run,
     load_sits,
-    FigureExporter,
+    DetectionMapExporter,
     plot_glrt_map,
 )
-from src.backend import get_data_on_device
+from src.backend import get_data_on_device, permute, reset_peak_memory, peak_memory_bytes, oom_errors
 from src.hardware_ressources import ImageCPURessourceManager, ImageGPURessourceManager
 
 
@@ -47,11 +46,12 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     cfg = setup_run(args)
-    exporter = FigureExporter(args, cfg)
+    exporter = DetectionMapExporter(args, cfg)
 
-    # Offline scripts use (n_times, n_features, n_rows, n_cols) for the batch managers
+    # Offline scripts use (n_times, n_features, n_rows, n_cols) for the batch managers.
+    # We load as numpy and move to the target backend via permute + get_data_on_device.
     sits_np = load_sits(args)  # (n_times, n_rows, n_cols, n_features)
-    sits_data = torch.from_numpy(np.asarray(sits_np)).moveaxis(3, 1)  # (T, p, H, W)
+    sits_data = permute(cfg.backend, get_data_on_device(np.asarray(sits_np), cfg.backend), (0, 3, 1, 2))  # (T, p, H, W)
     sits_np = None  # free memory
 
     if not args.quiet:
@@ -73,12 +73,13 @@ if __name__ == "__main__":
             splitting=cfg.splitting,
             verbose=0 if args.quiet else 1,
         )
-        if not cfg.is_gpu:
+        if cfg.is_gpu:
+            manager_kwargs["backend"] = cfg.backend
+        else:
             manager_kwargs["backend"] = cfg.backend
         manager = ResourceManager(**manager_kwargs)
 
-        if cfg.is_gpu:
-            torch.cuda.reset_peak_memory_stats()
+        reset_peak_memory(cfg.backend)
         t0 = perf_counter()
         results = manager.process_all_data()
         elapsed = perf_counter() - t0
@@ -89,9 +90,10 @@ if __name__ == "__main__":
 
     if "gaussian" in args.detectors:
         results, elapsed = _run_detector("Gaussian GLRT", GaussianGLRT(cfg.backend).compute)
-        if exporter.active or args.show_interactive:
-            fig = plot_glrt_map(get_data_on_device(results, "numpy"), "Gaussian GLRT")
-            exporter.save(fig, f"gaussian_{args.backend}", elapsed, close=not args.show_interactive)
+        results_np = get_data_on_device(results, "numpy")
+        exporter.save(results_np, f"gaussian_{args.backend}", elapsed, title="Gaussian GLRT")
+        if args.show_interactive:
+            plot_glrt_map(results_np, "Gaussian GLRT")
 
     if "dcg" in args.detectors:
         dcg_detector = DeterministicCompoundGaussianGLRT(
@@ -102,24 +104,26 @@ if __name__ == "__main__":
         )
         try:
             results, elapsed = _run_detector("DCG GLRT", dcg_detector.compute)
-        except torch.cuda.OutOfMemoryError:
+        except oom_errors(cfg.backend):
             print(
-                "ERROR: CUDA out of memory for DCG GLRT. "
+                "ERROR: Out of memory for DCG GLRT. "
                 "Try increasing --splitting (e.g. --splitting '(8,8)') "
                 "or decreasing --iteration-chunk."
             )
             sys.exit(1)
 
-        if exporter.active or args.show_interactive:
-            fig = plot_glrt_map(get_data_on_device(results, "numpy"), "DCG GLRT")
-            exporter.save(fig, f"dcg_{args.backend}", elapsed, close=not args.show_interactive)
+        results_np = get_data_on_device(results, "numpy")
+        exporter.save(results_np, f"dcg_{args.backend}", elapsed, title="DCG GLRT")
+        if args.show_interactive:
+            plot_glrt_map(results_np, "DCG GLRT")
 
     if args.report_memory and cfg.is_gpu:
-        print(f"PEAK_GPU_MEMORY_BYTES={torch.cuda.max_memory_allocated()}")
+        mem = peak_memory_bytes(cfg.backend)
+        if mem is not None:
+            print(f"PEAK_GPU_MEMORY_BYTES={mem}")
 
     if args.show_interactive:
         plt.show()
 
     if not args.quiet:
         print("\nDone.")
-

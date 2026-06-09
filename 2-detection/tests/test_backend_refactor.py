@@ -32,26 +32,29 @@ class TestBackendDataclass:
         """Test creating a numpy backend."""
         b = Backend.numpy()
         assert b.lib == "numpy"
-        assert b.device.type == "cpu"
+        assert b.device == "cpu"
         assert b.is_torch is False
         assert b.is_cuda is False
+        assert b.is_gpu is False
 
     def test_backend_torch_cpu_creation(self):
         """Test creating a torch-cpu backend."""
         b = Backend.torch_cpu()
         assert b.lib == "torch"
-        assert b.device.type == "cpu"
+        assert b.device == "cpu"
         assert b.is_torch is True
         assert b.is_cuda is False
+        assert b.is_gpu is False
 
     @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
     def test_backend_torch_cuda_creation(self):
         """Test creating a torch-cuda backend."""
         b = Backend.torch_cuda()
         assert b.lib == "torch"
-        assert b.device.type == "cuda"
+        assert b.device == "cuda"
         assert b.is_torch is True
         assert b.is_cuda is True
+        assert b.is_gpu is True
 
     def test_backend_from_str_numpy(self):
         """Test parsing 'numpy' string."""
@@ -63,7 +66,7 @@ class TestBackendDataclass:
         """Test parsing 'torch-cpu' string."""
         b = Backend.from_str("torch-cpu")
         assert b.lib == "torch"
-        assert b.device.type == "cpu"
+        assert b.device == "cpu"
         assert b.is_torch
         assert not b.is_cuda
 
@@ -72,14 +75,14 @@ class TestBackendDataclass:
         """Test parsing 'torch-cuda' string."""
         b = Backend.from_str("torch-cuda")
         assert b.lib == "torch"
-        assert b.device.type == "cuda"
+        assert b.device == "cuda"
         assert b.is_torch
         assert b.is_cuda
 
     def test_backend_from_str_invalid_raises_error(self):
         """Test that invalid string raises ValueError."""
         with pytest.raises(ValueError, match="Unknown backend string"):
-            Backend.from_str("invalid")
+            Backend.from_str("tensorflow")
 
     def test_backend_str_representation_numpy(self):
         """Test string representation of numpy backend."""
@@ -104,9 +107,9 @@ class TestBackendDataclass:
             b.lib = "torch"
 
     def test_backend_numpy_cuda_raises_error(self):
-        """Test that numpy with CUDA device raises error."""
-        with pytest.raises(ValueError, match="numpy backend only supports CPU"):
-            Backend("numpy", torch.device("cuda"))
+        """Test that numpy with a non-CPU device raises ValueError."""
+        with pytest.raises(ValueError):
+            Backend("numpy", "cuda")
 
     def test_backend_equality(self):
         """Test backend equality."""

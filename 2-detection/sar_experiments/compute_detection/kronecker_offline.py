@@ -6,7 +6,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 import argparse
-import torch
 import numpy as np
 import matplotlib.pyplot as plt
 from time import perf_counter
@@ -17,10 +16,10 @@ from sar_experiments.utils import (
     setup_run,
     load_sits,
     require_time_first,
-    FigureExporter,
+    DetectionMapExporter,
     plot_glrt_map,
 )
-from src.backend import get_data_on_device
+from src.backend import get_data_on_device, permute, reset_peak_memory, peak_memory_bytes
 from src.hardware_ressources import ImageCPURessourceManager, ImageGPURessourceManager
 
 
@@ -58,7 +57,7 @@ if __name__ == "__main__":
         )
 
     cfg = setup_run(args)
-    exporter = FigureExporter(args, cfg)
+    exporter = DetectionMapExporter(args, cfg)
 
     # Read n_features from the raw file before wavelet expands the channel dimension.
     # mmap_mode="r" makes this essentially free — only the header is accessed.
@@ -83,8 +82,12 @@ if __name__ == "__main__":
             "Make sure --wavelet-R and --wavelet-L match the data."
         )
 
-    # Convert to (T, p, H, W) for the batch resource managers
-    sits_data = torch.from_numpy(np.asarray(sits_np)).moveaxis(3, 1)
+    # Convert to (T, p, H, W) for the batch resource managers via backend-agnostic permute
+    sits_data = permute(
+        cfg.backend,
+        get_data_on_device(np.asarray(sits_np), cfg.backend),
+        (0, 3, 1, 2),
+    )
     sits_np = None
 
     if not args.quiet:
@@ -110,15 +113,15 @@ if __name__ == "__main__":
         splitting=cfg.splitting,
         verbose=0 if args.quiet else 1,
     )
+    reset_peak_memory(cfg.backend)
     if cfg.is_gpu:
-        torch.cuda.reset_peak_memory_stats()
         manager = ImageGPURessourceManager(
             **manager_kwargs,
-            device=torch.device("cuda"),
+            backend=cfg.backend,
             vram=args.vram,
         )
     else:
-        manager = ImageCPURessourceManager(**manager_kwargs, backend=args.backend)
+        manager = ImageCPURessourceManager(**manager_kwargs, backend=cfg.backend)
 
     t0 = perf_counter()
     cd_results = manager.process_all_data()
@@ -127,24 +130,27 @@ if __name__ == "__main__":
     if not args.quiet:
         print(f"Took {elapsed:.2f}s.")
 
-    if exporter.active or args.show_interactive:
-        fig = plot_glrt_map(
-            get_data_on_device(cd_results, "numpy"),
-            f"Kronecker GLRT (a={a}, b={b})",
-            colorbar_label="Log-likelihood ratio",
-        )
-        exporter.save(
-            fig, f"kronecker_a{a}b{b}_{args.backend}", elapsed, close=not args.show_interactive
-        )
-        if exporter.active and not args.quiet:
-            print(f"Exported to {cfg.export_path}/")
+    cd_results_np = get_data_on_device(cd_results, "numpy")
+    title = f"Kronecker GLRT (a={a}, b={b})"
+    exporter.save(
+        cd_results_np,
+        f"kronecker_a{a}b{b}_{args.backend}",
+        elapsed,
+        title=title,
+        colorbar_label="Log-likelihood ratio",
+    )
+    if exporter.active and not args.quiet:
+        print(f"Exported to {cfg.export_path}/")
+    if args.show_interactive:
+        plot_glrt_map(cd_results_np, title, colorbar_label="Log-likelihood ratio")
 
     if args.report_memory and cfg.is_gpu:
-        print(f"PEAK_GPU_MEMORY_BYTES={torch.cuda.max_memory_allocated()}")
+        mem = peak_memory_bytes(cfg.backend)
+        if mem is not None:
+            print(f"PEAK_GPU_MEMORY_BYTES={mem}")
 
     if args.show_interactive:
         plt.show()
 
     if not args.quiet:
         print("\nDone.")
-

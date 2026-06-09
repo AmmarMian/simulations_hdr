@@ -19,3 +19,21 @@ dependencies = [
     "scipy>=1.16.1",
     "torch>=2.9.0",
 ]
+
+# Optional extras — not installed by default (platform / hardware specific).
+# Install with:
+#   uv sync --extra jax          # CPU and CUDA
+#   uv sync --extra jax-metal    # Apple Silicon GPU
+#   uv sync --extra cupy         # NVIDIA CUDA (adjust suffix for your driver)
+[project.optional-dependencies]
+jax = [
+    "jax>=0.4",
+    "jaxlib>=0.4",
+]
+jax-metal = [
+    "jax-metal>=0.1",
+]
+cupy = [
+    # cupy-cuda12x covers CUDA 12.x; change to cupy-cuda11x for CUDA 11.x
+    "cupy-cuda12x>=13",
+]

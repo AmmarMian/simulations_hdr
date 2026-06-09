@@ -2,12 +2,19 @@
 
 from math import sqrt
 from typing import Callable, Optional, Tuple, List, Union
-import numpy as np
-import torch
-from torch.cuda import mem_get_info
 from rich.progress import track
 
-from .backend import Array, Backend, get_data_on_device, get_backend_module, Unfold2D, concatenate, make_writable_copy, dtype_itemsize
+from .backend import (
+    Array,
+    Backend,
+    get_data_on_device,
+    Unfold2D,
+    concatenate,
+    make_writable_copy,
+    permute,
+    dtype_itemsize,
+    empty_cache,
+)
 
 
 class ImageRessourceManager:
@@ -17,7 +24,7 @@ class ImageRessourceManager:
     sequentially via process_one_split, then stitches results back together.
 
     Device transfers, unfolding, and memory cleanup are all driven by
-    backend_name so no subclass overrides are needed for the processing loop.
+    backend so no subclass overrides are needed for the processing loop.
 
     Image data must be shaped (n_times, n_channels, height, width).
     Results are returned on the same backend as specified.
@@ -64,8 +71,8 @@ class ImageRessourceManager:
 
     def _delete_temp(self, data) -> None:
         del data
-        if self.backend.is_cuda:
-            torch.cuda.empty_cache()
+        if self.backend.is_gpu:
+            empty_cache(self.backend)
 
     def _finalize_result(self, result: Array, output_shape) -> Array:
         result = get_data_on_device(result, self.backend)
@@ -111,11 +118,50 @@ class ImageRessourceManager:
         )
 
 
+def _query_vram_mb(backend: Backend) -> float:
+    """Return available VRAM in MB for the given GPU backend.
+
+    * **torch-cuda**: uses ``torch.cuda.mem_get_info``.
+    * **cupy-cuda**: uses ``cupy.cuda.runtime.memGetInfo``.
+    * **jax-cuda / jax-metal**: no public free-memory API; returns a
+      conservative 4 096 MB default.  Override via the *vram* parameter.
+    """
+    if backend.is_torch and backend.is_cuda:
+        from torch.cuda import mem_get_info
+        return mem_get_info(device=backend.torch_device)[0] / (1024 * 1024)
+    if backend.is_cupy:
+        try:
+            import cupy
+            free, _ = cupy.cuda.runtime.memGetInfo()
+            return free / (1024 * 1024)
+        except ImportError:
+            pass
+    # jax or any other GPU backend: conservative fallback
+    return 4096.0
+
+
 class ImageGPURessourceManager(ImageRessourceManager):
     """GPU-backed splitting manager.
 
-    Thin wrapper around ImageRessourceManager that resolves the device,
-    queries available VRAM, and supports automatic splitting.
+    Thin wrapper around :class:`ImageRessourceManager` that resolves the
+    device, queries available VRAM, and supports automatic splitting.
+
+    Parameters
+    ----------
+    image_data : Array
+    window_size : int
+    stride : int
+    process_one_split : Callable
+    backend : str or Backend
+        Any GPU backend (``"torch-cuda"``, ``"cupy"``, ``"jax-cuda"``,
+        ``"jax-metal"``).  Defaults to ``"torch-cuda"`` for backward
+        compatibility.
+    splitting : str or tuple
+        ``"auto"`` to compute from available VRAM, or an explicit ``(r, c)``.
+    vram : float, optional
+        Override the VRAM estimate (MB).  Required for JAX GPU backends which
+        have no reliable free-memory query.
+    verbose : int
     """
 
     def __init__(
@@ -124,14 +170,14 @@ class ImageGPURessourceManager(ImageRessourceManager):
         window_size: int,
         stride: int,
         process_one_split: Callable,
-        device: Optional[torch.device] = torch.device("cuda"),
+        backend: str | Backend = "torch-cuda",
         splitting: Union[str, Tuple[int, int]] = "auto",
         vram: Optional[float] = None,
         verbose: Optional[int] = 1,
     ) -> None:
-        self.device = device
+        resolved = Backend.from_str(backend) if isinstance(backend, str) else backend
         self.dtype = image_data.dtype
-        self.vram = vram or mem_get_info(device=device)[0] / (1024 * 1024)
+        self.vram = vram or _query_vram_mb(resolved)
 
         if splitting == "auto":
             _, n_channels, height, width = image_data.shape
@@ -144,7 +190,7 @@ class ImageGPURessourceManager(ImageRessourceManager):
             window_size,
             stride,
             process_one_split,
-            backend="torch-cuda",
+            backend=resolved,
             splitting=splitting,
             verbose=verbose,
         )
@@ -153,9 +199,10 @@ class ImageGPURessourceManager(ImageRessourceManager):
 class ImageCPURessourceManager(ImageRessourceManager):
     """CPU-backed splitting manager.
 
-    Thin wrapper around ImageRessourceManager with CPU-appropriate defaults:
-    no device transfer, no VRAM management, splitting defaults to (1,1).
-    Accepts any torch-cpu-compatible backend (torch-cpu or numpy).
+    Thin wrapper around :class:`ImageRessourceManager` with CPU-appropriate
+    defaults: no device transfer, no VRAM management, splitting defaults to
+    ``(1, 1)``.  Accepts any CPU-compatible backend (``numpy``, ``torch-cpu``,
+    ``jax-cpu``).
     """
 
     def __init__(
@@ -183,11 +230,11 @@ class OnlineImageResourceManager:
     """Online streaming version for temporal processing.
 
     Processes each spatial split through all time steps sequentially,
-    maintaining state per split. Reads one time step at a time from a
+    maintaining state per split.  Reads one time step at a time from a
     numpy memmap so only the active slice is paged into RAM.
 
     image_data must be a numpy array (or memmap) shaped
-    (n_times, n_rows, n_cols, n_features).
+    ``(n_times, n_rows, n_cols, n_features)``.
     """
 
     def __init__(
@@ -221,20 +268,33 @@ class OnlineImageResourceManager:
 
     def _delete_temp(self, data) -> None:
         del data
-        if self.backend.is_cuda:
-            torch.cuda.empty_cache()
+        if self.backend.is_gpu:
+            empty_cache(self.backend)
 
     def _finalize_result(self, result: Array, output_shape) -> Array:
         result = get_data_on_device(result, self.backend)
         return make_writable_copy(self.backend, result.reshape(output_shape))
 
-    def _get_slice(self, t_start: int, t_end: int, row_min: int, row_max: int, col_min: int, col_max: int) -> Array:
-        """Read a spatial+temporal crop from memmap and return as (t, features, h, w) tensor."""
+    def _get_slice(
+        self,
+        t_start: int,
+        t_end: int,
+        row_min: int,
+        row_max: int,
+        col_min: int,
+        col_max: int,
+    ) -> Array:
+        """Read a spatial+temporal crop from memmap and return on backend.
+
+        The memmap is always numpy, shaped (t, h, w, features).
+        We need (t, features, h, w) on the target backend.
+        """
         # .copy() ensures a writable C-contiguous array even when the slice
         # covers the full spatial extent (ascontiguousarray would return a view)
-        data = self.memmap[t_start:t_end, row_min:row_max, col_min:col_max, :].copy()  # (t, h, w, features)
-        tensor = torch.from_numpy(data).permute(0, 3, 1, 2)  # (t, features, h, w)
-        return get_data_on_device(tensor, self.backend)
+        data_np = self.memmap[t_start:t_end, row_min:row_max, col_min:col_max, :].copy()
+        # (t, h, w, features) → (t, features, h, w) using backend-agnostic permute
+        data_on_device = get_data_on_device(data_np, self.backend)
+        return permute(self.backend, data_on_device, (0, 3, 1, 2))
 
     def process_all_data(self, *args, **kwargs) -> Array:
         """Process all splits sequentially with temporal streaming."""
@@ -308,7 +368,15 @@ class OnlineImageGPURessourceManager(OnlineImageResourceManager):
     """GPU-backed online streaming manager.
 
     Resolves device, queries VRAM, and supports automatic splitting.
-    image_data must be shaped (n_times, n_rows, n_cols, n_features).
+    image_data must be shaped ``(n_times, n_rows, n_cols, n_features)``.
+
+    Parameters
+    ----------
+    backend : str or Backend
+        Any GPU backend.  Defaults to ``"torch-cuda"`` for backward
+        compatibility.
+    vram : float, optional
+        VRAM override in MB.  Required for JAX GPU backends.
     """
 
     def __init__(
@@ -317,14 +385,14 @@ class OnlineImageGPURessourceManager(OnlineImageResourceManager):
         window_size: int,
         stride: int,
         detector,
-        device: Optional[torch.device] = torch.device("cuda"),
+        backend: str | Backend = "torch-cuda",
         splitting: Union[str, Tuple[int, int]] = "auto",
         vram: Optional[float] = None,
         verbose: Optional[int] = 1,
     ) -> None:
-        self.device = device
+        resolved = Backend.from_str(backend) if isinstance(backend, str) else backend
         self.dtype = image_data.dtype
-        self.vram = vram or mem_get_info(device=device)[0] / (1024 * 1024)
+        self.vram = vram or _query_vram_mb(resolved)
 
         if splitting == "auto":
             _, height, width, n_channels = image_data.shape
@@ -337,7 +405,7 @@ class OnlineImageGPURessourceManager(OnlineImageResourceManager):
             window_size,
             stride,
             detector,
-            backend="torch-cuda",
+            backend=resolved,
             splitting=splitting,
             verbose=verbose,
         )
@@ -352,8 +420,8 @@ def compute_splitting_coordinates(
 ) -> List[Tuple[int, int, int, int]]:
     """Split an image into overlapping tiles.
 
-    Returns a list of (row_min, row_max, col_min, col_max) tuples with
-    half-window overlap on interior boundaries to avoid edge artifacts.
+    Returns a list of ``(row_min, row_max, col_min, col_max)`` tuples with
+    half-window overlap on interior boundaries to avoid edge artefacts.
     """
     splits_list = []
     for i_row in range(n_rows):
@@ -394,10 +462,10 @@ def compute_splits_auto(
 ) -> Tuple[int, int]:
     """Compute number of splits given dtype and available VRAM (in MB).
 
-    Uses 20% of available VRAM to account for simultaneous allocations,
-    PyTorch memory overhead, and other GPU consumers.
+    Uses 20 % of available VRAM to account for simultaneous allocations,
+    framework overhead, and other GPU consumers.
 
-    dtype accepts both numpy and torch dtypes.
+    *dtype* accepts both numpy and torch dtypes.
     """
     n_windows = ((height - window_size) // stride + 1) * (
         (width - window_size) // stride + 1

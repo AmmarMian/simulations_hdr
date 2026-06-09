@@ -8,12 +8,11 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 import argparse
-import torch
-import numpy as np
 import matplotlib.pyplot as plt
 from time import perf_counter
 
 from src.detection_online import OnlineDCGDetector
+from src.backend import get_data_on_device, peak_memory_bytes
 from src.hardware_ressources import (
     OnlineImageResourceManager,
     OnlineImageGPURessourceManager,
@@ -22,7 +21,7 @@ from sar_experiments.utils import (
     add_common_args,
     setup_run,
     load_sits,
-    FigureExporter,
+    DetectionMapExporter,
     plot_glrt_map,
 )
 
@@ -46,7 +45,7 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     cfg = setup_run(args)
-    exporter = FigureExporter(args, cfg)
+    exporter = DetectionMapExporter(args, cfg)
 
     sits_np = load_sits(args)  # (n_times, n_rows, n_cols, n_features)
     n_times, n_rows, n_cols, n_features = sits_np.shape
@@ -57,9 +56,8 @@ if __name__ == "__main__":
             f"splitting: {cfg.splitting}"
         )
 
-    backend_name = "torch-cuda" if cfg.is_gpu else args.backend
     detector = OnlineDCGDetector(
-        backend_name=backend_name,
+        backend_name=str(cfg.backend),
         h0_lr=1.0,
         iter_max=args.iter_max,
         tol=args.tol,
@@ -71,6 +69,7 @@ if __name__ == "__main__":
             window_size=args.window_size,
             stride=1,
             detector=detector,
+            backend=cfg.backend,
             splitting=cfg.splitting,
             verbose=0 if args.quiet else 1,
         )
@@ -80,7 +79,7 @@ if __name__ == "__main__":
             window_size=args.window_size,
             stride=1,
             detector=detector,
-            backend=args.backend,
+            backend=cfg.backend,
             splitting=cfg.splitting,
             verbose=0 if args.quiet else 1,
         )
@@ -95,23 +94,19 @@ if __name__ == "__main__":
     if not args.quiet:
         print(f"Total elapsed time: {elapsed:.2f}s")
 
-    glrt_map_np = (
-        glrt_map.detach().cpu().numpy()
-        if isinstance(glrt_map, torch.Tensor)
-        else glrt_map
-    )
+    glrt_map_np = get_data_on_device(glrt_map, "numpy")
 
-    # glrt_map is the accumulated GLRT across all dates, shape (n_rows, n_cols)
-    if exporter.active or args.show_interactive:
-        fig = plot_glrt_map(glrt_map_np, "Online DCG GLRT", cmap="jet")
-        exporter.save(fig, "dcg_online", elapsed, close=not args.show_interactive)
+    exporter.save(glrt_map_np, "dcg_online", elapsed, title="Online DCG GLRT", cmap="jet")
+    if args.show_interactive:
+        plot_glrt_map(glrt_map_np, "Online DCG GLRT", cmap="jet")
 
     if cfg.is_gpu and args.report_memory:
-        print(f"Peak GPU memory: {torch.cuda.max_memory_allocated() / 1e9:.2f} GB")
+        mem = peak_memory_bytes(cfg.backend)
+        if mem is not None:
+            print(f"Peak GPU memory: {mem / 1e9:.2f} GB")
 
     if args.show_interactive:
         plt.show()
 
     if not args.quiet:
         print("\nDone.")
-

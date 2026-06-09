@@ -8,7 +8,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 import argparse
-import torch
 import matplotlib.pyplot as plt
 from time import perf_counter
 
@@ -17,10 +16,10 @@ from sar_experiments.utils import (
     add_common_args,
     setup_run,
     load_sits,
-    FigureExporter,
+    DetectionMapExporter,
     plot_glrt_map,
 )
-from src.backend import get_data_on_device
+from src.backend import get_data_on_device, reset_peak_memory, peak_memory_bytes
 from src.hardware_ressources import (
     OnlineImageResourceManager,
     OnlineImageGPURessourceManager,
@@ -32,7 +31,7 @@ if __name__ == "__main__":
     add_common_args(parser)
     args = parser.parse_args()
     cfg = setup_run(args)
-    exporter = FigureExporter(args, cfg)
+    exporter = DetectionMapExporter(args, cfg)
 
     sits_np = load_sits(args)  # (n_times, n_rows, n_cols, n_features)
     if not args.quiet:
@@ -53,9 +52,9 @@ if __name__ == "__main__":
         splitting=cfg.splitting,
         verbose=0 if args.quiet else 1,
     )
+    reset_peak_memory(cfg.backend)
     if cfg.is_gpu:
-        torch.cuda.reset_peak_memory_stats()
-        manager = OnlineImageGPURessourceManager(**manager_kwargs)
+        manager = OnlineImageGPURessourceManager(**manager_kwargs, backend=cfg.backend)
     else:
         manager = OnlineImageResourceManager(**manager_kwargs, backend=cfg.backend)
 
@@ -66,19 +65,18 @@ if __name__ == "__main__":
     if not args.quiet:
         print(f"Took {elapsed:.2f}s.")
 
-    if exporter.active or args.show_interactive:
-        fig = plot_glrt_map(
-            get_data_on_device(results, "numpy"),
-            "Online Gaussian GLRT",
-        )
-        exporter.save(fig, f"gaussian_online_{args.backend}", elapsed, close=not args.show_interactive)
+    results_np = get_data_on_device(results, "numpy")
+    exporter.save(results_np, f"gaussian_online_{args.backend}", elapsed, title="Online Gaussian GLRT")
+    if args.show_interactive:
+        plot_glrt_map(results_np, "Online Gaussian GLRT")
 
     if args.report_memory and cfg.is_gpu:
-        print(f"PEAK_GPU_MEMORY_BYTES={torch.cuda.max_memory_allocated()}")
+        mem = peak_memory_bytes(cfg.backend)
+        if mem is not None:
+            print(f"PEAK_GPU_MEMORY_BYTES={mem}")
 
     if args.show_interactive:
         plt.show()
 
     if not args.quiet:
         print("\nDone.")
-

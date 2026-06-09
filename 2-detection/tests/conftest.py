@@ -13,7 +13,51 @@ parent_path = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(parent_path))
 
 
-@pytest.fixture(params=[
+# ── Backend availability predicates ───────────────────────────────────────────
+
+def cupy_available() -> bool:
+    """True if CuPy is installed and a CUDA device is present."""
+    try:
+        import cupy
+        return cupy.cuda.is_available()
+    except (ImportError, Exception):
+        return False
+
+
+def jax_available() -> bool:
+    """True if JAX (CPU) is installed."""
+    try:
+        import jax  # noqa: F401
+        return True
+    except ImportError:
+        return False
+
+
+def jax_cuda_available() -> bool:
+    """True if JAX is installed and a CUDA GPU is present."""
+    try:
+        import jax
+        return len(jax.devices("gpu")) > 0
+    except Exception:
+        return False
+
+
+def jax_metal_available() -> bool:
+    """True if jax-metal is installed and a Metal device is present."""
+    try:
+        import jax
+        return len(jax.devices("metal")) > 0
+    except Exception:
+        return False
+
+
+# ── Shared parametrize list ───────────────────────────────────────────────────
+#
+# Use ALL_BACKEND_PARAMS in @pytest.mark.parametrize("backend_name", ALL_BACKEND_PARAMS)
+# so new backends are exercised everywhere without touching individual tests.
+# Unavailable backends are automatically skipped.
+
+ALL_BACKEND_PARAMS = [
     "numpy",
     "torch-cpu",
     pytest.param(
@@ -22,9 +66,64 @@ sys.path.insert(0, str(parent_path))
             not torch.backends.mps.is_available(), reason="MPS not available"
         ),
     ),
-])
+    pytest.param(
+        "cupy",
+        marks=pytest.mark.skipif(
+            not cupy_available(), reason="CuPy / CUDA not available"
+        ),
+    ),
+    pytest.param(
+        "jax-cpu",
+        marks=pytest.mark.skipif(not jax_available(), reason="JAX not installed"),
+    ),
+    pytest.param(
+        "jax-cuda",
+        marks=pytest.mark.skipif(
+            not jax_cuda_available(), reason="JAX GPU (CUDA) not available"
+        ),
+    ),
+    pytest.param(
+        "jax-metal",
+        marks=pytest.mark.skipif(
+            not jax_metal_available(), reason="jax-metal not available"
+        ),
+    ),
+]
+
+# Subset for tests that only make sense on CPU backends
+CPU_BACKEND_PARAMS = [
+    "numpy",
+    "torch-cpu",
+    pytest.param(
+        "jax-cpu",
+        marks=pytest.mark.skipif(not jax_available(), reason="JAX not installed"),
+    ),
+]
+
+
+# ── Helper for cross-backend comparison ───────────────────────────────────────
+
+def as_numpy_for_compare(x) -> np.ndarray:
+    """Convert any backend array to numpy for comparison in tests."""
+    if isinstance(x, np.ndarray):
+        return x
+    if isinstance(x, torch.Tensor):
+        return x.detach().cpu().numpy()
+    try:
+        import cupy as cp
+        if isinstance(x, cp.ndarray):
+            return cp.asnumpy(x)
+    except ImportError:
+        pass
+    # JAX or anything else
+    return np.asarray(x)
+
+
+# ── Fixtures ──────────────────────────────────────────────────────────────────
+
+@pytest.fixture(params=ALL_BACKEND_PARAMS)
 def backend_name(request):
-    """Parametrized fixture for different backend names."""
+    """Parametrized fixture covering all available backends."""
     return request.param
 
 
