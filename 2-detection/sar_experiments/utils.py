@@ -2,6 +2,7 @@
 
 import argparse
 import ast
+import math
 import sys
 from dataclasses import dataclass
 from datetime import datetime
@@ -142,6 +143,16 @@ def add_common_args(parser: argparse.ArgumentParser) -> None:
         action="store_true",
         help="Print peak GPU memory at the end (torch-cuda only).",
     )
+    parser.add_argument(
+        "--repeat-times",
+        type=int,
+        default=1,
+        help=(
+            "Repeat the time axis N times using a palindrome bounce "
+            "(e.g. T=68, repeat=2 → 136 frames: 0..67, 66..1, 0..1, ...). "
+            "Materialises the full repeated array in RAM."
+        ),
+    )
 
 
 @dataclass
@@ -240,6 +251,37 @@ def setup_run(args) -> RunConfig:
     )
 
 
+def repeat_times_palindrome(sits: np.ndarray, repeat: int) -> np.ndarray:
+    """Extend the time axis by bouncing the sequence back and forth.
+
+    The bounce pattern avoids duplicate frames at turn-around points:
+    one cycle is [0, 1, ..., T-1, T-2, ..., 1] (length 2*(T-1)).
+    The cycle is tiled and sliced to produce exactly repeat*T frames,
+    so the result always materialises as a contiguous in-RAM array.
+
+    Parameters
+    ----------
+    sits : np.ndarray, shape (T, ...)
+    repeat : int
+        Multiplier for the time axis (repeat=1 returns sits unchanged).
+
+    Returns
+    -------
+    np.ndarray, shape (repeat*T, ...)
+    """
+    if repeat <= 1:
+        return sits
+    T = sits.shape[0]
+    if T < 2:
+        return np.concatenate([sits] * repeat, axis=0)
+    # One bounce cycle: forward then back (no duplicate endpoints)
+    cycle = list(range(T)) + list(range(T - 2, 0, -1))  # length 2*(T-1)
+    target = repeat * T
+    n_tiles = math.ceil(target / len(cycle))
+    indices = (cycle * n_tiles)[:target]
+    return np.ascontiguousarray(sits[indices])
+
+
 def load_sits(args) -> np.ndarray:
     """Load SITS data, applying optional debug crop and wavelet decomposition.
 
@@ -273,6 +315,15 @@ def load_sits(args) -> np.ndarray:
         )  # (rows, cols, p*R*L, times)
         sits = np.ascontiguousarray(sits_wavelet.transpose(3, 0, 1, 2))
         logger.info(f"  Shape after wavelet: {sits.shape}")
+
+    repeat = getattr(args, "repeat_times", 1)
+    if repeat > 1:
+        T_orig = sits.shape[0]
+        sits = repeat_times_palindrome(np.asarray(sits), repeat)
+        logger.info(
+            f"Time axis repeated x{repeat} (palindrome bounce): "
+            f"{T_orig} → {sits.shape[0]} frames"
+        )
 
     return sits
 
