@@ -22,13 +22,17 @@ dependencies = [
 
 # Optional extras — not installed by default (platform / hardware specific).
 # Install with:
-#   uv sync --extra jax          # CPU and CUDA
+#   uv sync --extra jax          # JAX CPU-only
+#   uv sync --extra jax-cuda     # JAX with CUDA 12 GPU support
 #   uv sync --extra jax-metal    # Apple Silicon GPU
 #   uv sync --extra cupy         # NVIDIA CUDA (adjust suffix for your driver)
 [project.optional-dependencies]
 jax = [
     "jax>=0.4",
     "jaxlib>=0.4",
+]
+jax-cuda = [
+    "jax[cuda12]>=0.4",
 ]
 jax-metal = [
     "jax-metal>=0.1",
@@ -37,3 +41,9 @@ cupy = [
     # cupy-cuda12x covers CUDA 12.x; change to cupy-cuda11x for CUDA 11.x
     "cupy-cuda12x>=13",
 ]
+
+# jax[cuda12] pulls jaxlib-cuda12-plugin etc. from the JAX CUDA index.
+[[tool.uv.index]]
+name = "jax-cuda-releases"
+url = "https://storage.googleapis.com/jax-releases/jax_cuda_releases.html"
+explicit = true

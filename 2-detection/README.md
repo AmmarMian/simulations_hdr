@@ -2,6 +2,16 @@
 
 Ce répertoire contient le code pour reproduire les résultats présentés dans le chapitre 2 de ma dissertation de HDR.
 
+## Installation
+
+```sh
+uv sync                                  # base deps (numpy, torch-cpu, scipy…)
+uv sync --extra cupy                     # CuPy / CUDA GPU
+uv sync --extra jax                      # JAX CPU
+uv sync --extra jax-cuda                 # JAX CUDA GPU
+uv sync --extra cupy --extra jax         # combine extras freely
+```
+
 ## Data
 
 Pour certaines figures, il est nécessaire d'avoir des données réelles en Sonar et SAR:

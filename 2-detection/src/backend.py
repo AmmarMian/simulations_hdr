@@ -115,9 +115,19 @@ class Backend:
         # with a complex dtype would crash before get_data_on_device can help.
         if self.lib == "jax":
             try:
-                import jax
+                import os, jax
+                # Prevent XLA from pre-allocating ~75% of GPU memory at init.
+                os.environ.setdefault("XLA_PYTHON_CLIENT_PREALLOCATE", "false")
                 platform = "gpu" if self.device == "cuda" else self.device
-                jax.config.update("jax_default_device", jax.devices(platform)[0])
+                try:
+                    jax.config.update("jax_default_device", jax.devices(platform)[0])
+                except RuntimeError as e:
+                    available = [d.platform for d in jax.devices()]
+                    raise RuntimeError(
+                        f"JAX cannot use device '{self.device}' (platform='{platform}'). "
+                        f"Available JAX devices: {available}. "
+                        f"Install jax[cuda] for GPU support, or use 'jax-cpu' instead."
+                    ) from e
             except ImportError:
                 pass  # JAX not installed; will fail later when actually used
 

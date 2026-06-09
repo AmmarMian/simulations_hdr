@@ -197,6 +197,18 @@ def setup_run(args) -> RunConfig:
                 "uv sync --extra jax-metal  (Apple Silicon)"
             )
             sys.exit(1)
+        if args.backend == "jax-cuda":
+            import jax as _jax
+            gpu_devices = _jax.devices("gpu") if any(
+                d.platform == "gpu" for d in _jax.devices()
+            ) else []
+            if not gpu_devices:
+                print(
+                    "ERROR: jax-cuda backend requested but no CUDA GPU is available to JAX. "
+                    "A CUDA-enabled jaxlib is required. "
+                    "Install it with: uv sync --extra jax-cuda"
+                )
+                sys.exit(1)
 
     splitting_str = getattr(args, "splitting", None)
     if splitting_str is None:
