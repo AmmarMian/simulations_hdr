@@ -1,6 +1,7 @@
 # Online scaled Gaussian estimation
 # Author: Ammar Mian
 
+import logging
 from typing import Callable, List, Optional, Tuple, Union
 
 from .backend import (
@@ -12,6 +13,22 @@ from .backend import (
 )
 from .estimation import natural_gradient_scaled_gaussian, _rgrad_scaled_gaussian
 from .manifolds import ScaledGaussianFIM
+
+logger = logging.getLogger(__name__)
+
+
+class _InverseTStep:
+    """Inverse-t step size schedule: ``lr / t`` (1-indexed).
+
+    Implemented as a picklable callable class instead of a lambda so that
+    estimator instances can be serialised with ``pickle`` / ``joblib``.
+    """
+
+    def __init__(self, lr: float) -> None:
+        self.lr = lr
+
+    def __call__(self, t: int) -> float:
+        return self.lr / t
 
 
 # -----------------------------------------------------------------------
@@ -59,7 +76,7 @@ def online_natural_gradient_scaled_gaussian(
     n_features = X_batches.shape[-1]
 
     if step_fn is None:
-        step_fn = lambda t: lr / t
+        step_fn = _InverseTStep(lr)
 
     manifold = ScaledGaussianFIM(n_features, n_samples, backend_name=backend_name)
 
@@ -70,9 +87,9 @@ def online_natural_gradient_scaled_gaussian(
     history = [(Sigma, tau)]
 
     if verbosity:
-        print("Warm-started from batch 0")
-        print(f"{'Batch':<7} {'step':<10} {'||rS||':<12} {'||rt||':<12}")
-        print("-" * 44)
+        logger.debug("Warm-started from batch 0")
+        logger.debug("%-7s %-10s %-12s %-12s", "Batch", "step", "||rS||", "||rt||")
+        logger.debug("-" * 44)
 
     for t in range(1, n_batches):
         X_t = X_batches[t]  # (..., n_samples, n_features)
@@ -89,7 +106,7 @@ def online_natural_gradient_scaled_gaussian(
         if verbosity:
             nrS = to_scalar(be.real(be.sum(r_Sigma * r_Sigma.conj()))) ** 0.5
             nrt = to_scalar(be.real(be.sum(r_tau * r_tau))) ** 0.5
-            print(f"{t:<7} {step:<10.4f} {nrS:<12.4e} {nrt:<12.4e}")
+            logger.debug("%-7d %-10.4f %-12.4e %-12.4e", t, step, nrS, nrt)
 
     return Sigma, tau, history
 
@@ -126,7 +143,7 @@ class OnlineScaledGaussianEstimator:
         self.n_features = n_features
         self.n_samples = n_samples
         self.lr = lr
-        self.step_fn = step_fn if step_fn is not None else lambda t: lr / t
+        self.step_fn = step_fn if step_fn is not None else _InverseTStep(lr)
         self.backend_name = backend_name
         self.be = get_backend_module(backend_name)
         self._manifold = ScaledGaussianFIM(

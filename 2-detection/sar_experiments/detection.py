@@ -45,7 +45,6 @@ __all__ = [
     "TwoStepTylerGaussianGLRT",
     "DeterministicCompoundGaussianGLRT",
     "ScaleAndShapeKroneckerGLRT",
-    "_tyler_matandtext_fixed_point",
     # Online detectors
     "OnlineGaussianGLRT",
     "GaussianGLRTOnlineState",

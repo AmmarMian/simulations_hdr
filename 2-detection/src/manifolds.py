@@ -13,6 +13,8 @@ from .backend import (
     batched_trace,
     get_diagembed,
     is_complex,
+    cast_like,
+    to_complex,
     sample_standard_normal,
     sample_uniform,
 )
@@ -57,9 +59,9 @@ def sqrtm_invsqrtm_psd(
     inv_sqrt_eigvals = 1.0 / be.sqrt(be.abs(eigenvalues))
     inv_eigvals = 1.0 / be.abs(eigenvalues)
     if is_complex(backend_name, X):
-        inv_sqrt_eigvals = inv_sqrt_eigvals + 0j
-        sqrt_eigvals = sqrt_eigvals + 0j
-        inv_eigvals = inv_eigvals + 0j
+        inv_sqrt_eigvals = cast_like(inv_sqrt_eigvals, eigenvectors, backend_name)
+        sqrt_eigvals = cast_like(sqrt_eigvals, eigenvectors, backend_name)
+        inv_eigvals = cast_like(inv_eigvals, eigenvectors, backend_name)
 
     sqrtm = be.einsum(
         "...ab,...bc,...cd->...ad",
@@ -87,9 +89,9 @@ def inv_sqrtm_invsqrtm_psd(
     inv_sqrt_eigvals = 1.0 / be.sqrt(be.abs(eigenvalues))
     inv_eigvals = 1.0 / be.abs(eigenvalues)
     if is_complex(backend_name, X):
-        inv_sqrt_eigvals = inv_sqrt_eigvals + 0j
-        sqrt_eigvals = sqrt_eigvals + 0j
-        inv_eigvals = inv_eigvals + 0j
+        inv_sqrt_eigvals = cast_like(inv_sqrt_eigvals, eigenvectors, backend_name)
+        sqrt_eigvals = cast_like(sqrt_eigvals, eigenvectors, backend_name)
+        inv_eigvals = cast_like(inv_eigvals, eigenvectors, backend_name)
 
     inv = be.einsum(
         "...ab,...bc,...cd->...ad",
@@ -135,11 +137,7 @@ def sqrtm_psd(X: Array, backend: Union[str, Backend]) -> Array:
     eigenvalues, eigenvectors = batched_eigh(backend, X)
     sqrt_eigvals = be.sqrt(be.abs(eigenvalues))
     if is_complex(backend, X):
-        sqrt_eigvals = (
-            sqrt_eigvals.astype(eigenvectors.dtype)
-            if hasattr(sqrt_eigvals, "astype")
-            else sqrt_eigvals + 0j
-        )
+        sqrt_eigvals = cast_like(sqrt_eigvals, eigenvectors, backend)
     diag_sqrt = get_diagembed(backend, sqrt_eigvals)
 
     return be.einsum(
@@ -172,11 +170,7 @@ def invsqrtm_psd(X: Array, backend: Union[str, Backend]) -> Array:
     eigenvalues, eigenvectors = batched_eigh(backend, X)
     inv_sqrt_eigvals = 1.0 / be.sqrt(be.abs(eigenvalues))
     if is_complex(backend, X):
-        inv_sqrt_eigvals = (
-            inv_sqrt_eigvals.astype(eigenvectors.dtype)
-            if hasattr(inv_sqrt_eigvals, "astype")
-            else inv_sqrt_eigvals + 0j
-        )
+        inv_sqrt_eigvals = cast_like(inv_sqrt_eigvals, eigenvectors, backend)
     diag_inv_sqrt = get_diagembed(backend, inv_sqrt_eigvals)
 
     return be.einsum(
@@ -209,11 +203,7 @@ def logm_psd(X: Array, backend: Union[str, Backend]) -> Array:
     eigenvalues, eigenvectors = batched_eigh(backend, X)
     log_eigvals = be.log(be.abs(eigenvalues))
     if is_complex(backend, X):
-        log_eigvals = (
-            log_eigvals.astype(eigenvectors.dtype)
-            if hasattr(log_eigvals, "astype")
-            else log_eigvals + 0j
-        )
+        log_eigvals = cast_like(log_eigvals, eigenvectors, backend)
     diag_log = get_diagembed(backend, log_eigvals)
 
     return be.einsum(
@@ -568,7 +558,7 @@ class HermitianPositiveDefinite(Manifold):
         """Random unit tangent vector at point x."""
         u = sample_standard_normal(1, list(x.shape), self.backend_name)[0]
         u = multiherm(
-            u + 0j if is_complex(self.backend_name, x) else u, self.backend_name
+            to_complex(u, self.backend_name) if is_complex(self.backend_name, x) else u, self.backend_name
         )
         u = u / self.norm(x, u)
         return u
@@ -663,7 +653,7 @@ class SpecialHermitianPositiveDefinite(Manifold):
     def randvec(self, x: Array) -> Array:
         """Random unit tangent vector at point x."""
         u = sample_standard_normal(1, list(x.shape), self.backend_name)[0]
-        u = u + 0j if is_complex(self.backend_name, x) else u
+        u = to_complex(u, self.backend_name) if is_complex(self.backend_name, x) else u
         u = self.proj(x, u)
         u = u / self.norm(x, u)
         return u

@@ -8,9 +8,14 @@ import torch
 import sys
 from pathlib import Path
 
-# Add parent directory to path for imports
+# Add project root and 2-detection to path for imports
 parent_path = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(parent_path))
+_detection_path = str(Path(__file__).parent.parent)
+if _detection_path not in sys.path:
+    sys.path.insert(0, _detection_path)
+
+from src.backend import to_numpy  # noqa: E402
 
 
 # ── Backend availability predicates ───────────────────────────────────────────
@@ -105,18 +110,7 @@ CPU_BACKEND_PARAMS = [
 
 def as_numpy_for_compare(x) -> np.ndarray:
     """Convert any backend array to numpy for comparison in tests."""
-    if isinstance(x, np.ndarray):
-        return x
-    if isinstance(x, torch.Tensor):
-        return x.detach().cpu().numpy()
-    try:
-        import cupy as cp
-        if isinstance(x, cp.ndarray):
-            return cp.asnumpy(x)
-    except ImportError:
-        pass
-    # JAX or anything else
-    return np.asarray(x)
+    return to_numpy(x)
 
 
 # ── Fixtures ──────────────────────────────────────────────────────────────────

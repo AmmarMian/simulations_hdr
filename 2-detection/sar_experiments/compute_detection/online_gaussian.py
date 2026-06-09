@@ -8,6 +8,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 import argparse
+import logging
 import matplotlib.pyplot as plt
 from time import perf_counter
 
@@ -20,6 +21,7 @@ from sar_experiments.utils import (
     plot_glrt_map,
 )
 from src.backend import get_data_on_device, reset_peak_memory, peak_memory_bytes
+from src.logging_config import setup_logging, log_arguments
 from src.hardware_ressources import (
     OnlineImageResourceManager,
     OnlineImageGPURessourceManager,
@@ -30,18 +32,21 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser("Online Gaussian GLRT change detection.")
     add_common_args(parser)
     args = parser.parse_args()
+    setup_logging(quiet=args.quiet)
+    logger = logging.getLogger(__name__)
+    log_arguments(args)
+
     cfg = setup_run(args)
     exporter = DetectionMapExporter(args, cfg)
 
+    logger.info("Loading SITS data...")
     sits_np = load_sits(args)  # (n_times, n_rows, n_cols, n_features)
-    if not args.quiet:
-        print(
-            f"Image size: {sits_np.shape[1]}×{sits_np.shape[2]}, "
-            f"time steps: {sits_np.shape[0]}, splitting: {cfg.splitting}"
-        )
+    logger.info(
+        f"Data loaded: image size {sits_np.shape[1]}×{sits_np.shape[2]}, "
+        f"time steps {sits_np.shape[0]}, splitting {cfg.splitting}"
+    )
 
-    if not args.quiet:
-        print("\nComputing Online Gaussian GLRT...")
+    logger.info("Starting online Gaussian GLRT detection...")
 
     detector = OnlineGaussianGLRT(cfg.backend)
     manager_kwargs = dict(
@@ -62,8 +67,7 @@ if __name__ == "__main__":
     results = manager.process_all_data()
     elapsed = perf_counter() - t0
 
-    if not args.quiet:
-        print(f"Took {elapsed:.2f}s.")
+    logger.info(f"Detection completed in {elapsed:.2f}s.")
 
     results_np = get_data_on_device(results, "numpy")
     exporter.save(results_np, f"gaussian_online_{args.backend}", elapsed, title="Online Gaussian GLRT")
@@ -73,10 +77,9 @@ if __name__ == "__main__":
     if args.report_memory and cfg.is_gpu:
         mem = peak_memory_bytes(cfg.backend)
         if mem is not None:
-            print(f"PEAK_GPU_MEMORY_BYTES={mem}")
+            logger.info(f"Peak GPU memory: {mem / 1e9:.2f} GB (PEAK_GPU_MEMORY_BYTES={mem})")
 
     if args.show_interactive:
         plt.show()
 
-    if not args.quiet:
-        print("\nDone.")
+    logger.info("Done.")

@@ -81,12 +81,10 @@ def add_common_args(parser: argparse.ArgumentParser) -> None:
             "numpy",
             "torch-cpu",
             "torch-cuda",
-            "torch-mps",
             "cupy",
             "cupy-cuda",
             "jax-cpu",
             "jax-cuda",
-            "jax-metal",
         ],
         help="Computation backend (default: numpy).",
     )
@@ -180,6 +178,7 @@ def setup_run(args) -> RunConfig:
     if args.backend in ("cupy", "cupy-cuda"):
         try:
             import cupy
+
             if not cupy.cuda.is_available():
                 raise RuntimeError
         except (ImportError, RuntimeError):

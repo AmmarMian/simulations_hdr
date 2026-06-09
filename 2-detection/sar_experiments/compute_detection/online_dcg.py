@@ -8,15 +8,17 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 import argparse
+import logging
 import matplotlib.pyplot as plt
 from time import perf_counter
 
 from src.detection_online import OnlineDCGDetector
-from src.backend import get_data_on_device, peak_memory_bytes
+from src.backend import get_data_on_device, peak_memory_bytes, reset_peak_memory
 from src.hardware_ressources import (
     OnlineImageResourceManager,
     OnlineImageGPURessourceManager,
 )
+from src.logging_config import setup_logging, log_arguments
 from sar_experiments.utils import (
     add_common_args,
     setup_run,
@@ -44,17 +46,21 @@ if __name__ == "__main__":
         help="Convergence tolerance for H1 estimator (default 1e-8).",
     )
     args = parser.parse_args()
+    setup_logging(quiet=args.quiet)
+    logger = logging.getLogger(__name__)
+    log_arguments(args)
+
     cfg = setup_run(args)
     exporter = DetectionMapExporter(args, cfg)
 
+    logger.info("Loading SITS data...")
     sits_np = load_sits(args)  # (n_times, n_rows, n_cols, n_features)
     n_times, n_rows, n_cols, n_features = sits_np.shape
-    if not args.quiet:
-        print(
-            f"Data shape: {sits_np.shape}, "
-            f"backend: {args.backend}, window_size: {args.window_size}, "
-            f"splitting: {cfg.splitting}"
-        )
+    logger.info(
+        f"Data loaded: shape {sits_np.shape}, "
+        f"backend {args.backend}, window_size {args.window_size}, "
+        f"splitting {cfg.splitting}"
+    )
 
     detector = OnlineDCGDetector(
         backend_name=str(cfg.backend),
@@ -84,15 +90,14 @@ if __name__ == "__main__":
             verbose=0 if args.quiet else 1,
         )
 
-    if not args.quiet:
-        print("\nProcessing...")
+    logger.info("Starting online DCG detection processing...")
 
+    reset_peak_memory(cfg.backend)
     t0 = perf_counter()
     glrt_map = resource_manager.process_all_data()
     elapsed = perf_counter() - t0
 
-    if not args.quiet:
-        print(f"Total elapsed time: {elapsed:.2f}s")
+    logger.info(f"Detection completed in {elapsed:.2f}s.")
 
     glrt_map_np = get_data_on_device(glrt_map, "numpy")
 
@@ -103,10 +108,9 @@ if __name__ == "__main__":
     if cfg.is_gpu and args.report_memory:
         mem = peak_memory_bytes(cfg.backend)
         if mem is not None:
-            print(f"Peak GPU memory: {mem / 1e9:.2f} GB")
+            logger.info(f"Peak GPU memory: {mem / 1e9:.2f} GB")
 
     if args.show_interactive:
         plt.show()
 
-    if not args.quiet:
-        print("\nDone.")
+    logger.info("Done.")

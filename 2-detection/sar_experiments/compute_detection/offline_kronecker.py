@@ -6,6 +6,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 import argparse
+import logging
 import numpy as np
 import matplotlib.pyplot as plt
 from time import perf_counter
@@ -20,6 +21,7 @@ from sar_experiments.utils import (
     plot_glrt_map,
 )
 from src.backend import get_data_on_device, permute, reset_peak_memory, peak_memory_bytes
+from src.logging_config import setup_logging, log_arguments
 from src.hardware_ressources import ImageCPURessourceManager, ImageGPURessourceManager
 
 
@@ -47,18 +49,20 @@ if __name__ == "__main__":
         help="Available VRAM in MB for GPU auto-splitting (default: auto-detect).",
     )
     args = parser.parse_args()
+    setup_logging(quiet=args.quiet)
+    logger = logging.getLogger(__name__)
+    log_arguments(args)
 
-    # Kronecker detection requires the wavelet decomposition to build Kronecker structure.
-    # Warn the user but do not force it — they may have pre-processed data.
-    if not args.wavelet and not args.quiet:
-        print(
-            "Warning: Kronecker GLRT typically requires --wavelet to establish "
+    if not args.wavelet:
+        logger.warning(
+            "Kronecker GLRT typically requires --wavelet to establish "
             "the Kronecker structure (a = n_features, b = R×L)."
         )
 
     cfg = setup_run(args)
     exporter = DetectionMapExporter(args, cfg)
 
+    logger.info("Loading SITS data...")
     # Read n_features from the raw file before wavelet expands the channel dimension.
     # mmap_mode="r" makes this essentially free — only the header is accessed.
     n_features = np.load(require_time_first(args.data_path), mmap_mode="r").shape[3]
@@ -67,13 +71,12 @@ if __name__ == "__main__":
     b = args.wavelet_R * args.wavelet_L if args.wavelet else 1
     a = n_features
 
-    if not args.quiet:
-        print(
-            f"Image size: {sits_np.shape[1]}×{sits_np.shape[2]}, "
-            f"time steps: {sits_np.shape[0]}, "
-            f"channels: {sits_np.shape[3]}, "
-            f"Kronecker factors: a={a} (features), b={b} (R×L), p={a*b}"
-        )
+    logger.info(
+        f"Data loaded: image size {sits_np.shape[1]}×{sits_np.shape[2]}, "
+        f"time steps {sits_np.shape[0]}, "
+        f"channels {sits_np.shape[3]}, "
+        f"Kronecker factors: a={a} (features), b={b} (R×L), p={a*b}"
+    )
 
     p = sits_np.shape[3]
     if a * b != p:
@@ -90,11 +93,10 @@ if __name__ == "__main__":
     )
     sits_np = None
 
-    if not args.quiet:
-        print(
-            f"\nComputing Kronecker GLRT "
-            f"(a={a}, b={b}, backend={args.backend}, splitting={cfg.splitting})..."
-        )
+    logger.info(
+        f"Starting Kronecker GLRT detection "
+        f"(a={a}, b={b}, backend={args.backend}, splitting={cfg.splitting})..."
+    )
 
     kronecker_detector = ScaleAndShapeKroneckerGLRT(
         a=a,
@@ -127,8 +129,7 @@ if __name__ == "__main__":
     cd_results = manager.process_all_data()
     elapsed = perf_counter() - t0
 
-    if not args.quiet:
-        print(f"Took {elapsed:.2f}s.")
+    logger.info(f"Detection completed in {elapsed:.2f}s.")
 
     cd_results_np = get_data_on_device(cd_results, "numpy")
     title = f"Kronecker GLRT (a={a}, b={b})"
@@ -139,18 +140,17 @@ if __name__ == "__main__":
         title=title,
         colorbar_label="Log-likelihood ratio",
     )
-    if exporter.active and not args.quiet:
-        print(f"Exported to {cfg.export_path}/")
+    if exporter.active:
+        logger.info(f"Exported to {cfg.export_path}/")
     if args.show_interactive:
         plot_glrt_map(cd_results_np, title, colorbar_label="Log-likelihood ratio")
 
     if args.report_memory and cfg.is_gpu:
         mem = peak_memory_bytes(cfg.backend)
         if mem is not None:
-            print(f"PEAK_GPU_MEMORY_BYTES={mem}")
+            logger.info(f"Peak GPU memory: {mem / 1e9:.2f} GB (PEAK_GPU_MEMORY_BYTES={mem})")
 
     if args.show_interactive:
         plt.show()
 
-    if not args.quiet:
-        print("\nDone.")
+    logger.info("Done.")

@@ -2,6 +2,7 @@
 # Author: Ammar Mian
 # Date: 22/10/2025
 
+import logging
 from types import ModuleType
 from typing import Any, Callable, List, Optional, Tuple, Union
 
@@ -12,6 +13,7 @@ from .backend import (
     get_diagembed,
     is_complex,
     make_writable_copy,
+    masked_set,
     expand_dims,
     get_data_on_device,
     batched_eigh,
@@ -32,6 +34,8 @@ from rich.progress import (
     TimeElapsedColumn,
     TaskProgressColumn,
 )
+
+logger = logging.getLogger(__name__)
 
 
 # ------------------------------------------------------------------------
@@ -211,40 +215,44 @@ def _compute_covariance_update(
     backend_module = get_backend_module(backend_name)
 
     # Compute new covariance estimates
-    if debug:
-        print(
-            f"    cov_batch eigenvalues (sample 0): {backend_module.linalg.eigvalsh(cov_batch[0])}"
-        )
+    logger.debug(
+        "    cov_batch eigenvalues (sample 0): %s",
+        backend_module.linalg.eigvalsh(cov_batch[0]),
+    )
 
     inv_sqrt_cov = invsqrtm(cov_batch, backend_name)
-    if debug:
-        print(f"    invsqrtm any NaN: {backend_module.isnan(inv_sqrt_cov).any()}")
+    logger.debug("    invsqrtm any NaN: %s", backend_module.isnan(inv_sqrt_cov).any())
 
     temp = inv_sqrt_cov @ backend_module.swapaxes(X_batch, -1, -2)
-    if debug:
-        print(
-            f"    temp shape: {temp.shape}, any NaN: {backend_module.isnan(temp).any()}"
-        )
+    logger.debug(
+        "    temp shape: %s, any NaN: %s",
+        temp.shape,
+        backend_module.isnan(temp).any(),
+    )
 
     quadratic = backend_module.einsum(
         "...ij,...ji->...i", backend_module.swapaxes(temp, -1, -2).conj(), temp
     )
-    if debug:
-        print(
-            f"    quadratic shape: {quadratic.shape}, any NaN: {backend_module.isnan(quadratic).any()}"
-        )
-        print(
-            f"    quadratic range: min={backend_module.real(quadratic).min():.4e}, max={backend_module.real(quadratic).max():.4e}"
-        )
+    logger.debug(
+        "    quadratic shape: %s, any NaN: %s",
+        quadratic.shape,
+        backend_module.isnan(quadratic).any(),
+    )
+    logger.debug(
+        "    quadratic range: min=%.4e, max=%.4e",
+        backend_module.real(quadratic).min(),
+        backend_module.real(quadratic).max(),
+    )
 
     # Add backend_name to kwargs for m-estimator functions that need it (e.g., Huber)
     kwargs_with_backend = {**kwargs, "backend_name": backend_name}
     weights = m_estimator_function(
         backend_module.real(quadratic), **kwargs_with_backend
     )
-    if debug:
-        print(f"    weights any NaN: {backend_module.isnan(weights).any()}")
-        print(f"    weights range: min={weights.min():.4e}, max={weights.max():.4e}")
+    logger.debug("    weights any NaN: %s", backend_module.isnan(weights).any())
+    logger.debug(
+        "    weights range: min=%.4e, max=%.4e", weights.min(), weights.max()
+    )
 
     # Expand weights dimensions for broadcasting: (..., n_samples) -> (..., 1, n_samples)
     weights_expanded = expand_dims(backend_name, backend_module.sqrt(weights), axis=-2)
@@ -252,8 +260,9 @@ def _compute_covariance_update(
     cov_new_batch = (
         (1 / X_batch.shape[-2]) * temp @ backend_module.swapaxes(temp, -1, -2).conj()
     )
-    if debug:
-        print(f"    cov_new_batch any NaN: {backend_module.isnan(cov_new_batch).any()}")
+    logger.debug(
+        "    cov_new_batch any NaN: %s", backend_module.isnan(cov_new_batch).any()
+    )
 
     # Condition for stopping
     err_batch = backend_module.linalg.norm(
@@ -377,10 +386,10 @@ def fixed_point_m_estimation_centered(
     try:
         while (backend_module.any(err > tol)) and (iteration < iter_max):
             if debug:
-                print(f"\nIteration {iteration}")
-                print(f"  mask_notconverged: {mask_notconverged}")
-                print(f"  err: {err}")
-                print(
+                logger.debug(f"Iteration {iteration}")
+                logger.debug(f"  mask_notconverged: {mask_notconverged}")
+                logger.debug(f"  err: {err}")
+                logger.debug(
                     f"  n_batches to process: {backend_module.sum(mask_notconverged)}"
                 )
 
@@ -390,8 +399,8 @@ def fixed_point_m_estimation_centered(
             n_matrices_to_process = X_batch.shape[0]
 
             if debug:
-                print(f"  X_batch.shape: {X_batch.shape}")
-                print(f"  cov_batch.shape: {cov_batch.shape}")
+                logger.debug(f"  X_batch.shape: {X_batch.shape}")
+                logger.debug(f"  cov_batch.shape: {cov_batch.shape}")
 
             # Check if we need to chunk the iteration for memory efficiency
             if (
@@ -399,7 +408,7 @@ def fixed_point_m_estimation_centered(
                 and n_matrices_to_process > iteration_chunk_size
             ):
                 if debug:
-                    print(f"  Chunking into batches of {iteration_chunk_size}")
+                    logger.debug(f"  Chunking into batches of {iteration_chunk_size}")
 
                 # Process in chunks
                 cov_new_batch_list = []
@@ -443,14 +452,14 @@ def fixed_point_m_estimation_centered(
             iteration += 1
 
             if debug:
-                print(f"  err_batch: {err_batch}")
-                print(
+                logger.debug(f"  err_batch: {err_batch}")
+                logger.debug(
                     f"  cov_new_batch[0,0,0]: {cov_new_batch[0, 0, 0] if cov_new_batch.shape[0] > 0 else 'N/A'}"
                 )
 
             # Updating covariances and err
-            covariances[mask_notconverged] = cov_new_batch
-            err[mask_notconverged] = to_dtype(err_batch, err.dtype, backend_name)
+            covariances = masked_set(covariances, mask_notconverged, cov_new_batch, backend_name)
+            err = masked_set(err, mask_notconverged, to_dtype(err_batch, err.dtype, backend_name), backend_name)
 
             # Apply normalization if specified
             if normalization is not None:
@@ -462,8 +471,8 @@ def fixed_point_m_estimation_centered(
             mask_notconverged = err > tol
 
             if debug:
-                print(f"  After update - err: {err}")
-                print(f"  After update - mask_notconverged: {mask_notconverged}")
+                logger.debug(f"  After update - err: {err}")
+                logger.debug(f"  After update - mask_notconverged: {mask_notconverged}")
 
             if verbosity:
                 pbar.update(
@@ -1026,7 +1035,7 @@ def natural_gradient_scaled_gaussian(
         tau = make_writable_copy(backend_name, init_tau)
 
     # Per-batch convergence tracking
-    not_converged = be.ones(batch_shape, dtype=bool)
+    not_converged = get_data_on_device(be.ones(batch_shape, dtype=bool), backend_name)
     inf_val = create_scalar_array(float('inf'), X.real.dtype, backend_name)
     grad_norms = be.full(batch_shape, inf_val, dtype=X.real.dtype)
     grad_norms = get_data_on_device(grad_norms, backend_name)
@@ -1059,7 +1068,7 @@ def natural_gradient_scaled_gaussian(
             [r_Sigma_nc, r_tau_nc[..., 0]]))))
 
         # Update convergence: norms computed for not_converged subset
-        grad_norms[not_converged] = norms_nc
+        grad_norms = masked_set(grad_norms, not_converged, norms_nc, backend_name)
         step_mask_nc = norms_nc > tol  # within nc, who still needs stepping
         not_converged = grad_norms > tol  # global mask after update
 
@@ -1084,8 +1093,8 @@ def natural_gradient_scaled_gaussian(
             max_backtracks=armijo_max_backtracks,
         )
 
-        Sigma[not_converged] = Sigma_new
-        tau[not_converged] = tau_new
+        Sigma = masked_set(Sigma, not_converged, Sigma_new, backend_name)
+        tau = masked_set(tau, not_converged, tau_new, backend_name)
 
     if verbosity:
         pbar.stop()

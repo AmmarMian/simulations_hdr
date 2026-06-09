@@ -4,7 +4,7 @@
 
 from dataclasses import dataclass
 from types import ModuleType
-from typing import Optional, Literal, Union
+from typing import TYPE_CHECKING, Optional, Literal, Union
 import numpy as np
 import numpy.typing as npt
 import torch
@@ -13,10 +13,21 @@ from torch.nn import Unfold
 
 # ── Type annotations ──────────────────────────────────────────────────────────
 
-# Note: cupy and jax arrays are also valid at runtime; optional deps prevent
-# listing them statically here.
+# Runtime-safe aliases: only numpy and torch are guaranteed to be present.
 type ArrayLike = npt.ArrayLike | torch.Tensor
 type Array = npt.NDArray | torch.Tensor
+
+if TYPE_CHECKING:
+    # Extend aliases with optional backend types for static analysis.
+    # Wrapped in try/except so type-checkers that have the packages installed
+    # get the full union; those that don't fall back to the base aliases.
+    try:
+        import cupy as _cupy_t
+        import jax as _jax_t
+        type Array = npt.NDArray | torch.Tensor | _cupy_t.ndarray | _jax_t.Array  # type: ignore[no-redef]
+        type ArrayLike = npt.ArrayLike | torch.Tensor | _cupy_t.ndarray | _jax_t.Array  # type: ignore[no-redef]
+    except ImportError:
+        pass
 
 
 # ── Backend type registry ─────────────────────────────────────────────────────
@@ -97,6 +108,18 @@ class Backend:
                 f"Device {self.device!r} is not valid for lib={self.lib!r}. "
                 f"Valid choices: {valid[self.lib]}"
             )
+        # Pin the JAX default device at construction time so that all
+        # jnp.eye / jnp.ones / jnp.zeros etc. land on the right device
+        # immediately, without requiring an explicit get_data_on_device call.
+        # On Apple Silicon, JAX defaults to Metal; without this, any jnp call
+        # with a complex dtype would crash before get_data_on_device can help.
+        if self.lib == "jax":
+            try:
+                import jax
+                platform = "gpu" if self.device == "cuda" else self.device
+                jax.config.update("jax_default_device", jax.devices(platform)[0])
+            except ImportError:
+                pass  # JAX not installed; will fail later when actually used
 
     # ── Factories ──────────────────────────────────────────────────────────
 
@@ -255,6 +278,7 @@ def get_backend_module(backend: Union[str, "Backend"]) -> ModuleType:
     if b.lib == "jax":
         try:
             import jax.numpy as jnp
+            # Default device already pinned in Backend.__post_init__.
             return jnp
         except ImportError:
             raise ImportError(
@@ -319,21 +343,37 @@ def get_data_on_device(data: Array, backend: Union[str, "Backend"]) -> Array:
     if b.lib == "jax":
         try:
             import jax
-            import jax.numpy as jnp
         except ImportError:
             raise ImportError(
                 "Backend 'jax' requires JAX. "
                 "Install it with: uv sync --extra jax or --extra jax-metal"
             ) from None
-        arr_np = to_numpy(data) if not _is_jax_array(data) else data
-        if not _is_jax_array(arr_np):
-            arr_jax = jnp.asarray(arr_np)
-        else:
-            arr_jax = arr_np
-        # Metal does not support float64; downcast automatically
-        if b.device == "metal" and arr_jax.dtype == jnp.float64:
-            arr_jax = arr_jax.astype(jnp.float32)
-        return jax.device_put(arr_jax, b.jax_device)
+
+        if _is_jax_array(data):
+            # Already a JAX array — just move to the requested device.
+            return jax.device_put(data, b.jax_device)
+
+        # Convert to numpy first so we have a plain buffer to hand to device_put.
+        # We deliberately avoid jnp.asarray() here: on Apple Silicon that call
+        # stages through the default backend (Metal) even when targeting CPU,
+        # which fails for complex dtypes that Metal does not support.
+        arr_np = to_numpy(data)
+
+        if b.device == "metal":
+            # Metal does not support float64 → downcast
+            if arr_np.dtype == np.float64:
+                arr_np = arr_np.astype(np.float32)
+            # Metal does not support complex numbers at all
+            elif np.issubdtype(arr_np.dtype, np.complexfloating):
+                raise TypeError(
+                    "JAX Metal backend does not support complex-valued arrays "
+                    f"(got dtype {arr_np.dtype}). "
+                    "Use --backend jax-cpu for complex SAR data."
+                )
+
+        # jax.device_put accepts a numpy array directly and places it on the
+        # requested device without routing through the default backend.
+        return jax.device_put(arr_np, b.jax_device)
 
 
 # ── Central numpy extraction ──────────────────────────────────────────────────
@@ -513,6 +553,45 @@ def make_writable_copy(backend: Union[str, "Backend"], x: Array) -> Array:
     return bm.array(x)
 
 
+def masked_set(
+    x: Array,
+    mask: Array,
+    values: Array,
+    backend: Union[str, "Backend"],
+) -> Array:
+    """Set ``x[mask] = values`` in a backend-agnostic way.
+
+    JAX arrays are immutable, so ``x[mask] = values`` raises a ``TypeError``
+    at runtime.  This helper abstracts the difference:
+
+    * **numpy / torch / cupy** — performs the standard in-place assignment
+      ``x[mask] = values`` and returns *x*.
+    * **jax** — returns ``x.at[mask].set(values)`` (out-of-place), which must
+      be assigned back by the caller (``x = masked_set(x, mask, v, backend)``).
+
+    Parameters
+    ----------
+    x : Array
+        Target array to update.
+    mask : Array
+        Boolean index array.
+    values : Array
+        Values to write at the masked positions.
+    backend : str or Backend
+
+    Returns
+    -------
+    Array
+        Updated array.  For JAX this is a **new** array; for all other
+        backends it is the same object as *x* (mutated in-place).
+    """
+    b = _normalize_backend(backend)
+    if b.lib == "jax":
+        return x.at[mask].set(values)
+    x[mask] = values
+    return x
+
+
 def permute(backend: Union[str, "Backend"], x: Array, dims: tuple) -> Array:
     """Permute array axes, works for all backends.
 
@@ -649,7 +728,7 @@ def get_diagembed(backend: Union[str, "Backend"], x: Array) -> Array:
     if _is_torch_module(bm):
         return bm.diag_embed(x)
     # numpy / cupy / jax: einsum approach (none have diag_embed)
-    eye_matrix = bm.eye(x.shape[-1])
+    eye_matrix = bm.eye(x.shape[-1], dtype=x.dtype)
     target_shape = x.shape + (x.shape[-1],)
     eye_broadcasted = bm.broadcast_to(eye_matrix, target_shape)
     return bm.einsum("...i,...ij->...ij", x, eye_broadcasted)
@@ -728,6 +807,61 @@ def create_scalar_array(value, dtype, backend: Union[str, "Backend"]) -> Array:
     else:
         result = bm.array(value, dtype=dtype)
     return get_data_on_device(result, backend)
+
+
+def cast_like(x: Array, ref: Array, backend: Union[str, "Backend"]) -> Array:
+    """Cast *x* to the dtype of *ref*, in a backend-agnostic way.
+
+    Abstracts the ``ndarray.astype()`` (numpy/cupy/jax) vs
+    ``Tensor.to(dtype=...)`` (torch) difference so callers need not
+    check which API is available.
+
+    Parameters
+    ----------
+    x : Array
+        Array to cast.
+    ref : Array
+        Reference array whose dtype is used as the target.
+    backend : str or Backend
+
+    Returns
+    -------
+    Array
+        *x* with the same dtype as *ref*.
+    """
+    return to_dtype(x, ref.dtype, backend)
+
+
+def to_complex(x: Array, backend: Union[str, "Backend"]) -> Array:
+    """Promote a real array to its complex counterpart.
+
+    Maps float32 → complex64, float64 → complex128.  If *x* is already
+    complex, returns it unchanged.  Useful when real-valued eigenvalues
+    need to be cast back to complex before einsum with complex eigenvectors.
+
+    Parameters
+    ----------
+    x : Array
+        Real or complex array.
+    backend : str or Backend
+
+    Returns
+    -------
+    Array
+        Complex array with the same element size as *x*.
+    """
+    bm = get_backend_module(backend)
+    # numpy-compatible dtype check works for numpy, cupy, and jax
+    if not _is_torch_module(bm):
+        if np.issubdtype(x.dtype, np.complexfloating):
+            return x
+        complex_dtype = np.result_type(x.dtype, np.complex64)
+        return x.astype(complex_dtype)
+    # torch
+    if torch.is_complex(x):
+        return x
+    complex_dtype = torch.complex64 if x.dtype == torch.float32 else torch.complex128
+    return x.to(dtype=complex_dtype)
 
 
 def to_dtype(X: Array, dtype, backend: Union[str, "Backend"]) -> Array:
@@ -1023,12 +1157,14 @@ class Unfold2D:
     def _call_jax(self, data, b: "Backend") -> Array:
         """JAX path: compute on numpy host, then device_put result.
 
-        This avoids a dependency on a native JAX sliding-window primitive
-        for v1.  A ``jax.lax``-based implementation can replace this later.
+        Uses a numpy host fallback to avoid a dependency on a native
+        JAX sliding-window primitive for v1.  A jax.lax-based implementation
+        can replace this later.  We use jax.device_put(numpy_array, device)
+        directly rather than jnp.asarray() to avoid staging through the
+        default JAX backend (which is Metal on Apple Silicon, and Metal does
+        not support complex dtypes).
         """
         import jax
-        # Move to numpy for the patch extraction
-        import jax.numpy as jnp
         data_np = to_numpy(data)
         patches_np = self._call_numpy_like(data_np, np)
-        return jax.device_put(jnp.asarray(patches_np), b.jax_device)
+        return jax.device_put(patches_np, b.jax_device)

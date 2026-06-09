@@ -14,7 +14,8 @@ WARMUP=2
 
 mkdir -p "$RESULTS_DIR"
 
-COMPUTE_SCRIPT="${SCRIPT_DIR}/../compute_detection/offline.py"
+SCRIPT_GAUSSIAN="${SCRIPT_DIR}/../compute_detection/offline_gaussian.py"
+SCRIPT_DCG="${SCRIPT_DIR}/../compute_detection/offline_dcg.py"
 
 TOTAL=8
 CURRENT=0
@@ -33,31 +34,31 @@ run_benchmark() {
     "$cmd"
 }
 
-# CPU benchmarks
+# ---- CPU benchmarks ----------------------------------------------------------
 run_benchmark "cpu_gaussian_no_wavelet" \
-  "uv run ${COMPUTE_SCRIPT} ${DATA} ${WINDOW_SIZE} --backend torch-cpu --detectors gaussian --quiet"
+  "uv run ${SCRIPT_GAUSSIAN} ${DATA} ${WINDOW_SIZE} --backend torch-cpu --quiet"
 
 run_benchmark "cpu_gaussian_wavelet" \
-  "uv run ${COMPUTE_SCRIPT} ${DATA} ${WINDOW_SIZE} --backend torch-cpu --detectors gaussian --wavelet --quiet"
+  "uv run ${SCRIPT_GAUSSIAN} ${DATA} ${WINDOW_SIZE} --backend torch-cpu --wavelet --quiet"
 
 run_benchmark "cpu_dcg_no_wavelet" \
-  "uv run ${COMPUTE_SCRIPT} ${DATA} ${WINDOW_SIZE} --backend torch-cpu --detectors dcg --iteration-chunk 512 --quiet"
+  "uv run ${SCRIPT_DCG} ${DATA} ${WINDOW_SIZE} --backend torch-cpu --iteration-chunk 512 --quiet"
 
 run_benchmark "cpu_dcg_wavelet" \
-  "uv run ${COMPUTE_SCRIPT} ${DATA} ${WINDOW_SIZE} --backend torch-cpu --detectors dcg --wavelet --iteration-chunk 512 --splitting '(3,4)' --quiet"
+  "uv run ${SCRIPT_DCG} ${DATA} ${WINDOW_SIZE} --backend torch-cpu --wavelet --iteration-chunk 512 --splitting '(3,4)' --quiet"
 
-# GPU benchmarks
+# ---- GPU benchmarks ----------------------------------------------------------
 run_benchmark "gpu_gaussian_no_wavelet" \
-  "uv run ${COMPUTE_SCRIPT} ${DATA} ${WINDOW_SIZE} --backend torch-cuda --detectors gaussian --splitting '(3,3)' --quiet"
+  "uv run ${SCRIPT_GAUSSIAN} ${DATA} ${WINDOW_SIZE} --backend torch-cuda --splitting '(3,3)' --quiet"
 
 run_benchmark "gpu_gaussian_wavelet" \
-  "uv run ${COMPUTE_SCRIPT} ${DATA} ${WINDOW_SIZE} --backend torch-cuda --detectors gaussian --wavelet --splitting '(15,15)' --quiet"
+  "uv run ${SCRIPT_GAUSSIAN} ${DATA} ${WINDOW_SIZE} --backend torch-cuda --wavelet --splitting '(15,15)' --quiet"
 
 run_benchmark "gpu_dcg_no_wavelet" \
-  "uv run ${COMPUTE_SCRIPT} ${DATA} ${WINDOW_SIZE} --backend torch-cuda --detectors dcg --splitting '(15,15)' --iteration-chunk 512 --quiet"
+  "uv run ${SCRIPT_DCG} ${DATA} ${WINDOW_SIZE} --backend torch-cuda --splitting '(15,15)' --iteration-chunk 512 --quiet"
 
 run_benchmark "gpu_dcg_wavelet" \
-  "uv run ${COMPUTE_SCRIPT} ${DATA} ${WINDOW_SIZE} --backend torch-cuda --detectors dcg --wavelet --splitting '(31,31)' --iteration-chunk 512 --quiet"
+  "uv run ${SCRIPT_DCG} ${DATA} ${WINDOW_SIZE} --backend torch-cuda --wavelet --splitting '(31,31)' --iteration-chunk 512 --quiet"
 
 echo ""
 echo "All benchmarks done. Aggregating results and generating chart..."
@@ -69,7 +70,6 @@ import csv
 from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
-import matplot2tikz
 
 results_dir = Path(sys.argv[1])
 
@@ -96,7 +96,7 @@ for label in labels:
     mean = result["mean"]
     std = result["stddev"]
     rows.append({"label": label, "mean_s": mean, "std_s": std})
-    print(f"  {label}: {mean:.2f} ± {std:.2f} s")
+    print(f"  {label}: {mean:.2f} +/- {std:.2f} s")
 
 # Write CSV
 csv_path = results_dir / "benchmark_summary.csv"
@@ -123,7 +123,7 @@ def make_chart(rows, detector_name, results_dir):
     ax.set_xticks(x)
     ax.set_xticklabels(tick_labels, rotation=30, ha="right", fontsize=9)
     ax.set_ylabel("Time (s)")
-    ax.set_title(f"{detector_name} detection time (mean ± std)")
+    ax.set_title(f"{detector_name} detection time (mean +/- std)")
     ax.legend(handles=[
         Patch(color="steelblue",  label="CPU"),
         Patch(color="darkorange", label="GPU"),
@@ -132,11 +132,17 @@ def make_chart(rows, detector_name, results_dir):
 
     stem = f"benchmark_{detector_name.lower()}"
     png_path = results_dir / f"{stem}.png"
-    tex_path = results_dir / f"{stem}.tex"
     fig.savefig(png_path, dpi=150)
     print(f"Chart saved to {png_path}")
-    matplot2tikz.save(str(tex_path))
-    print(f"TikZ saved to {tex_path}")
+
+    try:
+        import matplot2tikz
+        tex_path = results_dir / f"{stem}.tex"
+        matplot2tikz.save(str(tex_path))
+        print(f"TikZ saved to {tex_path}")
+    except ImportError:
+        print("  matplot2tikz not installed, skipping .tex export.")
+
     plt.close(fig)
 
 gaussian_rows = [r for r in rows if "gaussian" in r["label"]]
