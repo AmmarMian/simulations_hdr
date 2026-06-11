@@ -1,6 +1,10 @@
 # Online Kronecker structured scaled Gaussian change detection on CPU or GPU.
 # Processes all dates sequentially maintaining H0 (pooled) and H1 (per-date) estimates.
 # Memory-efficient for large images.
+#
+# Kronecker structure is derived from the data:
+#   a = n_features  (number of SAR channels before wavelet)
+#   b = R * L       (wavelet sub-bands; 1 if --wavelet not used)
 
 import sys
 from pathlib import Path
@@ -10,6 +14,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 import argparse
 import logging
+import numpy as np
 import matplotlib.pyplot as plt
 from time import perf_counter
 
@@ -24,6 +29,7 @@ from utils import (
     add_common_args,
     setup_run,
     load_sits,
+    require_time_first,
     DetectionMapExporter,
     plot_glrt_map,
 )
@@ -34,18 +40,6 @@ if __name__ == "__main__":
         "Online Kronecker structured scaled Gaussian change detection on CPU or GPU backend."
     )
     add_common_args(parser)
-    parser.add_argument(
-        "--a",
-        type=int,
-        required=True,
-        help="Size of first Kronecker factor (p = a*b).",
-    )
-    parser.add_argument(
-        "--b",
-        type=int,
-        required=True,
-        help="Size of second Kronecker factor (p = a*b).",
-    )
     parser.add_argument(
         "--iter-max",
         type=int,
@@ -63,27 +57,38 @@ if __name__ == "__main__":
     logger = logging.getLogger(__name__)
     log_arguments(args)
 
+    if not args.wavelet:
+        logger.warning(
+            "Kronecker GLRT typically requires --wavelet to establish "
+            "the Kronecker structure (a = n_features, b = R×L)."
+        )
+
     cfg = setup_run(args)
     exporter = DetectionMapExporter(args, cfg)
 
     logger.info("Loading SITS data...")
-    sits_np = load_sits(args)  # (n_times, n_rows, n_cols, n_features)
-    n_times, n_rows, n_cols, n_features = sits_np.shape
-    logger.info(
-        f"Data loaded: shape {sits_np.shape}, "
-        f"backend {args.backend}, window_size {args.window_size}, "
-        f"splitting {cfg.splitting}"
-    )
+    n_features = np.load(require_time_first(args.data_path), mmap_mode="r").shape[3]
 
-    p = args.a * args.b
-    if n_features != p:
+    sits_np = load_sits(args)  # (n_times, n_rows, n_cols, p)
+    n_times, n_rows, n_cols, p = sits_np.shape
+
+    a = n_features
+    b = args.wavelet_R * args.wavelet_L if args.wavelet else 1
+
+    if a * b != p:
         raise ValueError(
-            f"Data has {n_features} features but a*b = {args.a}*{args.b} = {p}."
+            f"Kronecker structure a*b={a*b} does not match channel count p={p}. "
+            "Make sure --wavelet-R and --wavelet-L match the data."
         )
 
+    logger.info(
+        f"Data loaded: image size {n_rows}×{n_cols}, time steps {n_times}, "
+        f"channels {p}, Kronecker factors: a={a} (features), b={b} (R×L)"
+    )
+
     detector = OnlineKroneckerDetector(
-        a=args.a,
-        b=args.b,
+        a=a,
+        b=b,
         backend_name=str(cfg.backend),
         iter_max=args.iter_max,
         tol=args.tol,
@@ -110,7 +115,10 @@ if __name__ == "__main__":
             verbose=0 if args.quiet else 1,
         )
 
-    logger.info("Starting online Kronecker detection processing...")
+    logger.info(
+        f"Starting online Kronecker detection "
+        f"(a={a}, b={b}, backend={args.backend}, splitting={cfg.splitting})..."
+    )
 
     reset_peak_memory(cfg.backend)
     t0 = perf_counter()
@@ -120,15 +128,13 @@ if __name__ == "__main__":
     logger.info(f"Detection completed in {elapsed:.2f}s.")
 
     glrt_map_np = get_data_on_device(glrt_map, "numpy")
-
+    title = f"Online Kronecker GLRT (a={a}, b={b})"
     exporter.save(
-        glrt_map_np, "kronecker_online", elapsed,
-        title=f"Online Kronecker GLRT (a={args.a}, b={args.b})", cmap="jet"
+        glrt_map_np, f"kronecker_online_a{a}b{b}", elapsed,
+        title=title, cmap="jet"
     )
     if args.show_interactive:
-        plot_glrt_map(
-            glrt_map_np, f"Online Kronecker GLRT (a={args.a}, b={args.b})", cmap="jet"
-        )
+        plot_glrt_map(glrt_map_np, title, cmap="jet")
 
     if cfg.is_gpu and args.report_memory:
         mem = peak_memory_bytes(cfg.backend)
