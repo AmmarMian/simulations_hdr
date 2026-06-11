@@ -88,6 +88,7 @@ def online_natural_gradient_scaled_gaussian(
             X_t, Sigma, tau, r_Sigma, r_tau, manifold, be,
             alpha_0=alpha_0, c=armijo_c, rho=armijo_rho,
             max_backtracks=armijo_max_backtracks,
+            backend_name=backend_name,
         )
         history.append((Sigma, tau))
 
@@ -184,6 +185,7 @@ class OnlineScaledGaussianEstimator:
             X, self.Sigma, self.tau, r_Sigma, r_tau, self._manifold, self.be,
             alpha_0=self.alpha_0, c=self.armijo_c, rho=self.armijo_rho,
             max_backtracks=self.armijo_max_backtracks,
+            backend_name=self.backend_name,
         )
         self._t += 1
         return self.Sigma, self.tau

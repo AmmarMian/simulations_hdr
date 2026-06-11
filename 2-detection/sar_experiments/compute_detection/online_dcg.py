@@ -37,7 +37,7 @@ if __name__ == "__main__":
         "--iter-max",
         type=int,
         default=5,
-        help="Maximum iterations for H1 natural gradient estimator (default 5).",
+        help="Maximum iterations for H0 and H1 natural gradient estimators (default 5).",
     )
     parser.add_argument(
         "--tol",

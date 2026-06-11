@@ -921,13 +921,13 @@ def _armijo_backtracking_scaled_gaussian(
     c: float = 1e-4,
     rho: float = 0.5,
     max_backtracks: int = 30,
+    backend_name: Union[str, "Backend"] = "numpy",
 ):
-    """Armijo backtracking line search on ScaledGaussianFIM.
+    """Armijo backtracking line search on ScaledGaussianFIM with per-element step sizes.
 
-    Supports batched input. Shared step size across all batches.
-
-    Finds step size satisfying sufficient decrease:
-        f(retr(x, -alpha*g)) <= f(x) - c * alpha * <g, g>_x
+    Each batch element finds its own step size independently with no CPU-GPU sync.
+    NaN propagation into f_new naturally keeps armijo_ok False, so no explicit
+    NaN guards are needed.
 
     Parameters
     ----------
@@ -937,28 +937,35 @@ def _armijo_backtracking_scaled_gaussian(
     r_Sigma, r_tau : Array gradients of matching shapes
     manifold : ScaledGaussianFIM
     be : backend module
+    backend_name : str or Backend
     """
-    assert max_backtracks >= 1
-    tau_v   = tau[..., 0]       # (..., n) for manifold
+    tau_v   = tau[..., 0]       # (..., n)
     r_tau_v = r_tau[..., 0]     # (..., n)
     f0 = _neg_log_likelihood_scaled_gaussian(X, Sigma, tau, be)  # (...,)
     sq_grad_norm = be.abs(be.real(manifold.inner(
         [Sigma, tau_v], [r_Sigma, r_tau_v], [r_Sigma, r_tau_v])))  # (...,)
-    alpha = alpha_0
-    last_Sigma, last_tau = Sigma, tau  # fallback: current point if all retractions overflow
+
+    # Per-element step sizes and acceptance mask, kept on device
+    alpha    = get_data_on_device(be.ones(f0.shape, dtype=f0.dtype) * alpha_0, backend_name)
+    accepted = get_data_on_device(be.zeros(f0.shape, dtype=bool), backend_name)
+    last_Sigma, last_tau = Sigma, tau
+
     for _ in range(max_backtracks):
         Sigma_new, tau_new_v = manifold.retr(
-            [Sigma, tau_v], [-alpha * r_Sigma, -alpha * r_tau_v])
+            [Sigma, tau_v],
+            [-(alpha[..., None, None] * r_Sigma), -(alpha[..., None] * r_tau_v)],
+        )
         tau_new = tau_new_v[..., None]  # (..., n, 1)
-        if (be.any(be.isnan(Sigma_new)) or be.any(be.isinf(Sigma_new))
-                or be.any(be.isnan(tau_new_v)) or be.any(be.isinf(tau_new_v))):
-            alpha *= rho
-            continue
-        last_Sigma, last_tau = Sigma_new, tau_new
+
         f_new = _neg_log_likelihood_scaled_gaussian(X, Sigma_new, tau_new, be)
-        if be.all(f_new <= f0 - c * alpha * sq_grad_norm):
-            return alpha, Sigma_new, tau_new
-        alpha *= rho
+        armijo_ok = f_new <= f0 - c * alpha * sq_grad_norm  # (...,) on device
+
+        newly_accepted = armijo_ok & ~accepted
+        last_Sigma = be.where(newly_accepted[..., None, None], Sigma_new, last_Sigma)
+        last_tau   = be.where(newly_accepted[..., None, None], tau_new,   last_tau)
+        accepted   = accepted | armijo_ok
+        alpha      = be.where(accepted, alpha, alpha * rho)
+
     return alpha, last_Sigma, last_tau
 
 
@@ -1040,12 +1047,6 @@ def natural_gradient_scaled_gaussian(
     if init_tau is not None:
         tau = make_writable_copy(backend_name, init_tau)
 
-    # Per-batch convergence tracking
-    not_converged = get_data_on_device(be.ones(batch_shape, dtype=bool), backend_name)
-    inf_val = create_scalar_array(float('inf'), X.real.dtype, backend_name)
-    grad_norms = be.full(batch_shape, inf_val, dtype=X.real.dtype)
-    grad_norms = get_data_on_device(grad_norms, backend_name)
-
     pbar = None
     if verbosity:
         pbar = Progress(
@@ -1060,47 +1061,32 @@ def natural_gradient_scaled_gaussian(
         task_id = pbar.add_task("Gradient steps", total=iter_max)
 
     for k in range(iter_max):
-        # Only process not-converged batches
-        X_nc = X[not_converged]
-        Sigma_nc = Sigma[not_converged]
-        tau_nc = tau[not_converged]
+        r_Sigma, r_tau = _rgrad_scaled_gaussian(X, Sigma, tau, manifold, be)
 
-        r_Sigma_nc, r_tau_nc = _rgrad_scaled_gaussian(X_nc, Sigma_nc, tau_nc, manifold, be)
+        norms = be.sqrt(be.abs(be.real(manifold.inner(
+            [Sigma, tau[..., 0]],
+            [r_Sigma, r_tau[..., 0]],
+            [r_Sigma, r_tau[..., 0]]))))
 
-        # Compute per-batch gradient norms
-        norms_nc = be.sqrt(be.abs(be.real(manifold.inner(
-            [Sigma_nc, tau_nc[..., 0]],
-            [r_Sigma_nc, r_tau_nc[..., 0]],
-            [r_Sigma_nc, r_tau_nc[..., 0]]))))
-
-        # Update convergence: norms computed for not_converged subset
-        grad_norms = masked_set(grad_norms, not_converged, norms_nc, backend_name)
-        step_mask_nc = norms_nc > tol  # within nc, who still needs stepping
-        not_converged = grad_norms > tol  # global mask after update
+        # Convergence mask stays on device — no CPU sync
+        not_converged = norms > tol  # (...,) bool tensor on device
 
         if verbosity:
             pbar.update(task_id, advance=1)
 
-        if not be.any(not_converged):
-            break
-
-        # Step only for still-active batches, reusing computed gradients
         _, Sigma_new, tau_new = _armijo_backtracking_scaled_gaussian(
-            X[not_converged],
-            Sigma[not_converged],
-            tau[not_converged],
-            r_Sigma_nc[step_mask_nc],
-            r_tau_nc[step_mask_nc],
-            manifold,
-            be,
+            X, Sigma, tau, r_Sigma, r_tau, manifold, be,
             alpha_0=alpha_0,
             c=armijo_c,
             rho=armijo_rho,
             max_backtracks=armijo_max_backtracks,
+            backend_name=backend_name,
         )
 
-        Sigma = masked_set(Sigma, not_converged, Sigma_new, backend_name)
-        tau = masked_set(tau, not_converged, tau_new, backend_name)
+        # Freeze converged elements without leaving the device
+        nc = not_converged[..., None, None]
+        Sigma = be.where(nc, Sigma_new, Sigma)
+        tau   = be.where(nc, tau_new,   tau)
 
     if verbosity:
         pbar.stop()

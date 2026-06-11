@@ -150,6 +150,7 @@ def kronecker_mm_h1(
     A = make_writable_copy(backend_name, be.broadcast_to(eye_a, batch_shape + (a, a)))
     B = make_writable_copy(backend_name, be.broadcast_to(eye_b, batch_shape + (b, b)))
 
+    converged = get_data_on_device(be.zeros(batch_shape, dtype=bool), backend_name)
     for _ in range(iter_max):
         A_new, B_new = _kronecker_mm_step(M_i, A, B, N, a, b, backend_name)
 
@@ -159,10 +160,10 @@ def kronecker_mm_h1(
         delta_B = be.linalg.norm(B_new - B, axis=(-2, -1)) / be.linalg.norm(
             B, axis=(-2, -1)
         )
-        A, B = A_new, B_new
-
-        if bool(be.all(delta_A <= tol)) and bool(be.all(delta_B <= tol)):
-            break
+        converged = converged | ((delta_A <= tol) & (delta_B <= tol))
+        mask = (~converged)[..., None, None]
+        A = be.where(mask, A_new, A)
+        B = be.where(mask, B_new, B)
 
     iA = be.linalg.inv(A)
     iB = be.linalg.inv(B)
@@ -218,6 +219,7 @@ def kronecker_mm_h0(
     A = make_writable_copy(backend_name, be.broadcast_to(eye_a, batch_shape + (a, a)))
     B = make_writable_copy(backend_name, be.broadcast_to(eye_b, batch_shape + (b, b)))
 
+    converged = get_data_on_device(be.zeros(batch_shape, dtype=bool), backend_name)
     for _ in range(iter_max):
         A_new, B_new = _kronecker_mm_step(M_i_flat, A, B, T * N, a, b, backend_name)
 
@@ -227,10 +229,10 @@ def kronecker_mm_h0(
         delta_B = be.linalg.norm(B_new - B, axis=(-2, -1)) / be.linalg.norm(
             B, axis=(-2, -1)
         )
-        A, B = A_new, B_new
-
-        if bool(be.all(delta_A <= tol)) and bool(be.all(delta_B <= tol)):
-            break
+        converged = converged | ((delta_A <= tol) & (delta_B <= tol))
+        mask = (~converged)[..., None, None]
+        A = be.where(mask, A_new, A)
+        B = be.where(mask, B_new, B)
 
     # tau_n = mean_t Q_{t,n} / p  (average quadratic form over dates)
     iA = be.linalg.inv(A)
