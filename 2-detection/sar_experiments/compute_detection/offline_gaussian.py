@@ -18,7 +18,7 @@ from sar_experiments.utils import (
     DetectionMapExporter,
     plot_glrt_map,
 )
-from src.backend import get_data_on_device, permute, reset_peak_memory, peak_memory_bytes, oom_errors
+from src.backend import get_data_on_device, reset_peak_memory, peak_memory_bytes, oom_errors
 from src.hardware_ressources import ImageCPURessourceManager, ImageGPURessourceManager
 from src.logging_config import setup_logging, log_arguments
 
@@ -36,7 +36,7 @@ if __name__ == "__main__":
 
     logger.info("Loading SITS data...")
     sits_np = load_sits(args)  # (n_times, n_rows, n_cols, n_features)
-    sits_data = permute(cfg.backend, get_data_on_device(sits_np, cfg.backend), (0, 3, 1, 2))  # (T, p, H, W)
+    sits_data = np.ascontiguousarray(sits_np.transpose(0, 3, 1, 2))  # (T, p, H, W) — CPU, splits moved to GPU on demand
     sits_np = None
     logger.info(
         f"Data loaded: image size {sits_data.shape[-2]}×{sits_data.shape[-1]}, "

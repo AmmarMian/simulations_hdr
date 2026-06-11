@@ -20,7 +20,7 @@ from sar_experiments.utils import (
     DetectionMapExporter,
     plot_glrt_map,
 )
-from src.backend import get_data_on_device, permute, reset_peak_memory, peak_memory_bytes
+from src.backend import get_data_on_device, reset_peak_memory, peak_memory_bytes
 from src.logging_config import setup_logging, log_arguments
 from src.hardware_ressources import ImageCPURessourceManager, ImageGPURessourceManager
 
@@ -85,12 +85,8 @@ if __name__ == "__main__":
             "Make sure --wavelet-R and --wavelet-L match the data."
         )
 
-    # Convert to (T, p, H, W) for the batch resource managers via backend-agnostic permute
-    sits_data = permute(
-        cfg.backend,
-        get_data_on_device(np.asarray(sits_np), cfg.backend),
-        (0, 3, 1, 2),
-    )
+    # Keep on CPU — get_split moves each split to GPU on demand, avoiding full VRAM pre-allocation
+    sits_data = np.ascontiguousarray(sits_np.transpose(0, 3, 1, 2))  # (T, p, H, W)
     sits_np = None
 
     logger.info(

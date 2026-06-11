@@ -185,8 +185,8 @@ def apply_wavelet_to_sits(
     # Single FFT over the full stack: (n_rows, n_cols, p, T)
     spectre = np.fft.fftshift(np.fft.fft2(sits_data, axes=(0, 1)), axes=(0, 1))
 
-    # Output buffer: (n_rows, n_cols, p, R*L, T)
-    result = np.zeros((n_rows, n_cols, p, R * L, T), dtype=complex)
+    # Output buffer: (n_rows, n_cols, p, R*L, T) — preserve input dtype (complex64)
+    result = np.zeros((n_rows, n_cols, p, R * L, T), dtype=sits_data.dtype)
     for m in range(R):
         for n in range(L):
             H = _wavelet_filter(kappa, theta, m, n, width_k, width_t, d_1, d_2, L)
