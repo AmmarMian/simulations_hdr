@@ -3,8 +3,13 @@
 # Licensed under Apache 2.0
 # Vectorized apply_wavelet_to_sits added for batch processing of SITS data.
 
+import logging
+
 import numpy as np
 import matplotlib.pyplot as plt
+from rich.progress import track
+
+logger = logging.getLogger(__name__)
 
 # Physical defaults for Sentinel-1 SLC 1x1 data (L-band)
 DEFAULT_CENTER_FREQUENCY = 1.26e9  # Hz
@@ -122,7 +127,7 @@ def decompose_image_wavelet(
     )
     spectre = np.fft.fftshift(np.fft.fft2(image)) if shift else np.fft.fft2(image)
 
-    C = np.zeros((n_rows, n_cols, R * L), dtype=complex)
+    C = np.zeros((n_rows, n_cols, R * L), dtype=image.dtype if np.iscomplexobj(image) else complex)
     for m in range(R):
         for n in range(L):
             H = _wavelet_filter(kappa, theta, m, n, width_k, width_t, d_1, d_2, L)
@@ -144,6 +149,8 @@ def apply_wavelet_to_sits(
     bandwidth=DEFAULT_BANDWIDTH,
     range_resolution=DEFAULT_RANGE_RESOLUTION,
     azimuth_resolution=DEFAULT_AZIMUTH_RESOLUTION,
+    decimate=True,
+    verbose=True,
 ):
     """Apply wavelet decomposition to a full SITS (Satellite Image Time Series).
 
@@ -170,10 +177,19 @@ def apply_wavelet_to_sits(
         Range pixel spacing in metres. Default: Sentinel-1 SLC 1x1.
     azimuth_resolution : float
         Azimuth pixel spacing in metres. Default: Sentinel-1 SLC 1x1.
+    decimate : bool
+        Downsample each sub-band by R (range) and L (azimuth) after filtering.
+        Output shape becomes (n_rows//R, n_cols//L, p*R*L, T) instead of
+        (n_rows, n_cols, p*R*L, T).  Total data volume equals the input,
+        so memory scales with the input size rather than R*L times it.
+        Default True.
+    verbose : bool
+        Show a progress bar over sub-band iterations. Default True.
 
     Returns
     -------
-    ndarray, shape (n_rows, n_cols, p*R*L, T), complex
+    ndarray, shape (out_rows, out_cols, p*R*L, T), complex
+        out_rows = n_rows//R if decimate else n_rows (same for cols).
         Each original polarisation i is expanded to R*L sub-bands placed at
         indices [i*R*L : (i+1)*R*L] in the feature dimension.
     """
@@ -185,18 +201,24 @@ def apply_wavelet_to_sits(
     # Single FFT over the full stack: (n_rows, n_cols, p, T)
     spectre = np.fft.fftshift(np.fft.fft2(sits_data, axes=(0, 1)), axes=(0, 1))
 
-    # Output buffer: (n_rows, n_cols, p, R*L, T) — preserve input dtype (complex64)
-    result = np.zeros((n_rows, n_cols, p, R * L, T), dtype=sits_data.dtype)
-    for m in range(R):
-        for n in range(L):
-            H = _wavelet_filter(kappa, theta, m, n, width_k, width_t, d_1, d_2, L)
-            filtered = spectre * H[:, :, None, None]  # broadcast over (p, T)
-            result[:, :, :, m * L + n, :] = np.fft.ifft2(
-                np.fft.fftshift(filtered, axes=(0, 1)), axes=(0, 1)
-            )
+    out_rows = n_rows // R if decimate else n_rows
+    out_cols = n_cols // L if decimate else n_cols
 
-    # Merge p and R*L dims: (n_rows, n_cols, p, R*L, T) → (n_rows, n_cols, p*R*L, T)
-    return result.reshape(n_rows, n_cols, p * R * L, T)
+    # Output buffer — preserve input dtype (complex64 stays complex64)
+    result = np.zeros((out_rows, out_cols, p, R * L, T), dtype=sits_data.dtype)
+
+    sub_bands = [(m, n) for m in range(R) for n in range(L)]
+    iterator = track(sub_bands, description="  Wavelet sub-bands") if verbose else sub_bands
+
+    for m, n in iterator:
+        H = _wavelet_filter(kappa, theta, m, n, width_k, width_t, d_1, d_2, L)
+        sub_band = np.fft.ifft2(
+            np.fft.fftshift(spectre * H[:, :, None, None], axes=(0, 1)), axes=(0, 1)
+        )
+        result[:, :, :, m * L + n, :] = sub_band[::R, ::L, :, :] if decimate else sub_band
+
+    # Merge p and R*L dims: (..., p, R*L, T) → (..., p*R*L, T)
+    return result.reshape(out_rows, out_cols, p * R * L, T)
 
 
 # ---------------------------------------------------------------------------

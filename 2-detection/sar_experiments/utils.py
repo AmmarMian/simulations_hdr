@@ -132,6 +132,14 @@ def add_common_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--wavelet-L", type=int, default=2, help="Azimuth sub-bands (default 2)."
     )
+    parser.add_argument(
+        "--wavelet-no-decimate",
+        action="store_true",
+        help=(
+            "Disable sub-band decimation. Output is R*L times larger than input "
+            "(full-resolution redundant representation). Default: decimation ON."
+        ),
+    )
     parser.add_argument("--quiet", action="store_true", help="Suppress verbose output.")
     parser.add_argument(
         "--log-debug",
@@ -303,16 +311,19 @@ def load_sits(args) -> np.ndarray:
         sits = np.ascontiguousarray(sits[:, :100, :100, :])
 
     if args.wavelet:
+        decimate = not getattr(args, "wavelet_no_decimate", False)
         logger.info(
             f"Applying wavelet decomposition "
-            f"(R={args.wavelet_R}, L={args.wavelet_L})..."
+            f"(R={args.wavelet_R}, L={args.wavelet_L}, decimate={decimate})..."
         )
         # apply_wavelet_to_sits expects (rows, cols, features, times)
         sits_wavelet = apply_wavelet_to_sits(
             np.asarray(sits).transpose(1, 2, 3, 0),
             R=args.wavelet_R,
             L=args.wavelet_L,
-        )  # (rows, cols, p*R*L, times)
+            decimate=decimate,
+            verbose=not args.quiet,
+        )  # (out_rows, out_cols, p*R*L, times)
         sits = np.ascontiguousarray(sits_wavelet.transpose(3, 0, 1, 2))
         logger.info(f"  Shape after wavelet: {sits.shape}")
 
