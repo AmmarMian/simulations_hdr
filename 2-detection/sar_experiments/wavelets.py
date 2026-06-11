@@ -198,6 +198,10 @@ def apply_wavelet_to_sits(
         n_rows, n_cols, bandwidth, range_resolution, azimuth_resolution, center_frequency, R, L
     )
 
+    if verbose:
+        logger.info(
+            f"  Computing 2-D FFT over ({n_rows}×{n_cols}, p={p}, T={T}) stack..."
+        )
     # Single FFT over the full stack: (n_rows, n_cols, p, T)
     spectre = np.fft.fftshift(np.fft.fft2(sits_data, axes=(0, 1)), axes=(0, 1))
 
@@ -208,7 +212,7 @@ def apply_wavelet_to_sits(
     result = np.zeros((out_rows, out_cols, p, R * L, T), dtype=sits_data.dtype)
 
     sub_bands = [(m, n) for m in range(R) for n in range(L)]
-    iterator = track(sub_bands, description="  Wavelet sub-bands") if verbose else sub_bands
+    iterator = track(sub_bands, description="  Applying sub-band filters") if verbose else sub_bands
 
     for m, n in iterator:
         H = _wavelet_filter(kappa, theta, m, n, width_k, width_t, d_1, d_2, L)
