@@ -11,7 +11,7 @@ from .backend import (
     make_writable_copy,
     batched_trace,
 )
-from .manifolds import sqrtm_psd, inv_sqrtm_invsqrtm_psd
+from .manifolds import sqrtm_psd, inv_sqrtm_invsqrtm_psd, KroneckerHermitianPositiveScaledGaussian
 
 
 def _kronecker_quadratic_forms(
@@ -242,3 +242,179 @@ def kronecker_mm_h0(
     tau = Q.mean(-2) / (a * b)  # mean over T: (..., N)
 
     return A, B, tau
+
+
+# -----------------------------------------------------------------------
+# Riemannian natural gradient for Kronecker scaled Gaussian model
+# -----------------------------------------------------------------------
+
+def _neg_log_likelihood_kronecker_scaled_gaussian(
+    X: Array,
+    A: Array,
+    B: Array,
+    tau: Array,
+    a: int,
+    b: int,
+    backend_name: str,
+) -> Array:
+    """Negative log-likelihood for Kronecker scaled Gaussian (det(A)=det(B)=1).
+
+    Parameters
+    ----------
+    X : Array of shape (..., N, p) where p = a*b
+    A : Array of shape (..., a, a)
+    B : Array of shape (..., b, b)
+    tau : Array of shape (..., N, 1)
+    a, b : int
+
+    Returns
+    -------
+    Array of shape (...)
+    """
+    be = get_backend_module(backend_name)
+    N, p = X.shape[-2], X.shape[-1]
+    M_i = X.reshape(*X.shape[:-1], a, b).swapaxes(-1, -2)  # (..., N, b, a)
+    iA = be.linalg.inv(A)
+    iB = be.linalg.inv(B)
+    Q = _kronecker_quadratic_forms(M_i, iA, iB, backend_name)  # (..., N)
+    tau_flat = tau[..., 0]  # (..., N)
+    L = p * be.log(tau_flat) + Q / tau_flat
+    return be.sum(L, axis=-1) / (N * p)
+
+
+def _rgrad_kronecker_scaled_gaussian(
+    X: Array,
+    A: Array,
+    B: Array,
+    tau: Array,
+    manifold: KroneckerHermitianPositiveScaledGaussian,
+    be,
+    a: int,
+    b: int,
+    backend_name: str,
+) -> Tuple[Array, Array, Array]:
+    """Riemannian gradient of neg-log-likelihood for Kronecker scaled Gaussian.
+
+    Gradient on the product manifold SHPD(a) x SHPD(b) x SPV(N) with FIM
+    weights [b/p, a/p, 1/N]. Ported from rgrad_scaledgaussian_kronecker in
+    the original non-backend-agnostic implementation.
+
+    Parameters
+    ----------
+    X : Array of shape (..., N, p)
+    A : Array of shape (..., a, a)
+    B : Array of shape (..., b, b)
+    tau : Array of shape (..., N, 1)
+    manifold : KroneckerHermitianPositiveScaledGaussian
+    be : backend module
+    a, b : int
+
+    Returns
+    -------
+    r_A : Array of shape (..., a, a)
+    r_B : Array of shape (..., b, b)
+    r_tau : Array of shape (..., N)
+    """
+    N, p = X.shape[-2], X.shape[-1]
+    M_i = X.reshape(*X.shape[:-1], a, b).swapaxes(-1, -2)  # (..., N, b, a)
+    M_i_H = be.swapaxes(M_i, -1, -2).conj()  # (..., N, a, b)
+
+    iA = be.linalg.inv(A)
+    iB = be.linalg.inv(B)
+    tau_flat = tau[..., 0]  # (..., N)
+
+    # Gradient for A: proj_SHPD(A, M_i.T @ iB.conj() @ M_i.conj())
+    # = proj_SHPD(A, conj(M_i^H @ iB @ M_i))
+    iB_M = iB[..., None, :, :] @ M_i  # (..., N, b, a)
+    M_num_A = M_i_H @ iB_M  # (..., N, a, a) = M_i^H @ iB @ M_i
+    M_grad_A = M_num_A.conj()  # (..., N, a, a)
+    weighted_A = (M_grad_A / (b * tau_flat[..., None, None])).sum(-3) / N
+    r_A = -manifold.manifolds[0].proj(A, weighted_A)  # (..., a, a)
+
+    # Gradient for B: proj_SHPD(B, M_i @ iA.conj() @ M_i^H)
+    M_grad_B = M_i @ iA[..., None, :, :].conj() @ M_i_H  # (..., N, b, b)
+    weighted_B = (M_grad_B / (a * tau_flat[..., None, None])).sum(-3) / N
+    r_B = -manifold.manifolds[1].proj(B, weighted_B)  # (..., b, b)
+
+    # Gradient for tau: tau_n - Q_n/p
+    Q = _kronecker_quadratic_forms(M_i, iA, iB, backend_name)  # (..., N)
+    r_tau = tau_flat - Q / p  # (..., N)
+
+    return r_A, r_B, r_tau
+
+
+def _armijo_backtracking_kronecker_scaled_gaussian(
+    X: Array,
+    A: Array,
+    B: Array,
+    tau: Array,
+    r_A: Array,
+    r_B: Array,
+    r_tau: Array,
+    manifold: KroneckerHermitianPositiveScaledGaussian,
+    be,
+    a: int,
+    b: int,
+    alpha_0: float = 1.0,
+    c: float = 1e-4,
+    rho: float = 0.5,
+    max_backtracks: int = 30,
+    backend_name: str = "numpy",
+) -> Tuple[Array, Array, Array, Array]:
+    """Per-batch Armijo backtracking line search for Kronecker scaled Gaussian.
+
+    Parameters
+    ----------
+    X : Array of shape (..., N, p)
+    A, B : Arrays of shape (..., a, a) and (..., b, b)
+    tau : Array of shape (..., N, 1)
+    r_A, r_B : Riemannian gradients (..., a, a) and (..., b, b)
+    r_tau : Riemannian gradient (..., N)
+    manifold : KroneckerHermitianPositiveScaledGaussian
+    a, b : int
+
+    Returns
+    -------
+    alpha : Array of shape (...)
+    A_new, B_new, tau_new : updated parameters
+    """
+    tau_v = tau[..., 0]  # (..., N)
+    f0 = _neg_log_likelihood_kronecker_scaled_gaussian(X, A, B, tau, a, b, backend_name)
+    sq_grad_norm = be.abs(be.real(manifold.inner(
+        [A, B, tau_v], [r_A, r_B, r_tau], [r_A, r_B, r_tau]
+    )))
+    grad_norm_finite = be.isfinite(sq_grad_norm)
+
+    alpha = get_data_on_device(be.ones(f0.shape, dtype=f0.dtype) * alpha_0, backend_name)
+    accepted = get_data_on_device(be.zeros(f0.shape, dtype=bool), backend_name)
+    last_A, last_B, last_tau = A, B, tau
+
+    for _ in range(max_backtracks):
+        result = manifold.retr(
+            [A, B, tau_v],
+            [
+                -(alpha[..., None, None] * r_A),
+                -(alpha[..., None, None] * r_B),
+                -(alpha[..., None] * r_tau),
+            ],
+        )
+        A_new, B_new, tau_v_new = result[0], result[1], result[2]
+        tau_new = tau_v_new[..., None]
+
+        f_new = _neg_log_likelihood_kronecker_scaled_gaussian(
+            X, A_new, B_new, tau_new, a, b, backend_name
+        )
+        armijo_ok = be.where(
+            grad_norm_finite,
+            f_new <= f0 - c * alpha * sq_grad_norm,
+            be.isfinite(f_new) & (f_new < f0),
+        )
+
+        newly_accepted = armijo_ok & ~accepted
+        last_A = be.where(newly_accepted[..., None, None], A_new, last_A)
+        last_B = be.where(newly_accepted[..., None, None], B_new, last_B)
+        last_tau = be.where(newly_accepted[..., None, None], tau_new, last_tau)
+        accepted = accepted | armijo_ok
+        alpha = be.where(accepted, alpha, alpha * rho)
+
+    return alpha, last_A, last_B, last_tau
