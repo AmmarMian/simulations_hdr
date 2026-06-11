@@ -945,6 +945,12 @@ def _armijo_backtracking_scaled_gaussian(
     sq_grad_norm = be.abs(be.real(manifold.inner(
         [Sigma, tau_v], [r_Sigma, r_tau_v], [r_Sigma, r_tau_v])))  # (...,)
 
+    # When the gradient norm overflows (very large gradient, far from optimum),
+    # the standard Armijo slope condition f_new <= f0 - c*alpha*inf = -inf can
+    # never be satisfied, so no step is accepted.  Fall back to plain sufficient
+    # decrease f_new < f0 for those elements.
+    grad_norm_finite = be.isfinite(sq_grad_norm)  # (...,)
+
     # Per-element step sizes and acceptance mask, kept on device
     alpha    = get_data_on_device(be.ones(f0.shape, dtype=f0.dtype) * alpha_0, backend_name)
     accepted = get_data_on_device(be.zeros(f0.shape, dtype=bool), backend_name)
@@ -958,7 +964,11 @@ def _armijo_backtracking_scaled_gaussian(
         tau_new = tau_new_v[..., None]  # (..., n, 1)
 
         f_new = _neg_log_likelihood_scaled_gaussian(X, Sigma_new, tau_new, be)
-        armijo_ok = f_new <= f0 - c * alpha * sq_grad_norm  # (...,) on device
+        armijo_ok = be.where(
+            grad_norm_finite,
+            f_new <= f0 - c * alpha * sq_grad_norm,
+            be.isfinite(f_new) & (f_new < f0),
+        )
 
         newly_accepted = armijo_ok & ~accepted
         last_Sigma = be.where(newly_accepted[..., None, None], Sigma_new, last_Sigma)

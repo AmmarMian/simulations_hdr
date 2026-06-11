@@ -171,6 +171,10 @@ class OnlineScaledGaussianEstimator:
             Current texture estimate
         """
         X = get_data_on_device(X, self.backend_name)
+        assert X.shape[-2] == self.n_samples, (
+            f"n_samples mismatch in OnlineScaledGaussianEstimator.update: "
+            f"expected {self.n_samples}, got {X.shape[-2]}"
+        )
         if self._t == 0:
             self.Sigma, self.tau = natural_gradient_scaled_gaussian(
                 X, iter_max=self.iter_max, tol=self.tol, backend_name=self.backend_name

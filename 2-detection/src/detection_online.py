@@ -1,6 +1,7 @@
 # Online change detection for scaled Gaussian model
 # Author: Ammar Mian
 
+import math
 from dataclasses import dataclass
 from typing import Union, Tuple, Any
 
@@ -9,6 +10,7 @@ from .backend import (
     Array,
     get_backend_module,
     get_data_on_device,
+    batched_trace,
 )
 from .detection import OnlineDetector
 from .estimation import ScaledGaussianNaturalGradientEstimator
@@ -197,19 +199,25 @@ class OnlineDCGDetector(OnlineDetector):
         Returns
         -------
         Array of shape (...)
-            Negative log-likelihood, summed over samples, normalized by n*p
+            Negative log-likelihood summed over samples (unnormalised).
+            Factor 0.5 is applied so that 2*(L_H0 - L_H1) reproduces the
+            offline DeterministicCompoundGaussianGLRT formula exactly when
+            both estimators reach their respective MLEs (Mahalanobis q/tau→p
+            cancels; log|Sigma| and p*log(tau) terms match the offline).
         """
-        n_samples = X.shape[-2]
         n_features = X.shape[-1]
 
-        # Mahalanobis distances
         i_Sigma = self.be.linalg.inv(Sigma)
         q = self.be.real(
             self.be.einsum("...ni,...ij,...nj->...n", X.conj(), i_Sigma, X)
         )  # (..., n)
 
-        # Negative log-likelihood (det(Sigma)=1 already)
+        # Trace-normalised log-det: log|Σ_trace| where Σ_trace = Σ·p/Tr(Σ).
+        # The online estimator enforces det(Σ)≈1, so log|Σ_det|≈0; using
+        # log|Σ_trace| = p·log(p/Tr(Σ)) instead makes the scale match the
+        # offline DeterministicCompoundGaussianGLRT which uses Tyler (Tr=p).
+        trace_sigma = self.be.real(batched_trace(self.backend_name, Sigma))  # (...)
+        log_det_sigma_trace = n_features * math.log(n_features) - n_features * self.be.log(trace_sigma)
         tau_flat = tau[..., 0]  # (..., n)
-        L = n_features * self.be.log(tau_flat) + q / tau_flat  # (..., n)
-        # Sum over samples, return per-batch
-        return self.be.sum(L, axis=-1) / (n_samples * n_features)
+        L = n_features * self.be.log(tau_flat) + log_det_sigma_trace[..., None] + q / tau_flat
+        return 0.5 * self.be.sum(L, axis=-1)

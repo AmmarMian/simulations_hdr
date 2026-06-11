@@ -1,5 +1,6 @@
 # Online SAR detection tools
 
+import math
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -27,14 +28,16 @@ class GaussianGLRTOnlineState:
     Attributes
     ----------
     sum_St : Array
-        Accumulated sum of sample covariance matrices
-    logdet_sum_St : Array
-        Log determinant of sum_St
+        Accumulated sum of sample covariance matrices S_1 + ... + S_T
+    logdet_mean_St : Array
+        Log determinant of the *mean* covariance (1/T)(S_1 + ... + S_T),
+        i.e. logdet_sum_St - p*log(T). Stored normalised so that the
+        accumulated statistic matches the offline GaussianGLRT exactly.
     n_times : int
         Number of time steps processed
     """
     sum_St: Array
-    logdet_sum_St: Array
+    logdet_mean_St: Array
     n_times: int
 
 
@@ -60,20 +63,22 @@ class OnlineGaussianGLRT(OnlineDetector):
             Initial detection statistic
         """
         assert X.shape[-3] == 2, "Only two dates to initialize state"
+        n_features = X.shape[-1]
         S_matrices = self.be.einsum(
             "...ab,...bc->...ac", self.be.swapaxes(X, -1, -2).conj(), X
         )
         sum_St = self.be.sum(S_matrices, axis=-3)
-        logdet_sum_St = self.be.linalg.slogdet(sum_St)[1]
+        # log|(1/2)(S0+S1)| = log|S0+S1| - p*log(2) — matches offline GaussianGLRT
+        logdet_mean_St = self.be.linalg.slogdet(sum_St)[1] - n_features * math.log(2)
         res = (
-            2 * logdet_sum_St
+            2 * logdet_mean_St
             - self.be.linalg.slogdet(S_matrices[..., 0, :, :])[1]
             - self.be.linalg.slogdet(S_matrices[..., 1, :, :])[1]
         )
 
         state = GaussianGLRTOnlineState(
             sum_St=sum_St,
-            logdet_sum_St=logdet_sum_St,
+            logdet_mean_St=logdet_mean_St,
             n_times=2,
         )
 
@@ -103,23 +108,27 @@ class OnlineGaussianGLRT(OnlineDetector):
         Tuple[Array, GaussianGLRTOnlineState]
             result of test statistic and updated state over all batches dimensions.
         """
+        n_features = X.shape[-1]
         S_Tplusone = self.be.einsum(
             "...ab,...bc->...ac", self.be.swapaxes(X, -1, -2).conj(), X
         )
         sum_STplusone = state.sum_St + S_Tplusone
-        logdet_sum_STplusone = self.be.linalg.slogdet(sum_STplusone)[1]
         T = state.n_times
         new_T = T + 1
+        # log|(1/new_T) Σ S_t| — matches offline GaussianGLRT at each step
+        logdet_mean_STplusone = (
+            self.be.linalg.slogdet(sum_STplusone)[1] - n_features * math.log(new_T)
+        )
 
         new_state = GaussianGLRTOnlineState(
             sum_St=sum_STplusone,
-            logdet_sum_St=logdet_sum_STplusone,
+            logdet_mean_St=logdet_mean_STplusone,
             n_times=new_T,
         )
 
         return (
             past_value
-            + new_T * logdet_sum_STplusone
-            - T * state.logdet_sum_St
+            + new_T * logdet_mean_STplusone
+            - T * state.logdet_mean_St
             - self.be.linalg.slogdet(S_Tplusone)[1]
         ), new_state

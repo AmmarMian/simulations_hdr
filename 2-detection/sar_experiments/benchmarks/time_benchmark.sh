@@ -14,8 +14,8 @@ WARMUP=2
 
 mkdir -p "$RESULTS_DIR"
 
-SCRIPT_GAUSSIAN="${SCRIPT_DIR}/../compute_detection/offline_gaussian.py"
-SCRIPT_DCG="${SCRIPT_DIR}/../compute_detection/offline_dcg.py"
+SCRIPT_GAUSSIAN="${SCRIPT_DIR}/../compute_detection_real_data/offline_gaussian.py"
+SCRIPT_DCG="${SCRIPT_DIR}/../compute_detection_real_data/offline_dcg.py"
 
 TOTAL=8
 CURRENT=0
