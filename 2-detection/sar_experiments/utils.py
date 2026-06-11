@@ -424,6 +424,7 @@ class DetectionMapExporter(ResultExporter):
             fig = plot_glrt_map(data, title, cmap=cmap, colorbar_label=colorbar_label)
             _matplot2tikz.save(str(self._export_path / full_stem) + ".tex", figure=fig)
             plt.close(fig)
+            logger.info(f"  {full_stem}.tex — PGFPlots export")
 
         return out
 

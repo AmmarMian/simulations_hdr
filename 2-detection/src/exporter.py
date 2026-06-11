@@ -6,12 +6,15 @@
 #   {stem}_plot.py    — self-contained plot script; supports --tikz for PGFPlots export
 
 import json
+import logging
 import subprocess
 import sys
 from abc import ABC, abstractmethod
 from pathlib import Path
 
 import numpy as np
+
+logger = logging.getLogger(__name__)
 
 
 def _git_sha() -> str:
@@ -98,6 +101,11 @@ class ResultExporter(ABC):
         }
         Path(f"{out}.json").write_text(json.dumps(provenance, indent=2))
         Path(f"{out}_plot.py").write_text(self._plot_script(full_stem, **plot_kwargs))
+
+        logger.info(f"Exported results to {self._export_path}/")
+        logger.info(f"  {out.name}.npy  — result array {list(data.shape)} {data.dtype}")
+        logger.info(f"  {out.name}.json — provenance sidecar")
+        logger.info(f"  {out.name}_plot.py — standalone plot script")
 
         return out
 

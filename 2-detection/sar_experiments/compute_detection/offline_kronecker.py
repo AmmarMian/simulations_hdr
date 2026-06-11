@@ -140,8 +140,6 @@ if __name__ == "__main__":
         title=title,
         colorbar_label="Log-likelihood ratio",
     )
-    if exporter.active:
-        logger.info(f"Exported to {cfg.export_path}/")
     if args.show_interactive:
         plot_glrt_map(cd_results_np, title, colorbar_label="Log-likelihood ratio")
 
