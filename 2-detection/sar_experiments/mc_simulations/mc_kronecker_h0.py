@@ -31,7 +31,7 @@ from src.backend import get_data_on_device
 from src.simulation import T_vec_logspace, generate_kronecker_data, make_ab_true
 from sar_experiments.detection_offline import ScaleAndShapeKroneckerGLRT
 from src.detection_online import OnlineKroneckerDetector
-from utils import MCResultExporter, add_mc_args, aggregate, plot_mc_stats
+from utils import MCResultExporter, add_mc_args, aggregate, maybe_empty_cache, plot_mc_stats
 
 logger = logging.getLogger(__name__)
 
@@ -143,6 +143,7 @@ def _run_batched(data_numpy, T_vec, backend, a, b, iter_max, tol_online, tol_off
 
         for T in T_vec:
             offline_raw[T] = _to_numpy(offline_det.compute(data_device[..., :T, :, :]))
+            maybe_empty_cache(backend)
             progress.advance(task_off)
 
     return online_raw, offline_raw

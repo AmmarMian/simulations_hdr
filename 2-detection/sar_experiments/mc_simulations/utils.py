@@ -24,6 +24,20 @@ from plot_style import apply_style
 logger = logging.getLogger(__name__)
 
 
+def maybe_empty_cache(backend: str) -> None:
+    """Release PyTorch's cached (but unused) GPU memory after each T-loop step.
+
+    PyTorch's caching allocator retains freed tensors to amortise system calls.
+    Across many iterations of a T-loop each allocating hundreds of MB of
+    intermediates this cache can exhaust GPU memory even though live tensors are
+    small.  Calling this after every offline.compute() prevents that build-up.
+    No-op for non-CUDA backends.
+    """
+    if "cuda" in backend:
+        import torch
+        torch.cuda.empty_cache()
+
+
 # ---------------------------------------------------------------------------
 # Standalone plot script template
 # ---------------------------------------------------------------------------

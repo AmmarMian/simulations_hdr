@@ -46,6 +46,7 @@ from utils import (
     add_mc_args,
     add_mc_h1_args,
     aggregate_power,
+    maybe_empty_cache,
     plot_mc_power,
 )
 
@@ -221,6 +222,7 @@ def _run_batched(data_h0, T_vec, backend, a, b, n_samples, change_fraction,
 
         for T in T_vec:
             h0_off_raw[T] = _to_numpy(offline.compute(dh0[..., :T, :, :]))
+            maybe_empty_cache(backend)
             progress.advance(task_off)
 
     h0_stats = {"online": h0_on_raw, "offline": h0_off_raw}
@@ -244,6 +246,7 @@ def _run_batched(data_h0, T_vec, backend, a, b, n_samples, change_fraction,
             dh1 = get_data_on_device(data_h1_T, backend)
             h1_off_raw[T] = _to_numpy(offline.compute(dh1))
             h1_on_raw[T] = _to_numpy(_online_run(dh1, online))
+            maybe_empty_cache(backend)
             progress.advance(task)
 
     h1_stats = {"online": h1_on_raw, "offline": h1_off_raw}
