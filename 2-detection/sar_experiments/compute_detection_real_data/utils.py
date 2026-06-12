@@ -108,7 +108,7 @@ def add_common_args(parser: argparse.ArgumentParser) -> None:
         help="Also save a TikZ/PGFPlots figure (.tex) alongside the exported data.",
     )
     parser.add_argument(
-        "--storage-path", "--export-path",
+        "--storage-path", "--storage_path", "--export-path",
         dest="export_path",
         type=str,
         default="./exports",
