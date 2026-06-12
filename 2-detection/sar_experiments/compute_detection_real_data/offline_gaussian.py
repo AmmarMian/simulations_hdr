@@ -8,6 +8,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 import argparse
 import logging
+import numpy as np
 import matplotlib.pyplot as plt
 from time import perf_counter
 
