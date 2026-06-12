@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en" data-paper="warm" data-type="classic">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Home — HDR Simulations</title>
+
+  <!-- Fonts: EB Garamond (classic) + IBM Plex Sans (labels) + IBM Plex Mono (code) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="./assets/css/theme.css">
+
+  <!-- Apply saved theme before paint to avoid flash -->
+  <script>
+    (function(){
+      var p = localStorage.getItem("hdr-paper");
+      if (p) document.documentElement.setAttribute("data-paper", p);
+      var s = parseFloat(localStorage.getItem("hdr-scale"));
+      if (!isNaN(s)) document.documentElement.style.setProperty("--reading-scale", s);
+    })();
+  </script>
+</head>
+<body>
+
+<!-- ░░░ Topbar ░░░ -->
+<header class="topbar">
+  <button class="toolbtn" id="btn-toc" aria-label="Navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+      <path d="M4 6h16M4 12h16M4 18h10"/>
+    </svg>
+  </button>
+
+  <a class="site-title" href="./">HDR Simulations</a>
+
+  <div class="topbar-sep"></div>
+
+  <nav class="topbar-nav" aria-label="Site sections">
+    
+      
+        <a class="topbar-link active"
+           href=".">Home</a>
+      
+    
+      
+        <a class="topbar-link"
+           href="chapters/1-context/">Chapters</a>
+      
+    
+      
+        <a class="topbar-link"
+           href="experiments/">Experiments</a>
+      
+    
+      
+        <a class="topbar-link"
+           href="api/backend/">API</a>
+      
+    
+      
+        <a class="topbar-link"
+           href="kitchen-sink/">Kitchen Sink</a>
+      
+    
+  </nav>
+
+  <div class="topbar-spacer"></div>
+
+  <div style="display:inline-flex;align-items:center;gap:2px">
+    <button class="toolbtn" id="btn-az-sm" aria-label="Smaller text">
+      <span class="type-az-sm">A</span>
+    </button>
+    <button class="toolbtn" id="btn-az-lg" aria-label="Larger text">
+      <span class="type-az-lg">A</span>
+    </button>
+  </div>
+
+  <button class="toolbtn" id="btn-theme" aria-label="Toggle dark mode">
+    <svg id="ico-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>
+    </svg>
+    <svg id="ico-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" style="display:none">
+      <circle cx="12" cy="12" r="4"/>
+      <path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.4 1.4M17.6 17.6L19 19M19 5l-1.4 1.4M6.4 17.6L5 19"/>
+    </svg>
+  </button>
+</header>
+
+<div class="progress" id="progress"></div>
+
+<!-- ░░░ TOC drawer ░░░ -->
+<div class="toc-scrim" id="toc-scrim"></div>
+<div class="toc" id="toc" role="navigation" aria-label="Site navigation">
+  <p class="toc-site">HDR Simulations</p>
+  <p class="toc-sub">Companion code documentation for the HDR dissertation</p>
+
+  <nav>
+    
+      
+        <ul>
+          <li>
+            <a href="." class="active">
+              Home
+            </a>
+          </li>
+        </ul>
+      
+    
+      
+        <p class="toc-section-label">Chapters</p>
+        <ul>
+          
+            <li>
+              <a href="chapters/1-context/">
+                1 · Context
+              </a>
+            </li>
+          
+            <li>
+              <a href="chapters/2-detection/">
+                2 · Detection
+              </a>
+            </li>
+          
+            <li>
+              <a href="chapters/3-machinelearning/">
+                3 · Machine Learning
+              </a>
+            </li>
+          
+            <li>
+              <a href="chapters/4-deeplearning/">
+                4 · Deep Learning
+              </a>
+            </li>
+          
+        </ul>
+      
+    
+      
+        <ul>
+          <li>
+            <a href="experiments/">
+              Experiments
+            </a>
+          </li>
+        </ul>
+      
+    
+      
+        <p class="toc-section-label">API</p>
+        <ul>
+          
+            <li>
+              <a href="api/backend/">
+                backend
+              </a>
+            </li>
+          
+            <li>
+              <a href="api/estimation/">
+                estimation
+              </a>
+            </li>
+          
+            <li>
+              <a href="api/estimation_kronecker/">
+                estimation_kronecker
+              </a>
+            </li>
+          
+            <li>
+              <a href="api/estimation_online/">
+                estimation_online
+              </a>
+            </li>
+          
+            <li>
+              <a href="api/manifolds/">
+                manifolds
+              </a>
+            </li>
+          
+            <li>
+              <a href="api/detection/">
+                detection
+              </a>
+            </li>
+          
+            <li>
+              <a href="api/simulation/">
+                simulation
+              </a>
+            </li>
+          
+            <li>
+              <a href="api/exporter/">
+                exporter
+              </a>
+            </li>
+          
+        </ul>
+      
+    
+      
+        <ul>
+          <li>
+            <a href="kitchen-sink/">
+              Kitchen Sink
+            </a>
+          </li>
+        </ul>
+      
+    
+  </nav>
+</div>
+
+<!-- ░░░ Page ░░░ -->
+<div class="page-wrap">
+  <div class="page-body">
+
+    <main class="page-content" id="content">
+      <h1 id="hdr-simulations">HDR Simulations</h1>
+<p>Companion code for the HDR dissertation. Each chapter directory reproduces a set of figures; this site documents the structure, explains how to run experiments, and provides a searchable reference for all ~100s of experiment configurations and the underlying library API.</p>
+<h2 id="chapter-map">Chapter map</h2>
+<table>
+<thead>
+<tr>
+<th>Directory</th>
+<th>Chapter</th>
+<th>Stack</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>1-context/</code></td>
+<td>Context &amp; background figures</td>
+<td>numpy, scipy</td>
+</tr>
+<tr>
+<td><code>2-detection/</code></td>
+<td>Change detection in SAR imagery</td>
+<td>numpy · torch · cupy · jax</td>
+</tr>
+<tr>
+<td><code>3-machinelearning/</code></td>
+<td><em>(forthcoming)</em></td>
+<td>scikit-learn · torch</td>
+</tr>
+<tr>
+<td><code>4-deeplearning/</code></td>
+<td><em>(forthcoming)</em></td>
+<td>torch</td>
+</tr>
+</tbody>
+</table>
+<h2 id="shared-utilities">Shared utilities</h2>
+<p><code>shared/plot_style.py</code> — dark serif theme applied across all chapters for consistent dissertation aesthetics.</p>
+<h2 id="installation">Installation</h2>
+<p>Each chapter declares its own extras. Install only what you need:</p>
+<div class="language-sh highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span>
+<span class="normal">8</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># base (numpy, torch-cpu, scipy)</span>
+uv<span class="w"> </span>sync
+
+<span class="c1"># chapter 2 — optional compute backends</span>
+uv<span class="w"> </span>sync<span class="w"> </span>--extra<span class="w"> </span>cupy<span class="w">        </span><span class="c1"># NVIDIA CUDA</span>
+uv<span class="w"> </span>sync<span class="w"> </span>--extra<span class="w"> </span>jax<span class="w">         </span><span class="c1"># JAX CPU</span>
+uv<span class="w"> </span>sync<span class="w"> </span>--extra<span class="w"> </span>jax-cuda<span class="w">    </span><span class="c1"># JAX CUDA</span>
+uv<span class="w"> </span>sync<span class="w"> </span>--extra<span class="w"> </span>jax-metal<span class="w">   </span><span class="c1"># Apple Silicon</span>
+</code></pre></div></td></tr></table></div>
+<h2 id="running-an-experiment">Running an experiment</h2>
+<p>Experiments are managed by <a href="https://github.com/ammarmian/qanat">qanat</a>. Each YAML file in a chapter's <code>experiments/</code> directory defines one experiment.</p>
+<div class="language-sh highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span>
+<span class="normal">8</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># list all experiments for chapter 2</span>
+qanat<span class="w"> </span>experiment<span class="w"> </span>list
+
+<span class="c1"># run a specific experiment</span>
+qanat<span class="w"> </span>experiment<span class="w"> </span>run<span class="w"> </span>sar_mc_kron_h1
+
+<span class="c1"># plot results from the last run</span>
+qanat<span class="w"> </span>action<span class="w"> </span>run<span class="w"> </span>sar_mc_kron_h1<span class="w"> </span>plot
+</code></pre></div></td></tr></table></div>
+<p>Results land in <code>results/&lt;experiment_name&gt;/run_&lt;N&gt;/</code> alongside a self-contained <code>_plot.py</code> that can be run standalone.</p>
+    </main>
+
+    
+    <aside class="page-aside">
+      <nav class="aside-toc" aria-label="On this page">
+        <p class="aside-toc-label">On this page</p>
+        <ul>
+          
+            <li>
+              <a href="#hdr-simulations">HDR Simulations</a>
+              
+                <ul>
+                  
+                    <li><a href="#chapter-map">Chapter map</a></li>
+                  
+                    <li><a href="#shared-utilities">Shared utilities</a></li>
+                  
+                    <li><a href="#installation">Installation</a></li>
+                  
+                    <li><a href="#running-an-experiment">Running an experiment</a></li>
+                  
+                </ul>
+              
+            </li>
+          
+        </ul>
+      </nav>
+    </aside>
+    
+
+  </div>
+</div>
+
+<script src="./assets/js/theme.js"></script>
+</body>
+</html>

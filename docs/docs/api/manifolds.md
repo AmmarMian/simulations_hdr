@@ -1,0 +1,3 @@
+# `manifolds`
+
+::: src.manifolds

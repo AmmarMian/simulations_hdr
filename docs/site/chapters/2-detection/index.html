@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en" data-paper="warm" data-type="classic">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>2 · Detection — HDR Simulations</title>
+
+  <!-- Fonts: EB Garamond (classic) + IBM Plex Sans (labels) + IBM Plex Mono (code) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../../assets/css/theme.css">
+
+  <!-- Apply saved theme before paint to avoid flash -->
+  <script>
+    (function(){
+      var p = localStorage.getItem("hdr-paper");
+      if (p) document.documentElement.setAttribute("data-paper", p);
+      var s = parseFloat(localStorage.getItem("hdr-scale"));
+      if (!isNaN(s)) document.documentElement.style.setProperty("--reading-scale", s);
+    })();
+  </script>
+</head>
+<body>
+
+<!-- ░░░ Topbar ░░░ -->
+<header class="topbar">
+  <button class="toolbtn" id="btn-toc" aria-label="Navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+      <path d="M4 6h16M4 12h16M4 18h10"/>
+    </svg>
+  </button>
+
+  <a class="site-title" href="../../">HDR Simulations</a>
+
+  <div class="topbar-sep"></div>
+
+  <nav class="topbar-nav" aria-label="Site sections">
+    
+      
+        <a class="topbar-link"
+           href="../..">Home</a>
+      
+    
+      
+        <a class="topbar-link active"
+           href="../1-context/">Chapters</a>
+      
+    
+      
+        <a class="topbar-link"
+           href="../../experiments/">Experiments</a>
+      
+    
+      
+        <a class="topbar-link"
+           href="../../api/backend/">API</a>
+      
+    
+      
+        <a class="topbar-link"
+           href="../../kitchen-sink/">Kitchen Sink</a>
+      
+    
+  </nav>
+
+  <div class="topbar-spacer"></div>
+
+  <div style="display:inline-flex;align-items:center;gap:2px">
+    <button class="toolbtn" id="btn-az-sm" aria-label="Smaller text">
+      <span class="type-az-sm">A</span>
+    </button>
+    <button class="toolbtn" id="btn-az-lg" aria-label="Larger text">
+      <span class="type-az-lg">A</span>
+    </button>
+  </div>
+
+  <button class="toolbtn" id="btn-theme" aria-label="Toggle dark mode">
+    <svg id="ico-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>
+    </svg>
+    <svg id="ico-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" style="display:none">
+      <circle cx="12" cy="12" r="4"/>
+      <path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.4 1.4M17.6 17.6L19 19M19 5l-1.4 1.4M6.4 17.6L5 19"/>
+    </svg>
+  </button>
+</header>
+
+<div class="progress" id="progress"></div>
+
+<!-- ░░░ TOC drawer ░░░ -->
+<div class="toc-scrim" id="toc-scrim"></div>
+<div class="toc" id="toc" role="navigation" aria-label="Site navigation">
+  <p class="toc-site">HDR Simulations</p>
+  <p class="toc-sub">Companion code documentation for the HDR dissertation</p>
+
+  <nav>
+    
+      
+        <ul>
+          <li>
+            <a href="../..">
+              Home
+            </a>
+          </li>
+        </ul>
+      
+    
+      
+        <p class="toc-section-label">Chapters</p>
+        <ul>
+          
+            <li>
+              <a href="../1-context/">
+                1 · Context
+              </a>
+            </li>
+          
+            <li>
+              <a href="./" class="active">
+                2 · Detection
+              </a>
+            </li>
+          
+            <li>
+              <a href="../3-machinelearning/">
+                3 · Machine Learning
+              </a>
+            </li>
+          
+            <li>
+              <a href="../4-deeplearning/">
+                4 · Deep Learning
+              </a>
+            </li>
+          
+        </ul>
+      
+    
+      
+        <ul>
+          <li>
+            <a href="../../experiments/">
+              Experiments
+            </a>
+          </li>
+        </ul>
+      
+    
+      
+        <p class="toc-section-label">API</p>
+        <ul>
+          
+            <li>
+              <a href="../../api/backend/">
+                backend
+              </a>
+            </li>
+          
+            <li>
+              <a href="../../api/estimation/">
+                estimation
+              </a>
+            </li>
+          
+            <li>
+              <a href="../../api/estimation_kronecker/">
+                estimation_kronecker
+              </a>
+            </li>
+          
+            <li>
+              <a href="../../api/estimation_online/">
+                estimation_online
+              </a>
+            </li>
+          
+            <li>
+              <a href="../../api/manifolds/">
+                manifolds
+              </a>
+            </li>
+          
+            <li>
+              <a href="../../api/detection/">
+                detection
+              </a>
+            </li>
+          
+            <li>
+              <a href="../../api/simulation/">
+                simulation
+              </a>
+            </li>
+          
+            <li>
+              <a href="../../api/exporter/">
+                exporter
+              </a>
+            </li>
+          
+        </ul>
+      
+    
+      
+        <ul>
+          <li>
+            <a href="../../kitchen-sink/">
+              Kitchen Sink
+            </a>
+          </li>
+        </ul>
+      
+    
+  </nav>
+</div>
+
+<!-- ░░░ Page ░░░ -->
+<div class="page-wrap">
+  <div class="page-body">
+
+    <main class="page-content" id="content">
+      <h1 id="chapter-2-detection">Chapter 2 · Detection</h1>
+<p>Change-detection in SAR and sonar imagery using robust covariance estimators under Gaussian, DCG, and Kronecker-structured models.</p>
+<h2 id="library-src">Library (<code>src/</code>)</h2>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="../../api/backend/"><code>backend</code></a></td>
+<td>Multi-backend abstraction — numpy / torch / cupy / jax</td>
+</tr>
+<tr>
+<td><a href="../../api/estimation/"><code>estimation</code></a></td>
+<td>SCM, Tyler, Student-t, Huber, scaled-Gaussian natural gradient</td>
+</tr>
+<tr>
+<td><a href="../../api/estimation_kronecker/"><code>estimation_kronecker</code></a></td>
+<td>Kronecker MM algorithm (H0 and H1)</td>
+</tr>
+<tr>
+<td><a href="../../api/estimation_online/"><code>estimation_online</code></a></td>
+<td>Online estimators for scaled Gaussian and Kronecker models</td>
+</tr>
+<tr>
+<td><a href="../../api/manifolds/"><code>manifolds</code></a></td>
+<td>Riemannian geometry — HPD, SHPD, product manifolds</td>
+</tr>
+<tr>
+<td><a href="../../api/detection/"><code>detection</code></a></td>
+<td><code>Detector</code> / <code>OnlineDetector</code> ABCs</td>
+</tr>
+<tr>
+<td><a href="../../api/simulation/"><code>simulation</code></a></td>
+<td>Synthetic data generation — Gaussian / DCG / Kronecker, H0 / H1</td>
+</tr>
+<tr>
+<td><a href="../../api/exporter/"><code>exporter</code></a></td>
+<td>Result persistence (.npy + .json provenance + standalone _plot.py)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="experiments">Experiments</h2>
+<p>See the <a href="../../experiments/">Experiment Index</a> filtered by tags <code>detection</code>.</p>
+<p>Experiment configs live in <code>2-detection/experiments/</code>. Twelve experiments cover:</p>
+<ul>
+<li><strong>Gaussian</strong> · <strong>DCG</strong> · <strong>Kronecker</strong> models</li>
+<li><strong>Offline</strong> detection · <strong>Online</strong> (sequential) detection</li>
+<li><strong>H0</strong> (false-alarm rate) · <strong>H1</strong> (power curve) Monte Carlo</li>
+</ul>
+<h2 id="real-data-pipeline">Real-data pipeline</h2>
+<p>SAR scenes (Scene 1, 2, 4-cropped) must be downloaded and reformatted before running detection experiments:</p>
+<div class="language-sh highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nb">cd</span><span class="w"> </span><span class="m">2</span>-detection
+bash<span class="w"> </span>data/download_sar.sh
+uv<span class="w"> </span>run<span class="w"> </span>sar_experiments/compute_detection_real_data/prepare_data.py<span class="w"> </span>data/SAR/scene1.npy
+</code></pre></div></td></tr></table></div>
+<h2 id="adding-a-new-backend">Adding a new backend</h2>
+<ol>
+<li>Add an optional extra to <code>pyproject.toml</code>.</li>
+<li>Register the array type in <code>src/backend.py</code> → <code>BACKEND_TYPES</code>.</li>
+<li>Implement the dispatch branches in <code>get_backend_module</code>, <code>get_data_on_device</code>, and <code>empty_cache</code>.</li>
+<li>All estimators and detectors inherit the new backend automatically.</li>
+</ol>
+    </main>
+
+    
+    <aside class="page-aside">
+      <nav class="aside-toc" aria-label="On this page">
+        <p class="aside-toc-label">On this page</p>
+        <ul>
+          
+            <li>
+              <a href="#chapter-2-detection">Chapter 2 · Detection</a>
+              
+                <ul>
+                  
+                    <li><a href="#library-src">Library (src/)</a></li>
+                  
+                    <li><a href="#experiments">Experiments</a></li>
+                  
+                    <li><a href="#real-data-pipeline">Real-data pipeline</a></li>
+                  
+                    <li><a href="#adding-a-new-backend">Adding a new backend</a></li>
+                  
+                </ul>
+              
+            </li>
+          
+        </ul>
+      </nav>
+    </aside>
+    
+
+  </div>
+</div>
+
+<script src="../../assets/js/theme.js"></script>
+</body>
+</html>

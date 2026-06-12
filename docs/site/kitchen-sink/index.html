@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en" data-paper="warm" data-type="classic">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kitchen Sink — HDR Simulations</title>
+
+  <!-- Fonts: EB Garamond (classic) + IBM Plex Sans (labels) + IBM Plex Mono (code) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../assets/css/theme.css">
+
+  <!-- Apply saved theme before paint to avoid flash -->
+  <script>
+    (function(){
+      var p = localStorage.getItem("hdr-paper");
+      if (p) document.documentElement.setAttribute("data-paper", p);
+      var s = parseFloat(localStorage.getItem("hdr-scale"));
+      if (!isNaN(s)) document.documentElement.style.setProperty("--reading-scale", s);
+    })();
+  </script>
+</head>
+<body>
+
+<!-- ░░░ Topbar ░░░ -->
+<header class="topbar">
+  <button class="toolbtn" id="btn-toc" aria-label="Navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+      <path d="M4 6h16M4 12h16M4 18h10"/>
+    </svg>
+  </button>
+
+  <a class="site-title" href="../">HDR Simulations</a>
+
+  <div class="topbar-sep"></div>
+
+  <nav class="topbar-nav" aria-label="Site sections">
+    
+      
+        <a class="topbar-link"
+           href="..">Home</a>
+      
+    
+      
+        <a class="topbar-link"
+           href="../chapters/1-context/">Chapters</a>
+      
+    
+      
+        <a class="topbar-link"
+           href="../experiments/">Experiments</a>
+      
+    
+      
+        <a class="topbar-link"
+           href="../api/backend/">API</a>
+      
+    
+      
+        <a class="topbar-link active"
+           href="./">Kitchen Sink</a>
+      
+    
+  </nav>
+
+  <div class="topbar-spacer"></div>
+
+  <div style="display:inline-flex;align-items:center;gap:2px">
+    <button class="toolbtn" id="btn-az-sm" aria-label="Smaller text">
+      <span class="type-az-sm">A</span>
+    </button>
+    <button class="toolbtn" id="btn-az-lg" aria-label="Larger text">
+      <span class="type-az-lg">A</span>
+    </button>
+  </div>
+
+  <button class="toolbtn" id="btn-theme" aria-label="Toggle dark mode">
+    <svg id="ico-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>
+    </svg>
+    <svg id="ico-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" style="display:none">
+      <circle cx="12" cy="12" r="4"/>
+      <path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.4 1.4M17.6 17.6L19 19M19 5l-1.4 1.4M6.4 17.6L5 19"/>
+    </svg>
+  </button>
+</header>
+
+<div class="progress" id="progress"></div>
+
+<!-- ░░░ TOC drawer ░░░ -->
+<div class="toc-scrim" id="toc-scrim"></div>
+<div class="toc" id="toc" role="navigation" aria-label="Site navigation">
+  <p class="toc-site">HDR Simulations</p>
+  <p class="toc-sub">Companion code documentation for the HDR dissertation</p>
+
+  <nav>
+    
+      
+        <ul>
+          <li>
+            <a href="..">
+              Home
+            </a>
+          </li>
+        </ul>
+      
+    
+      
+        <p class="toc-section-label">Chapters</p>
+        <ul>
+          
+            <li>
+              <a href="../chapters/1-context/">
+                1 · Context
+              </a>
+            </li>
+          
+            <li>
+              <a href="../chapters/2-detection/">
+                2 · Detection
+              </a>
+            </li>
+          
+            <li>
+              <a href="../chapters/3-machinelearning/">
+                3 · Machine Learning
+              </a>
+            </li>
+          
+            <li>
+              <a href="../chapters/4-deeplearning/">
+                4 · Deep Learning
+              </a>
+            </li>
+          
+        </ul>
+      
+    
+      
+        <ul>
+          <li>
+            <a href="../experiments/">
+              Experiments
+            </a>
+          </li>
+        </ul>
+      
+    
+      
+        <p class="toc-section-label">API</p>
+        <ul>
+          
+            <li>
+              <a href="../api/backend/">
+                backend
+              </a>
+            </li>
+          
+            <li>
+              <a href="../api/estimation/">
+                estimation
+              </a>
+            </li>
+          
+            <li>
+              <a href="../api/estimation_kronecker/">
+                estimation_kronecker
+              </a>
+            </li>
+          
+            <li>
+              <a href="../api/estimation_online/">
+                estimation_online
+              </a>
+            </li>
+          
+            <li>
+              <a href="../api/manifolds/">
+                manifolds
+              </a>
+            </li>
+          
+            <li>
+              <a href="../api/detection/">
+                detection
+              </a>
+            </li>
+          
+            <li>
+              <a href="../api/simulation/">
+                simulation
+              </a>
+            </li>
+          
+            <li>
+              <a href="../api/exporter/">
+                exporter
+              </a>
+            </li>
+          
+        </ul>
+      
+    
+      
+        <ul>
+          <li>
+            <a href="./" class="active">
+              Kitchen Sink
+            </a>
+          </li>
+        </ul>
+      
+    
+  </nav>
+</div>
+
+<!-- ░░░ Page ░░░ -->
+<div class="page-wrap">
+  <div class="page-body">
+
+    <main class="page-content" id="content">
+      <div class="page-header">
+  <div class="eyebrow">Design Reference</div>
+  <h1>Kitchen <em>Sink</em></h1>
+  <p class="standfirst">Every component in one place — use this page to verify the theme
+  under warm, cool, and dark paper modes. Resize the window to check the responsive collapse.</p>
+</div>
+
+<h2 id="body-text-and-sidenotes">Body text and sidenotes</h2>
+<p>The estimator <label for="sn-1" class="sidenote-number"></label><input type="checkbox" id="sn-1" class="margin-toggle"/><span class="sidenote">The Sample Covariance Matrix (SCM) is the maximum likelihood estimator under the Gaussian model. It is consistent but biased, and breaks down when the number of samples is comparable to the dimension.</span> takes a sequence of observation vectors and returns a Hermitian positive-definite matrix. Under the Gaussian model the natural choice is the SCM, but for heavy-tailed distributions — SAR amplitude, sonar returns — robust alternatives such as Tyler's M-estimator converge to the true scatter matrix regardless of the tail weight.</p>
+<p>The iterative fixed-point equation <label for="sn-2" class="sidenote-number"></label><input type="checkbox" id="sn-2" class="margin-toggle"/><span class="sidenote">Convergence is guaranteed by a contraction argument on the Riemannian manifold of HPD matrices. Each iterate strictly decreases the negative log-likelihood.</span> is solved by alternating between a quadratic form and a normalisation step until the Frobenius distance between successive iterates falls below a tolerance.</p>
+<p>The Kronecker model factors the scatter matrix as a tensor product $\mathbf{A} \otimes \mathbf{B}$, reducing the number of free parameters from $p^2$ to $a^2 + b^2$ when the data has separable spatial and spectral structure.</p>
+<hr />
+<h2 id="code-blocks">Code blocks</h2>
+<p>A basic Python block — the language label and window frame are injected automatically:</p>
+<div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">fixed_point_m_estimation</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">psi</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Fixed-point M-estimator (centred).&quot;&quot;&quot;</span>
+    <span class="n">n</span><span class="p">,</span> <span class="n">p</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">Sigma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_iter</span><span class="p">):</span>
+        <span class="n">Q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">&quot;...i,ij,...j-&gt;...&quot;</span><span class="p">,</span> <span class="n">X</span><span class="o">.</span><span class="n">conj</span><span class="p">(),</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">Sigma</span><span class="p">),</span> <span class="n">X</span><span class="p">))</span>
+        <span class="n">weights</span> <span class="o">=</span> <span class="n">psi</span><span class="p">(</span><span class="n">Q</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span> <span class="o">/</span> <span class="n">p</span>
+        <span class="n">Sigma_new</span> <span class="o">=</span> <span class="p">(</span><span class="n">weights</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">&quot;...i,...j-&gt;...ij&quot;</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">X</span><span class="o">.</span><span class="n">conj</span><span class="p">()))</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">Sigma_new</span> <span class="o">-</span> <span class="n">Sigma</span><span class="p">,</span> <span class="s2">&quot;fro&quot;</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">tol</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">Sigma_new</span>
+        <span class="n">Sigma</span> <span class="o">=</span> <span class="n">Sigma_new</span>
+    <span class="k">return</span> <span class="n">Sigma</span>
+</code></pre></div></td></tr></table></div>
+<p>A block with a filename annotation:</p>
+<div class="language-python highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">src/estimation_kronecker.py</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">kronecker_mm_h0</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;MM algorithm for Kronecker structured scatter under H0.&quot;&quot;&quot;</span>
+    <span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span>
+    <span class="n">B</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_iter</span><span class="p">):</span>
+        <span class="n">A_new</span> <span class="o">=</span> <span class="n">_kronecker_mm_step</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+        <span class="n">B_new</span> <span class="o">=</span> <span class="n">_kronecker_mm_step</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">A_new</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">swap</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">A_new</span> <span class="o">-</span> <span class="n">A</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">B_new</span> <span class="o">-</span> <span class="n">B</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">tol</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">A_new</span><span class="p">,</span> <span class="n">B_new</span>
+        <span class="n">A</span><span class="p">,</span> <span class="n">B</span> <span class="o">=</span> <span class="n">A_new</span><span class="p">,</span> <span class="n">B_new</span>
+    <span class="k">return</span> <span class="n">A</span><span class="p">,</span> <span class="n">B</span>
+</code></pre></div></td></tr></table></div>
+<p>Followed by a terminal output block:</p>
+<div class="terminal">
+  <div class="term-head">
+    <span class="tdot tdot-r"></span>
+    <span class="tdot tdot-y"></span>
+    <span class="tdot tdot-g"></span>
+    <span class="term-label">Output</span>
+  </div>
+  <pre><span class="tp">$</span> <span class="tv">uv run python 2-detection/sar_experiments/mc_simulations/mc_kronecker_h1.py --T-max 500 --n-trials 1000</span>
+<span class="ta">INFO  backend: torch-cpu  trials: 1000  T_max: 500</span>
+<span class="tv">Running H0 pass …  [████████████████████]  done  (4.2 s)</span>
+<span class="tv">Running H1 pass …  [████████████████████]  done  (18.7 s)</span>
+<span class="ta">Exported → results/sar_mc_kron_h1/run_9/mc_kronecker_h1_a2_b3_T500_n1000.npy</span></pre>
+</div>
+
+<p>A YAML config block:</p>
+<div class="language-yaml highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">2-detection/experiments/sar_mc_kron_h1.yaml</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sar_mc_kron_h1</span>
+<span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">MC power curve — OnlineKroneckerGLRT vs KroneckerGLRT under H1</span>
+<span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2-detection/sar_experiments/mc_simulations</span>
+<span class="nt">executable</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2-detection/sar_experiments/mc_simulations/mc_kronecker_h1.py</span>
+<span class="nt">tags</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">detection</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">kronecker</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">H1</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">monte-carlo</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">power-curve</span><span class="p p-Indicator">]</span>
+</code></pre></div></td></tr></table></div>
+<hr />
+<h2 id="figure-placeholder">Figure placeholder</h2>
+<div class="figframe">
+  <div class="figtop">
+    <span class="figtag">Figure 2.4 — Power curves · Kronecker model · H1</span>
+  </div>
+  <div class="fig-placeholder">Figure goes here — run the experiment and drop the PNG output</div>
+  <div class="figcap">
+    <span class="fignum">Fig.&nbsp;2.4</span>
+    <span>Detection probability as a function of the number of time steps <em>T</em>
+    for the online Kronecker GLRT (solid) and the offline Kronecker GLRT (dashed),
+    at a fixed false-alarm rate PFA = 10<sup>−2</sup>.
+    The online detector approaches the offline curve as <em>T</em> grows.</span>
+  </div>
+</div>
+
+<hr />
+<h2 id="callout-blocks">Callout blocks</h2>
+<div class="block note">
+  <div class="block-head">Note</div>
+  <div class="block-body">The MM algorithm requires the data dimension to satisfy
+  <em>n &gt; a·b</em> to guarantee a positive-definite estimate at each step.
+  For under-sampled regimes, use the regularised variant with a diagonal loading term.</div>
+</div>
+
+<div class="block warning">
+  <div class="block-head">Warning</div>
+  <div class="block-body">The Kronecker estimator assumes the covariance factors
+  <strong>A</strong> and <strong>B</strong> share no common scale. Always normalise
+  <code>trace(A) = a</code> after each MM step to avoid the scale ambiguity.</div>
+</div>
+
+<hr />
+<h2 id="tables">Tables</h2>
+<table>
+<thead>
+<tr>
+<th>Estimator</th>
+<th>Model</th>
+<th>Convergence</th>
+<th>Backend</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SCMEstimator</code></td>
+<td>Gaussian</td>
+<td>Closed form</td>
+<td>all</td>
+</tr>
+<tr>
+<td><code>TylerEstimator</code></td>
+<td>Elliptical</td>
+<td>Fixed point</td>
+<td>all</td>
+</tr>
+<tr>
+<td><code>HuberEstimator</code></td>
+<td>Huber</td>
+<td>Fixed point</td>
+<td>all</td>
+</tr>
+<tr>
+<td><code>ScaledGaussianNaturalGradientEstimator</code></td>
+<td>Scaled Gaussian</td>
+<td>Riemannian GD</td>
+<td>all</td>
+</tr>
+<tr>
+<td><code>OnlineScaledGaussianEstimator</code></td>
+<td>Scaled Gaussian</td>
+<td>Online</td>
+<td>all</td>
+</tr>
+<tr>
+<td><code>OnlineKroneckerEstimator</code></td>
+<td>Kronecker SG</td>
+<td>Online</td>
+<td>torch, cupy</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="margin-note-with-figure">Margin note with figure</h2>
+<p><span class="marginnote">
+  <span class="mn-label">Geometry</span>
+  The Hermitian positive-definite manifold is a Riemannian symmetric space.
+  The geodesic between two points <strong>A</strong> and <strong>B</strong> is
+  <em>A</em><sup>1/2</sup>(<em>A</em><sup>−1/2</sup><em>B A</em><sup>−1/2</sup>)<sup><em>t</em></sup><em>A</em><sup>1/2</sup>.
+</span></p>
+<p>The natural gradient on the scaled-Gaussian Fisher information metric reduces to a
+Riemannian gradient step on the product manifold
+<strong>HPD</strong>(<em>p</em>) × ℝ<sub>+</sub>.
+Each step jointly updates the shape matrix Σ and the scale τ along the geodesic direction,
+giving quadratic convergence near the maximum likelihood estimate.</p>
+<hr />
+<h2 id="blockquote">Blockquote</h2>
+<blockquote>
+<p>The geometry of a covariance matrix is not in its eigenvalues alone,
+but in the interplay between magnitude and direction as the data distribution shifts.</p>
+</blockquote>
+    </main>
+
+    
+    <aside class="page-aside">
+      <nav class="aside-toc" aria-label="On this page">
+        <p class="aside-toc-label">On this page</p>
+        <ul>
+          
+            <li>
+              <a href="#body-text-and-sidenotes">Body text and sidenotes</a>
+              
+            </li>
+          
+            <li>
+              <a href="#code-blocks">Code blocks</a>
+              
+            </li>
+          
+            <li>
+              <a href="#figure-placeholder">Figure placeholder</a>
+              
+            </li>
+          
+            <li>
+              <a href="#callout-blocks">Callout blocks</a>
+              
+            </li>
+          
+            <li>
+              <a href="#tables">Tables</a>
+              
+            </li>
+          
+            <li>
+              <a href="#margin-note-with-figure">Margin note with figure</a>
+              
+            </li>
+          
+            <li>
+              <a href="#blockquote">Blockquote</a>
+              
+            </li>
+          
+        </ul>
+      </nav>
+    </aside>
+    
+
+  </div>
+</div>
+
+<script src="../assets/js/theme.js"></script>
+</body>
+</html>

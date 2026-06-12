@@ -12,6 +12,11 @@ tags:
 actions:
   - plot:
       name: plot
-      executable: 2-detection/sar_experiments/mc_simulations/action_plot.py
+      executable: 2-detection/sar_experiments/action_plot.py
       executable_command: .venv/bin/python
       description: Plot all power curves found in the run directory
+  - add_to_docs:
+      name: add_to_docs
+      executable: 2-detection/sar_experiments/mc_simulations/action_add_to_docs.py
+      executable_command: .venv/bin/python
+      description: Publish power curve figure to the docs (pins run via docs_figure in YAML)

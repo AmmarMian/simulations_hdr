@@ -11,6 +11,6 @@ tags:
 actions:
   - plot:
       name: plot
-      executable: 2-detection/sar_experiments/mc_simulations/action_plot.py
+      executable: 2-detection/sar_experiments/action_plot.py
       executable_command: .venv/bin/python
       description: Plot all convergence curves found in the run directory

@@ -1,0 +1,3 @@
+# `simulation`
+
+::: src.simulation
