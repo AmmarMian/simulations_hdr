@@ -3,6 +3,7 @@
 **/data/SAR
 **/dev/
 **/exports/
+results
 
 # Output plots and benchmark results
 *.png
