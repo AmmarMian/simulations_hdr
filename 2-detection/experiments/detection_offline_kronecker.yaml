@@ -1,0 +1,17 @@
+name: detection_offline_kronecker
+description: Offline Kronecker GLRT change detection on real SAR data
+path: 2-detection/sar_experiments/compute_detection_real_data
+executable: 2-detection/sar_experiments/compute_detection_real_data/offline_kronecker.py
+executable_command: .venv/bin/python
+tags:
+  - detection
+  - kronecker
+  - offline
+  - real-data
+  - SAR
+actions:
+  - plot:
+      name: plot
+      executable: 2-detection/sar_experiments/compute_detection_real_data/action_plot.py
+      executable_command: .venv/bin/python
+      description: Plot detection maps found in the run directory

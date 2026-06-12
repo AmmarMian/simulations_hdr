@@ -216,10 +216,11 @@ def add_mc_args(parser: argparse.ArgumentParser) -> None:
              "all others → trials stacked in leading batch dimension (default numpy).")
     parser.add_argument("--n-workers", type=int, default=None,
         help="Pool workers for numpy backend (default: os.cpu_count()).")
-    parser.add_argument("--export", action="store_true",
-        help="Save .npz results + provenance sidecar + plot script.")
-    parser.add_argument("--export-path", type=str, default="./exports",
-        help="Directory for exported results (default: ./exports).")
+    parser.add_argument("--export", action=argparse.BooleanOptionalAction, default=True,
+        help="Save .npz results + provenance sidecar + plot script (default: True).")
+    parser.add_argument("--storage-path", "--export-path", dest="export_path",
+        type=str, default="./exports",
+        help="Directory for exported results; --storage-path is the qanat alias (default: ./exports).")
     parser.add_argument("--show-interactive", action="store_true",
         help="Display figures interactively at the end of the simulation.")
 

@@ -98,8 +98,9 @@ def add_common_args(parser: argparse.ArgumentParser) -> None:
     )
     parser.add_argument(
         "--export",
-        action="store_true",
-        help="Save result (.npy), provenance sidecar (.json), and plot script (_plot.py).",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Save result (.npy), provenance sidecar (.json), and plot script (_plot.py) (default: True).",
     )
     parser.add_argument(
         "--export-tikz",
@@ -107,10 +108,11 @@ def add_common_args(parser: argparse.ArgumentParser) -> None:
         help="Also save a TikZ/PGFPlots figure (.tex) alongside the exported data.",
     )
     parser.add_argument(
-        "--export-path",
+        "--storage-path", "--export-path",
+        dest="export_path",
         type=str,
         default="./exports",
-        help="Directory for exported plots (default: ./exports).",
+        help="Directory for exported plots; --storage-path is the qanat alias (default: ./exports).",
     )
     parser.add_argument(
         "--debug", action="store_true", help="Crop data to 100×100 for fast debugging."

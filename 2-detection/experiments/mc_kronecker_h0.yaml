@@ -1,0 +1,16 @@
+name: mc_kronecker_h0
+description: MC convergence test — OnlineKroneckerGLRT telescopes to KroneckerGLRT as T grows (H0)
+path: 2-detection/sar_experiments/mc_simulations
+executable: 2-detection/sar_experiments/mc_simulations/mc_kronecker_h0.py
+executable_command: .venv/bin/python
+tags:
+  - detection
+  - kronecker
+  - H0
+  - monte-carlo
+actions:
+  - plot:
+      name: plot
+      executable: 2-detection/sar_experiments/mc_simulations/action_plot.py
+      executable_command: .venv/bin/python
+      description: Plot all convergence curves found in the run directory
