@@ -1336,7 +1336,7 @@ wheels = [
 [[package]]
 name = "qanat"
 version = "0.1.0"
-source = { git = "https://github.com/ammarmian/qanat#63a644b0bb9298f419a83586e95e6e54a2fe6ab9" }
+source = { git = "https://github.com/ammarmian/qanat#73ee3c34e6406658a1d21d08b6756d82210dfa4f" }
 dependencies = [
     { name = "art" },
     { name = "filelock" },
