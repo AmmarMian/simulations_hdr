@@ -164,6 +164,7 @@ def kronecker_mm_h1(
         mask = (~converged)[..., None, None]
         A = be.where(mask, A_new, A)
         B = be.where(mask, B_new, B)
+        del A_new, B_new, delta_A, delta_B, mask
 
     iA = be.linalg.inv(A)
     iB = be.linalg.inv(B)
@@ -233,6 +234,7 @@ def kronecker_mm_h0(
         mask = (~converged)[..., None, None]
         A = be.where(mask, A_new, A)
         B = be.where(mask, B_new, B)
+        del A_new, B_new, delta_A, delta_B, mask
 
     # tau_n = mean_t Q_{t,n} / p  (average quadratic form over dates)
     iA = be.linalg.inv(A)
