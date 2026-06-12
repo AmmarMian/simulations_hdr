@@ -301,10 +301,21 @@ stats = np.load(here / (stem + ".npz"), allow_pickle=True)
 T = stats["T"]
 pfa = float(stats["pfa"])
 
+n_trials = int(stats["n_trials"]) if "n_trials" in stats else None
+
 fig, ax = plt.subplots(figsize=(8, 5))
 ax.semilogx(T, stats["power_offline"], color="steelblue", marker="o", markersize=3, label="offline")
 ax.semilogx(T, stats["power_online"],  color="tomato", linestyle="--", marker="s", markersize=3, label="online")
-ax.axhline(pfa, color="gray", linestyle=":", linewidth=1, label=f"PFA = {pfa:.2f}")
+if n_trials is not None:
+    se_off = np.sqrt(stats["power_offline"] * (1 - stats["power_offline"]) / n_trials)
+    ax.fill_between(T, np.clip(stats["power_offline"] - se_off, 0, 1),
+                       np.clip(stats["power_offline"] + se_off, 0, 1),
+                    alpha=0.2, color="steelblue")
+    se_on = np.sqrt(stats["power_online"] * (1 - stats["power_online"]) / n_trials)
+    ax.fill_between(T, np.clip(stats["power_online"] - se_on, 0, 1),
+                       np.clip(stats["power_online"] + se_on, 0, 1),
+                    alpha=0.2, color="tomato")
+ax.axhline(pfa, color="gray", linestyle=":", linewidth=1, label=f"PFA = {pfa:.2e}")
 ax.set_xlabel("T (number of dates)")
 ax.set_ylabel("Empirical power")
 ax.set_ylim(-0.02, 1.05)
@@ -352,6 +363,8 @@ def aggregate_power(
     T_arr = np.asarray(T_vec)
     power_online = np.zeros(len(T_vec))
     power_offline = np.zeros(len(T_vec))
+    first_T = T_vec[0]
+    n_trials = len(np.asarray(h0_stats["online"][first_T]))
 
     for i, T in enumerate(T_vec):
         h0_on = np.asarray(h0_stats["online"][T])
@@ -370,6 +383,7 @@ def aggregate_power(
         "power_online": power_online,
         "power_offline": power_offline,
         "pfa": np.array(pfa),
+        "n_trials": np.array(n_trials),
     }
 
 
@@ -400,10 +414,21 @@ def plot_mc_power(stats: dict, title: str = "") -> None:
     T = stats["T"]
     pfa = float(stats["pfa"])
 
+    n_trials = int(stats["n_trials"]) if "n_trials" in stats else None
+
     fig, ax = plt.subplots(figsize=(8, 5))
     ax.semilogx(T, stats["power_offline"], color="steelblue", marker="o", markersize=3, label="offline")
     ax.semilogx(T, stats["power_online"], color="tomato", linestyle="--", marker="s", markersize=3, label="online")
-    ax.axhline(pfa, color="gray", linestyle=":", linewidth=1, label=f"PFA = {pfa:.2f}")
+    if n_trials is not None:
+        se_off = np.sqrt(stats["power_offline"] * (1 - stats["power_offline"]) / n_trials)
+        ax.fill_between(T, np.clip(stats["power_offline"] - se_off, 0, 1),
+                           np.clip(stats["power_offline"] + se_off, 0, 1),
+                        alpha=0.2, color="steelblue")
+        se_on = np.sqrt(stats["power_online"] * (1 - stats["power_online"]) / n_trials)
+        ax.fill_between(T, np.clip(stats["power_online"] - se_on, 0, 1),
+                           np.clip(stats["power_online"] + se_on, 0, 1),
+                        alpha=0.2, color="tomato")
+    ax.axhline(pfa, color="gray", linestyle=":", linewidth=1, label=f"PFA = {pfa:.2e}")
     ax.set_xlabel("T (number of dates)")
     ax.set_ylabel("Empirical power")
     ax.set_ylim(-0.02, 1.05)

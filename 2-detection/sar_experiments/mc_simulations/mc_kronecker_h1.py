@@ -261,7 +261,7 @@ def main():
     )
     add_mc_args(parser)
     add_mc_h1_args(parser)
-    parser.set_defaults(T_max=200, n_trials=50)
+    parser.set_defaults(T_max=500, n_trials=50)
 
     parser.add_argument("--a", type=int, default=2,
         help="Size of first Kronecker factor (default 2).")
@@ -283,8 +283,8 @@ def main():
         help="Seed for A1_true generation (default 0).")
     parser.add_argument("--seed-b", type=int, default=1,
         help="Seed for B1_true generation (default 1).")
-    parser.add_argument("--seed-a2", type=int, default=2,
-        help="Seed for A2_true (H1 distribution, default 2).")
+    parser.add_argument("--seed-a2", type=int, default=8,
+        help="Seed for A2_true (H1 distribution, default 8).")
     parser.add_argument("--seed-b2", type=int, default=3,
         help="Seed for B2_true (H1 distribution, default 3).")
     args = parser.parse_args()
