@@ -14,8 +14,12 @@ import numpy as np
 _ROOT = str(Path(__file__).parent.parent.parent)
 if _ROOT not in sys.path:
     sys.path.insert(0, _ROOT)
+_SHARED = str(Path(_ROOT).parent / "shared")
+if _SHARED not in sys.path:
+    sys.path.insert(0, _SHARED)
 
 from src.exporter import _git_sha
+from plot_style import apply_style
 
 logger = logging.getLogger(__name__)
 
@@ -32,18 +36,39 @@ import argparse
 from pathlib import Path
 
 import numpy as np
+import matplotlib as _mpl
 import matplotlib.pyplot as plt
 
-try:
-    plt.rcParams["text.usetex"] = True
-    plt.rcParams["text.latex.preamble"] = r"\\usepackage{amsmath}"
-except Exception:
-    pass
+_mpl.rcParams.update({
+    "figure.facecolor": "#14141a", "axes.facecolor": "#14141a",
+    "savefig.facecolor": "#14141a",
+    "text.color": "#dde3f0", "axes.labelcolor": "#dde3f0", "axes.titlecolor": "#dde3f0",
+    "xtick.color": "#48485e", "ytick.color": "#48485e",
+    "xtick.labelcolor": "#dde3f0", "ytick.labelcolor": "#dde3f0",
+    "axes.edgecolor": "#48485e", "axes.spines.top": False, "axes.spines.right": False,
+    "axes.grid": True, "axes.grid.which": "both",
+    "grid.color": "#272733", "grid.linewidth": 0.6, "grid.linestyle": "--",
+    "font.family": "serif",
+    "font.serif": ["STIXTwoText", "STIX Two Text", "DejaVu Serif", "serif"],
+    "mathtext.fontset": "stix", "font.size": 12, "axes.titlesize": 13,
+    "axes.labelsize": 12, "legend.fontsize": 10,
+    "xtick.labelsize": 10, "ytick.labelsize": 10,
+    "lines.linewidth": 1.8, "lines.markersize": 5,
+    "legend.facecolor": "#1c1c27", "legend.edgecolor": "#48485e",
+    "legend.framealpha": 0.9, "savefig.dpi": 200, "savefig.bbox": "tight",
+})
 
 parser = argparse.ArgumentParser("Plot MC convergence results.")
 parser.add_argument("--tikz", action="store_true", help="Also export as PGFPlots .tex via matplot2tikz.")
 parser.add_argument("--no-save", action="store_true", help="Show only, do not save PDFs.")
+parser.add_argument("--use-latex", action="store_true", help="Enable LaTeX rendering (requires a LaTeX install).")
 args = parser.parse_args()
+
+if args.use_latex:
+    try:
+        _mpl.rcParams.update({"text.usetex": True, "text.latex.preamble": r"\\usepackage{amsmath}"})
+    except Exception:
+        pass
 
 here = Path(__file__).parent
 stem = $stem_repr
@@ -51,23 +76,26 @@ title = $title_repr
 stats = np.load(here / (stem + ".npz"))
 T = stats["T"]
 
+_BLUE   = "#5ca8d3"
+_CORAL  = "#e06b6b"
+_VIOLET = "#a57bc5"
+
 # --- Figure 1: S_online and S_offline vs T (linear scale) ---
 fig1, ax1 = plt.subplots(figsize=(8, 5))
-ax1.plot(T, stats["S_offline_mean"], color="steelblue", label="S_offline")
+ax1.plot(T, stats["S_offline_mean"], color=_BLUE,  label="S_offline")
 ax1.fill_between(T,
     stats["S_offline_mean"] - stats["S_offline_std"],
     stats["S_offline_mean"] + stats["S_offline_std"],
-    alpha=0.25, color="steelblue")
-ax1.plot(T, stats["S_online_mean"], color="tomato", linestyle="--", label="S_online")
+    alpha=0.18, color=_BLUE)
+ax1.plot(T, stats["S_online_mean"], color=_CORAL, linestyle="--", label="S_online")
 ax1.fill_between(T,
     stats["S_online_mean"] - stats["S_online_std"],
     stats["S_online_mean"] + stats["S_online_std"],
-    alpha=0.25, color="tomato")
+    alpha=0.18, color=_CORAL)
 ax1.set_xlabel("T (number of dates)")
 ax1.set_ylabel("GLRT statistic")
-ax1.set_title(title + " -- online vs offline")
+ax1.set_title(title + " — online vs offline")
 ax1.legend()
-ax1.grid(True, alpha=0.4)
 fig1.tight_layout()
 if not args.no_save:
     out = here / (stem + "_convergence.pdf")
@@ -80,12 +108,11 @@ if not args.no_save:
 # --- Figure 2: |S_online - S_offline| log-log ---
 fig2, ax2 = plt.subplots(figsize=(8, 5))
 lo = np.maximum(stats["diff_mean"] - stats["diff_std"], 1e-15)
-ax2.loglog(T, stats["diff_mean"], color="purple")
-ax2.fill_between(T, lo, stats["diff_mean"] + stats["diff_std"], alpha=0.25, color="purple")
+ax2.loglog(T, stats["diff_mean"], color=_VIOLET)
+ax2.fill_between(T, lo, stats["diff_mean"] + stats["diff_std"], alpha=0.18, color=_VIOLET)
 ax2.set_xlabel("T (number of dates)")
 ax2.set_ylabel("|S_online - S_offline|")
-ax2.set_title(title + " -- difference (log scale)")
-ax2.grid(True, which="both", alpha=0.4)
+ax2.set_title(title + " — difference (log scale)")
 fig2.tight_layout()
 if not args.no_save:
     out = here / (stem + "_difference.pdf")
@@ -229,7 +256,7 @@ def add_mc_args(parser: argparse.ArgumentParser) -> None:
 # Interactive plotting
 # ---------------------------------------------------------------------------
 
-def plot_mc_stats(stats: dict, title: str = "") -> None:
+def plot_mc_stats(stats: dict, title: str = "", use_latex: bool = False) -> None:
     """Display the two standard MC convergence figures interactively.
 
     Calls matplotlib.pyplot.show() — meant to be called at end of a script
@@ -237,34 +264,37 @@ def plot_mc_stats(stats: dict, title: str = "") -> None:
     """
     import matplotlib.pyplot as plt
 
+    apply_style(use_latex=use_latex)
+
     T = stats["T"]
+    _BLUE   = "#5ca8d3"
+    _CORAL  = "#e06b6b"
+    _VIOLET = "#a57bc5"
 
     fig1, ax1 = plt.subplots(figsize=(8, 5))
-    ax1.plot(T, stats["S_offline_mean"], color="steelblue", label="S_offline")
+    ax1.plot(T, stats["S_offline_mean"], color=_BLUE, label="S_offline")
     ax1.fill_between(T,
         stats["S_offline_mean"] - stats["S_offline_std"],
         stats["S_offline_mean"] + stats["S_offline_std"],
-        alpha=0.25, color="steelblue")
-    ax1.plot(T, stats["S_online_mean"], color="tomato", linestyle="--", label="S_online")
+        alpha=0.18, color=_BLUE)
+    ax1.plot(T, stats["S_online_mean"], color=_CORAL, linestyle="--", label="S_online")
     ax1.fill_between(T,
         stats["S_online_mean"] - stats["S_online_std"],
         stats["S_online_mean"] + stats["S_online_std"],
-        alpha=0.25, color="tomato")
+        alpha=0.18, color=_CORAL)
     ax1.set_xlabel("T (number of dates)")
     ax1.set_ylabel("GLRT statistic")
     ax1.set_title(f"{title} — online vs offline" if title else "online vs offline")
     ax1.legend()
-    ax1.grid(True, alpha=0.4)
     fig1.tight_layout()
 
     fig2, ax2 = plt.subplots(figsize=(8, 5))
     lo = np.maximum(stats["diff_mean"] - stats["diff_std"], 1e-15)
-    ax2.loglog(T, stats["diff_mean"], color="purple")
-    ax2.fill_between(T, lo, stats["diff_mean"] + stats["diff_std"], alpha=0.25, color="purple")
+    ax2.loglog(T, stats["diff_mean"], color=_VIOLET)
+    ax2.fill_between(T, lo, stats["diff_mean"] + stats["diff_std"], alpha=0.18, color=_VIOLET)
     ax2.set_xlabel("T (number of dates)")
     ax2.set_ylabel("|S_online - S_offline|")
     ax2.set_title(f"{title} — difference (log scale)" if title else "difference (log scale)")
-    ax2.grid(True, which="both", alpha=0.4)
     fig2.tight_layout()
 
     plt.show()
@@ -281,18 +311,39 @@ import argparse
 from pathlib import Path
 
 import numpy as np
+import matplotlib as _mpl
 import matplotlib.pyplot as plt
 
-try:
-    plt.rcParams["text.usetex"] = True
-    plt.rcParams["text.latex.preamble"] = r"\\usepackage{amsmath}"
-except Exception:
-    pass
+_mpl.rcParams.update({
+    "figure.facecolor": "#14141a", "axes.facecolor": "#14141a",
+    "savefig.facecolor": "#14141a",
+    "text.color": "#dde3f0", "axes.labelcolor": "#dde3f0", "axes.titlecolor": "#dde3f0",
+    "xtick.color": "#48485e", "ytick.color": "#48485e",
+    "xtick.labelcolor": "#dde3f0", "ytick.labelcolor": "#dde3f0",
+    "axes.edgecolor": "#48485e", "axes.spines.top": False, "axes.spines.right": False,
+    "axes.grid": True, "axes.grid.which": "both",
+    "grid.color": "#272733", "grid.linewidth": 0.6, "grid.linestyle": "--",
+    "font.family": "serif",
+    "font.serif": ["STIXTwoText", "STIX Two Text", "DejaVu Serif", "serif"],
+    "mathtext.fontset": "stix", "font.size": 12, "axes.titlesize": 13,
+    "axes.labelsize": 12, "legend.fontsize": 10,
+    "xtick.labelsize": 10, "ytick.labelsize": 10,
+    "lines.linewidth": 1.8, "lines.markersize": 5,
+    "legend.facecolor": "#1c1c27", "legend.edgecolor": "#48485e",
+    "legend.framealpha": 0.9, "savefig.dpi": 200, "savefig.bbox": "tight",
+})
 
 parser = argparse.ArgumentParser("Plot MC power curve results.")
 parser.add_argument("--tikz", action="store_true")
 parser.add_argument("--no-save", action="store_true")
+parser.add_argument("--use-latex", action="store_true", help="Enable LaTeX rendering (requires a LaTeX install).")
 args = parser.parse_args()
+
+if args.use_latex:
+    try:
+        _mpl.rcParams.update({"text.usetex": True, "text.latex.preamble": r"\\usepackage{amsmath}"})
+    except Exception:
+        pass
 
 here = Path(__file__).parent
 stem = $stem_repr
@@ -300,28 +351,29 @@ title = $title_repr
 stats = np.load(here / (stem + ".npz"), allow_pickle=True)
 T = stats["T"]
 pfa = float(stats["pfa"])
-
 n_trials = int(stats["n_trials"]) if "n_trials" in stats else None
 
+_BLUE  = "#5ca8d3"
+_CORAL = "#e06b6b"
+
 fig, ax = plt.subplots(figsize=(8, 5))
-ax.semilogx(T, stats["power_offline"], color="steelblue", marker="o", markersize=3, label="offline")
-ax.semilogx(T, stats["power_online"],  color="tomato", linestyle="--", marker="s", markersize=3, label="online")
+ax.semilogx(T, stats["power_offline"], color=_BLUE,  marker="o", markersize=3, label="offline")
+ax.semilogx(T, stats["power_online"],  color=_CORAL, linestyle="--", marker="s", markersize=3, label="online")
 if n_trials is not None:
     se_off = np.sqrt(stats["power_offline"] * (1 - stats["power_offline"]) / n_trials)
     ax.fill_between(T, np.clip(stats["power_offline"] - se_off, 0, 1),
                        np.clip(stats["power_offline"] + se_off, 0, 1),
-                    alpha=0.2, color="steelblue")
+                    alpha=0.18, color=_BLUE)
     se_on = np.sqrt(stats["power_online"] * (1 - stats["power_online"]) / n_trials)
     ax.fill_between(T, np.clip(stats["power_online"] - se_on, 0, 1),
                        np.clip(stats["power_online"] + se_on, 0, 1),
-                    alpha=0.2, color="tomato")
-ax.axhline(pfa, color="gray", linestyle=":", linewidth=1, label=f"PFA = {pfa:.2e}")
+                    alpha=0.18, color=_CORAL)
+ax.axhline(pfa, color="#6b7280", linestyle=":", linewidth=1.2, label=f"PFA = {pfa:.2e}")
 ax.set_xlabel("T (number of dates)")
 ax.set_ylabel("Empirical power")
 ax.set_ylim(-0.02, 1.05)
 ax.set_title(title if title else "Detection power vs T")
 ax.legend()
-ax.grid(True, which="both", alpha=0.4)
 fig.tight_layout()
 
 if not args.no_save:
@@ -407,33 +459,36 @@ def add_mc_h1_args(parser: argparse.ArgumentParser) -> None:
 # H1 interactive plot
 # ---------------------------------------------------------------------------
 
-def plot_mc_power(stats: dict, title: str = "") -> None:
+def plot_mc_power(stats: dict, title: str = "", use_latex: bool = False) -> None:
     """Display the power-vs-T figure interactively."""
     import matplotlib.pyplot as plt
 
+    apply_style(use_latex=use_latex)
+
     T = stats["T"]
     pfa = float(stats["pfa"])
-
     n_trials = int(stats["n_trials"]) if "n_trials" in stats else None
 
+    _BLUE  = "#5ca8d3"
+    _CORAL = "#e06b6b"
+
     fig, ax = plt.subplots(figsize=(8, 5))
-    ax.semilogx(T, stats["power_offline"], color="steelblue", marker="o", markersize=3, label="offline")
-    ax.semilogx(T, stats["power_online"], color="tomato", linestyle="--", marker="s", markersize=3, label="online")
+    ax.semilogx(T, stats["power_offline"], color=_BLUE,  marker="o", markersize=3, label="offline")
+    ax.semilogx(T, stats["power_online"],  color=_CORAL, linestyle="--", marker="s", markersize=3, label="online")
     if n_trials is not None:
         se_off = np.sqrt(stats["power_offline"] * (1 - stats["power_offline"]) / n_trials)
         ax.fill_between(T, np.clip(stats["power_offline"] - se_off, 0, 1),
                            np.clip(stats["power_offline"] + se_off, 0, 1),
-                        alpha=0.2, color="steelblue")
+                        alpha=0.18, color=_BLUE)
         se_on = np.sqrt(stats["power_online"] * (1 - stats["power_online"]) / n_trials)
         ax.fill_between(T, np.clip(stats["power_online"] - se_on, 0, 1),
                            np.clip(stats["power_online"] + se_on, 0, 1),
-                        alpha=0.2, color="tomato")
-    ax.axhline(pfa, color="gray", linestyle=":", linewidth=1, label=f"PFA = {pfa:.2e}")
+                        alpha=0.18, color=_CORAL)
+    ax.axhline(pfa, color="#6b7280", linestyle=":", linewidth=1.2, label=f"PFA = {pfa:.2e}")
     ax.set_xlabel("T (number of dates)")
     ax.set_ylabel("Empirical power")
     ax.set_ylim(-0.02, 1.05)
     ax.set_title(f"{title} — power curve" if title else "power curve")
     ax.legend()
-    ax.grid(True, which="both", alpha=0.4)
     fig.tight_layout()
     plt.show()

@@ -18,9 +18,13 @@ import logging
 _project_root = str(Path(__file__).parent.parent)
 if _project_root not in sys.path:
     sys.path.insert(0, _project_root)
+_shared = str(Path(__file__).parent.parent.parent / "shared")
+if _shared not in sys.path:
+    sys.path.insert(0, _shared)
 
 from src.backend import Array, Backend
 from src.exporter import ResultExporter
+from plot_style import apply_style
 from sar_experiments.wavelets import apply_wavelet_to_sits
 
 try:
@@ -355,12 +359,36 @@ import argparse
 from pathlib import Path
 
 import numpy as np
+import matplotlib as _mpl
 import matplotlib.pyplot as plt
+
+_mpl.rcParams.update({{
+    "figure.facecolor": "#14141a", "axes.facecolor": "#14141a",
+    "savefig.facecolor": "#14141a",
+    "text.color": "#dde3f0", "axes.labelcolor": "#dde3f0", "axes.titlecolor": "#dde3f0",
+    "xtick.color": "#48485e", "ytick.color": "#48485e",
+    "xtick.labelcolor": "#dde3f0", "ytick.labelcolor": "#dde3f0",
+    "axes.edgecolor": "#48485e", "axes.spines.top": False, "axes.spines.right": False,
+    "axes.grid": False,
+    "font.family": "serif",
+    "font.serif": ["STIXTwoText", "STIX Two Text", "DejaVu Serif", "serif"],
+    "mathtext.fontset": "stix", "font.size": 12, "axes.titlesize": 13,
+    "axes.labelsize": 12,
+    "lines.linewidth": 1.8,
+    "savefig.dpi": 200, "savefig.bbox": "tight",
+}})
 
 parser = argparse.ArgumentParser("Regenerate GLRT result figure.")
 parser.add_argument("--tikz", action="store_true", help="Export as PGFPlots (.tex) via matplot2tikz.")
 parser.add_argument("--no-save", action="store_true", help="Show only, do not save PNG.")
+parser.add_argument("--use-latex", action="store_true", help="Enable LaTeX rendering (requires a LaTeX install).")
 args = parser.parse_args()
+
+if args.use_latex:
+    try:
+        _mpl.rcParams.update({{"text.usetex": True, "text.latex.preamble": r"\\usepackage{{amsmath}}"}})
+    except Exception:
+        pass
 
 here = Path(__file__).parent
 stem = {stem_repr}
@@ -371,12 +399,14 @@ im = ax.imshow(data, cmap={cmap_repr}, aspect="auto")
 ax.set_title({title_repr})
 ax.set_xlabel("Column")
 ax.set_ylabel("Row")
-fig.colorbar(im, ax=ax, label={colorbar_label_repr})
+cbar = fig.colorbar(im, ax=ax, label={colorbar_label_repr})
+cbar.ax.yaxis.set_tick_params(color="#48485e")
+plt.setp(cbar.ax.yaxis.get_ticklabels(), color="#dde3f0")
 fig.tight_layout()
 
 if not args.no_save:
     out = here / (stem + ".png")
-    fig.savefig(out, dpi=150)
+    fig.savefig(out)
     print(f"Saved {{out}}")
 
 if args.tikz:
@@ -463,6 +493,7 @@ def plot_glrt_map(
     *,
     cmap: str = "viridis",
     colorbar_label: str = "GLRT",
+    use_latex: bool = False,
 ) -> plt.Figure:
     """Create a standard GLRT detection-map figure.
 
@@ -473,17 +504,21 @@ def plot_glrt_map(
     cmap : str
         Matplotlib colormap name (default 'viridis').
     colorbar_label : str
+    use_latex : bool
 
     Returns
     -------
     plt.Figure
     """
+    apply_style(use_latex=use_latex)
     fig, ax = plt.subplots(figsize=(10, 8), dpi=150)
     im = ax.imshow(data, cmap=cmap, aspect="auto")
     ax.set_title(title)
     ax.set_xlabel("Column")
     ax.set_ylabel("Row")
-    fig.colorbar(im, ax=ax, label=colorbar_label)
+    cbar = fig.colorbar(im, ax=ax, label=colorbar_label)
+    cbar.ax.yaxis.set_tick_params(color="#48485e")
+    plt.setp(cbar.ax.yaxis.get_ticklabels(), color="#dde3f0")
     return fig
 
 

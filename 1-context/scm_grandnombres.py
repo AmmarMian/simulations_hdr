@@ -1,6 +1,12 @@
 # Showing behavior of SCM on simple data
 
 import argparse
+import sys
+from pathlib import Path
+
+_SHARED = str(Path(__file__).parent.parent / "shared")
+if _SHARED not in sys.path:
+    sys.path.insert(0, _SHARED)
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -12,9 +18,9 @@ from multiprocessing import Pool
 from itertools import product
 
 from matplot2tikz import clean_figure, save
+from plot_style import apply_style
 
-plt.rcParams["text.usetex"] = True
-plt.rcParams["text.latex.preamble"] = r"\usepackage{amsmath}"
+apply_style()
 
 
 def compute_estimation(params):

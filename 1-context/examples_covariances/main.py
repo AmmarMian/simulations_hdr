@@ -1,5 +1,10 @@
 # Illustation of different regime of covariance matrices
 
+import sys
+from pathlib import Path
+_SHARED = str(Path(__file__).parent.parent.parent / "shared")
+if _SHARED not in sys.path:
+    sys.path.insert(0, _SHARED)
 
 from typing import Optional
 from matplotlib.figure import Figure
@@ -8,6 +13,9 @@ from scipy.linalg import toeplitz
 import matplotlib.pyplot as plt
 from matplot2tikz import clean_figure, save
 import os
+
+from plot_style import apply_style
+apply_style()
 
 
 def save_tikz_with_path(filepath: str, fig: Optional[Figure] = None):
