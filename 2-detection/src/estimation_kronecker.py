@@ -360,6 +360,8 @@ def _armijo_backtracking_kronecker_scaled_gaussian(
     rho: float = 0.5,
     max_backtracks: int = 30,
     backend_name: str = "numpy",
+    alpha_0_tau: "float | None" = None,
+    max_exp_tau: "float | None" = None,
 ) -> Tuple[Array, Array, Array, Array]:
     """Per-batch Armijo backtracking line search for Kronecker scaled Gaussian.
 
@@ -372,6 +374,9 @@ def _armijo_backtracking_kronecker_scaled_gaussian(
     r_tau : Riemannian gradient (..., N)
     manifold : KroneckerHermitianPositiveScaledGaussian
     a, b : int
+    alpha_0_tau : separate initial step size for tau (None → use alpha_0 for all).
+    max_exp_tau : if set, caps the tau exp-map argument to this value to prevent
+        overshoot when tau << Q/p.  Only applied when alpha_0_tau is given.
 
     Returns
     -------
@@ -385,6 +390,54 @@ def _armijo_backtracking_kronecker_scaled_gaussian(
     )))
     grad_norm_finite = be.isfinite(sq_grad_norm)
 
+    if alpha_0_tau is not None:
+        # Separate step sizes for (A, B) and tau.
+        # Safety cap: clamp exp argument for tau so tau never overshoots by more
+        # than exp(max_exp_tau) in one step (prevents Armijo accepting a
+        # numerically huge tau that has moved past the MLE).
+        if max_exp_tau is not None:
+            tau_v_safe = be.where(tau_v > 1e-12, tau_v, be.ones_like(tau_v) * 1e-12)
+            max_ratio = float(be.real(be.max(be.abs(r_tau) / tau_v_safe)))
+            if max_ratio > 0:
+                alpha_0_tau = min(alpha_0_tau, max_exp_tau / max_ratio)
+
+        alpha_AB  = get_data_on_device(be.ones(f0.shape, dtype=f0.dtype) * alpha_0,     backend_name)
+        alpha_tau = get_data_on_device(be.ones(f0.shape, dtype=f0.dtype) * alpha_0_tau, backend_name)
+        accepted  = get_data_on_device(be.zeros(f0.shape, dtype=bool), backend_name)
+        last_A, last_B, last_tau = A, B, tau
+
+        for _ in range(max_backtracks):
+            result = manifold.retr(
+                [A, B, tau_v],
+                [
+                    -(alpha_AB[..., None, None]  * r_A),
+                    -(alpha_AB[..., None, None]  * r_B),
+                    -(alpha_tau[..., None] * r_tau),
+                ],
+            )
+            A_new, B_new, tau_v_new = result[0], result[1], result[2]
+            tau_new = tau_v_new[..., None]
+
+            f_new = _neg_log_likelihood_kronecker_scaled_gaussian(
+                X, A_new, B_new, tau_new, a, b, backend_name
+            )
+            armijo_ok = be.where(
+                grad_norm_finite,
+                f_new <= f0 - c * alpha_AB * sq_grad_norm,
+                be.isfinite(f_new) & (f_new < f0),
+            )
+
+            newly_accepted = armijo_ok & ~accepted
+            last_A    = be.where(newly_accepted[..., None, None], A_new,   last_A)
+            last_B    = be.where(newly_accepted[..., None, None], B_new,   last_B)
+            last_tau  = be.where(newly_accepted[..., None, None], tau_new, last_tau)
+            accepted  = accepted | armijo_ok
+            alpha_AB  = be.where(accepted, alpha_AB,  alpha_AB  * rho)
+            alpha_tau = be.where(accepted, alpha_tau, alpha_tau * rho)
+
+        return alpha_AB, last_A, last_B, last_tau
+
+    # Original joint-alpha path (backward compatible).
     alpha = get_data_on_device(be.ones(f0.shape, dtype=f0.dtype) * alpha_0, backend_name)
     accepted = get_data_on_device(be.zeros(f0.shape, dtype=bool), backend_name)
     last_A, last_B, last_tau = A, B, tau

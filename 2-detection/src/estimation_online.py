@@ -252,6 +252,7 @@ class OnlineKroneckerEstimator:
         iter_max: int = 30,
         tol: float = 1e-4,
         backend_name: Union[str, Backend] = "numpy",
+        max_exp_tau: float = 3.0,
     ):
         self.a = a
         self.b = b
@@ -267,6 +268,7 @@ class OnlineKroneckerEstimator:
         self._manifold = KroneckerHermitianPositiveScaledGaussian(
             a, b, n_samples, backend_name=backend_name
         )
+        self.max_exp_tau = max_exp_tau
         self._t = 0
         self.A = None
         self.B = None
@@ -307,14 +309,17 @@ class OnlineKroneckerEstimator:
             self._manifold, self.be,
             self.a, self.b, self.backend_name,
         )
+        alpha_t = self.alpha_0 / self._t
         _, self.A, self.B, self.tau = _armijo_backtracking_kronecker_scaled_gaussian(
             X, self.A, self.B, self.tau,
             r_A, r_B, r_tau,
             self._manifold, self.be,
             self.a, self.b,
-            alpha_0=self.alpha_0, c=self.armijo_c, rho=self.armijo_rho,
+            alpha_0=alpha_t, c=self.armijo_c, rho=self.armijo_rho,
             max_backtracks=self.armijo_max_backtracks,
             backend_name=self.backend_name,
+            alpha_0_tau=alpha_t,
+            max_exp_tau=self.max_exp_tau,
         )
         self._t += 1
         return self.A, self.B, self.tau
