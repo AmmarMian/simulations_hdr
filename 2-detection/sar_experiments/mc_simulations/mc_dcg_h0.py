@@ -11,10 +11,8 @@ Backend selection:
 
 from __future__ import annotations
 
-import argparse
 import logging
 import sys
-import time
 from multiprocessing import Pool
 from pathlib import Path
 
@@ -27,11 +25,19 @@ for _p in (_ROOT, str(_HERE)):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
-from src.backend import get_data_on_device
+from src.backend import get_data_on_device, to_numpy
 from src.simulation import T_vec_logspace, generate_dcg_data, make_sigma_true
 from sar_experiments.detection_offline import DeterministicCompoundGaussianGLRT
 from src.detection_online import OnlineDCGDetector
-from utils import MCResultExporter, add_mc_args, aggregate, plot_mc_stats
+from utils import (
+    MCResultExporter,
+    add_mc_args,
+    finish_h0,
+    init_logging,
+    make_mc_parser,
+    online_single_pass,
+    timed_run,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -39,35 +45,6 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
-
-def _to_numpy(x):
-    if hasattr(x, "cpu"):
-        return x.cpu().numpy()
-    if hasattr(x, "__array__"):
-        return np.asarray(x)
-    return np.array(x)
-
-
-def _online_single_pass(data, T_vec, detector):
-    """Stream data through detector, recording stat at each T checkpoint.
-
-    data : (..., T_max, n_samples, n_features)
-    Returns dict {T: array of shape (...)}
-    """
-    T_set = set(T_vec)
-    T_max = data.shape[-3]
-    results = {}
-    detector.reset_state()
-    stat = detector.initialize(data[..., :2, :, :])
-    if 2 in T_set:
-        results[2] = stat
-    for t in range(2, T_max):
-        T_current = t + 1
-        stat = detector.update(stat, data[..., t, :, :])
-        if T_current in T_set:
-            results[T_current] = stat
-    return results
-
 
 # ---------------------------------------------------------------------------
 # Pool worker (numpy only — one trial per worker process)
@@ -84,9 +61,9 @@ def _worker(args):
         "numpy", iter_max=iter_max, tol=tol_online
     )
 
-    offline = {T: float(_to_numpy(offline_det.compute(trial_data[:T]))) for T in T_vec}
-    online_raw = _online_single_pass(trial_data, T_vec, online_det)
-    online = {T: float(_to_numpy(v)) for T, v in online_raw.items()}
+    offline = {T: float(to_numpy(offline_det.compute(trial_data[:T]))) for T in T_vec}
+    online_raw = online_single_pass(trial_data, T_vec, online_det)
+    online = {T: float(to_numpy(v)) for T, v in online_raw.items()}
     return online, offline
 
 
@@ -107,6 +84,7 @@ def _run_pool(
     all_online: list[dict] = []
     all_offline: list[dict] = []
 
+    logger.info(f"Starting H0 computation: {n_trials} trials via Pool, {len(T_vec)} T-checkpoints...")
     with Progress(
         TextColumn("[progress.description]{task.description}"),
         BarColumn(),
@@ -149,6 +127,7 @@ def _run_batched(
     online_raw: dict = {}
     offline_raw: dict = {}
 
+    logger.info(f"Starting H0 batched computation on {backend} (T_max={T_max}, {len(T_vec)} T-pts)...")
     with Progress(
         TextColumn("[progress.description]{task.description}"),
         BarColumn(),
@@ -161,17 +140,17 @@ def _run_batched(
         online_det.reset_state()
         stat = online_det.initialize(data_device[..., :2, :, :])
         if 2 in T_set:
-            online_raw[2] = _to_numpy(stat)
+            online_raw[2] = to_numpy(stat)
 
         for t in range(2, T_max):
             T_current = t + 1
             stat = online_det.update(stat, data_device[..., t, :, :])
             if T_current in T_set:
-                online_raw[T_current] = _to_numpy(stat)
+                online_raw[T_current] = to_numpy(stat)
             progress.advance(task_on)
 
         for T in T_vec:
-            offline_raw[T] = _to_numpy(offline_det.compute(data_device[..., :T, :, :]))
+            offline_raw[T] = to_numpy(offline_det.compute(data_device[..., :T, :, :]))
             progress.advance(task_off)
 
     return online_raw, offline_raw
@@ -182,10 +161,7 @@ def _run_batched(
 # ---------------------------------------------------------------------------
 
 def main():
-    parser = argparse.ArgumentParser(
-        description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-    )
+    parser = make_mc_parser(__doc__)
     add_mc_args(parser)
     # DCG-specific defaults: conservative for speed
     parser.set_defaults(T_max=200, n_trials=50)
@@ -202,7 +178,7 @@ def main():
         help="Scale parameter of Gamma(shape, scale) texture distribution (default 1.0).")
     args = parser.parse_args()
 
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
+    init_logging(args.backend)
 
     p = args.n_features
     n_samples = 2 * p + 1
@@ -220,33 +196,17 @@ def main():
         seed=args.seed, tau_shape=args.tau_shape, tau_scale=args.tau_scale,
     )
 
-    exporter = MCResultExporter(
-        args, Path(args.export_path), f"p{p}_T{T_max}_n{args.n_trials}"
+    exporter = MCResultExporter(args, Path(args.export_path), f"p{p}_T{T_max}_n{args.n_trials}")
+
+    (online_dict, offline_dict), elapsed = timed_run(
+        args,
+        lambda: _run_pool(data, T_vec, args.n_workers, args.iter_max, args.tol_online, args.tol_offline),
+        lambda: _run_batched(data, T_vec, args.backend, args.iter_max, args.tol_online, args.tol_offline),
     )
-
-    t0 = time.perf_counter()
-    if args.backend == "numpy":
-        online_dict, offline_dict = _run_pool(
-            data, T_vec, args.n_workers,
-            args.iter_max, args.tol_online, args.tol_offline,
-        )
-    else:
-        online_dict, offline_dict = _run_batched(
-            data, T_vec, args.backend,
-            args.iter_max, args.tol_online, args.tol_offline,
-        )
-    elapsed = time.perf_counter() - t0
-
-    stats = aggregate(online_dict, offline_dict, T_vec)
-    logger.info(f"Done in {elapsed:.1f}s")
-    logger.info(f"  S_offline mean range: [{stats['S_offline_mean'].min():.3g}, {stats['S_offline_mean'].max():.3g}]")
-    logger.info(f"  |S_online - S_offline| mean range: [{stats['diff_mean'].min():.3g}, {stats['diff_mean'].max():.3g}]")
 
     title = (f"DCG GLRT convergence  (p={p}, n={n_samples}, "
              f"tau~Gamma({args.tau_shape},{args.tau_scale}))")
-    exporter.save(stats, "mc_dcg", elapsed, title=title)
-    if args.show_interactive:
-        plot_mc_stats(stats, title=title)
+    finish_h0(args, exporter, online_dict, offline_dict, T_vec, "mc_dcg", title, elapsed)
 
 
 if __name__ == "__main__":

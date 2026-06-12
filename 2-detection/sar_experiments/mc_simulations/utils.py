@@ -6,6 +6,7 @@ import json
 import sys
 import argparse
 import logging
+import time
 from pathlib import Path
 from string import Template
 
@@ -22,6 +23,62 @@ from src.exporter import _git_sha
 from plot_style import apply_style
 
 logger = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# Online detector helpers (shared between pool workers and batched paths)
+# ---------------------------------------------------------------------------
+
+def online_single_pass(data, T_vec, detector):
+    """Stream data through detector, recording the statistic at each T checkpoint."""
+    T_set = set(T_vec)
+    T_max = data.shape[-3]
+    results = {}
+    detector.reset_state()
+    stat = detector.initialize(data[..., :2, :, :])
+    if 2 in T_set:
+        results[2] = stat
+    for t in range(2, T_max):
+        T_current = t + 1
+        stat = detector.update(stat, data[..., t, :, :])
+        if T_current in T_set:
+            results[T_current] = stat
+    return results
+
+
+def online_run(data, detector):
+    """Run online detector through all T dates, return final statistic."""
+    T = data.shape[-3]
+    detector.reset_state()
+    stat = detector.initialize(data[..., :2, :, :])
+    for t in range(2, T):
+        stat = detector.update(stat, data[..., t, :, :])
+    return stat
+
+
+def chunk_trial_ranges(
+    n_trials: int, chunk_trials: "int | None"
+) -> "tuple[list[int], int, int]":
+    """Return (c_starts, chunk_size, n_chunks) for iterating over trial chunks."""
+    chunk = min(chunk_trials if chunk_trials is not None else n_trials, n_trials)
+    c_starts = list(range(0, n_trials, chunk))
+    return c_starts, chunk, len(c_starts)
+
+
+def warn_gpu_not_optimized(backend: str) -> None:
+    """Warn when a GPU/accelerator backend is selected.
+
+    The batched GPU path is functionally correct but not memory- or
+    kernel-optimized: the MM loop iterates sequentially over T checkpoints
+    rather than exploiting GPU parallelism across T, so utilization will be
+    low.  For large n_trials, --backend numpy + Pool is often faster.
+    """
+    if backend != "numpy":
+        logger.warning(
+            f"Backend '{backend}': GPU/accelerator path is NOT optimized for these MC "
+            "simulations. Operations run sequentially per T checkpoint; GPU utilization "
+            "will be low. For large n_trials, --backend numpy (Pool) may be faster."
+        )
 
 
 def maybe_empty_cache(backend: str) -> None:
@@ -506,3 +563,50 @@ def plot_mc_power(stats: dict, title: str = "", use_latex: bool = False) -> None
     ax.legend()
     fig.tight_layout()
     plt.show()
+
+
+# ---------------------------------------------------------------------------
+# Main function helpers
+# ---------------------------------------------------------------------------
+
+def make_mc_parser(description: str = "") -> argparse.ArgumentParser:
+    """Return an ArgumentParser with the standard MC docstring formatter."""
+    return argparse.ArgumentParser(
+        description=description,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+
+
+def init_logging(backend: str) -> None:
+    """Configure root logging and emit the GPU disclaimer when needed."""
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
+    warn_gpu_not_optimized(backend)
+
+
+def timed_run(args, pool_fn, batched_fn):
+    """Dispatch to pool or batched runner; return (result, elapsed_seconds)."""
+    t0 = time.perf_counter()
+    result = pool_fn() if args.backend == "numpy" else batched_fn()
+    return result, time.perf_counter() - t0
+
+
+def finish_h0(args, exporter, online_dict, offline_dict, T_vec, stem, title, elapsed):
+    """Aggregate H0 convergence stats, log summary, export, and optionally plot."""
+    stats = aggregate(online_dict, offline_dict, T_vec)
+    logger.info(f"Done in {elapsed:.1f}s")
+    logger.info(f"  S_offline mean range: [{stats['S_offline_mean'].min():.3g}, {stats['S_offline_mean'].max():.3g}]")
+    logger.info(f"  |S_online - S_offline| mean range: [{stats['diff_mean'].min():.3g}, {stats['diff_mean'].max():.3g}]")
+    exporter.save(stats, stem, elapsed, title=title)
+    if args.show_interactive:
+        plot_mc_stats(stats, title=title)
+
+
+def finish_h1(args, exporter, h0_stats, h1_stats, T_vec, stem, title, elapsed):
+    """Aggregate H1 power stats, log summary, export, and optionally plot."""
+    stats = aggregate_power(h0_stats, h1_stats, T_vec, args.pfa)
+    logger.info(f"Done in {elapsed:.1f}s")
+    logger.info(f"  Power offline @ T_max: {stats['power_offline'][-1]:.3f}")
+    logger.info(f"  Power online  @ T_max: {stats['power_online'][-1]:.3f}")
+    exporter.save(stats, stem, elapsed, title=title)
+    if args.show_interactive:
+        plot_mc_power(stats, title=title)
