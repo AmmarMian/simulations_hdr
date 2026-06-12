@@ -1,4 +1,4 @@
-name: detection_offline_dcg
+name: sar_det_off_dcg
 description: Offline DCG GLRT change detection on real SAR data
 path: 2-detection/sar_experiments/compute_detection_real_data
 executable: 2-detection/sar_experiments/compute_detection_real_data/offline_dcg.py

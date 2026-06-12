@@ -1,4 +1,4 @@
-name: mc_dcg_h1
+name: sar_mc_dcg_h1
 description: MC power curve — OnlineDCGGLRT vs DCGGLRT under H1 (change detection)
 path: 2-detection/sar_experiments/mc_simulations
 executable: 2-detection/sar_experiments/mc_simulations/mc_dcg_h1.py

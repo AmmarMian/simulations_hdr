@@ -1,4 +1,4 @@
-name: mc_gaussian_h0
+name: sar_mc_gauss_h0
 description: MC convergence test — OnlineGaussianGLRT telescopes to GaussianGLRT as T grows (H0)
 path: 2-detection/sar_experiments/mc_simulations
 executable: 2-detection/sar_experiments/mc_simulations/mc_gaussian_h0.py

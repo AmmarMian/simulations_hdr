@@ -1,4 +1,4 @@
-name: mc_dcg_h0
+name: sar_mc_dcg_h0
 description: MC convergence test — OnlineDCGGLRT telescopes to DCGGLRT as T grows (H0)
 path: 2-detection/sar_experiments/mc_simulations
 executable: 2-detection/sar_experiments/mc_simulations/mc_dcg_h0.py

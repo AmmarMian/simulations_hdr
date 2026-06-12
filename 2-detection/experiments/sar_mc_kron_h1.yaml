@@ -1,4 +1,4 @@
-name: mc_kronecker_h1
+name: sar_mc_kron_h1
 description: MC power curve — OnlineKroneckerGLRT vs KroneckerGLRT under H1 (change detection)
 path: 2-detection/sar_experiments/mc_simulations
 executable: 2-detection/sar_experiments/mc_simulations/mc_kronecker_h1.py

@@ -1,4 +1,4 @@
-name: detection_offline_kronecker
+name: sar_det_off_kron
 description: Offline Kronecker GLRT change detection on real SAR data
 path: 2-detection/sar_experiments/compute_detection_real_data
 executable: 2-detection/sar_experiments/compute_detection_real_data/offline_kronecker.py

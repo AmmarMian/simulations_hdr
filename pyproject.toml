@@ -14,6 +14,7 @@ dependencies = [
     "pip>=25.1.1",
     "pyqt6>=6.9.1",
     "pytest>=8.3.4",
+    "qanat",
     "rich>=14.1.0",
     "ruff>=0.15.12",
     "scipy>=1.16.1",
@@ -47,3 +48,6 @@ cupy = [
 name = "jax-cuda-releases"
 url = "https://storage.googleapis.com/jax-releases/jax_cuda_releases.html"
 explicit = true
+
+[tool.uv.sources]
+qanat = { git = "https://github.com/ammarmian/qanat" }

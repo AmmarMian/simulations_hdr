@@ -1,4 +1,4 @@
-name: mc_kronecker_h0
+name: sar_mc_kron_h0
 description: MC convergence test — OnlineKroneckerGLRT telescopes to KroneckerGLRT as T grows (H0)
 path: 2-detection/sar_experiments/mc_simulations
 executable: 2-detection/sar_experiments/mc_simulations/mc_kronecker_h0.py
