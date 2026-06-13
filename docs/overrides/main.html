@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en" data-paper="warm" data-type="classic">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% if page and page.title %}{{ page.title }} — {% endif %}{{ config.site_name }}</title>
+
+  <!-- Fonts: EB Garamond (classic) + IBM Plex Sans (labels) + IBM Plex Mono (code) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="{{ base_url }}/assets/css/theme.css">
+
+  <script>var HDR_BASE = "{{ base_url }}";</script>
+  <!-- Apply saved theme before paint to avoid flash -->
+  <script>
+    (function(){
+      var p = localStorage.getItem("hdr-paper");
+      if (p) document.documentElement.setAttribute("data-paper", p);
+      var s = parseFloat(localStorage.getItem("hdr-scale"));
+      if (!isNaN(s)) document.documentElement.style.setProperty("--reading-scale", s);
+    })();
+  </script>
+</head>
+<body>
+
+<!-- ░░░ Topbar ░░░ -->
+<header class="topbar">
+  <button class="toolbtn" id="btn-toc" aria-label="Navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+      <path d="M4 6h16M4 12h16M4 18h10"/>
+    </svg>
+  </button>
+
+  <a class="site-title" href="{{ base_url }}/">{{ config.site_name }}</a>
+
+  <div class="topbar-sep"></div>
+
+  <nav class="topbar-nav" aria-label="Site sections">
+    {% for nav_item in nav %}
+      {% if nav_item.children %}
+        <a class="topbar-link{% if nav_item.active %} active{% endif %}"
+           href="{{ nav_item.children[0].url | url }}">{{ nav_item.title }}</a>
+      {% else %}
+        <a class="topbar-link{% if nav_item.active %} active{% endif %}"
+           href="{{ nav_item.url | url }}">{{ nav_item.title }}</a>
+      {% endif %}
+    {% endfor %}
+  </nav>
+
+  <div class="topbar-spacer"></div>
+
+  <div class="search-wrap" id="search-wrap">
+    <div class="search-input-wrap" id="search-input-wrap" hidden>
+      <input type="search" id="search-input" placeholder="Search…" autocomplete="off" spellcheck="false">
+    </div>
+    <div class="search-results" id="search-results" hidden></div>
+    <button class="toolbtn" id="btn-search" aria-label="Search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/>
+      </svg>
+    </button>
+  </div>
+
+  <div style="display:inline-flex;align-items:center;gap:2px">
+    <button class="toolbtn" id="btn-az-sm" aria-label="Smaller text">
+      <span class="type-az-sm">A</span>
+    </button>
+    <button class="toolbtn" id="btn-az-lg" aria-label="Larger text">
+      <span class="type-az-lg">A</span>
+    </button>
+  </div>
+
+  <button class="toolbtn" id="btn-theme" aria-label="Toggle dark mode">
+    <svg id="ico-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>
+    </svg>
+    <svg id="ico-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" style="display:none">
+      <circle cx="12" cy="12" r="4"/>
+      <path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.4 1.4M17.6 17.6L19 19M19 5l-1.4 1.4M6.4 17.6L5 19"/>
+    </svg>
+  </button>
+</header>
+
+<div class="progress" id="progress"></div>
+
+<!-- ░░░ TOC drawer ░░░ -->
+<div class="toc-scrim" id="toc-scrim"></div>
+<div class="toc" id="toc" role="navigation" aria-label="Site navigation">
+  <p class="toc-site">{{ config.site_name }}</p>
+  <p class="toc-sub">{{ config.site_description }}</p>
+
+  <nav>
+    {% for nav_item in nav %}
+      {% if nav_item.children %}
+        <p class="toc-section-label">{{ nav_item.title }}</p>
+        <ul>
+          {% for child in nav_item.children %}
+            {% if child.children %}
+              <li class="toc-subsection">
+                <span class="toc-subsection-label">{{ child.title }}</span>
+                <ul>
+                  {% for grandchild in child.children %}
+                    <li>
+                      <a href="{{ grandchild.url | url }}"{% if grandchild.active %} class="active"{% endif %}>
+                        {{ grandchild.title }}
+                      </a>
+                    </li>
+                  {% endfor %}
+                </ul>
+              </li>
+            {% else %}
+              <li>
+                <a href="{{ child.url | url }}"{% if child.active %} class="active"{% endif %}>
+                  {{ child.title }}
+                </a>
+              </li>
+            {% endif %}
+          {% endfor %}
+        </ul>
+      {% else %}
+        <ul>
+          <li>
+            <a href="{{ nav_item.url | url }}"{% if nav_item.active %} class="active"{% endif %}>
+              {{ nav_item.title }}
+            </a>
+          </li>
+        </ul>
+      {% endif %}
+    {% endfor %}
+  </nav>
+</div>
+
+<!-- ░░░ Page ░░░ -->
+<div class="page-wrap">
+  <div class="page-body">
+
+    <main class="page-content" id="content">
+      {{ page.content }}
+
+      {% if git_date %}
+      <p class="page-meta">Last updated {{ git_date }}</p>
+      {% endif %}
+
+      {% if page.previous_page or page.next_page %}
+      <nav class="page-nav" aria-label="Page navigation">
+        {% if page.previous_page %}
+        <a href="{{ page.previous_page.url | url }}">← {{ page.previous_page.title }}</a>
+        {% else %}<span></span>{% endif %}
+        {% if page.next_page %}
+        <a href="{{ page.next_page.url | url }}">{{ page.next_page.title }} →</a>
+        {% endif %}
+      </nav>
+      {% endif %}
+    </main>
+
+    {% if page.toc %}
+    <aside class="page-aside">
+      <nav class="aside-toc" aria-label="On this page">
+        <p class="aside-toc-label">On this page</p>
+        <ul>
+          {% for toc_item in page.toc %}
+            <li>
+              <a href="{{ toc_item.url }}">{{ toc_item.title }}</a>
+              {% if toc_item.children %}
+                <ul>
+                  {% for child in toc_item.children %}
+                    <li><a href="{{ child.url }}">{{ child.title }}</a></li>
+                  {% endfor %}
+                </ul>
+              {% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      </nav>
+    </aside>
+    {% endif %}
+
+  </div>
+</div>
+
+<script src="{{ base_url }}/assets/js/theme.js"></script>
+{% if page and page.content and 'plotly-wrap' in page.content %}
+<script src="https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.35.2/plotly.min.js"
+        integrity="sha384-cCVCZkAjYNxaYKbM8lsArLznDF/SvMFr1jcZrvOpSTCa0W40ZAdLzHCEulnUa5i7"
+        crossorigin="anonymous"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  document.querySelectorAll(".plotly-wrap[data-src]").forEach(function (el) {
+    if (el.dataset.title) {
+      var top = document.createElement("div");
+      top.className = "figtop";
+      top.innerHTML = '<span class="figtag">' + el.dataset.title + '</span>';
+      el.appendChild(top);
+    }
+    var inner = document.createElement("div");
+    inner.className = "plotly-inner";
+    el.appendChild(inner);
+
+    fetch(el.dataset.src)
+      .then(function (r) { return r.json(); })
+      .then(function (spec) {
+        var style = getComputedStyle(document.documentElement);
+        var grid  = style.getPropertyValue("--rule").trim()  || "rgba(187,170,148,0.35)";
+        var ink2  = style.getPropertyValue("--ink-2").trim() || "#5c4a35";
+        var muted = style.getPropertyValue("--muted").trim() || "#9a8a75";
+
+        function patchAxis(ax) {
+          if (!ax) return;
+          if (ax.showgrid)   ax.gridcolor  = grid;
+          if (ax.linecolor)  ax.linecolor  = muted;
+          if (ax.tickcolor)  ax.tickcolor  = muted;
+          if (ax.tickfont)   ax.tickfont.color  = muted;
+          if (ax.title && ax.title.font) ax.title.font.color = ink2;
+        }
+        patchAxis(spec.layout.xaxis);
+        patchAxis(spec.layout.yaxis);
+        if (spec.layout.legend) spec.layout.legend.font.color = ink2;
+        if (spec.layout.font)   spec.layout.font.color = ink2;
+
+        Plotly.react(inner, spec.data, spec.layout, {
+          displayModeBar: false,
+          displaylogo:    false,
+          responsive:     true,
+          scrollZoom:     true,
+        });
+      });
+  });
+});
+</script>
+{% endif %}
+<script>
+  window.MathJax = {
+    tex: {
+      inlineMath:  [["\\(", "\\)"]],
+      displayMath: [["\\[", "\\]"]],
+      processEscapes: true,
+      tags: "ams"
+    },
+    options: { ignoreHtmlClass: ".*", processHtmlClass: "arithmatex" }
+  };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js"
+        integrity="sha384-Wuix6BuhrWbjDBs24bXrjf4ZQ5aFeFWBuKkFekO2t8xFU0iNaLQfp2K6/1Nxveei"
+        crossorigin="anonymous" async></script>
+</body>
+</html>
