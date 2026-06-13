@@ -1,0 +1,1 @@
+/Users/ammarmian/Research/simulations_hdr/results/sar_mc_kron_h1/run_8/mc_kronecker_h1_a2_b3_T1000_n100.npz

@@ -1,12 +1,52 @@
 <div class="page-header">
   <div class="eyebrow">Reference</div>
   <h1>API</h1>
-  <p class="standfirst">Eight modules covering backends, estimators, manifold operations,
-  detection, simulation, and result export. All public classes and functions are
-  documented with type signatures and NumPy-style docstrings.</p>
+  <p class="standfirst">Modules organised by chapter, plus cross-chapter shared
+  utilities. All public classes and functions are documented with type
+  signatures and NumPy-style docstrings.</p>
 </div>
 
-<div class="api-index">
+<div class="api-section">
+  <div class="api-section-head">
+    <span class="api-section-num">Shared</span>
+    <span class="api-section-title">Cross-chapter utilities</span>
+  </div>
+  <div class="api-index">
+
+  <a class="api-card" href="plot_style/">
+    <div class="api-card-head">
+      <span class="api-mod">shared.plot_style</span>
+      <span class="api-badge">style</span>
+    </div>
+    <div class="api-card-body">
+      <p class="api-desc">Dark serif matplotlib theme. Call <code>apply_style()</code>
+      once per process to configure rcParams globally. Exports
+      <code>DARK_STYLE_DICT</code> and <code>EMBEDDED_STYLE_CODE</code> for
+      standalone scripts.</p>
+    </div>
+  </a>
+
+  <a class="api-card" href="plotly_style/">
+    <div class="api-card-head">
+      <span class="api-mod">shared.plotly_style</span>
+      <span class="api-badge">style</span>
+    </div>
+    <div class="api-card-body">
+      <p class="api-desc">Plotly design tokens for the docs design system.
+      Provides colour constants, font stacks, and <code>hex_to_rgba()</code>
+      for all <code>action_add_to_docs.py</code> scripts.</p>
+    </div>
+  </a>
+
+  </div>
+</div>
+
+<div class="api-section">
+  <div class="api-section-head">
+    <span class="api-section-num">2 · Detection</span>
+    <span class="api-section-title">Change detection under elliptical distributions</span>
+  </div>
+  <div class="api-index">
 
 <a class="api-card" href="backend/">
   <div class="api-card-head">
@@ -102,4 +142,5 @@
   </div>
 </a>
 
+  </div>
 </div>

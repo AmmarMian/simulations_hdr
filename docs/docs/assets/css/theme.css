@@ -337,6 +337,17 @@ body {
 .toc nav a.active { color: var(--accent); background: var(--accent-wash); }
 .toc nav li li a { font-size: 14px; padding-left: 20px; color: var(--ink-3); }
 .toc nav li li a.active { color: var(--accent); }
+.toc-subsection-label {
+  display: block;
+  font-family: var(--font-label);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: .8em 10px .2em;
+}
+.toc nav li li li a { padding-left: 32px; }
 
 /* ── Page layout ────────────────────────────────────────────── */
 .page-wrap {
@@ -531,6 +542,27 @@ strong { font-weight: 600; }
 .page-content .cbfile {
   font-family: var(--font-label); font-size: 11px; color: var(--muted);
 }
+.cb-copy {
+  margin-left: auto;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--muted);
+  padding: 3px 5px;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  opacity: 0;
+  transition: opacity .15s, color .15s, background .15s;
+}
+.highlight:hover .cb-copy,
+.highlighttable:hover .cb-copy,
+.cbhead:focus-within .cb-copy { opacity: 1; }
+.cb-copy:hover { color: var(--ink-2); background: var(--panel-2); }
+.cb-copy svg { display: block; }
+.cb-copy .cb-check-icon { display: none; }
+.cb-copy.copied .cb-copy-icon { display: none; }
+.cb-copy.copied .cb-check-icon { display: block; color: var(--accent); }
 
 /* pymdownx title — hidden; JS picks it up and moves it into cbhead */
 .page-content .highlight > .filename { display: none; }
@@ -1135,7 +1167,34 @@ details.exp-params[open] > summary::before { transform: rotate(90deg); }
   color: var(--ink-3);
   line-height: 1.6;
 }
-
+.api-section {
+  margin: 2.8em 0 0;
+}
+.api-section-head {
+  display: flex;
+  align-items: baseline;
+  gap: .9em;
+  padding-bottom: .55em;
+  margin-bottom: 1.4em;
+  border-bottom: 1px solid var(--rule);
+}
+.api-section-num {
+  font-family: var(--font-label);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.api-section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-2);
+  margin: 0;
+}
+.api-section .api-index {
+  margin-top: 0;
+}
 /* ── Plotly figures ─────────────────────────────────────────── */
 .plotly-wrap {
   width: 100%;
@@ -1289,3 +1348,63 @@ details.mkdocstrings-source table.highlighttable {
   font-size: calc(12px * var(--reading-scale));
   box-shadow: var(--shadow);
 }
+
+/* ── Heading anchor links ──────────────────────────────────── */
+.heading-anchor {
+  display: inline-flex; align-items: center;
+  margin-left: .4em; opacity: 0;
+  color: var(--muted); transition: opacity .15s;
+  vertical-align: middle; text-decoration: none;
+}
+.heading-anchor svg { width: 14px; height: 14px; }
+h2:hover .heading-anchor,
+h3:hover .heading-anchor,
+h4:hover .heading-anchor { opacity: 1; }
+.heading-anchor:hover { color: var(--accent); }
+
+/* ── Figure captions ───────────────────────────────────────── */
+.page-content figure {
+  margin: 2em auto; text-align: center;
+}
+.page-content figure img {
+  max-width: 100%; border-radius: 4px;
+}
+.page-content figcaption {
+  font-size: calc(var(--body-size) * .82 * var(--reading-scale));
+  color: var(--muted); margin-top: .7em;
+  font-style: italic; line-height: 1.55;
+}
+.page-content figcaption strong {
+  color: var(--ink-2); font-style: normal;
+}
+
+/* ── Prev / Next page navigation ──────────────────────────── */
+.page-nav {
+  display: flex; justify-content: space-between; margin-top: 3.5em;
+  padding-top: 1.2em; border-top: 1px solid var(--rule);
+  font-family: var(--font-label); font-size: 12px; letter-spacing: .04em;
+  text-transform: uppercase; color: var(--muted);
+}
+.page-nav a {
+  color: var(--ink-2); background-image: none !important;
+  letter-spacing: .04em; font-weight: 500;
+}
+.page-nav a:hover { color: var(--accent); }
+
+/* ── Last-modified date ────────────────────────────────────── */
+.page-meta {
+  margin-top: 1.2em;
+  font-family: var(--font-label); font-size: 12px; letter-spacing: .04em;
+  color: var(--muted);
+}
+
+/* ── 404 page ──────────────────────────────────────────────── */
+.not-found-links {
+  margin-top: 1.5em;
+  font-family: var(--font-label); font-size: 14px; letter-spacing: .03em;
+  color: var(--muted);
+}
+.not-found-links a {
+  color: var(--ink-2); background-image: none !important; font-weight: 500;
+}
+.not-found-links a:hover { color: var(--accent); }

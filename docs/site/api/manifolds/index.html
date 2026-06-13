@@ -12,6 +12,7 @@
 
   <link rel="stylesheet" href="../../assets/css/theme.css">
 
+  <script>var HDR_BASE = "../..";</script>
   <!-- Apply saved theme before paint to avoid flash -->
   <script>
     (function(){
@@ -45,17 +46,12 @@
     
       
         <a class="topbar-link"
-           href="../../chapters/1-context/">Chapters</a>
-      
-    
-      
-        <a class="topbar-link"
-           href="../../experiments/">Experiments</a>
+           href="../../experiments-overview/">Experiments</a>
       
     
       
         <a class="topbar-link active"
-           href="../backend/">API</a>
+           href="../">API</a>
       
     
       
@@ -66,6 +62,18 @@
   </nav>
 
   <div class="topbar-spacer"></div>
+
+  <div class="search-wrap" id="search-wrap">
+    <div class="search-input-wrap" id="search-input-wrap" hidden>
+      <input type="search" id="search-input" placeholder="Search…" autocomplete="off" spellcheck="false">
+    </div>
+    <div class="search-results" id="search-results" hidden></div>
+    <button class="toolbtn" id="btn-search" aria-label="Search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/>
+      </svg>
+    </button>
+  </div>
 
   <div style="display:inline-flex;align-items:center;gap:2px">
     <button class="toolbtn" id="btn-az-sm" aria-label="Smaller text">
@@ -108,43 +116,49 @@
       
     
       
-        <p class="toc-section-label">Chapters</p>
+        <p class="toc-section-label">Experiments</p>
         <ul>
           
-            <li>
-              <a href="../../chapters/1-context/">
-                1 · Context
-              </a>
-            </li>
+            
+              <li>
+                <a href="../../experiments-overview/">
+                  Overview
+                </a>
+              </li>
+            
           
-            <li>
-              <a href="../../chapters/2-detection/">
-                2 · Detection
-              </a>
-            </li>
+            
+              <li>
+                <a href="../../chapters/1-context/">
+                  1 · Context
+                </a>
+              </li>
+            
           
-            <li>
-              <a href="../../chapters/3-machinelearning/">
-                3 · Machine Learning
-              </a>
-            </li>
+            
+              <li>
+                <a href="../../chapters/2-detection/">
+                  2 · Detection
+                </a>
+              </li>
+            
           
-            <li>
-              <a href="../../chapters/4-deeplearning/">
-                4 · Deep Learning
-              </a>
-            </li>
+            
+              <li>
+                <a href="../../chapters/3-machinelearning/">
+                  3 · Machine Learning
+                </a>
+              </li>
+            
           
-        </ul>
-      
-    
-      
-        <ul>
-          <li>
-            <a href="../../experiments/">
-              Experiments
-            </a>
-          </li>
+            
+              <li>
+                <a href="../../chapters/4-deeplearning/">
+                  4 · Deep Learning
+                </a>
+              </li>
+            
+          
         </ul>
       
     
@@ -152,53 +166,91 @@
         <p class="toc-section-label">API</p>
         <ul>
           
-            <li>
-              <a href="../backend/">
-                backend
-              </a>
-            </li>
+            
+              <li>
+                <a href="../">
+                  Overview
+                </a>
+              </li>
+            
           
-            <li>
-              <a href="../estimation/">
-                estimation
-              </a>
-            </li>
+            
+              <li class="toc-subsection">
+                <span class="toc-subsection-label">Shared</span>
+                <ul>
+                  
+                    <li>
+                      <a href="../plot_style/">
+                        plot_style
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../plotly_style/">
+                        plotly_style
+                      </a>
+                    </li>
+                  
+                </ul>
+              </li>
+            
           
-            <li>
-              <a href="../estimation_kronecker/">
-                estimation_kronecker
-              </a>
-            </li>
-          
-            <li>
-              <a href="../estimation_online/">
-                estimation_online
-              </a>
-            </li>
-          
-            <li>
-              <a href="./" class="active">
-                manifolds
-              </a>
-            </li>
-          
-            <li>
-              <a href="../detection/">
-                detection
-              </a>
-            </li>
-          
-            <li>
-              <a href="../simulation/">
-                simulation
-              </a>
-            </li>
-          
-            <li>
-              <a href="../exporter/">
-                exporter
-              </a>
-            </li>
+            
+              <li class="toc-subsection">
+                <span class="toc-subsection-label">2 · Detection</span>
+                <ul>
+                  
+                    <li>
+                      <a href="../backend/">
+                        backend
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../estimation/">
+                        estimation
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../estimation_kronecker/">
+                        estimation_kronecker
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../estimation_online/">
+                        estimation_online
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="./" class="active">
+                        manifolds
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../detection/">
+                        detection
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../simulation/">
+                        simulation
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../exporter/">
+                        exporter
+                      </a>
+                    </li>
+                  
+                </ul>
+              </li>
+            
           
         </ul>
       
@@ -589,11 +641,58 @@ Uses canonical geometry (generalized eigenvalue problem) and retraction via matr
     <div class="doc doc-contents ">
 
         <p>Initialize HPD manifold.</p>
-<h6 id="src.manifolds.HermitianPositiveDefinite.__init__--parameters">Parameters</h6>
-<p>n : int
-    Size of matrices (n x n)
-backend_name : Union[str, Backend], optional
-    Backend specification. Default "numpy".</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>n</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Size of matrices (n x n)</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>backend_name</code>
+            </td>
+            <td>
+                  <code><span title="typing.Union">Union</span>[<span title="str">str</span>, <a class="autorefs autorefs-internal" title="Backend
+
+
+  
+      dataclass
+   (src.backend.Backend)" href="../backend/#src.backend.Backend">Backend</a>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Backend specification. Default "numpy".</p>
+              </div>
+            </td>
+            <td>
+                  <code>&#39;numpy&#39;</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -1230,15 +1329,90 @@ The Fisher metric includes an elliptical coupling term (alpha parameter).</p>
     <div class="doc doc-contents ">
 
         <p>Initialize KroneckerHermitianPositiveElliptical manifold.</p>
-<h6 id="src.manifolds.KroneckerHermitianPositiveElliptical.__init__--parameters">Parameters</h6>
-<p>a : int
-    Size of first Kronecker factor (a x a)
-b : int
-    Size of second Kronecker factor (b x b)
-alpha : float, optional
-    Elliptical coupling parameter. Default 1.0.
-backend_name : Union[str, Backend], optional
-    Backend specification. Default "numpy".</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>a</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Size of first Kronecker factor (a x a)</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>b</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Size of second Kronecker factor (b x b)</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>alpha</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Elliptical coupling parameter. Default 1.0.</p>
+              </div>
+            </td>
+            <td>
+                  <code>1.0</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>backend_name</code>
+            </td>
+            <td>
+                  <code><span title="typing.Union">Union</span>[<span title="str">str</span>, <a class="autorefs autorefs-internal" title="Backend
+
+
+  
+      dataclass
+   (src.backend.Backend)" href="../backend/#src.backend.Backend">Backend</a>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Backend specification. Default "numpy".</p>
+              </div>
+            </td>
+            <td>
+                  <code>&#39;numpy&#39;</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -1445,15 +1619,90 @@ Kronecker structure: Sigma = A kron B with det(A) = det(B) = 1.</p>
     <div class="doc doc-contents ">
 
         <p>Initialize KroneckerHermitianPositiveScaledGaussian manifold.</p>
-<h6 id="src.manifolds.KroneckerHermitianPositiveScaledGaussian.__init__--parameters">Parameters</h6>
-<p>a : int
-    Size of first Kronecker factor (a x a)
-b : int
-    Size of second Kronecker factor (b x b)
-n : int
-    Number of texture parameters
-backend_name : Union[str, Backend], optional
-    Backend specification. Default "numpy".</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>a</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Size of first Kronecker factor (a x a)</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>b</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Size of second Kronecker factor (b x b)</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>n</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Number of texture parameters</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>backend_name</code>
+            </td>
+            <td>
+                  <code><span title="typing.Union">Union</span>[<span title="str">str</span>, <a class="autorefs autorefs-internal" title="Backend
+
+
+  
+      dataclass
+   (src.backend.Backend)" href="../backend/#src.backend.Backend">Backend</a>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Backend specification. Default "numpy".</p>
+              </div>
+            </td>
+            <td>
+                  <code>&#39;numpy&#39;</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -2011,14 +2260,76 @@ backend_name : Union[str, Backend], optional
     <div class="doc doc-contents ">
 
         <p>Riemannian distance between points x and y.</p>
-<h6 id="src.manifolds.Manifold.dist--parameters">Parameters</h6>
-<p>x : Array
-    Point on manifold
-y : Array
-    Point on manifold</p>
-<h6 id="src.manifolds.Manifold.dist--returns">Returns</h6>
-<p>Array
-    Distance (scalar or batch of scalars)</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>x</code>
+            </td>
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Point on manifold</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>y</code>
+            </td>
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Point on manifold</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Distance (scalar or batch of scalars)</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -2075,14 +2386,76 @@ y : Array
 
         <p>Convert Euclidean gradient to Riemannian gradient.</p>
 <p>For submanifolds, this involves projection and metric conversion.</p>
-<h6 id="src.manifolds.Manifold.egrad2rgrad--parameters">Parameters</h6>
-<p>x : Array
-    Point on manifold
-egrad : Array
-    Euclidean gradient at x</p>
-<h6 id="src.manifolds.Manifold.egrad2rgrad--returns">Returns</h6>
-<p>Array
-    Riemannian gradient at x</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>x</code>
+            </td>
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Point on manifold</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>egrad</code>
+            </td>
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Euclidean gradient at x</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Riemannian gradient at x</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -2140,18 +2513,108 @@ egrad : Array
     <div class="doc doc-contents ">
 
         <p>Convert Euclidean Hessian to Riemannian Hessian.</p>
-<h6 id="src.manifolds.Manifold.ehess2rhess--parameters">Parameters</h6>
-<p>x : Array
-    Point on manifold
-egrad : Array
-    Euclidean gradient at x
-ehess : Array
-    Euclidean Hessian at x
-u : Array
-    Tangent direction (used in second-order derivative)</p>
-<h6 id="src.manifolds.Manifold.ehess2rhess--returns">Returns</h6>
-<p>Array
-    Riemannian Hessian at x in direction u</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>x</code>
+            </td>
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Point on manifold</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>egrad</code>
+            </td>
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Euclidean gradient at x</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>ehess</code>
+            </td>
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Euclidean Hessian at x</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>u</code>
+            </td>
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Tangent direction (used in second-order derivative)</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Riemannian Hessian at x in direction u</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -2217,14 +2680,76 @@ u : Array
     <div class="doc doc-contents ">
 
         <p>Exponential map: curve from x along tangent vector u.</p>
-<h6 id="src.manifolds.Manifold.exp--parameters">Parameters</h6>
-<p>x : Array
-    Base point on manifold
-u : Array
-    Tangent vector at x</p>
-<h6 id="src.manifolds.Manifold.exp--returns">Returns</h6>
-<p>Array
-    exp_x(u) on manifold</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>x</code>
+            </td>
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Base point on manifold</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>u</code>
+            </td>
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Tangent vector at x</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>exp_x(u) on manifold</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -2284,16 +2809,92 @@ u : Array
     <div class="doc doc-contents ">
 
         <p>Inner product of tangent vectors u, v at point x.</p>
-<h6 id="src.manifolds.Manifold.inner--parameters">Parameters</h6>
-<p>x : Array
-    Point on manifold
-u : Array
-    Tangent vector at x
-v : Array
-    Tangent vector at x</p>
-<h6 id="src.manifolds.Manifold.inner--returns">Returns</h6>
-<p>Array
-    Inner product (scalar or batch of scalars)</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>x</code>
+            </td>
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Point on manifold</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>u</code>
+            </td>
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Tangent vector at x</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>v</code>
+            </td>
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Tangent vector at x</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Inner product (scalar or batch of scalars)</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -2357,14 +2958,76 @@ v : Array
     <div class="doc doc-contents ">
 
         <p>Logarithmic map: tangent vector from x to y.</p>
-<h6 id="src.manifolds.Manifold.log--parameters">Parameters</h6>
-<p>x : Array
-    Base point on manifold
-y : Array
-    Target point on manifold</p>
-<h6 id="src.manifolds.Manifold.log--returns">Returns</h6>
-<p>Array
-    Tangent vector u such that exp_x(u) ≈ y</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>x</code>
+            </td>
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Base point on manifold</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>y</code>
+            </td>
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Target point on manifold</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Tangent vector u such that exp_x(u) ≈ y</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -2420,14 +3083,76 @@ y : Array
     <div class="doc doc-contents ">
 
         <p>Norm of tangent vector u at point x.</p>
-<h6 id="src.manifolds.Manifold.norm--parameters">Parameters</h6>
-<p>x : Array
-    Point on manifold
-u : Array
-    Tangent vector at x</p>
-<h6 id="src.manifolds.Manifold.norm--returns">Returns</h6>
-<p>Array
-    Norm (scalar or batch of scalars)</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>x</code>
+            </td>
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Point on manifold</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>u</code>
+            </td>
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Tangent vector at x</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Norm (scalar or batch of scalars)</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -2487,14 +3212,76 @@ u : Array
     <div class="doc doc-contents ">
 
         <p>Orthogonal projection onto tangent space at x.</p>
-<h6 id="src.manifolds.Manifold.proj--parameters">Parameters</h6>
-<p>x : Array
-    Point on manifold
-u : Array
-    Vector to project</p>
-<h6 id="src.manifolds.Manifold.proj--returns">Returns</h6>
-<p>Array
-    Projected tangent vector</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>x</code>
+            </td>
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Point on manifold</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>u</code>
+            </td>
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Vector to project</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Projected tangent vector</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -2554,12 +3341,60 @@ u : Array
     <div class="doc doc-contents ">
 
         <p>Sample random point on manifold.</p>
-<h6 id="src.manifolds.Manifold.rand--parameters">Parameters</h6>
-<p>batch_shape : Tuple, optional
-    Batch dimensions. Default empty (single point).</p>
-<h6 id="src.manifolds.Manifold.rand--returns">Returns</h6>
-<p>Array
-    Random point of shape (<em>batch_shape, </em>manifold_shape)</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>batch_shape</code>
+            </td>
+            <td>
+                  <code><span title="typing.Tuple">Tuple</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Batch dimensions. Default empty (single point).</p>
+              </div>
+            </td>
+            <td>
+                  <code>()</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Random point of shape (<em>batch_shape, </em>manifold_shape)</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -2681,16 +3516,92 @@ cheaper retraction than exp is available.</p>
     <div class="doc doc-contents ">
 
         <p>Parallel transport of tangent vector d from x1 to x2.</p>
-<h6 id="src.manifolds.Manifold.transp--parameters">Parameters</h6>
-<p>x1 : Array
-    Base point (where d lives)
-x2 : Array
-    Target point
-d : Array
-    Tangent vector at x1</p>
-<h6 id="src.manifolds.Manifold.transp--returns">Returns</h6>
-<p>Array
-    Transported tangent vector at x2</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>x1</code>
+            </td>
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Base point (where d lives)</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>x2</code>
+            </td>
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Target point</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>d</code>
+            </td>
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Tangent vector at x1</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Transported tangent vector at x2</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -2992,11 +3903,58 @@ Inner product is sum of component inner products (unweighted).</p>
     <div class="doc doc-contents ">
 
         <p>Initialize product manifold.</p>
-<h6 id="src.manifolds.ProductManifold.__init__--parameters">Parameters</h6>
-<p>manifolds : List[Manifold]
-    List of component manifolds
-backend_name : Union[str, Backend], optional
-    Backend specification. Default "numpy".</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>manifolds</code>
+            </td>
+            <td>
+                  <code><span title="typing.List">List</span>[<a class="autorefs autorefs-internal" title="Manifold (src.manifolds.Manifold)" href="#src.manifolds.Manifold">Manifold</a>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>List of component manifolds</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>backend_name</code>
+            </td>
+            <td>
+                  <code><span title="typing.Union">Union</span>[<span title="str">str</span>, <a class="autorefs autorefs-internal" title="Backend
+
+
+  
+      dataclass
+   (src.backend.Backend)" href="../backend/#src.backend.Backend">Backend</a>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Backend specification. Default "numpy".</p>
+              </div>
+            </td>
+            <td>
+                  <code>&#39;numpy&#39;</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -3507,13 +4465,74 @@ Weights are (1/d, 1/n).</p>
     <div class="doc doc-contents ">
 
         <p>Initialize ScaledGaussianFIM manifold.</p>
-<h6 id="src.manifolds.ScaledGaussianFIM.__init__--parameters">Parameters</h6>
-<p>d : int
-    Size of covariance matrix (d x d)
-n : int
-    Number of texture parameters
-backend_name : Union[str, Backend], optional
-    Backend specification. Default "numpy".</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>d</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Size of covariance matrix (d x d)</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>n</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Number of texture parameters</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>backend_name</code>
+            </td>
+            <td>
+                  <code><span title="typing.Union">Union</span>[<span title="str">str</span>, <a class="autorefs autorefs-internal" title="Backend
+
+
+  
+      dataclass
+   (src.backend.Backend)" href="../backend/#src.backend.Backend">Backend</a>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Backend specification. Default "numpy".</p>
+              </div>
+            </td>
+            <td>
+                  <code>&#39;numpy&#39;</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -3820,11 +4839,58 @@ This is a totally geodesic submanifold of HPD.</p>
     <div class="doc doc-contents ">
 
         <p>Initialize SHPD manifold.</p>
-<h6 id="src.manifolds.SpecialHermitianPositiveDefinite.__init__--parameters">Parameters</h6>
-<p>n : int
-    Size of matrices (n x n)
-backend_name : Union[str, Backend], optional
-    Backend specification. Default "numpy".</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>n</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Size of matrices (n x n)</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>backend_name</code>
+            </td>
+            <td>
+                  <code><span title="typing.Union">Union</span>[<span title="str">str</span>, <a class="autorefs autorefs-internal" title="Backend
+
+
+  
+      dataclass
+   (src.backend.Backend)" href="../backend/#src.backend.Backend">Backend</a>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Backend specification. Default "numpy".</p>
+              </div>
+            </td>
+            <td>
+                  <code>&#39;numpy&#39;</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -4436,11 +5502,58 @@ Inner product: <u, v>_x = sum(u_i * v_i / x_i^2)</p>
     <div class="doc doc-contents ">
 
         <p>Initialize StrictlyPositiveVectors manifold.</p>
-<h6 id="src.manifolds.StrictlyPositiveVectors.__init__--parameters">Parameters</h6>
-<p>n : int
-    Dimension of vectors
-backend_name : Union[str, Backend], optional
-    Backend specification. Default "numpy".</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>n</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Dimension of vectors</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>backend_name</code>
+            </td>
+            <td>
+                  <code><span title="typing.Union">Union</span>[<span title="str">str</span>, <a class="autorefs autorefs-internal" title="Backend
+
+
+  
+      dataclass
+   (src.backend.Backend)" href="../backend/#src.backend.Backend">Backend</a>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Backend specification. Default "numpy".</p>
+              </div>
+            </td>
+            <td>
+                  <code>&#39;numpy&#39;</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -4952,13 +6065,74 @@ Distance: sqrt(weighted sum of squared distances).</p>
     <div class="doc doc-contents ">
 
         <p>Initialize weighted product manifold.</p>
-<h6 id="src.manifolds.WeightedProductManifold.__init__--parameters">Parameters</h6>
-<p>manifolds : List[Manifold]
-    List of component manifolds
-weights : List[float], optional
-    Weights for each component. Default: uniform (all ones).
-backend_name : Union[str, Backend], optional
-    Backend specification. Default "numpy".</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>manifolds</code>
+            </td>
+            <td>
+                  <code><span title="typing.List">List</span>[<a class="autorefs autorefs-internal" title="Manifold (src.manifolds.Manifold)" href="#src.manifolds.Manifold">Manifold</a>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>List of component manifolds</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>weights</code>
+            </td>
+            <td>
+                  <code><span title="typing.List">List</span>[<span title="float">float</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Weights for each component. Default: uniform (all ones).</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>backend_name</code>
+            </td>
+            <td>
+                  <code><span title="typing.Union">Union</span>[<span title="str">str</span>, <a class="autorefs autorefs-internal" title="Backend
+
+
+  
+      dataclass
+   (src.backend.Backend)" href="../backend/#src.backend.Backend">Backend</a>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Backend specification. Default "numpy".</p>
+              </div>
+            </td>
+            <td>
+                  <code>&#39;numpy&#39;</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -5256,14 +6430,81 @@ backend_name : Union[str, Backend], optional
         <p>Matrix inverse square root of PSD matrix via eigendecomposition.</p>
 <p>For Hermitian PSD X, computes X^{-1/2} = Q^H @ diag(1/sqrt(d)) @ Q where
 X = Q @ diag(d) @ Q^H from eigendecomposition.</p>
-<h5 id="src.manifolds.invsqrtm_psd--parameters">Parameters</h5>
-<p>X : Array
-    Hermitian PSD matrices of shape (..., n, n)
-backend : Union[str, Backend]
-    Backend specification</p>
-<h5 id="src.manifolds.invsqrtm_psd--returns">Returns</h5>
-<p>Array
-    Inverse square root of X, same shape as input</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>X</code>
+            </td>
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Hermitian PSD matrices of shape (..., n, n)</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>backend</code>
+            </td>
+            <td>
+                  <code><span title="typing.Union">Union</span>[<span title="str">str</span>, <a class="autorefs autorefs-internal" title="Backend
+
+
+  
+      dataclass
+   (src.backend.Backend)" href="../backend/#src.backend.Backend">Backend</a>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Backend specification</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Inverse square root of X, same shape as input</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -5349,14 +6590,81 @@ backend : Union[str, Backend]
         <p>Matrix logarithm of positive definite matrix via eigendecomposition.</p>
 <p>For Hermitian PD X, computes log(X) = Q @ diag(log(d)) @ Q^H where
 X = Q @ diag(d) @ Q^H from eigendecomposition.</p>
-<h5 id="src.manifolds.logm_psd--parameters">Parameters</h5>
-<p>X : Array
-    Hermitian PD matrices of shape (..., n, n)
-backend : Union[str, Backend]
-    Backend specification</p>
-<h5 id="src.manifolds.logm_psd--returns">Returns</h5>
-<p>Array
-    Matrix logarithm of X, same shape as input</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>X</code>
+            </td>
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Hermitian PD matrices of shape (..., n, n)</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>backend</code>
+            </td>
+            <td>
+                  <code><span title="typing.Union">Union</span>[<span title="str">str</span>, <a class="autorefs autorefs-internal" title="Backend
+
+
+  
+      dataclass
+   (src.backend.Backend)" href="../backend/#src.backend.Backend">Backend</a>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Backend specification</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Matrix logarithm of X, same shape as input</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -5440,14 +6748,81 @@ backend : Union[str, Backend]
     <div class="doc doc-contents ">
 
         <p>Hermitian symmetrization: (A + A^H) / 2</p>
-<h5 id="src.manifolds.multiherm--parameters">Parameters</h5>
-<p>A : Array
-    Input array of shape (..., n, n)
-backend : Union[str, Backend]
-    Backend specification</p>
-<h5 id="src.manifolds.multiherm--returns">Returns</h5>
-<p>Array
-    Hermitian symmetrized array</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>A</code>
+            </td>
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Input array of shape (..., n, n)</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>backend</code>
+            </td>
+            <td>
+                  <code><span title="typing.Union">Union</span>[<span title="str">str</span>, <a class="autorefs autorefs-internal" title="Backend
+
+
+  
+      dataclass
+   (src.backend.Backend)" href="../backend/#src.backend.Backend">Backend</a>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Backend specification</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Hermitian symmetrized array</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -5582,14 +6957,81 @@ backend : Union[str, Backend]
         <p>Matrix square root of positive semi-definite matrix via eigendecomposition.</p>
 <p>For Hermitian PSD X, computes X^{1/2} = Q @ diag(sqrt(d)) @ Q^H where
 X = Q @ diag(d) @ Q^H from eigendecomposition.</p>
-<h5 id="src.manifolds.sqrtm_psd--parameters">Parameters</h5>
-<p>X : Array
-    Hermitian PSD matrices of shape (..., n, n)
-backend : Union[str, Backend]
-    Backend specification</p>
-<h5 id="src.manifolds.sqrtm_psd--returns">Returns</h5>
-<p>Array
-    Square root of X, same shape as input</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>X</code>
+            </td>
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Hermitian PSD matrices of shape (..., n, n)</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>backend</code>
+            </td>
+            <td>
+                  <code><span title="typing.Union">Union</span>[<span title="str">str</span>, <a class="autorefs autorefs-internal" title="Backend
+
+
+  
+      dataclass
+   (src.backend.Backend)" href="../backend/#src.backend.Backend">Backend</a>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Backend specification</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Square root of X, same shape as input</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -5668,6 +7110,27 @@ backend : Union[str, Backend]
     </div>
 
 </div>
+
+      
+      <p class="page-meta">Last updated June 12, 2026</p>
+      
+
+      
+      <nav class="page-nav" aria-label="Page navigation">
+        
+        <a class="page-nav-prev" href="../estimation_online/">
+          <span class="page-nav-dir">← Previous</span>
+          <span class="page-nav-title">estimation_online</span>
+        </a>
+        
+        
+        <a class="page-nav-next" href="../detection/">
+          <span class="page-nav-dir">Next →</span>
+          <span class="page-nav-title">detection</span>
+        </a>
+        
+      </nav>
+      
     </main>
 
     
@@ -5696,5 +7159,20 @@ backend : Union[str, Backend]
 </div>
 
 <script src="../../assets/js/theme.js"></script>
+
+<script>
+  window.MathJax = {
+    tex: {
+      inlineMath:  [["\\(", "\\)"]],
+      displayMath: [["\\[", "\\]"]],
+      processEscapes: true,
+      tags: "ams"
+    },
+    options: { ignoreHtmlClass: ".*", processHtmlClass: "arithmatex" }
+  };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js"
+        integrity="sha384-Wuix6BuhrWbjDBs24bXrjf4ZQ5aFeFWBuKkFekO2t8xFU0iNaLQfp2K6/1Nxveei"
+        crossorigin="anonymous" async></script>
 </body>
 </html>

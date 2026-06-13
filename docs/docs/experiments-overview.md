@@ -1,13 +1,14 @@
 <div class="page-header">
   <div class="eyebrow">HDR Dissertation</div>
-  <h1>Chapters</h1>
+  <h1>Experiments</h1>
   <p class="standfirst">Four chapters spanning the theoretical foundations and practical algorithms
   for covariance estimation and detection in high-dimensional radar data.</p>
 </div>
 
+
 <div class="chapter-index">
 
-<a class="chapter-entry" href="1-context/">
+<a class="chapter-entry" href="../chapters/1-context/">
   <div class="chapter-num-col">
     <span class="chapter-num">01</span>
   </div>
@@ -26,7 +27,7 @@
   </div>
 </a>
 
-<a class="chapter-entry" href="2-detection/">
+<a class="chapter-entry" href="../chapters/2-detection/">
   <div class="chapter-num-col">
     <span class="chapter-num">02</span>
   </div>
@@ -46,7 +47,7 @@
   </div>
 </a>
 
-<a class="chapter-entry" href="3-machinelearning/">
+<a class="chapter-entry" href="../chapters/3-machinelearning/">
   <div class="chapter-num-col">
     <span class="chapter-num">03</span>
   </div>
@@ -65,7 +66,7 @@
   </div>
 </a>
 
-<a class="chapter-entry" href="4-deeplearning/">
+<a class="chapter-entry" href="../chapters/4-deeplearning/">
   <div class="chapter-num-col">
     <span class="chapter-num">04</span>
   </div>

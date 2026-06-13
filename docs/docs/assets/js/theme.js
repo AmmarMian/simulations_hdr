@@ -205,7 +205,29 @@
       return { lang: lang, file: file };
     }
 
-    function makeCbhead(lang, file) {
+    function makeCopyBtn(getCode) {
+      var btn = document.createElement("button");
+      btn.className = "cb-copy";
+      btn.setAttribute("aria-label", "Copy code");
+      btn.innerHTML =
+        '<svg class="cb-copy-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+          '<rect x="9" y="2" width="6" height="4" rx="1"></rect>' +
+          '<path d="M17 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>' +
+        '</svg>' +
+        '<svg class="cb-check-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">' +
+          '<polyline points="20 6 9 17 4 12"></polyline>' +
+        '</svg>';
+      btn.addEventListener("click", function () {
+        var text = getCode();
+        navigator.clipboard.writeText(text).then(function () {
+          btn.classList.add("copied");
+          setTimeout(function () { btn.classList.remove("copied"); }, 1800);
+        });
+      });
+      return btn;
+    }
+
+    function makeCbhead(lang, file, getCode) {
       var head = document.createElement("div");
       head.className = "cbhead";
       if (lang) {
@@ -220,6 +242,7 @@
         fs.textContent = file;
         head.appendChild(fs);
       }
+      if (getCode) head.appendChild(makeCopyBtn(getCode));
       return head;
     }
 
@@ -229,7 +252,8 @@
       if (block.querySelector("table.highlighttable")) return;  /* handled by thead loop below */
       var lf = readLangFile(block);
       if (!lf.lang && !lf.file) return;
-      block.insertBefore(makeCbhead(lf.lang, lf.file), block.firstChild);
+      var getCode = function () { return (block.querySelector("pre") || block).innerText; };
+      block.insertBefore(makeCbhead(lf.lang, lf.file, getCode), block.firstChild);
     });
 
     /* line-numbered blocks — inject a <thead> with two cells matching column structure */
@@ -257,6 +281,10 @@
         fs.textContent = lf.file;
         thCode.appendChild(fs);
       }
+      var getCode = (function (t) {
+        return function () { return (t.querySelector("td.code pre") || t).innerText; };
+      }(table));
+      thCode.appendChild(makeCopyBtn(getCode));
       tr.appendChild(thLn);
       tr.appendChild(thCode);
       thead.appendChild(tr);
@@ -437,6 +465,29 @@
       window.addEventListener("scroll", markFabActive, { passive: true });
       markFabActive();
     }
+
+    /* ── Anchor links on headings ───────────────────────────────── */
+    document.querySelectorAll(
+      ".page-content h2[id], .page-content h3[id], .page-content h4[id]"
+    ).forEach(function (h) {
+      var a = document.createElement("a");
+      a.className = "heading-anchor";
+      a.href = "#" + h.id;
+      a.setAttribute("aria-label", "Link to this section");
+      a.innerHTML =
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">' +
+        '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>' +
+        '<path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>' +
+        '</svg>';
+      h.appendChild(a);
+    });
+
+    /* ── Figure auto-numbering ──────────────────────────────────── */
+    var figIdx = 0;
+    document.querySelectorAll(".page-content figure figcaption").forEach(function (cap) {
+      figIdx++;
+      cap.innerHTML = "<strong>Figure " + figIdx + " — </strong>" + cap.innerHTML;
+    });
 
   });
 })();

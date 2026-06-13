@@ -12,6 +12,7 @@
 
   <link rel="stylesheet" href="./assets/css/theme.css">
 
+  <script>var HDR_BASE = ".";</script>
   <!-- Apply saved theme before paint to avoid flash -->
   <script>
     (function(){
@@ -45,17 +46,12 @@
     
       
         <a class="topbar-link"
-           href="chapters/1-context/">Chapters</a>
+           href="experiments-overview/">Experiments</a>
       
     
       
         <a class="topbar-link"
-           href="experiments/">Experiments</a>
-      
-    
-      
-        <a class="topbar-link"
-           href="api/backend/">API</a>
+           href="api/">API</a>
       
     
       
@@ -66,6 +62,18 @@
   </nav>
 
   <div class="topbar-spacer"></div>
+
+  <div class="search-wrap" id="search-wrap">
+    <div class="search-input-wrap" id="search-input-wrap" hidden>
+      <input type="search" id="search-input" placeholder="Search…" autocomplete="off" spellcheck="false">
+    </div>
+    <div class="search-results" id="search-results" hidden></div>
+    <button class="toolbtn" id="btn-search" aria-label="Search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/>
+      </svg>
+    </button>
+  </div>
 
   <div style="display:inline-flex;align-items:center;gap:2px">
     <button class="toolbtn" id="btn-az-sm" aria-label="Smaller text">
@@ -108,43 +116,49 @@
       
     
       
-        <p class="toc-section-label">Chapters</p>
+        <p class="toc-section-label">Experiments</p>
         <ul>
           
-            <li>
-              <a href="chapters/1-context/">
-                1 · Context
-              </a>
-            </li>
+            
+              <li>
+                <a href="experiments-overview/">
+                  Overview
+                </a>
+              </li>
+            
           
-            <li>
-              <a href="chapters/2-detection/">
-                2 · Detection
-              </a>
-            </li>
+            
+              <li>
+                <a href="chapters/1-context/">
+                  1 · Context
+                </a>
+              </li>
+            
           
-            <li>
-              <a href="chapters/3-machinelearning/">
-                3 · Machine Learning
-              </a>
-            </li>
+            
+              <li>
+                <a href="chapters/2-detection/">
+                  2 · Detection
+                </a>
+              </li>
+            
           
-            <li>
-              <a href="chapters/4-deeplearning/">
-                4 · Deep Learning
-              </a>
-            </li>
+            
+              <li>
+                <a href="chapters/3-machinelearning/">
+                  3 · Machine Learning
+                </a>
+              </li>
+            
           
-        </ul>
-      
-    
-      
-        <ul>
-          <li>
-            <a href="experiments/">
-              Experiments
-            </a>
-          </li>
+            
+              <li>
+                <a href="chapters/4-deeplearning/">
+                  4 · Deep Learning
+                </a>
+              </li>
+            
+          
         </ul>
       
     
@@ -152,53 +166,91 @@
         <p class="toc-section-label">API</p>
         <ul>
           
-            <li>
-              <a href="api/backend/">
-                backend
-              </a>
-            </li>
+            
+              <li>
+                <a href="api/">
+                  Overview
+                </a>
+              </li>
+            
           
-            <li>
-              <a href="api/estimation/">
-                estimation
-              </a>
-            </li>
+            
+              <li class="toc-subsection">
+                <span class="toc-subsection-label">Shared</span>
+                <ul>
+                  
+                    <li>
+                      <a href="api/plot_style/">
+                        plot_style
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="api/plotly_style/">
+                        plotly_style
+                      </a>
+                    </li>
+                  
+                </ul>
+              </li>
+            
           
-            <li>
-              <a href="api/estimation_kronecker/">
-                estimation_kronecker
-              </a>
-            </li>
-          
-            <li>
-              <a href="api/estimation_online/">
-                estimation_online
-              </a>
-            </li>
-          
-            <li>
-              <a href="api/manifolds/">
-                manifolds
-              </a>
-            </li>
-          
-            <li>
-              <a href="api/detection/">
-                detection
-              </a>
-            </li>
-          
-            <li>
-              <a href="api/simulation/">
-                simulation
-              </a>
-            </li>
-          
-            <li>
-              <a href="api/exporter/">
-                exporter
-              </a>
-            </li>
+            
+              <li class="toc-subsection">
+                <span class="toc-subsection-label">2 · Detection</span>
+                <ul>
+                  
+                    <li>
+                      <a href="api/backend/">
+                        backend
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="api/estimation/">
+                        estimation
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="api/estimation_kronecker/">
+                        estimation_kronecker
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="api/estimation_online/">
+                        estimation_online
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="api/manifolds/">
+                        manifolds
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="api/detection/">
+                        detection
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="api/simulation/">
+                        simulation
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="api/exporter/">
+                        exporter
+                      </a>
+                    </li>
+                  
+                </ul>
+              </li>
+            
           
         </ul>
       
@@ -222,41 +274,10 @@
 
     <main class="page-content" id="content">
       <h1 id="hdr-simulations">HDR Simulations</h1>
-<p>Companion code for the HDR dissertation. Each chapter directory reproduces a set of figures; this site documents the structure, explains how to run experiments, and provides a searchable reference for all ~100s of experiment configurations and the underlying library API.</p>
-<h2 id="chapter-map">Chapter map</h2>
-<table>
-<thead>
-<tr>
-<th>Directory</th>
-<th>Chapter</th>
-<th>Stack</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>1-context/</code></td>
-<td>Context &amp; background figures</td>
-<td>numpy, scipy</td>
-</tr>
-<tr>
-<td><code>2-detection/</code></td>
-<td>Change detection in SAR imagery</td>
-<td>numpy · torch · cupy · jax</td>
-</tr>
-<tr>
-<td><code>3-machinelearning/</code></td>
-<td><em>(forthcoming)</em></td>
-<td>scikit-learn · torch</td>
-</tr>
-<tr>
-<td><code>4-deeplearning/</code></td>
-<td><em>(forthcoming)</em></td>
-<td>torch</td>
-</tr>
-</tbody>
-</table>
-<h2 id="shared-utilities">Shared utilities</h2>
-<p><code>shared/plot_style.py</code> — dark serif theme applied across all chapters for consistent dissertation aesthetics.</p>
+<p>Cette page regroupe la documentation qui accompagne ma dissertation d'HDR intitulée:</p>
+<blockquote>
+<p>Matrices de covariances : des statistiques multivariées à l'apprentissage profond</p>
+</blockquote>
 <h2 id="installation">Installation</h2>
 <p>Each chapter declares its own extras. Install only what you need:</p>
 <div class="language-sh highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
@@ -294,6 +315,22 @@ qanat<span class="w"> </span>experiment<span class="w"> </span>run<span class="w
 qanat<span class="w"> </span>action<span class="w"> </span>run<span class="w"> </span>sar_mc_kron_h1<span class="w"> </span>plot
 </code></pre></div></td></tr></table></div>
 <p>Results land in <code>results/&lt;experiment_name&gt;/run_&lt;N&gt;/</code> alongside a self-contained <code>_plot.py</code> that can be run standalone.</p>
+
+      
+      <p class="page-meta">Last updated June 12, 2026</p>
+      
+
+      
+      <nav class="page-nav" aria-label="Page navigation">
+        
+        
+        <a class="page-nav-next" href="experiments-overview/">
+          <span class="page-nav-dir">Next →</span>
+          <span class="page-nav-title">Overview</span>
+        </a>
+        
+      </nav>
+      
     </main>
 
     
@@ -306,10 +343,6 @@ qanat<span class="w"> </span>action<span class="w"> </span>run<span class="w"> <
               <a href="#hdr-simulations">HDR Simulations</a>
               
                 <ul>
-                  
-                    <li><a href="#chapter-map">Chapter map</a></li>
-                  
-                    <li><a href="#shared-utilities">Shared utilities</a></li>
                   
                     <li><a href="#installation">Installation</a></li>
                   
@@ -328,5 +361,20 @@ qanat<span class="w"> </span>action<span class="w"> </span>run<span class="w"> <
 </div>
 
 <script src="./assets/js/theme.js"></script>
+
+<script>
+  window.MathJax = {
+    tex: {
+      inlineMath:  [["\\(", "\\)"]],
+      displayMath: [["\\[", "\\]"]],
+      processEscapes: true,
+      tags: "ams"
+    },
+    options: { ignoreHtmlClass: ".*", processHtmlClass: "arithmatex" }
+  };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js"
+        integrity="sha384-Wuix6BuhrWbjDBs24bXrjf4ZQ5aFeFWBuKkFekO2t8xFU0iNaLQfp2K6/1Nxveei"
+        crossorigin="anonymous" async></script>
 </body>
 </html>

@@ -12,6 +12,7 @@
 
   <link rel="stylesheet" href="../../assets/css/theme.css">
 
+  <script>var HDR_BASE = "../..";</script>
   <!-- Apply saved theme before paint to avoid flash -->
   <script>
     (function(){
@@ -45,17 +46,12 @@
     
       
         <a class="topbar-link"
-           href="../../chapters/1-context/">Chapters</a>
-      
-    
-      
-        <a class="topbar-link"
-           href="../../experiments/">Experiments</a>
+           href="../../experiments-overview/">Experiments</a>
       
     
       
         <a class="topbar-link active"
-           href="../backend/">API</a>
+           href="../">API</a>
       
     
       
@@ -66,6 +62,18 @@
   </nav>
 
   <div class="topbar-spacer"></div>
+
+  <div class="search-wrap" id="search-wrap">
+    <div class="search-input-wrap" id="search-input-wrap" hidden>
+      <input type="search" id="search-input" placeholder="Search…" autocomplete="off" spellcheck="false">
+    </div>
+    <div class="search-results" id="search-results" hidden></div>
+    <button class="toolbtn" id="btn-search" aria-label="Search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/>
+      </svg>
+    </button>
+  </div>
 
   <div style="display:inline-flex;align-items:center;gap:2px">
     <button class="toolbtn" id="btn-az-sm" aria-label="Smaller text">
@@ -108,43 +116,49 @@
       
     
       
-        <p class="toc-section-label">Chapters</p>
+        <p class="toc-section-label">Experiments</p>
         <ul>
           
-            <li>
-              <a href="../../chapters/1-context/">
-                1 · Context
-              </a>
-            </li>
+            
+              <li>
+                <a href="../../experiments-overview/">
+                  Overview
+                </a>
+              </li>
+            
           
-            <li>
-              <a href="../../chapters/2-detection/">
-                2 · Detection
-              </a>
-            </li>
+            
+              <li>
+                <a href="../../chapters/1-context/">
+                  1 · Context
+                </a>
+              </li>
+            
           
-            <li>
-              <a href="../../chapters/3-machinelearning/">
-                3 · Machine Learning
-              </a>
-            </li>
+            
+              <li>
+                <a href="../../chapters/2-detection/">
+                  2 · Detection
+                </a>
+              </li>
+            
           
-            <li>
-              <a href="../../chapters/4-deeplearning/">
-                4 · Deep Learning
-              </a>
-            </li>
+            
+              <li>
+                <a href="../../chapters/3-machinelearning/">
+                  3 · Machine Learning
+                </a>
+              </li>
+            
           
-        </ul>
-      
-    
-      
-        <ul>
-          <li>
-            <a href="../../experiments/">
-              Experiments
-            </a>
-          </li>
+            
+              <li>
+                <a href="../../chapters/4-deeplearning/">
+                  4 · Deep Learning
+                </a>
+              </li>
+            
+          
         </ul>
       
     
@@ -152,53 +166,91 @@
         <p class="toc-section-label">API</p>
         <ul>
           
-            <li>
-              <a href="../backend/">
-                backend
-              </a>
-            </li>
+            
+              <li>
+                <a href="../">
+                  Overview
+                </a>
+              </li>
+            
           
-            <li>
-              <a href="./" class="active">
-                estimation
-              </a>
-            </li>
+            
+              <li class="toc-subsection">
+                <span class="toc-subsection-label">Shared</span>
+                <ul>
+                  
+                    <li>
+                      <a href="../plot_style/">
+                        plot_style
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../plotly_style/">
+                        plotly_style
+                      </a>
+                    </li>
+                  
+                </ul>
+              </li>
+            
           
-            <li>
-              <a href="../estimation_kronecker/">
-                estimation_kronecker
-              </a>
-            </li>
-          
-            <li>
-              <a href="../estimation_online/">
-                estimation_online
-              </a>
-            </li>
-          
-            <li>
-              <a href="../manifolds/">
-                manifolds
-              </a>
-            </li>
-          
-            <li>
-              <a href="../detection/">
-                detection
-              </a>
-            </li>
-          
-            <li>
-              <a href="../simulation/">
-                simulation
-              </a>
-            </li>
-          
-            <li>
-              <a href="../exporter/">
-                exporter
-              </a>
-            </li>
+            
+              <li class="toc-subsection">
+                <span class="toc-subsection-label">2 · Detection</span>
+                <ul>
+                  
+                    <li>
+                      <a href="../backend/">
+                        backend
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="./" class="active">
+                        estimation
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../estimation_kronecker/">
+                        estimation_kronecker
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../estimation_online/">
+                        estimation_online
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../manifolds/">
+                        manifolds
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../detection/">
+                        detection
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../simulation/">
+                        simulation
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../exporter/">
+                        exporter
+                      </a>
+                    </li>
+                  
+                </ul>
+              </li>
+            
           
         </ul>
       
@@ -364,16 +416,64 @@
     <div class="doc doc-contents ">
 
         <p>Compute the estimator on the data.</p>
-<h6 id="src.estimation.Estimator.compute--parameters">Parameters</h6>
-<p>X: Array (torch or numpy)
-    data to compute the estimator on. Usually would be of shape
-    (..., n_samples, n_features), where ... are batch dimensions.
-    Data is assumed to be centered (zero mean).</p>
-<h6 id="src.estimation.Estimator.compute--returns">Returns</h6>
-<p>Any
-    Estimated parameters. Return type depends on the estimator:
-    - Single Array: covariance matrices of shape (..., n_features, n_features)
-    - Tuple[Array, Array]: (Sigma, tau) for models with texture parameter</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>X</code>
+            </td>
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>data to compute the estimator on. Usually would be of shape
+(..., n_samples, n_features), where ... are batch dimensions.
+Data is assumed to be centered (zero mean).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="typing.Any">Any</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Estimated parameters. Return type depends on the estimator:
+- Single Array: covariance matrices of shape (..., n_features, n_features)
+- Tuple[Array, Array]: (Sigma, tau) for models with texture parameter</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -459,75 +559,213 @@ p 16, Ph.d Thesis, Gordana Draskovic</p>
 </blockquote>
 <p>The weighting function is:
 u(x) = (1/beta) * min(1, lambda/x)</p>
-<h5 id="src.estimation.HuberEstimator--parameters">Parameters</h5>
-<p>lbda : float, optional
-    Threshold parameter. Values below lambda are not downweighted, values above
-    are inversely weighted. By default inf (no downweighting, equivalent to sample cov).</p>
 
 
-<details class="beta-" open>
-  <summary>float, optional</summary>
-  <p>Tuning parameter that controls the overall scaling of weights. By default 1.0.</p>
-</details>
-
-<details class="normalization-" open>
-  <summary>str or None, optional</summary>
-  <p>Normalization method to apply at each iteration. Options: 'trace', 'det',
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>lbda</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Threshold parameter. Values below lambda are not downweighted, values above
+are inversely weighted. By default inf (no downweighting, equivalent to sample cov).</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="float">float</span>(&#39;inf&#39;)</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>beta</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Tuning parameter that controls the overall scaling of weights. By default 1.0.</p>
+              </div>
+            </td>
+            <td>
+                  <code>1.0</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>normalization</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> or None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Normalization method to apply at each iteration. Options: 'trace', 'det',
 'diag', or None. By default None.</p>
-</details>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>backend_name</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> or <a class="autorefs autorefs-internal" title="Backend
 
-<details class="backend_name-" open>
-  <summary>str or Backend, optional</summary>
-  <p>Backend specification. Can be a string ('numpy', 'torch-cpu', 'torch-cuda')
+
+  
+      dataclass
+   (src.backend.Backend)" href="../backend/#src.backend.Backend">Backend</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Backend specification. Can be a string ('numpy', 'torch-cpu', 'torch-cuda')
 or a Backend object. By default 'numpy'.</p>
-</details>
-
-<details class="tol-" open>
-  <summary>float, optional</summary>
-  <p>Convergence tolerance for the fixed-point algorithm. By default 1e-4.</p>
-</details>
-
-<details class="iter_max-" open>
-  <summary>int, optional</summary>
-  <p>Maximum number of iterations. By default 50.</p>
-</details>
-
-<details class="verbosity-" open>
-  <summary>bool, optional</summary>
-  <p>Show progress bar during iterations. By default False.</p>
-</details>
-
-<details class="debug-" open>
-  <summary>bool, optional</summary>
-  <p>Print debug information during iterations. By default False.</p>
-</details>
-
-<details class="iteration_chunk_size-" open>
-  <summary>int or None, optional</summary>
-  <p>Process matrices in chunks of this size within each iteration to reduce
+              </div>
+            </td>
+            <td>
+                  <code>&#39;numpy&#39;</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>tol</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Convergence tolerance for the fixed-point algorithm. By default 1e-4.</p>
+              </div>
+            </td>
+            <td>
+                  <code>0.0001</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>iter_max</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Maximum number of iterations. By default 50.</p>
+              </div>
+            </td>
+            <td>
+                  <code>50</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>verbosity</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Show progress bar during iterations. By default False.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>debug</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Print debug information during iterations. By default False.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>iteration_chunk_size</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span> or None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Process matrices in chunks of this size within each iteration to reduce
 memory usage. Useful for large batches on GPU. By default None (no chunking).</p>
-</details>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>init</code>
+            </td>
+            <td>
+                  <code><span title="src.backend.Array">Array</span> or None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Initial covariance estimate. If None, uses identity matrix. By default None.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
-<details class="init-" open>
-  <summary>Array or None, optional</summary>
-  <p>Initial covariance estimate. If None, uses identity matrix. By default None.</p>
-</details>        <h5 id="src.estimation.HuberEstimator--examples">Examples</h5>
-<blockquote>
-<blockquote>
-<blockquote>
-<p>import numpy as np
-from src.estimation import HuberEstimator</p>
-<h4 id="src.estimation.HuberEstimator--generate-centered-data">Generate centered data</h4>
-<p>X = np.random.randn(100, 5)  # 100 samples, 5 features
-X = X - X.mean(axis=0)  # Center the data</p>
-<h4 id="src.estimation.HuberEstimator--create-estimator-with-threshold">Create estimator with threshold</h4>
-<p>estimator = HuberEstimator(lbda=2.0, beta=1.0, tol=1e-4, iter_max=50)</p>
-<h4 id="src.estimation.HuberEstimator--compute-covariance">Compute covariance</h4>
-<p>cov = estimator.compute(X)
-print(cov.shape)  # (5, 5)</p>
-</blockquote>
-</blockquote>
-</blockquote>
+
+<p><span class="doc-section-title">Examples:</span></p>
+    <div class="language-pycon highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">src.estimation</span><span class="w"> </span><span class="kn">import</span> <span class="n">HuberEstimator</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Generate centered data</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>  <span class="c1"># 100 samples, 5 features</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X</span> <span class="o">=</span> <span class="n">X</span> <span class="o">-</span> <span class="n">X</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># Center the data</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Create estimator with threshold</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">estimator</span> <span class="o">=</span> <span class="n">HuberEstimator</span><span class="p">(</span><span class="n">lbda</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">,</span> <span class="n">iter_max</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Compute covariance</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cov</span> <span class="o">=</span> <span class="n">estimator</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">cov</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>  <span class="c1"># (5, 5)</span>
+</code></pre></div></td></tr></table></div>
 
 
 
@@ -803,14 +1041,62 @@ print(cov.shape)  # (5, 5)</p>
     <div class="doc doc-contents ">
 
         <p>Compute Huber M-estimator of covariance matrix.</p>
-<h6 id="src.estimation.HuberEstimator.compute--parameters">Parameters</h6>
-<p>X : Array of shape (..., n_samples, n_features)
-    Centered data, where n_samples is the number of samples,
-    n_features is the number of features, and ... are batch dimensions.
-    Data must be centered (zero mean).</p>
-<h6 id="src.estimation.HuberEstimator.compute--returns">Returns</h6>
-<p>Array of shape (..., n_features, n_features)
-    Estimated covariance matrices.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>X</code>
+            </td>
+            <td>
+                  <code>Array of shape (..., n_samples, n_features)</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Centered data, where n_samples is the number of samples,
+n_features is the number of features, and ... are batch dimensions.
+Data must be centered (zero mean).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>Array of shape (..., n_features, n_features)</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Estimated covariance matrices.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -909,27 +1195,186 @@ print(cov.shape)  # (5, 5)</p>
 <p>Jointly estimates shape matrix Sigma (SHPD, det=1) and texture vector tau
 using natural gradient descent with Armijo backtracking.</p>
 <p>Model: x_i ~ CN(0, tau_i * Sigma).</p>
-<h5 id="src.estimation.ScaledGaussianNaturalGradientEstimator--parameters">Parameters</h5>
-<p>tol : float
-    Convergence tolerance on Riemannian gradient norm. Default 1e-8.
-iter_max : int
-    Maximum gradient steps per batch element. Default 200.
-alpha_0 : float
-    Initial Armijo step size. Default 1.0.
-armijo_c : float
-    Sufficient decrease constant. Default 1e-4.
-armijo_rho : float
-    Backtracking reduction factor. Default 0.5.
-armijo_max_backtracks : int
-    Max backtracking steps. Default 30.
-init_Sigma : Array or None
-    Initial shape matrix. Default identity.
-init_tau : Array or None
-    Initial texture vector. Default ones.
-verbosity : bool
-    Show progress bar. Default False.
-backend_name : str or Backend
-    Backend. Default "numpy".</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>tol</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Convergence tolerance on Riemannian gradient norm. Default 1e-8.</p>
+              </div>
+            </td>
+            <td>
+                  <code>1e-08</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>iter_max</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Maximum gradient steps per batch element. Default 200.</p>
+              </div>
+            </td>
+            <td>
+                  <code>200</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>alpha_0</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Initial Armijo step size. Default 1.0.</p>
+              </div>
+            </td>
+            <td>
+                  <code>1.0</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>armijo_c</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Sufficient decrease constant. Default 1e-4.</p>
+              </div>
+            </td>
+            <td>
+                  <code>0.0001</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>armijo_rho</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Backtracking reduction factor. Default 0.5.</p>
+              </div>
+            </td>
+            <td>
+                  <code>0.5</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>armijo_max_backtracks</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Max backtracking steps. Default 30.</p>
+              </div>
+            </td>
+            <td>
+                  <code>30</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>init_Sigma</code>
+            </td>
+            <td>
+                  <code><span title="src.backend.Array">Array</span> or None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Initial shape matrix. Default identity.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>init_tau</code>
+            </td>
+            <td>
+                  <code><span title="src.backend.Array">Array</span> or None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Initial texture vector. Default ones.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>verbosity</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Show progress bar. Default False.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>backend_name</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> or <a class="autorefs autorefs-internal" title="Backend
+
+
+  
+      dataclass
+   (src.backend.Backend)" href="../backend/#src.backend.Backend">Backend</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Backend. Default "numpy".</p>
+              </div>
+            </td>
+            <td>
+                  <code>&#39;numpy&#39;</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
 
@@ -1135,14 +1580,70 @@ backend_name : str or Backend
     <div class="doc doc-contents ">
 
         <p>Compute shape matrix Sigma and texture vector tau.</p>
-<h6 id="src.estimation.ScaledGaussianNaturalGradientEstimator.compute--parameters">Parameters</h6>
-<p>X : Array of shape (..., n_samples, n_features)
-    Centered complex data.</p>
-<h6 id="src.estimation.ScaledGaussianNaturalGradientEstimator.compute--returns">Returns</h6>
-<p>Sigma : Array of shape (..., n_features, n_features)
-    Estimated shape matrices (det = 1).
-tau : Array of shape (..., n_samples, 1)
-    Estimated texture parameters.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>X</code>
+            </td>
+            <td>
+                  <code>Array of shape (..., n_samples, n_features)</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Centered complex data.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+<th>Name</th>          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+<td><code>Sigma</code></td>            <td>
+                  <code>Array of shape (..., n_features, n_features)</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Estimated shape matrices (det = 1).</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+<td><code>tau</code></td>            <td>
+                  <code>Array of shape (..., n_samples, 1)</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Estimated texture parameters.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -1245,72 +1746,199 @@ and shrinkage, while high df (e.g., 300) approaches Gaussian MLE behavior.</p>
 The Annals of Statistics, 4(1) 51-67 January, 1976.
 https://doi.org/10.1214/aos/1176343347</p>
 </blockquote>
-<h5 id="src.estimation.StudentTEstimator--parameters">Parameters</h5>
-<p>df : float, optional
-    Degrees of freedom of the Student-t distribution. Lower values (e.g., 3)
-    provide stronger robustness to outliers but more shrinkage. Higher values
-    (e.g., 300) approach Gaussian behavior. By default 3.</p>
 
 
-<details class="normalization-" open>
-  <summary>str or None, optional</summary>
-  <p>Normalization method to apply at each iteration. Unlike Tyler, normalization
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>df</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Degrees of freedom of the Student-t distribution. Lower values (e.g., 3)
+provide stronger robustness to outliers but more shrinkage. Higher values
+(e.g., 300) approach Gaussian behavior. By default 3.</p>
+              </div>
+            </td>
+            <td>
+                  <code>3</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>normalization</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> or None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Normalization method to apply at each iteration. Unlike Tyler, normalization
 is optional for Student-t. Options: 'trace', 'det', 'diag', or None.
 By default None.</p>
-</details>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>backend_name</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> or <a class="autorefs autorefs-internal" title="Backend
 
-<details class="backend_name-" open>
-  <summary>str or Backend, optional</summary>
-  <p>Backend specification. Can be a string ('numpy', 'torch-cpu', 'torch-cuda')
+
+  
+      dataclass
+   (src.backend.Backend)" href="../backend/#src.backend.Backend">Backend</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Backend specification. Can be a string ('numpy', 'torch-cpu', 'torch-cuda')
 or a Backend object. By default 'numpy'.</p>
-</details>
-
-<details class="tol-" open>
-  <summary>float, optional</summary>
-  <p>Convergence tolerance for the fixed-point algorithm. By default 1e-4.</p>
-</details>
-
-<details class="iter_max-" open>
-  <summary>int, optional</summary>
-  <p>Maximum number of iterations. By default 50.</p>
-</details>
-
-<details class="verbosity-" open>
-  <summary>bool, optional</summary>
-  <p>Show progress bar during iterations. By default False.</p>
-</details>
-
-<details class="debug-" open>
-  <summary>bool, optional</summary>
-  <p>Print debug information during iterations. By default False.</p>
-</details>
-
-<details class="iteration_chunk_size-" open>
-  <summary>int or None, optional</summary>
-  <p>Process matrices in chunks of this size within each iteration to reduce
+              </div>
+            </td>
+            <td>
+                  <code>&#39;numpy&#39;</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>tol</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Convergence tolerance for the fixed-point algorithm. By default 1e-4.</p>
+              </div>
+            </td>
+            <td>
+                  <code>0.0001</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>iter_max</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Maximum number of iterations. By default 50.</p>
+              </div>
+            </td>
+            <td>
+                  <code>50</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>verbosity</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Show progress bar during iterations. By default False.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>debug</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Print debug information during iterations. By default False.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>iteration_chunk_size</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span> or None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Process matrices in chunks of this size within each iteration to reduce
 memory usage. Useful for large batches on GPU. By default None (no chunking).</p>
-</details>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>init</code>
+            </td>
+            <td>
+                  <code><span title="src.backend.Array">Array</span> or None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Initial covariance estimate. If None, uses identity matrix. By default None.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
-<details class="init-" open>
-  <summary>Array or None, optional</summary>
-  <p>Initial covariance estimate. If None, uses identity matrix. By default None.</p>
-</details>        <h5 id="src.estimation.StudentTEstimator--examples">Examples</h5>
-<blockquote>
-<blockquote>
-<blockquote>
-<p>import numpy as np
-from src.estimation import StudentTEstimator</p>
-<h4 id="src.estimation.StudentTEstimator--generate-centered-data">Generate centered data</h4>
-<p>X = np.random.randn(100, 5)  # 100 samples, 5 features
-X = X - X.mean(axis=0)  # Center the data</p>
-<h4 id="src.estimation.StudentTEstimator--create-estimator-with-df3-for-robustness">Create estimator with df=3 for robustness</h4>
-<p>estimator = StudentTEstimator(df=3, tol=1e-4, iter_max=50)</p>
-<h4 id="src.estimation.StudentTEstimator--compute-covariance">Compute covariance</h4>
-<p>cov = estimator.compute(X)
-print(cov.shape)  # (5, 5)</p>
-</blockquote>
-</blockquote>
-</blockquote>
+
+<p><span class="doc-section-title">Examples:</span></p>
+    <div class="language-pycon highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">src.estimation</span><span class="w"> </span><span class="kn">import</span> <span class="n">StudentTEstimator</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Generate centered data</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>  <span class="c1"># 100 samples, 5 features</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X</span> <span class="o">=</span> <span class="n">X</span> <span class="o">-</span> <span class="n">X</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># Center the data</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Create estimator with df=3 for robustness</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">estimator</span> <span class="o">=</span> <span class="n">StudentTEstimator</span><span class="p">(</span><span class="n">df</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">,</span> <span class="n">iter_max</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Compute covariance</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cov</span> <span class="o">=</span> <span class="n">estimator</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">cov</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>  <span class="c1"># (5, 5)</span>
+</code></pre></div></td></tr></table></div>
 
 
 
@@ -1582,14 +2210,62 @@ print(cov.shape)  # (5, 5)</p>
     <div class="doc doc-contents ">
 
         <p>Compute Student-t M-estimator of covariance matrix.</p>
-<h6 id="src.estimation.StudentTEstimator.compute--parameters">Parameters</h6>
-<p>X : Array of shape (..., n_samples, n_features)
-    Centered data, where n_samples is the number of samples,
-    n_features is the number of features, and ... are batch dimensions.
-    Data must be centered (zero mean).</p>
-<h6 id="src.estimation.StudentTEstimator.compute--returns">Returns</h6>
-<p>Array of shape (..., n_features, n_features)
-    Estimated covariance matrices.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>X</code>
+            </td>
+            <td>
+                  <code>Array of shape (..., n_samples, n_features)</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Centered data, where n_samples is the number of samples,
+n_features is the number of features, and ... are batch dimensions.
+Data must be centered (zero mean).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>Array of shape (..., n_features, n_features)</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Estimated covariance matrices.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -1697,68 +2373,179 @@ only estimates shape, not scale.</p>
 The Annals of Statistics, 15(1) 234-251 March, 1987.
 https://doi.org/10.1214/aos/1176350263</p>
 </blockquote>
-<h5 id="src.estimation.TylerEstimator--parameters">Parameters</h5>
-<p>normalization : str, optional
-    Normalization method to apply at each iteration. Required for Tyler's estimator.
-    Options:
-    - 'trace': normalize so trace(Sigma) = n_features (recommended)
-    - 'det': normalize so det(Sigma) = 1
-    - 'diag': normalize so Sigma[0, 0] = 1
-    By default 'trace'.</p>
 
 
-<details class="backend_name-" open>
-  <summary>str, optional</summary>
-  <p>Backend to use. Choices are: 'numpy', 'torch-cpu', 'torch-cuda'.
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>normalization</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Normalization method to apply at each iteration. Required for Tyler's estimator.
+Options:
+- 'trace': normalize so trace(Sigma) = n_features (recommended)
+- 'det': normalize so det(Sigma) = 1
+- 'diag': normalize so Sigma[0, 0] = 1
+By default 'trace'.</p>
+              </div>
+            </td>
+            <td>
+                  <code>&#39;trace&#39;</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>backend_name</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Backend to use. Choices are: 'numpy', 'torch-cpu', 'torch-cuda'.
 By default 'numpy'.</p>
-</details>
-
-<details class="tol-" open>
-  <summary>float, optional</summary>
-  <p>Convergence tolerance for the fixed-point algorithm. By default 1e-4.</p>
-</details>
-
-<details class="iter_max-" open>
-  <summary>int, optional</summary>
-  <p>Maximum number of iterations. By default 50.</p>
-</details>
-
-<details class="verbosity-" open>
-  <summary>bool, optional</summary>
-  <p>Show progress bar during iterations. By default False.</p>
-</details>
-
-<details class="debug-" open>
-  <summary>bool, optional</summary>
-  <p>Print debug information during iterations. By default False.</p>
-</details>
-
-<details class="iteration_chunk_size-" open>
-  <summary>int or None, optional</summary>
-  <p>Process matrices in chunks of this size within each iteration to reduce
+              </div>
+            </td>
+            <td>
+                  <code>&#39;numpy&#39;</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>tol</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Convergence tolerance for the fixed-point algorithm. By default 1e-4.</p>
+              </div>
+            </td>
+            <td>
+                  <code>0.0001</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>iter_max</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Maximum number of iterations. By default 50.</p>
+              </div>
+            </td>
+            <td>
+                  <code>50</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>verbosity</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Show progress bar during iterations. By default False.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>debug</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Print debug information during iterations. By default False.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>iteration_chunk_size</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span> or None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Process matrices in chunks of this size within each iteration to reduce
 memory usage. Useful for large batches on GPU. By default None (no chunking).</p>
-</details>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>init</code>
+            </td>
+            <td>
+                  <code><span title="src.backend.Array">Array</span> or None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Initial covariance estimate. If None, uses identity matrix. By default None.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
-<details class="init-" open>
-  <summary>Array or None, optional</summary>
-  <p>Initial covariance estimate. If None, uses identity matrix. By default None.</p>
-</details>        <h5 id="src.estimation.TylerEstimator--examples">Examples</h5>
-<blockquote>
-<blockquote>
-<blockquote>
-<p>import numpy as np
-from src.estimation import TylerEstimator</p>
-<h4 id="src.estimation.TylerEstimator--generate-centered-data">Generate centered data</h4>
-<p>X = np.random.randn(100, 5)  # 100 samples, 5 features
-X = X - X.mean(axis=0)  # Center the data</p>
-<h4 id="src.estimation.TylerEstimator--create-estimator">Create estimator</h4>
-<p>estimator = TylerEstimator(normalization='trace', tol=1e-4, iter_max=50)</p>
-<h4 id="src.estimation.TylerEstimator--compute-covariance">Compute covariance</h4>
-<p>cov = estimator.compute(X)
-print(cov.shape)  # (5, 5)</p>
-</blockquote>
-</blockquote>
-</blockquote>
+
+<p><span class="doc-section-title">Examples:</span></p>
+    <div class="language-pycon highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">src.estimation</span><span class="w"> </span><span class="kn">import</span> <span class="n">TylerEstimator</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Generate centered data</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>  <span class="c1"># 100 samples, 5 features</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X</span> <span class="o">=</span> <span class="n">X</span> <span class="o">-</span> <span class="n">X</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># Center the data</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Create estimator</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">estimator</span> <span class="o">=</span> <span class="n">TylerEstimator</span><span class="p">(</span><span class="n">normalization</span><span class="o">=</span><span class="s1">&#39;trace&#39;</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">,</span> <span class="n">iter_max</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Compute covariance</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cov</span> <span class="o">=</span> <span class="n">estimator</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">cov</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>  <span class="c1"># (5, 5)</span>
+</code></pre></div></td></tr></table></div>
 
 
 
@@ -2018,14 +2805,62 @@ print(cov.shape)  # (5, 5)</p>
     <div class="doc doc-contents ">
 
         <p>Compute Tyler's M-estimator of scatter matrix.</p>
-<h6 id="src.estimation.TylerEstimator.compute--parameters">Parameters</h6>
-<p>X : Array of shape (..., n_samples, n_features)
-    Centered data, where n_samples is the number of samples,
-    n_features is the number of features, and ... are batch dimensions.
-    Data must be centered (zero mean).</p>
-<h6 id="src.estimation.TylerEstimator.compute--returns">Returns</h6>
-<p>Array of shape (..., n_features, n_features)
-    Estimated scatter matrices.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>X</code>
+            </td>
+            <td>
+                  <code>Array of shape (..., n_samples, n_features)</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Centered data, where n_samples is the number of samples,
+n_features is the number of features, and ... are batch dimensions.
+Data must be centered (zero mean).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>Array of shape (..., n_features, n_features)</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Estimated scatter matrices.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -2118,45 +2953,237 @@ print(cov.shape)  # (5, 5)</p>
         <p>Fixed-point algorithm for M-estimators of covariance matrix as defined in:</p>
 <blockquote>
 <p>Ricardo Antonio Maronna.
-"Robust $M$-Estimators of Multivariate Location and Scatter." The Annals of Statistics, 4(1) 51-67 January, 1976.
+"Robust <span class="arithmatex">\(M\)</span>-Estimators of Multivariate Location and Scatter." The Annals of Statistics, 4(1) 51-67 January, 1976.
 https://doi.org/10.1214/aos/1176343347</p>
 </blockquote>
 <p>Data is assumed to be centered.</p>
-<h5 id="src.estimation.fixed_point_m_estimation_centered--parameters">Parameters</h5>
-<p>X : Array of shape (..., n_samples, n_features)
-    data, where n_samples is the number of samples and
-      n_features is the number of features and ... are batch dimensions.
-m_estimator_function : function
-    function to compute the scaling to apply to the quadratic form.
-    it has to be vectorized. By default Tyler's function.
-init : Array, optional
-    initial point of algorithm, by default Identity matrix.
-tol : float, optional
-    tolerance for convergence of algorithm, by default 1e-4.
-iter_max : int, optional
-    number of maximum iterations, by default 10.
-verbosity : bool, optional
-    show progress of algorithm at each iteration, by default False
-backend_name : str or Backend, optional
-    Backend specification. Can be a string ('numpy', 'torch-cpu', 'torch-cuda')
-    or a Backend object. By default "numpy"
-debug : bool, optional
-    Print debug information during iterations, by default False
-iteration_chunk_size : int, optional
-    Process matrices in chunks of this size within each iteration to reduce memory usage.
-    Useful for large batches on GPU. By default None (no chunking).
-normalization : str or None, optional
-    Normalization to apply at each iteration. Required for Tyler's estimator.
-    Options are:
-    - None or 'none': no normalization (default)
-    - 'diag': normalize so first diagonal element = 1
-    - 'trace': normalize so trace(Sigma) = n_features
-    - 'det': normalize so det(Sigma) = 1
-**kwargs :
-    Arguments to m_estimator_function</p>
-<h5 id="src.estimation.fixed_point_m_estimation_centered--returns">Returns</h5>
-<p>Array
-    estimated covariances matrix</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>X</code>
+            </td>
+            <td>
+                  <code>Array of shape (..., n_samples, n_features)</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>data, where n_samples is the number of samples and
+  n_features is the number of features and ... are batch dimensions.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>m_estimator_function</code>
+            </td>
+            <td>
+                  <code><span title="function">function</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>function to compute the scaling to apply to the quadratic form.
+it has to be vectorized. By default Tyler's function.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="src.estimation._tyler_m_estimator_function">_tyler_m_estimator_function</span></code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>init</code>
+            </td>
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>initial point of algorithm, by default Identity matrix.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>tol</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>tolerance for convergence of algorithm, by default 1e-4.</p>
+              </div>
+            </td>
+            <td>
+                  <code>0.0001</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>iter_max</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>number of maximum iterations, by default 10.</p>
+              </div>
+            </td>
+            <td>
+                  <code>10</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>verbosity</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>show progress of algorithm at each iteration, by default False</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>backend_name</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> or <a class="autorefs autorefs-internal" title="Backend
+
+
+  
+      dataclass
+   (src.backend.Backend)" href="../backend/#src.backend.Backend">Backend</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Backend specification. Can be a string ('numpy', 'torch-cpu', 'torch-cuda')
+or a Backend object. By default "numpy"</p>
+              </div>
+            </td>
+            <td>
+                  <code>&#39;numpy&#39;</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>debug</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Print debug information during iterations, by default False</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>iteration_chunk_size</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Process matrices in chunks of this size within each iteration to reduce memory usage.
+Useful for large batches on GPU. By default None (no chunking).</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>normalization</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> or None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Normalization to apply at each iteration. Required for Tyler's estimator.
+Options are:
+- None or 'none': no normalization (default)
+- 'diag': normalize so first diagonal element = 1
+- 'trace': normalize so trace(Sigma) = n_features
+- 'det': normalize so det(Sigma) = 1</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>**kwargs</code>
+            </td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Arguments to m_estimator_function</p>
+              </div>
+            </td>
+            <td>
+                  <code>{}</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>estimated covariances matrix</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -2610,32 +3637,235 @@ normalization : str or None, optional
 via natural gradient descent with Armijo backtracking line search.
 Natively supports batch dimensions; processes all batches efficiently.</p>
 <p>Model: x_i ~ CN(0, tau_i * Sigma), det(Sigma) = 1.</p>
-<h5 id="src.estimation.natural_gradient_scaled_gaussian--parameters">Parameters</h5>
-<p>X : Array of shape (..., n_samples, n_features)
-    Centered complex data. Batch dimensions (...) processed simultaneously.
-tol : float
-    Convergence tolerance on the Riemannian gradient norm.
-iter_max : int
-    Maximum number of gradient steps.
-alpha_0 : float
-    Initial step size for Armijo backtracking.
-armijo_c : float
-    Sufficient decrease constant (Armijo condition).
-armijo_rho : float
-    Step reduction factor for backtracking.
-armijo_max_backtracks : int
-    Maximum number of backtracking steps.
-init_Sigma : Array or None
-    Initial shape matrix (broadcast to batch shape). Defaults to identity.
-init_tau : Array or None
-    Initial texture vector (broadcast to batch shape). Defaults to ones.
-verbosity : bool
-    Print convergence info.
-backend_name : str or Backend
-    Backend specification.</p>
-<h5 id="src.estimation.natural_gradient_scaled_gaussian--returns">Returns</h5>
-<p>Sigma : Array of shape (..., n_features, n_features)
-tau   : Array of shape (..., n_samples, 1)</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>X</code>
+            </td>
+            <td>
+                  <code>Array of shape (..., n_samples, n_features)</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Centered complex data. Batch dimensions (...) processed simultaneously.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>tol</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Convergence tolerance on the Riemannian gradient norm.</p>
+              </div>
+            </td>
+            <td>
+                  <code>1e-08</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>iter_max</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Maximum number of gradient steps.</p>
+              </div>
+            </td>
+            <td>
+                  <code>200</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>alpha_0</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Initial step size for Armijo backtracking.</p>
+              </div>
+            </td>
+            <td>
+                  <code>1.0</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>armijo_c</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Sufficient decrease constant (Armijo condition).</p>
+              </div>
+            </td>
+            <td>
+                  <code>0.0001</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>armijo_rho</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Step reduction factor for backtracking.</p>
+              </div>
+            </td>
+            <td>
+                  <code>0.5</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>armijo_max_backtracks</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Maximum number of backtracking steps.</p>
+              </div>
+            </td>
+            <td>
+                  <code>30</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>init_Sigma</code>
+            </td>
+            <td>
+                  <code><span title="src.backend.Array">Array</span> or None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Initial shape matrix (broadcast to batch shape). Defaults to identity.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>init_tau</code>
+            </td>
+            <td>
+                  <code><span title="src.backend.Array">Array</span> or None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Initial texture vector (broadcast to batch shape). Defaults to ones.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>verbosity</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Print convergence info.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>backend_name</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> or <a class="autorefs autorefs-internal" title="Backend
+
+
+  
+      dataclass
+   (src.backend.Backend)" href="../backend/#src.backend.Backend">Backend</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Backend specification.</p>
+              </div>
+            </td>
+            <td>
+                  <code>&#39;numpy&#39;</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+<th>Name</th>          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+<td><code>Sigma</code></td>            <td>
+                  <code>Array of shape (..., n_features, n_features)</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+<td><code>tau</code></td>            <td>
+                  <code>Array of shape (..., n_samples, 1)</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -2906,6 +4136,27 @@ tau   : Array of shape (..., n_samples, 1)</p>
     </div>
 
 </div>
+
+      
+      <p class="page-meta">Last updated June 12, 2026</p>
+      
+
+      
+      <nav class="page-nav" aria-label="Page navigation">
+        
+        <a class="page-nav-prev" href="../backend/">
+          <span class="page-nav-dir">← Previous</span>
+          <span class="page-nav-title">backend</span>
+        </a>
+        
+        
+        <a class="page-nav-next" href="../estimation_kronecker/">
+          <span class="page-nav-dir">Next →</span>
+          <span class="page-nav-title">estimation_kronecker</span>
+        </a>
+        
+      </nav>
+      
     </main>
 
     
@@ -2934,5 +4185,20 @@ tau   : Array of shape (..., n_samples, 1)</p>
 </div>
 
 <script src="../../assets/js/theme.js"></script>
+
+<script>
+  window.MathJax = {
+    tex: {
+      inlineMath:  [["\\(", "\\)"]],
+      displayMath: [["\\[", "\\]"]],
+      processEscapes: true,
+      tags: "ams"
+    },
+    options: { ignoreHtmlClass: ".*", processHtmlClass: "arithmatex" }
+  };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js"
+        integrity="sha384-Wuix6BuhrWbjDBs24bXrjf4ZQ5aFeFWBuKkFekO2t8xFU0iNaLQfp2K6/1Nxveei"
+        crossorigin="anonymous" async></script>
 </body>
 </html>

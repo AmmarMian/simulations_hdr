@@ -1,19 +1,9 @@
 # HDR Simulations
 
-Companion code for the HDR dissertation. Each chapter directory reproduces a set of figures; this site documents the structure, explains how to run experiments, and provides a searchable reference for all ~100s of experiment configurations and the underlying library API.
+Cette page regroupe la documentation qui accompagne ma dissertation d'HDR intitulée:
+> Matrices de covariances : des statistiques multivariées à l'apprentissage profond
 
-## Chapter map
 
-| Directory | Chapter | Stack |
-|-----------|---------|-------|
-| `1-context/` | Context & background figures | numpy, scipy |
-| `2-detection/` | Change detection in SAR imagery | numpy · torch · cupy · jax |
-| `3-machinelearning/` | *(forthcoming)* | scikit-learn · torch |
-| `4-deeplearning/` | *(forthcoming)* | torch |
-
-## Shared utilities
-
-`shared/plot_style.py` — dark serif theme applied across all chapters for consistent dissertation aesthetics.
 
 ## Installation
 

@@ -22,12 +22,16 @@ markdown_extensions:
       permalink: false
       toc_depth: 3
 
+hooks:
+  - hooks/git_dates.py
+
 plugins:
   - search
   - mkdocstrings:
       handlers:
         python:
           paths:
+            - ../shared
             - ../2-detection
             - ../3-machinelearning
             - ../4-deeplearning
@@ -39,20 +43,24 @@ plugins:
 
 nav:
   - Home: index.md
-  - Chapters:
-    - Overview: chapters.md
+  - Experiments:
+    - Overview: experiments-overview.md
     - "1 · Context": chapters/1-context.md
     - "2 · Detection": chapters/2-detection.md
     - "3 · Machine Learning": chapters/3-machinelearning.md
     - "4 · Deep Learning": chapters/4-deeplearning.md
   - API:
     - Overview: api.md
-    - "backend": api/backend.md
-    - "estimation": api/estimation.md
-    - "estimation_kronecker": api/estimation_kronecker.md
-    - "estimation_online": api/estimation_online.md
-    - "manifolds": api/manifolds.md
-    - "detection": api/detection.md
-    - "simulation": api/simulation.md
-    - "exporter": api/exporter.md
+    - Shared:
+      - "plot_style": api/plot_style.md
+      - "plotly_style": api/plotly_style.md
+    - "2 · Detection":
+      - "backend": api/backend.md
+      - "estimation": api/estimation.md
+      - "estimation_kronecker": api/estimation_kronecker.md
+      - "estimation_online": api/estimation_online.md
+      - "manifolds": api/manifolds.md
+      - "detection": api/detection.md
+      - "simulation": api/simulation.md
+      - "exporter": api/exporter.md
   - Kitchen Sink: kitchen-sink.md

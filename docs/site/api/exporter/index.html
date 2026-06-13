@@ -12,6 +12,7 @@
 
   <link rel="stylesheet" href="../../assets/css/theme.css">
 
+  <script>var HDR_BASE = "../..";</script>
   <!-- Apply saved theme before paint to avoid flash -->
   <script>
     (function(){
@@ -45,17 +46,12 @@
     
       
         <a class="topbar-link"
-           href="../../chapters/1-context/">Chapters</a>
-      
-    
-      
-        <a class="topbar-link"
-           href="../../experiments/">Experiments</a>
+           href="../../experiments-overview/">Experiments</a>
       
     
       
         <a class="topbar-link active"
-           href="../backend/">API</a>
+           href="../">API</a>
       
     
       
@@ -66,6 +62,18 @@
   </nav>
 
   <div class="topbar-spacer"></div>
+
+  <div class="search-wrap" id="search-wrap">
+    <div class="search-input-wrap" id="search-input-wrap" hidden>
+      <input type="search" id="search-input" placeholder="Search…" autocomplete="off" spellcheck="false">
+    </div>
+    <div class="search-results" id="search-results" hidden></div>
+    <button class="toolbtn" id="btn-search" aria-label="Search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/>
+      </svg>
+    </button>
+  </div>
 
   <div style="display:inline-flex;align-items:center;gap:2px">
     <button class="toolbtn" id="btn-az-sm" aria-label="Smaller text">
@@ -108,43 +116,49 @@
       
     
       
-        <p class="toc-section-label">Chapters</p>
+        <p class="toc-section-label">Experiments</p>
         <ul>
           
-            <li>
-              <a href="../../chapters/1-context/">
-                1 · Context
-              </a>
-            </li>
+            
+              <li>
+                <a href="../../experiments-overview/">
+                  Overview
+                </a>
+              </li>
+            
           
-            <li>
-              <a href="../../chapters/2-detection/">
-                2 · Detection
-              </a>
-            </li>
+            
+              <li>
+                <a href="../../chapters/1-context/">
+                  1 · Context
+                </a>
+              </li>
+            
           
-            <li>
-              <a href="../../chapters/3-machinelearning/">
-                3 · Machine Learning
-              </a>
-            </li>
+            
+              <li>
+                <a href="../../chapters/2-detection/">
+                  2 · Detection
+                </a>
+              </li>
+            
           
-            <li>
-              <a href="../../chapters/4-deeplearning/">
-                4 · Deep Learning
-              </a>
-            </li>
+            
+              <li>
+                <a href="../../chapters/3-machinelearning/">
+                  3 · Machine Learning
+                </a>
+              </li>
+            
           
-        </ul>
-      
-    
-      
-        <ul>
-          <li>
-            <a href="../../experiments/">
-              Experiments
-            </a>
-          </li>
+            
+              <li>
+                <a href="../../chapters/4-deeplearning/">
+                  4 · Deep Learning
+                </a>
+              </li>
+            
+          
         </ul>
       
     
@@ -152,53 +166,91 @@
         <p class="toc-section-label">API</p>
         <ul>
           
-            <li>
-              <a href="../backend/">
-                backend
-              </a>
-            </li>
+            
+              <li>
+                <a href="../">
+                  Overview
+                </a>
+              </li>
+            
           
-            <li>
-              <a href="../estimation/">
-                estimation
-              </a>
-            </li>
+            
+              <li class="toc-subsection">
+                <span class="toc-subsection-label">Shared</span>
+                <ul>
+                  
+                    <li>
+                      <a href="../plot_style/">
+                        plot_style
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../plotly_style/">
+                        plotly_style
+                      </a>
+                    </li>
+                  
+                </ul>
+              </li>
+            
           
-            <li>
-              <a href="../estimation_kronecker/">
-                estimation_kronecker
-              </a>
-            </li>
-          
-            <li>
-              <a href="../estimation_online/">
-                estimation_online
-              </a>
-            </li>
-          
-            <li>
-              <a href="../manifolds/">
-                manifolds
-              </a>
-            </li>
-          
-            <li>
-              <a href="../detection/">
-                detection
-              </a>
-            </li>
-          
-            <li>
-              <a href="../simulation/">
-                simulation
-              </a>
-            </li>
-          
-            <li>
-              <a href="./" class="active">
-                exporter
-              </a>
-            </li>
+            
+              <li class="toc-subsection">
+                <span class="toc-subsection-label">2 · Detection</span>
+                <ul>
+                  
+                    <li>
+                      <a href="../backend/">
+                        backend
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../estimation/">
+                        estimation
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../estimation_kronecker/">
+                        estimation_kronecker
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../estimation_online/">
+                        estimation_online
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../manifolds/">
+                        manifolds
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../detection/">
+                        detection
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../simulation/">
+                        simulation
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="./" class="active">
+                        exporter
+                      </a>
+                    </li>
+                  
+                </ul>
+              </li>
+            
           
         </ul>
       
@@ -274,14 +326,70 @@
 
         <p>Base class for saving experiment results with full provenance.</p>
 <p>Subclass and implement :meth:<code>_plot_script</code> for each result modality.</p>
-<h5 id="src.exporter.ResultExporter--parameters">Parameters</h5>
-<p>args : argparse.Namespace
-    Full parsed CLI args — stored verbatim in the provenance sidecar.
-export_path : Path
-    Directory where all files are written.
-stem_suffix : str
-    Appended to every stem to make filenames unique across runs,
-    e.g. <code>"Scene4_cropped_20260609_085500"</code>.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>args</code>
+            </td>
+            <td>
+                  <code><span title="argparse.Namespace">Namespace</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Full parsed CLI args — stored verbatim in the provenance sidecar.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>export_path</code>
+            </td>
+            <td>
+                  <code><span title="pathlib.Path">Path</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Directory where all files are written.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>stem_suffix</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Appended to every stem to make filenames unique across runs,
+e.g. <code>"Scene4_cropped_20260609_085500"</code>.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
 
@@ -505,18 +613,107 @@ stem_suffix : str
     <div class="doc doc-contents ">
 
         <p>Persist <em>data</em> and write provenance sidecar + plot script.</p>
-<h6 id="src.exporter.ResultExporter.save--parameters">Parameters</h6>
-<p>data : np.ndarray
-    Result array to persist.
-stem : str
-    Base filename component, e.g. <code>"gaussian_offline"</code>.
-elapsed : float
-    Wall-clock seconds for the computation.
-**plot_kwargs
-    Forwarded to :meth:<code>_plot_script</code> (e.g. <code>title</code>, <code>cmap</code>).</p>
-<h6 id="src.exporter.ResultExporter.save--returns">Returns</h6>
-<p>Path or None
-    Stem path (no extension) if exported, else <code>None</code>.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>data</code>
+            </td>
+            <td>
+                  <code><span title="numpy.ndarray">ndarray</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Result array to persist.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>stem</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Base filename component, e.g. <code>"gaussian_offline"</code>.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>elapsed</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Wall-clock seconds for the computation.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>**plot_kwargs</code>
+            </td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Forwarded to :meth:<code>_plot_script</code> (e.g. <code>title</code>, <code>cmap</code>).</p>
+              </div>
+            </td>
+            <td>
+                  <code>{}</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="pathlib.Path">Path</span> or None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Stem path (no extension) if exported, else <code>None</code>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -632,6 +829,27 @@ elapsed : float
     </div>
 
 </div>
+
+      
+      <p class="page-meta">Last updated June 12, 2026</p>
+      
+
+      
+      <nav class="page-nav" aria-label="Page navigation">
+        
+        <a class="page-nav-prev" href="../simulation/">
+          <span class="page-nav-dir">← Previous</span>
+          <span class="page-nav-title">simulation</span>
+        </a>
+        
+        
+        <a class="page-nav-next" href="../../kitchen-sink/">
+          <span class="page-nav-dir">Next →</span>
+          <span class="page-nav-title">Kitchen Sink</span>
+        </a>
+        
+      </nav>
+      
     </main>
 
     
@@ -660,5 +878,20 @@ elapsed : float
 </div>
 
 <script src="../../assets/js/theme.js"></script>
+
+<script>
+  window.MathJax = {
+    tex: {
+      inlineMath:  [["\\(", "\\)"]],
+      displayMath: [["\\[", "\\]"]],
+      processEscapes: true,
+      tags: "ams"
+    },
+    options: { ignoreHtmlClass: ".*", processHtmlClass: "arithmatex" }
+  };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js"
+        integrity="sha384-Wuix6BuhrWbjDBs24bXrjf4ZQ5aFeFWBuKkFekO2t8xFU0iNaLQfp2K6/1Nxveei"
+        crossorigin="anonymous" async></script>
 </body>
 </html>

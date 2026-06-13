@@ -23,6 +23,131 @@
 
   document.addEventListener("DOMContentLoaded", function () {
 
+    /* ── Search ────────────────────────────────────────────────── */
+    (function () {
+      var wrap    = document.getElementById("search-wrap");
+      var btnS    = document.getElementById("btn-search");
+      var inputW  = document.getElementById("search-input-wrap");
+      var input   = document.getElementById("search-input");
+      var results = document.getElementById("search-results");
+      if (!btnS || !input) return;
+
+      var index = null;
+
+      function loadIndex(cb) {
+        if (index) { cb(); return; }
+        var base = (typeof HDR_BASE !== "undefined" ? HDR_BASE : "").replace(/\/$/, "");
+        fetch(base + "/search/search_index.json")
+          .then(function (r) { return r.json(); })
+          .then(function (data) { index = data.docs || []; cb(); })
+          .catch(function () { index = []; });
+      }
+
+      function openSearch() {
+        wrap.classList.add("open");
+        inputW.hidden = false;
+        results.hidden = true;
+        setTimeout(function () { input.focus(); }, 50);
+        loadIndex(function () {});
+      }
+      function closeSearch() {
+        wrap.classList.remove("open");
+        inputW.hidden = true;
+        results.hidden = true;
+        input.value = "";
+      }
+
+      btnS.addEventListener("click", function (e) {
+        e.stopPropagation();
+        wrap.classList.contains("open") ? closeSearch() : openSearch();
+      });
+      document.addEventListener("click", function (e) {
+        if (!wrap.contains(e.target)) closeSearch();
+      });
+      document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape") { closeSearch(); return; }
+        if (e.key === "k" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); openSearch(); return; }
+        if (!wrap.classList.contains("open")) return;
+        if (e.key !== "ArrowDown" && e.key !== "ArrowUp" && e.key !== "Enter") return;
+
+        var items = results.querySelectorAll(".search-result-item");
+        if (!items.length) return;
+        e.preventDefault();
+
+        var active = results.querySelector(".search-result-item.active");
+        var idx = active ? Array.prototype.indexOf.call(items, active) : -1;
+
+        if (e.key === "Enter" && active) { active.click(); return; }
+
+        if (active) active.classList.remove("active");
+        if (e.key === "ArrowDown") idx = (idx + 1) % items.length;
+        else if (e.key === "ArrowUp") idx = (idx - 1 + items.length) % items.length;
+        items[idx].classList.add("active");
+        items[idx].scrollIntoView({ block: "nearest" });
+      });
+
+      function query(q) {
+        if (!q || !index) { results.hidden = true; return; }
+        var terms = q.toLowerCase().split(/\s+/).filter(Boolean);
+        var hits = index.filter(function (doc) {
+          var hay = (doc.title + " " + doc.text).toLowerCase();
+          return terms.every(function (t) { return hay.includes(t); });
+        }).slice(0, 8);
+
+        function esc(s) {
+          return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+        }
+        function highlight(text, terms) {
+          var out = esc(text);
+          terms.forEach(function (t) {
+            var re = new RegExp("(" + t.replace(/[.*+?^${}()|[\]\\]/g,"\\$&") + ")", "gi");
+            out = out.replace(re, "<strong>$1</strong>");
+          });
+          return out;
+        }
+
+        results.innerHTML = "";
+        if (!hits.length) {
+          var empty = document.createElement("div");
+          empty.className = "search-empty";
+          empty.textContent = "No results";
+          results.appendChild(empty);
+        } else {
+          hits.forEach(function (doc) {
+            var a = document.createElement("a");
+            a.className = "search-result-item";
+            var base = (typeof HDR_BASE !== "undefined" ? HDR_BASE : "").replace(/\/$/, "");
+            a.href = base + "/" + doc.location;
+
+            var title = document.createElement("div");
+            title.className = "search-result-title";
+            title.innerHTML = highlight(doc.title || doc.location, terms);
+            a.appendChild(title);
+
+            var loc = document.createElement("div");
+            loc.className = "search-result-loc";
+            loc.textContent = doc.location;
+            a.appendChild(loc);
+
+            if (doc.text) {
+              var idx = doc.text.toLowerCase().indexOf(terms[0]);
+              var snip = idx >= 0
+                ? doc.text.slice(Math.max(0, idx - 40), idx + 100)
+                : doc.text.slice(0, 120);
+              var ex = document.createElement("div");
+              ex.className = "search-result-excerpt";
+              ex.innerHTML = "…" + highlight(snip.trim(), terms) + "…";
+              a.appendChild(ex);
+            }
+            results.appendChild(a);
+          });
+        }
+        results.hidden = false;
+      }
+
+      input.addEventListener("input", function () { loadIndex(function () { query(input.value.trim()); }); });
+    })();
+
     /* ── Theme toggle ──────────────────────────────────────────── */
     var btn = document.getElementById("btn-theme");
     if (btn) btn.addEventListener("click", function () {
@@ -65,20 +190,44 @@
       container.classList.forEach(function (c) {
         if (c.startsWith("language-")) lang = c.slice(9);
       });
-      /* also check inner highlight div (highlighttable case) */
-      if (!lang) {
-        var inner = container.querySelector(".highlight");
-        if (inner) inner.classList.forEach(function (c) {
+      /* For highlighttable, pymdownx puts language-* on the outer wrapper div (parent),
+         and the .filename span is also a child of that wrapper, not of the table. */
+      var fileRoot = container;
+      if (!lang && container.parentElement) {
+        container.parentElement.classList.forEach(function (c) {
           if (c.startsWith("language-")) lang = c.slice(9);
         });
+        fileRoot = container.parentElement;
       }
       var file = "";
-      var fileEl = container.querySelector(".filename");
+      var fileEl = fileRoot.querySelector(".filename");
       if (fileEl) { file = fileEl.textContent.trim(); fileEl.style.display = "none"; }
       return { lang: lang, file: file };
     }
 
-    function makeCbhead(lang, file) {
+    function makeCopyBtn(getCode) {
+      var btn = document.createElement("button");
+      btn.className = "cb-copy";
+      btn.setAttribute("aria-label", "Copy code");
+      btn.innerHTML =
+        '<svg class="cb-copy-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+          '<rect x="9" y="2" width="6" height="4" rx="1"></rect>' +
+          '<path d="M17 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>' +
+        '</svg>' +
+        '<svg class="cb-check-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">' +
+          '<polyline points="20 6 9 17 4 12"></polyline>' +
+        '</svg>';
+      btn.addEventListener("click", function () {
+        var text = getCode();
+        navigator.clipboard.writeText(text).then(function () {
+          btn.classList.add("copied");
+          setTimeout(function () { btn.classList.remove("copied"); }, 1800);
+        });
+      });
+      return btn;
+    }
+
+    function makeCbhead(lang, file, getCode) {
       var head = document.createElement("div");
       head.className = "cbhead";
       if (lang) {
@@ -93,31 +242,51 @@
         fs.textContent = file;
         head.appendChild(fs);
       }
+      if (getCode) head.appendChild(makeCopyBtn(getCode));
       return head;
     }
 
-    /* plain (no linenums) blocks — skip API doc elements (.doc = mkdocstrings) */
+    /* plain (no linenums) blocks — skip API doc elements and outer wrappers around highlighttable */
     document.querySelectorAll(".highlight:not(.highlighttable .highlight):not(.doc .highlight)").forEach(function (block) {
       if (block.querySelector(".cbhead")) return;
+      if (block.querySelector("table.highlighttable")) return;  /* handled by thead loop below */
       var lf = readLangFile(block);
       if (!lf.lang && !lf.file) return;
-      block.insertBefore(makeCbhead(lf.lang, lf.file), block.firstChild);
+      var getCode = function () { return (block.querySelector("pre") || block).innerText; };
+      block.insertBefore(makeCbhead(lf.lang, lf.file, getCode), block.firstChild);
     });
 
-    /* line-numbered blocks — inject a <thead> row spanning both columns */
+    /* line-numbered blocks — inject a <thead> with two cells matching column structure */
     document.querySelectorAll("table.highlighttable:not(.doc table.highlighttable)").forEach(function (table) {
       if (table.querySelector(".cbhead")) return;
       var lf = readLangFile(table);
       if (!lf.lang && !lf.file) return;
-      var thead = document.createElement("thead");
-      var tr    = document.createElement("tr");
-      var th    = document.createElement("th");
-      th.colSpan = 2;
-      var head = makeCbhead(lf.lang, lf.file);
-      /* move cbhead children into the th */
-      while (head.firstChild) th.appendChild(head.firstChild);
-      th.className = "cbhead";
-      tr.appendChild(th);
+      var thead  = document.createElement("thead");
+      var tr     = document.createElement("tr");
+      /* linenos header cell — same panel background as the column below */
+      var thLn   = document.createElement("th");
+      thLn.className = "cbhead-linenos";
+      /* code header cell — holds the language / filename label */
+      var thCode = document.createElement("th");
+      thCode.className = "cbhead";
+      if (lf.lang) {
+        var ls = document.createElement("span");
+        ls.className = "cblang";
+        ls.textContent = lf.lang.toUpperCase();
+        thCode.appendChild(ls);
+      }
+      if (lf.file) {
+        var fs = document.createElement("span");
+        fs.className = "cbfile";
+        fs.textContent = lf.file;
+        thCode.appendChild(fs);
+      }
+      var getCode = (function (t) {
+        return function () { return (t.querySelector("td.code pre") || t).innerText; };
+      }(table));
+      thCode.appendChild(makeCopyBtn(getCode));
+      tr.appendChild(thLn);
+      tr.appendChild(thCode);
       thead.appendChild(tr);
       table.insertBefore(thead, table.firstChild);
     });
@@ -157,6 +326,43 @@
       window.addEventListener("scroll", updateProgress, { passive: true });
       updateProgress();
     }
+
+    /* ── Rebuild aside TOC from DOM on API pages ────────────────── */
+    /* page.toc is extracted from markdown before mkdocstrings injects its headings,
+       so API pages only show the h1. If .doc elements exist, rebuild from the DOM. */
+    (function () {
+      var aside = document.querySelector(".aside-toc");
+      if (!aside) return;
+      if (!document.querySelector(".page-content .doc")) return;  /* not an API page */
+
+      var domHeadings = Array.from(
+        document.querySelectorAll(".page-content h2[id], .page-content h3[id], .page-content h4[id]")
+      ).filter(function (h) {
+        /* skip mkdocstrings parameter/raises headings (h5) and the markdown h1 */
+        return h.id && !h.id.includes("--");
+      });
+      if (domHeadings.length < 2) return;  /* nothing interesting to add */
+
+      var ul = document.createElement("ul");
+      domHeadings.forEach(function (h) {
+        var li = document.createElement("li");
+        var tag = h.tagName;
+        li.className = tag === "H4" ? "h3" : (tag === "H3" ? "h2" : "h1");
+        var a = document.createElement("a");
+        a.href = "#" + h.id;
+        /* strip badges/labels text — keep only the code element text */
+        var codeEl = h.querySelector("code");
+        a.textContent = codeEl ? codeEl.textContent.trim()
+                                : h.textContent.replace(/[¶#]/g, "").trim();
+        li.appendChild(a);
+        ul.appendChild(li);
+      });
+
+      /* replace existing ul */
+      var existingUl = aside.querySelector("ul");
+      if (existingUl) existingUl.replaceWith(ul);
+      else aside.appendChild(ul);
+    })();
 
     /* ── Active aside-TOC link on scroll ────────────────────────── */
     var asideLinks = Array.from(document.querySelectorAll(".aside-toc a[href^='#']"));
@@ -259,6 +465,29 @@
       window.addEventListener("scroll", markFabActive, { passive: true });
       markFabActive();
     }
+
+    /* ── Anchor links on headings ───────────────────────────────── */
+    document.querySelectorAll(
+      ".page-content h2[id], .page-content h3[id], .page-content h4[id]"
+    ).forEach(function (h) {
+      var a = document.createElement("a");
+      a.className = "heading-anchor";
+      a.href = "#" + h.id;
+      a.setAttribute("aria-label", "Link to this section");
+      a.innerHTML =
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">' +
+        '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>' +
+        '<path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>' +
+        '</svg>';
+      h.appendChild(a);
+    });
+
+    /* ── Figure auto-numbering ──────────────────────────────────── */
+    var figIdx = 0;
+    document.querySelectorAll(".page-content figure figcaption").forEach(function (cap) {
+      figIdx++;
+      cap.innerHTML = "<strong>Figure " + figIdx + " — </strong>" + cap.innerHTML;
+    });
 
   });
 })();

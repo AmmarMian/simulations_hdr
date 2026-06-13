@@ -12,6 +12,7 @@
 
   <link rel="stylesheet" href="../../assets/css/theme.css">
 
+  <script>var HDR_BASE = "../..";</script>
   <!-- Apply saved theme before paint to avoid flash -->
   <script>
     (function(){
@@ -45,17 +46,12 @@
     
       
         <a class="topbar-link"
-           href="../../chapters/1-context/">Chapters</a>
-      
-    
-      
-        <a class="topbar-link"
-           href="../../experiments/">Experiments</a>
+           href="../../experiments-overview/">Experiments</a>
       
     
       
         <a class="topbar-link active"
-           href="../backend/">API</a>
+           href="../">API</a>
       
     
       
@@ -66,6 +62,18 @@
   </nav>
 
   <div class="topbar-spacer"></div>
+
+  <div class="search-wrap" id="search-wrap">
+    <div class="search-input-wrap" id="search-input-wrap" hidden>
+      <input type="search" id="search-input" placeholder="Search…" autocomplete="off" spellcheck="false">
+    </div>
+    <div class="search-results" id="search-results" hidden></div>
+    <button class="toolbtn" id="btn-search" aria-label="Search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/>
+      </svg>
+    </button>
+  </div>
 
   <div style="display:inline-flex;align-items:center;gap:2px">
     <button class="toolbtn" id="btn-az-sm" aria-label="Smaller text">
@@ -108,43 +116,49 @@
       
     
       
-        <p class="toc-section-label">Chapters</p>
+        <p class="toc-section-label">Experiments</p>
         <ul>
           
-            <li>
-              <a href="../../chapters/1-context/">
-                1 · Context
-              </a>
-            </li>
+            
+              <li>
+                <a href="../../experiments-overview/">
+                  Overview
+                </a>
+              </li>
+            
           
-            <li>
-              <a href="../../chapters/2-detection/">
-                2 · Detection
-              </a>
-            </li>
+            
+              <li>
+                <a href="../../chapters/1-context/">
+                  1 · Context
+                </a>
+              </li>
+            
           
-            <li>
-              <a href="../../chapters/3-machinelearning/">
-                3 · Machine Learning
-              </a>
-            </li>
+            
+              <li>
+                <a href="../../chapters/2-detection/">
+                  2 · Detection
+                </a>
+              </li>
+            
           
-            <li>
-              <a href="../../chapters/4-deeplearning/">
-                4 · Deep Learning
-              </a>
-            </li>
+            
+              <li>
+                <a href="../../chapters/3-machinelearning/">
+                  3 · Machine Learning
+                </a>
+              </li>
+            
           
-        </ul>
-      
-    
-      
-        <ul>
-          <li>
-            <a href="../../experiments/">
-              Experiments
-            </a>
-          </li>
+            
+              <li>
+                <a href="../../chapters/4-deeplearning/">
+                  4 · Deep Learning
+                </a>
+              </li>
+            
+          
         </ul>
       
     
@@ -152,53 +166,91 @@
         <p class="toc-section-label">API</p>
         <ul>
           
-            <li>
-              <a href="../backend/">
-                backend
-              </a>
-            </li>
+            
+              <li>
+                <a href="../">
+                  Overview
+                </a>
+              </li>
+            
           
-            <li>
-              <a href="../estimation/">
-                estimation
-              </a>
-            </li>
+            
+              <li class="toc-subsection">
+                <span class="toc-subsection-label">Shared</span>
+                <ul>
+                  
+                    <li>
+                      <a href="../plot_style/">
+                        plot_style
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../plotly_style/">
+                        plotly_style
+                      </a>
+                    </li>
+                  
+                </ul>
+              </li>
+            
           
-            <li>
-              <a href="../estimation_kronecker/">
-                estimation_kronecker
-              </a>
-            </li>
-          
-            <li>
-              <a href="../estimation_online/">
-                estimation_online
-              </a>
-            </li>
-          
-            <li>
-              <a href="../manifolds/">
-                manifolds
-              </a>
-            </li>
-          
-            <li>
-              <a href="../detection/">
-                detection
-              </a>
-            </li>
-          
-            <li>
-              <a href="./" class="active">
-                simulation
-              </a>
-            </li>
-          
-            <li>
-              <a href="../exporter/">
-                exporter
-              </a>
-            </li>
+            
+              <li class="toc-subsection">
+                <span class="toc-subsection-label">2 · Detection</span>
+                <ul>
+                  
+                    <li>
+                      <a href="../backend/">
+                        backend
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../estimation/">
+                        estimation
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../estimation_kronecker/">
+                        estimation_kronecker
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../estimation_online/">
+                        estimation_online
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../manifolds/">
+                        manifolds
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../detection/">
+                        detection
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="./" class="active">
+                        simulation
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../exporter/">
+                        exporter
+                      </a>
+                    </li>
+                  
+                </ul>
+              </li>
+            
           
         </ul>
       
@@ -301,8 +353,29 @@
         <p>Complex DCG (SIRV) data under H0: X_{t,n} = sqrt(tau_n) * z, z ~ CN(0, Sigma_true).</p>
 <p>tau_n ~ Gamma(tau_shape, tau_scale) per sample, constant across dates — matching the
 MatAndText null hypothesis tested by DeterministicCompoundGaussianGLRT.</p>
-<h5 id="src.simulation.generate_dcg_data--returns">Returns</h5>
-<p>np.ndarray of shape (n_trials, T_max, n_samples, n_features), complex128</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>np.ndarray of shape (n_trials, T_max, n_samples, n_features), complex128</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -377,8 +450,29 @@ MatAndText null hypothesis tested by DeterministicCompoundGaussianGLRT.</p>
 
         <p>DCG data under H1: change point at date n_change_dates.</p>
 <p>Same structure as generate_gaussian_data_h1 but with Gamma textures.</p>
-<h5 id="src.simulation.generate_dcg_data_h1--returns">Returns</h5>
-<p>np.ndarray of shape (n_trials, T_max, n_samples, n_features), complex128</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>np.ndarray of shape (n_trials, T_max, n_samples, n_features), complex128</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -470,8 +564,29 @@ MatAndText null hypothesis tested by DeterministicCompoundGaussianGLRT.</p>
     <div class="doc doc-contents ">
 
         <p>Complex Gaussian data under H0: X_{t,n} ~ CN(0, Sigma_true) i.i.d.</p>
-<h5 id="src.simulation.generate_gaussian_data--returns">Returns</h5>
-<p>np.ndarray of shape (n_trials, T_max, n_samples, n_features), complex128</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>np.ndarray of shape (n_trials, T_max, n_samples, n_features), complex128</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -533,8 +648,29 @@ MatAndText null hypothesis tested by DeterministicCompoundGaussianGLRT.</p>
         <p>Gaussian data under H1: change point at date n_change_dates.</p>
 <p>Dates 0..n_change_dates-1 drawn from CN(0, Sigma_1),
 dates n_change_dates..T_max-1 drawn from CN(0, Sigma_2).</p>
-<h5 id="src.simulation.generate_gaussian_data_h1--returns">Returns</h5>
-<p>np.ndarray of shape (n_trials, T_max, n_samples, n_features), complex128</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>np.ndarray of shape (n_trials, T_max, n_samples, n_features), complex128</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -621,14 +757,204 @@ dates n_change_dates..T_max-1 drawn from CN(0, Sigma_2).</p>
 <p>Uses the identity vec_F(M) ~ CN(0, kron(A,B)) when M = L_B @ G @ L_A^H,
 G ~ CN(0, I_{b×a}). Texture tau_{t,n} ~ Gamma(tau_shape, tau_scale),
 drawn independently per sample and per date.</p>
-<h5 id="src.simulation.generate_kronecker_data--parameters">Parameters</h5>
-<p>n_trials, T_max, n_samples : int
-a, b : int   — Kronecker factor sizes, p = a*b
-A_true, B_true : np.ndarray  — SHPD ground truth
-seed : int
-tau_shape, tau_scale : float  — Gamma texture parameters</p>
-<h5 id="src.simulation.generate_kronecker_data--returns">Returns</h5>
-<p>np.ndarray of shape (n_trials, T_max, n_samples, p), complex128</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>n_trials</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>T_max</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>n_samples</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>a</code>
+            </td>
+            <td>
+                  <code>int   — Kronecker factor sizes, p = a*b</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>b</code>
+            </td>
+            <td>
+                  <code>int   — Kronecker factor sizes, p = a*b</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>A_true</code>
+            </td>
+            <td>
+                  <code>np.ndarray  — SHPD ground truth</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>B_true</code>
+            </td>
+            <td>
+                  <code>np.ndarray  — SHPD ground truth</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>seed</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+            <td>
+                  <code>0</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>tau_shape</code>
+            </td>
+            <td>
+                  <code>float  — Gamma texture parameters</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+            <td>
+                  <code>1.0</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>tau_scale</code>
+            </td>
+            <td>
+                  <code>float  — Gamma texture parameters</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+            <td>
+                  <code>1.0</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>np.ndarray of shape (n_trials, T_max, n_samples, p), complex128</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -738,8 +1064,29 @@ tau_shape, tau_scale : float  — Gamma texture parameters</p>
         <p>Kronecker SIRV data under H1: change point at date n_change_dates.</p>
 <p>Dates 0..n_change_dates-1: kron(A1, B1) with Gamma textures.
 Dates n_change_dates..T_max-1: kron(A2, B2) with fresh Gamma textures.</p>
-<h5 id="src.simulation.generate_kronecker_data_h1--returns">Returns</h5>
-<p>np.ndarray of shape (n_trials, T_max, n_samples, p), complex128</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>np.ndarray of shape (n_trials, T_max, n_samples, p), complex128</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -861,14 +1208,118 @@ Dates n_change_dates..T_max-1: kron(A2, B2) with fresh Gamma textures.</p>
     <div class="doc doc-contents ">
 
         <p>Random SHPD(a) and SHPD(b) matrices (det=1) for Kronecker simulations.</p>
-<h5 id="src.simulation.make_ab_true--parameters">Parameters</h5>
-<p>a, b : int
-    Sizes of the two Kronecker factors.
-seed_a, seed_b : int
-    Independent seeds for A and B.</p>
-<h5 id="src.simulation.make_ab_true--returns">Returns</h5>
-<p>A : np.ndarray of shape (a, a), complex128, det ≈ 1
-B : np.ndarray of shape (b, b), complex128, det ≈ 1</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>a</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Sizes of the two Kronecker factors.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>b</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Sizes of the two Kronecker factors.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>seed_a</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Independent seeds for A and B.</p>
+              </div>
+            </td>
+            <td>
+                  <code>0</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>seed_b</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Independent seeds for A and B.</p>
+              </div>
+            </td>
+            <td>
+                  <code>0</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+<th>Name</th>          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+<td><code>A</code></td>            <td>
+                  <code>np.ndarray of shape (a, a), complex128, det ≈ 1</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+<td><code>B</code></td>            <td>
+                  <code>np.ndarray of shape (b, b), complex128, det ≈ 1</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -938,15 +1389,93 @@ B : np.ndarray of shape (b, b), complex128, det ≈ 1</p>
     <div class="doc doc-contents ">
 
         <p>Random complex HPD shape matrix.</p>
-<h5 id="src.simulation.make_sigma_true--parameters">Parameters</h5>
-<p>n_features : int
-seed : int
-    RNG seed, independent from the data seed.
-normalize : "trace" or "det"
-    "trace" — Tr(Sigma) = p, matches Tyler / DCG trace normalization.
-    "det"   — det(Sigma) = 1, matches scaled-Gaussian MLE convention.</p>
-<h5 id="src.simulation.make_sigma_true--returns">Returns</h5>
-<p>np.ndarray of shape (n_features, n_features), complex128</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>n_features</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>seed</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>RNG seed, independent from the data seed.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>normalize</code>
+            </td>
+            <td>
+                  <code>&#39;trace&#39; or &#39;det&#39;</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>"trace" — Tr(Sigma) = p, matches Tyler / DCG trace normalization.
+"det"   — det(Sigma) = 1, matches scaled-Gaussian MLE convention.</p>
+              </div>
+            </td>
+            <td>
+                  <code>&#39;trace&#39;</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>np.ndarray of shape (n_features, n_features), complex128</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -1013,6 +1542,27 @@ normalize : "trace" or "det"
     </div>
 
 </div>
+
+      
+      <p class="page-meta">Last updated June 12, 2026</p>
+      
+
+      
+      <nav class="page-nav" aria-label="Page navigation">
+        
+        <a class="page-nav-prev" href="../detection/">
+          <span class="page-nav-dir">← Previous</span>
+          <span class="page-nav-title">detection</span>
+        </a>
+        
+        
+        <a class="page-nav-next" href="../exporter/">
+          <span class="page-nav-dir">Next →</span>
+          <span class="page-nav-title">exporter</span>
+        </a>
+        
+      </nav>
+      
     </main>
 
     
@@ -1041,5 +1591,20 @@ normalize : "trace" or "det"
 </div>
 
 <script src="../../assets/js/theme.js"></script>
+
+<script>
+  window.MathJax = {
+    tex: {
+      inlineMath:  [["\\(", "\\)"]],
+      displayMath: [["\\[", "\\]"]],
+      processEscapes: true,
+      tags: "ams"
+    },
+    options: { ignoreHtmlClass: ".*", processHtmlClass: "arithmatex" }
+  };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js"
+        integrity="sha384-Wuix6BuhrWbjDBs24bXrjf4ZQ5aFeFWBuKkFekO2t8xFU0iNaLQfp2K6/1Nxveei"
+        crossorigin="anonymous" async></script>
 </body>
 </html>

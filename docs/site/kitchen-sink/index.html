@@ -12,6 +12,7 @@
 
   <link rel="stylesheet" href="../assets/css/theme.css">
 
+  <script>var HDR_BASE = "..";</script>
   <!-- Apply saved theme before paint to avoid flash -->
   <script>
     (function(){
@@ -45,17 +46,12 @@
     
       
         <a class="topbar-link"
-           href="../chapters/1-context/">Chapters</a>
+           href="../experiments-overview/">Experiments</a>
       
     
       
         <a class="topbar-link"
-           href="../experiments/">Experiments</a>
-      
-    
-      
-        <a class="topbar-link"
-           href="../api/backend/">API</a>
+           href="../api/">API</a>
       
     
       
@@ -66,6 +62,18 @@
   </nav>
 
   <div class="topbar-spacer"></div>
+
+  <div class="search-wrap" id="search-wrap">
+    <div class="search-input-wrap" id="search-input-wrap" hidden>
+      <input type="search" id="search-input" placeholder="Search…" autocomplete="off" spellcheck="false">
+    </div>
+    <div class="search-results" id="search-results" hidden></div>
+    <button class="toolbtn" id="btn-search" aria-label="Search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/>
+      </svg>
+    </button>
+  </div>
 
   <div style="display:inline-flex;align-items:center;gap:2px">
     <button class="toolbtn" id="btn-az-sm" aria-label="Smaller text">
@@ -108,43 +116,49 @@
       
     
       
-        <p class="toc-section-label">Chapters</p>
+        <p class="toc-section-label">Experiments</p>
         <ul>
           
-            <li>
-              <a href="../chapters/1-context/">
-                1 · Context
-              </a>
-            </li>
+            
+              <li>
+                <a href="../experiments-overview/">
+                  Overview
+                </a>
+              </li>
+            
           
-            <li>
-              <a href="../chapters/2-detection/">
-                2 · Detection
-              </a>
-            </li>
+            
+              <li>
+                <a href="../chapters/1-context/">
+                  1 · Context
+                </a>
+              </li>
+            
           
-            <li>
-              <a href="../chapters/3-machinelearning/">
-                3 · Machine Learning
-              </a>
-            </li>
+            
+              <li>
+                <a href="../chapters/2-detection/">
+                  2 · Detection
+                </a>
+              </li>
+            
           
-            <li>
-              <a href="../chapters/4-deeplearning/">
-                4 · Deep Learning
-              </a>
-            </li>
+            
+              <li>
+                <a href="../chapters/3-machinelearning/">
+                  3 · Machine Learning
+                </a>
+              </li>
+            
           
-        </ul>
-      
-    
-      
-        <ul>
-          <li>
-            <a href="../experiments/">
-              Experiments
-            </a>
-          </li>
+            
+              <li>
+                <a href="../chapters/4-deeplearning/">
+                  4 · Deep Learning
+                </a>
+              </li>
+            
+          
         </ul>
       
     
@@ -152,53 +166,91 @@
         <p class="toc-section-label">API</p>
         <ul>
           
-            <li>
-              <a href="../api/backend/">
-                backend
-              </a>
-            </li>
+            
+              <li>
+                <a href="../api/">
+                  Overview
+                </a>
+              </li>
+            
           
-            <li>
-              <a href="../api/estimation/">
-                estimation
-              </a>
-            </li>
+            
+              <li class="toc-subsection">
+                <span class="toc-subsection-label">Shared</span>
+                <ul>
+                  
+                    <li>
+                      <a href="../api/plot_style/">
+                        plot_style
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../api/plotly_style/">
+                        plotly_style
+                      </a>
+                    </li>
+                  
+                </ul>
+              </li>
+            
           
-            <li>
-              <a href="../api/estimation_kronecker/">
-                estimation_kronecker
-              </a>
-            </li>
-          
-            <li>
-              <a href="../api/estimation_online/">
-                estimation_online
-              </a>
-            </li>
-          
-            <li>
-              <a href="../api/manifolds/">
-                manifolds
-              </a>
-            </li>
-          
-            <li>
-              <a href="../api/detection/">
-                detection
-              </a>
-            </li>
-          
-            <li>
-              <a href="../api/simulation/">
-                simulation
-              </a>
-            </li>
-          
-            <li>
-              <a href="../api/exporter/">
-                exporter
-              </a>
-            </li>
+            
+              <li class="toc-subsection">
+                <span class="toc-subsection-label">2 · Detection</span>
+                <ul>
+                  
+                    <li>
+                      <a href="../api/backend/">
+                        backend
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../api/estimation/">
+                        estimation
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../api/estimation_kronecker/">
+                        estimation_kronecker
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../api/estimation_online/">
+                        estimation_online
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../api/manifolds/">
+                        manifolds
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../api/detection/">
+                        detection
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../api/simulation/">
+                        simulation
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../api/exporter/">
+                        exporter
+                      </a>
+                    </li>
+                  
+                </ul>
+              </li>
+            
           
         </ul>
       
@@ -231,7 +283,7 @@
 <h2 id="body-text-and-sidenotes">Body text and sidenotes</h2>
 <p>The estimator <label for="sn-1" class="sidenote-number"></label><input type="checkbox" id="sn-1" class="margin-toggle"/><span class="sidenote">The Sample Covariance Matrix (SCM) is the maximum likelihood estimator under the Gaussian model. It is consistent but biased, and breaks down when the number of samples is comparable to the dimension.</span> takes a sequence of observation vectors and returns a Hermitian positive-definite matrix. Under the Gaussian model the natural choice is the SCM, but for heavy-tailed distributions — SAR amplitude, sonar returns — robust alternatives such as Tyler's M-estimator converge to the true scatter matrix regardless of the tail weight.</p>
 <p>The iterative fixed-point equation <label for="sn-2" class="sidenote-number"></label><input type="checkbox" id="sn-2" class="margin-toggle"/><span class="sidenote">Convergence is guaranteed by a contraction argument on the Riemannian manifold of HPD matrices. Each iterate strictly decreases the negative log-likelihood.</span> is solved by alternating between a quadratic form and a normalisation step until the Frobenius distance between successive iterates falls below a tolerance.</p>
-<p>The Kronecker model factors the scatter matrix as a tensor product $\mathbf{A} \otimes \mathbf{B}$, reducing the number of free parameters from $p^2$ to $a^2 + b^2$ when the data has separable spatial and spectral structure.</p>
+<p>The Kronecker model factors the scatter matrix as a tensor product <span class="arithmatex">\(\mathbf{A} \otimes \mathbf{B}\)</span>, reducing the number of free parameters from <span class="arithmatex">\(p^2\)</span> to <span class="arithmatex">\(a^2 + b^2\)</span> when the data has separable spatial and spectral structure.</p>
 <hr />
 <h2 id="code-blocks">Code blocks</h2>
 <p>A basic Python block — the language label and window frame are injected automatically:</p>
@@ -404,11 +456,40 @@ Riemannian gradient step on the product manifold
 Each step jointly updates the shape matrix Σ and the scale τ along the geodesic direction,
 giving quadratic convergence near the maximum likelihood estimate.</p>
 <hr />
+<h2 id="interactive-figure">Interactive figure</h2>
+<p><span class="marginnote">
+  <span class="mn-label">Parameters</span>
+  <code>--a 2</code> · Kronecker factor A size<br>
+  <code>--b 3</code> · Kronecker factor B size<br>
+  <code>--T-max 500</code> · max time steps<br>
+  <code>--n-trials 10 000</code> · Monte Carlo trials<br>
+  <code>--pfa 1e-2</code> · false-alarm rate<br>
+  <code>--seed 42</code>
+</span></p>
+<div class="plotly-wrap" data-src="../../assets/data/example_power_curve.json" data-title="Fig. 2.4 — Power curves · Kronecker model · H1"></div>
+
+<hr />
 <h2 id="blockquote">Blockquote</h2>
 <blockquote>
 <p>The geometry of a covariance matrix is not in its eigenvalues alone,
 but in the interplay between magnitude and direction as the data distribution shifts.</p>
 </blockquote>
+
+      
+      <p class="page-meta">Last updated June 12, 2026</p>
+      
+
+      
+      <nav class="page-nav" aria-label="Page navigation">
+        
+        <a class="page-nav-prev" href="../api/exporter/">
+          <span class="page-nav-dir">← Previous</span>
+          <span class="page-nav-title">exporter</span>
+        </a>
+        
+        
+      </nav>
+      
     </main>
 
     
@@ -448,6 +529,11 @@ but in the interplay between magnitude and direction as the data distribution sh
             </li>
           
             <li>
+              <a href="#interactive-figure">Interactive figure</a>
+              
+            </li>
+          
+            <li>
               <a href="#blockquote">Blockquote</a>
               
             </li>
@@ -461,5 +547,68 @@ but in the interplay between magnitude and direction as the data distribution sh
 </div>
 
 <script src="../assets/js/theme.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.35.2/plotly.min.js"
+        integrity="sha384-cCVCZkAjYNxaYKbM8lsArLznDF/SvMFr1jcZrvOpSTCa0W40ZAdLzHCEulnUa5i7"
+        crossorigin="anonymous"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  document.querySelectorAll(".plotly-wrap[data-src]").forEach(function (el) {
+    if (el.dataset.title) {
+      var top = document.createElement("div");
+      top.className = "figtop";
+      top.innerHTML = '<span class="figtag">' + el.dataset.title + '</span>';
+      el.appendChild(top);
+    }
+    var inner = document.createElement("div");
+    inner.className = "plotly-inner";
+    el.appendChild(inner);
+
+    fetch(el.dataset.src)
+      .then(function (r) { return r.json(); })
+      .then(function (spec) {
+        var style = getComputedStyle(document.documentElement);
+        var grid  = style.getPropertyValue("--rule").trim()  || "rgba(187,170,148,0.35)";
+        var ink2  = style.getPropertyValue("--ink-2").trim() || "#5c4a35";
+        var muted = style.getPropertyValue("--muted").trim() || "#9a8a75";
+
+        function patchAxis(ax) {
+          if (!ax) return;
+          if (ax.showgrid)   ax.gridcolor  = grid;
+          if (ax.linecolor)  ax.linecolor  = muted;
+          if (ax.tickcolor)  ax.tickcolor  = muted;
+          if (ax.tickfont)   ax.tickfont.color  = muted;
+          if (ax.title && ax.title.font) ax.title.font.color = ink2;
+        }
+        patchAxis(spec.layout.xaxis);
+        patchAxis(spec.layout.yaxis);
+        if (spec.layout.legend) spec.layout.legend.font.color = ink2;
+        if (spec.layout.font)   spec.layout.font.color = ink2;
+
+        Plotly.react(inner, spec.data, spec.layout, {
+          displayModeBar: false,
+          displaylogo:    false,
+          responsive:     true,
+          scrollZoom:     true,
+        });
+      });
+  });
+});
+</script>
+
+<script>
+  window.MathJax = {
+    tex: {
+      inlineMath:  [["\\(", "\\)"]],
+      displayMath: [["\\[", "\\]"]],
+      processEscapes: true,
+      tags: "ams"
+    },
+    options: { ignoreHtmlClass: ".*", processHtmlClass: "arithmatex" }
+  };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js"
+        integrity="sha384-Wuix6BuhrWbjDBs24bXrjf4ZQ5aFeFWBuKkFekO2t8xFU0iNaLQfp2K6/1Nxveei"
+        crossorigin="anonymous" async></script>
 </body>
 </html>

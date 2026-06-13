@@ -12,6 +12,7 @@
 
   <link rel="stylesheet" href="../../assets/css/theme.css">
 
+  <script>var HDR_BASE = "../..";</script>
   <!-- Apply saved theme before paint to avoid flash -->
   <script>
     (function(){
@@ -45,17 +46,12 @@
     
       
         <a class="topbar-link"
-           href="../../chapters/1-context/">Chapters</a>
-      
-    
-      
-        <a class="topbar-link"
-           href="../../experiments/">Experiments</a>
+           href="../../experiments-overview/">Experiments</a>
       
     
       
         <a class="topbar-link active"
-           href="./">API</a>
+           href="../">API</a>
       
     
       
@@ -66,6 +62,18 @@
   </nav>
 
   <div class="topbar-spacer"></div>
+
+  <div class="search-wrap" id="search-wrap">
+    <div class="search-input-wrap" id="search-input-wrap" hidden>
+      <input type="search" id="search-input" placeholder="Search…" autocomplete="off" spellcheck="false">
+    </div>
+    <div class="search-results" id="search-results" hidden></div>
+    <button class="toolbtn" id="btn-search" aria-label="Search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/>
+      </svg>
+    </button>
+  </div>
 
   <div style="display:inline-flex;align-items:center;gap:2px">
     <button class="toolbtn" id="btn-az-sm" aria-label="Smaller text">
@@ -108,43 +116,49 @@
       
     
       
-        <p class="toc-section-label">Chapters</p>
+        <p class="toc-section-label">Experiments</p>
         <ul>
           
-            <li>
-              <a href="../../chapters/1-context/">
-                1 · Context
-              </a>
-            </li>
+            
+              <li>
+                <a href="../../experiments-overview/">
+                  Overview
+                </a>
+              </li>
+            
           
-            <li>
-              <a href="../../chapters/2-detection/">
-                2 · Detection
-              </a>
-            </li>
+            
+              <li>
+                <a href="../../chapters/1-context/">
+                  1 · Context
+                </a>
+              </li>
+            
           
-            <li>
-              <a href="../../chapters/3-machinelearning/">
-                3 · Machine Learning
-              </a>
-            </li>
+            
+              <li>
+                <a href="../../chapters/2-detection/">
+                  2 · Detection
+                </a>
+              </li>
+            
           
-            <li>
-              <a href="../../chapters/4-deeplearning/">
-                4 · Deep Learning
-              </a>
-            </li>
+            
+              <li>
+                <a href="../../chapters/3-machinelearning/">
+                  3 · Machine Learning
+                </a>
+              </li>
+            
           
-        </ul>
-      
-    
-      
-        <ul>
-          <li>
-            <a href="../../experiments/">
-              Experiments
-            </a>
-          </li>
+            
+              <li>
+                <a href="../../chapters/4-deeplearning/">
+                  4 · Deep Learning
+                </a>
+              </li>
+            
+          
         </ul>
       
     
@@ -152,53 +166,91 @@
         <p class="toc-section-label">API</p>
         <ul>
           
-            <li>
-              <a href="./" class="active">
-                backend
-              </a>
-            </li>
+            
+              <li>
+                <a href="../">
+                  Overview
+                </a>
+              </li>
+            
           
-            <li>
-              <a href="../estimation/">
-                estimation
-              </a>
-            </li>
+            
+              <li class="toc-subsection">
+                <span class="toc-subsection-label">Shared</span>
+                <ul>
+                  
+                    <li>
+                      <a href="../plot_style/">
+                        plot_style
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../plotly_style/">
+                        plotly_style
+                      </a>
+                    </li>
+                  
+                </ul>
+              </li>
+            
           
-            <li>
-              <a href="../estimation_kronecker/">
-                estimation_kronecker
-              </a>
-            </li>
-          
-            <li>
-              <a href="../estimation_online/">
-                estimation_online
-              </a>
-            </li>
-          
-            <li>
-              <a href="../manifolds/">
-                manifolds
-              </a>
-            </li>
-          
-            <li>
-              <a href="../detection/">
-                detection
-              </a>
-            </li>
-          
-            <li>
-              <a href="../simulation/">
-                simulation
-              </a>
-            </li>
-          
-            <li>
-              <a href="../exporter/">
-                exporter
-              </a>
-            </li>
+            
+              <li class="toc-subsection">
+                <span class="toc-subsection-label">2 · Detection</span>
+                <ul>
+                  
+                    <li>
+                      <a href="./" class="active">
+                        backend
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../estimation/">
+                        estimation
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../estimation_kronecker/">
+                        estimation_kronecker
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../estimation_online/">
+                        estimation_online
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../manifolds/">
+                        manifolds
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../detection/">
+                        detection
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../simulation/">
+                        simulation
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../exporter/">
+                        exporter
+                      </a>
+                    </li>
+                  
+                </ul>
+              </li>
+            
           
         </ul>
       
@@ -277,16 +329,78 @@
         <p>Hardware/library backend descriptor.</p>
 <p>Decouples <em>library</em> (numpy / torch / cupy / jax) from <em>device</em>
 (cpu / cuda / mps / metal).</p>
-<h5 id="src.backend.Backend--parameters">Parameters</h5>
-<p>lib : Literal["numpy", "torch", "cupy", "jax"]
-    The compute library.
-device : str
-    Target device: <code>"cpu"</code>, <code>"cuda"</code>, <code>"mps"</code> (Apple Silicon /
-    torch), or <code>"metal"</code> (Apple Silicon / jax).  Ignored for numpy
-    (always CPU).</p>
-<h5 id="src.backend.Backend--raises">Raises</h5>
-<p>ValueError
-    If the lib/device combination is unsupported.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>lib</code>
+            </td>
+            <td>
+                  <code><span title="typing.Literal">Literal</span>[&#39;numpy&#39;, &#39;torch&#39;, &#39;cupy&#39;, &#39;jax&#39;]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The compute library.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>device</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Target device: <code>"cpu"</code>, <code>"cuda"</code>, <code>"mps"</code> (Apple Silicon /
+torch), or <code>"metal"</code> (Apple Silicon / jax).  Ignored for numpy
+(always CPU).</p>
+              </div>
+            </td>
+            <td>
+                  <code>&#39;cpu&#39;</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="ValueError">ValueError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the lib/device combination is unsupported.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
 
@@ -1050,11 +1164,81 @@ Output shape: <code>(n_windows, n_times, kernel_size², n_channels)</code></p>
     <div class="doc doc-contents ">
 
         <p>Compute determinant of batched matrices <code>(..., n, n) → (...,)</code>.</p>
-<h5 id="src.backend.batched_det--parameters">Parameters</h5>
-<p>backend : str or Backend
-X : Array</p>
-<h5 id="src.backend.batched_det--returns">Returns</h5>
-<p>Array</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>backend</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> or <a class="autorefs autorefs-internal" title="Backend
+
+
+  
+      dataclass
+   (src.backend.Backend)" href="#src.backend.Backend">Backend</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>X</code>
+            </td>
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -1112,15 +1296,97 @@ X : Array</p>
   to stay within cuSOLVER limits.</li>
 <li><strong>Everything else</strong>: direct <code>linalg.eigh</code> call.</li>
 </ul>
-<h5 id="src.backend.batched_eigh--parameters">Parameters</h5>
-<p>backend : str or Backend
-X : Array
-    SPD matrices of shape <code>(..., n, n)</code>.
-max_batch_size : int
-    Max matrices per CUDA chunk (default 16 000).</p>
-<h5 id="src.backend.batched_eigh--returns">Returns</h5>
-<p>tuple[Array, Array]
-    (eigenvalues, eigenvectors)</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>backend</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> or <a class="autorefs autorefs-internal" title="Backend
+
+
+  
+      dataclass
+   (src.backend.Backend)" href="#src.backend.Backend">Backend</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>X</code>
+            </td>
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>SPD matrices of shape <code>(..., n, n)</code>.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>max_batch_size</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Max matrices per CUDA chunk (default 16 000).</p>
+              </div>
+            </td>
+            <td>
+                  <code>16000</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="tuple">tuple</span>[<span title="src.backend.Array">Array</span>, <span title="src.backend.Array">Array</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>(eigenvalues, eigenvectors)</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -1288,11 +1554,81 @@ max_batch_size : int
     <div class="doc doc-contents ">
 
         <p>Compute trace of batched matrices <code>(..., n, n) → (...,)</code>.</p>
-<h5 id="src.backend.batched_trace--parameters">Parameters</h5>
-<p>backend : str or Backend
-X : Array</p>
-<h5 id="src.backend.batched_trace--returns">Returns</h5>
-<p>Array</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>backend</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> or <a class="autorefs autorefs-internal" title="Backend
+
+
+  
+      dataclass
+   (src.backend.Backend)" href="#src.backend.Backend">Backend</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>X</code>
+            </td>
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -1349,15 +1685,97 @@ X : Array</p>
 <p>Abstracts the <code>ndarray.astype()</code> (numpy/cupy/jax) vs
 <code>Tensor.to(dtype=...)</code> (torch) difference so callers need not
 check which API is available.</p>
-<h5 id="src.backend.cast_like--parameters">Parameters</h5>
-<p>x : Array
-    Array to cast.
-ref : Array
-    Reference array whose dtype is used as the target.
-backend : str or Backend</p>
-<h5 id="src.backend.cast_like--returns">Returns</h5>
-<p>Array
-    <em>x</em> with the same dtype as <em>ref</em>.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>x</code>
+            </td>
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Array to cast.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>ref</code>
+            </td>
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Reference array whose dtype is used as the target.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>backend</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> or <a class="autorefs autorefs-internal" title="Backend
+
+
+  
+      dataclass
+   (src.backend.Backend)" href="#src.backend.Backend">Backend</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p><em>x</em> with the same dtype as <em>ref</em>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -1421,12 +1839,97 @@ backend : str or Backend</p>
     <div class="doc doc-contents ">
 
         <p>Concatenate arrays along an axis, works for all backends.</p>
-<h5 id="src.backend.concatenate--parameters">Parameters</h5>
-<p>backend : str or Backend
-arrays : list[Array]
-axis : int</p>
-<h5 id="src.backend.concatenate--returns">Returns</h5>
-<p>Array</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>backend</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> or <a class="autorefs autorefs-internal" title="Backend
+
+
+  
+      dataclass
+   (src.backend.Backend)" href="#src.backend.Backend">Backend</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>arrays</code>
+            </td>
+            <td>
+                  <code><span title="list">list</span>[<span title="src.backend.Array">Array</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>axis</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+            <td>
+                  <code>0</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -1486,12 +1989,97 @@ axis : int</p>
     <div class="doc doc-contents ">
 
         <p>Create a 0-dimensional array holding <em>value</em>.</p>
-<h5 id="src.backend.create_scalar_array--parameters">Parameters</h5>
-<p>value : float or bool
-dtype : dtype
-backend : str or Backend</p>
-<h5 id="src.backend.create_scalar_array--returns">Returns</h5>
-<p>Array</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>value</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span> or <span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>dtype</code>
+            </td>
+            <td>
+                  <code><span title="dtype">dtype</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>backend</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> or <a class="autorefs autorefs-internal" title="Backend
+
+
+  
+      dataclass
+   (src.backend.Backend)" href="#src.backend.Backend">Backend</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -1551,10 +2139,60 @@ backend : str or Backend</p>
     <div class="doc doc-contents ">
 
         <p>Return byte size of one element for a numpy or torch dtype.</p>
-<h5 id="src.backend.dtype_itemsize--parameters">Parameters</h5>
-<p>dtype : np.dtype or torch.dtype</p>
-<h5 id="src.backend.dtype_itemsize--returns">Returns</h5>
-<p>int</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>dtype</code>
+            </td>
+            <td>
+                  <code><span title="numpy.dtype">dtype</span> or <span title="torch.dtype">dtype</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -1610,8 +2248,42 @@ backend : str or Backend</p>
 <li><strong>jax</strong>: no-op (JAX manages its own memory).</li>
 <li><strong>CPU / numpy</strong>: no-op.</li>
 </ul>
-<h5 id="src.backend.empty_cache--parameters">Parameters</h5>
-<p>backend : str or Backend</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>backend</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> or <a class="autorefs autorefs-internal" title="Backend
+
+
+  
+      dataclass
+   (src.backend.Backend)" href="#src.backend.Backend">Backend</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -1675,12 +2347,97 @@ backend : str or Backend</p>
     <div class="doc doc-contents ">
 
         <p>Add a new axis to an array, works for all backends.</p>
-<h5 id="src.backend.expand_dims--parameters">Parameters</h5>
-<p>backend : str or Backend
-x : Array
-axis : int</p>
-<h5 id="src.backend.expand_dims--returns">Returns</h5>
-<p>Array</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>backend</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> or <a class="autorefs autorefs-internal" title="Backend
+
+
+  
+      dataclass
+   (src.backend.Backend)" href="#src.backend.Backend">Backend</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>x</code>
+            </td>
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>axis</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -1736,17 +2493,98 @@ axis : int</p>
     <div class="doc doc-contents ">
 
         <p>Return the compute module for a given backend.</p>
-<h5 id="src.backend.get_backend_module--parameters">Parameters</h5>
-<p>backend : str or Backend
-    Backend specification.</p>
-<h5 id="src.backend.get_backend_module--returns">Returns</h5>
-<p>ModuleType
-    <code>numpy</code>, <code>torch</code>, <code>cupy</code>, or <code>jax.numpy</code>.</p>
-<h5 id="src.backend.get_backend_module--raises">Raises</h5>
-<p>ImportError
-    If the requested optional library (cupy / jax) is not installed.
-ValueError
-    If the backend string is not recognised.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>backend</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> or <a class="autorefs autorefs-internal" title="Backend
+
+
+  
+      dataclass
+   (src.backend.Backend)" href="#src.backend.Backend">Backend</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Backend specification.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="types.ModuleType">ModuleType</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p><code>numpy</code>, <code>torch</code>, <code>cupy</code>, or <code>jax.numpy</code>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="ImportError">ImportError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the requested optional library (cupy / jax) is not installed.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="ValueError">ValueError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the backend string is not recognised.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -1861,14 +2699,81 @@ ValueError
 <p>Handles all pairwise conversions between numpy / torch / cupy / jax,
 including automatic float64→float32 downcasting when the target device
 does not support float64 (torch-mps, jax-metal).</p>
-<h5 id="src.backend.get_data_on_device--parameters">Parameters</h5>
-<p>data : Array
-    Source array (numpy, torch, cupy, or jax).
-backend : str or Backend
-    Target backend.</p>
-<h5 id="src.backend.get_data_on_device--returns">Returns</h5>
-<p>Array
-    Array on the requested backend/device.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>data</code>
+            </td>
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Source array (numpy, torch, cupy, or jax).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>backend</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> or <a class="autorefs autorefs-internal" title="Backend
+
+
+  
+      dataclass
+   (src.backend.Backend)" href="#src.backend.Backend">Backend</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Target backend.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Array on the requested backend/device.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -2058,13 +2963,81 @@ backend : str or Backend
     <div class="doc doc-contents ">
 
         <p>Embed a batch of vectors into diagonal matrices.</p>
-<h5 id="src.backend.get_diagembed--parameters">Parameters</h5>
-<p>backend : str or Backend
-x : Array
-    Input of shape <code>(..., n)</code>.</p>
-<h5 id="src.backend.get_diagembed--returns">Returns</h5>
-<p>Array
-    Diagonal matrices of shape <code>(..., n, n)</code>.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>backend</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> or <a class="autorefs autorefs-internal" title="Backend
+
+
+  
+      dataclass
+   (src.backend.Backend)" href="#src.backend.Backend">Backend</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>x</code>
+            </td>
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Input of shape <code>(..., n)</code>.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Diagonal matrices of shape <code>(..., n, n)</code>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -2130,11 +3103,81 @@ x : Array
     <div class="doc doc-contents ">
 
         <p>Return True if <em>X</em> has a complex dtype.</p>
-<h5 id="src.backend.is_complex--parameters">Parameters</h5>
-<p>backend : str or Backend
-X : Array</p>
-<h5 id="src.backend.is_complex--returns">Returns</h5>
-<p>bool</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>backend</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> or <a class="autorefs autorefs-internal" title="Backend
+
+
+  
+      dataclass
+   (src.backend.Backend)" href="#src.backend.Backend">Backend</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>X</code>
+            </td>
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -2190,11 +3233,81 @@ X : Array</p>
     <div class="doc doc-contents ">
 
         <p>Return a writable copy of <em>x</em>, works for all backends.</p>
-<h5 id="src.backend.make_writable_copy--parameters">Parameters</h5>
-<p>backend : str or Backend
-x : Array</p>
-<h5 id="src.backend.make_writable_copy--returns">Returns</h5>
-<p>Array</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>backend</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> or <a class="autorefs autorefs-internal" title="Backend
+
+
+  
+      dataclass
+   (src.backend.Backend)" href="#src.backend.Backend">Backend</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>x</code>
+            </td>
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -2256,18 +3369,114 @@ at runtime.  This helper abstracts the difference:</p>
 <li><strong>jax</strong> — returns <code>x.at[mask].set(values)</code> (out-of-place), which must
   be assigned back by the caller (<code>x = masked_set(x, mask, v, backend)</code>).</li>
 </ul>
-<h5 id="src.backend.masked_set--parameters">Parameters</h5>
-<p>x : Array
-    Target array to update.
-mask : Array
-    Boolean index array.
-values : Array
-    Values to write at the masked positions.
-backend : str or Backend</p>
-<h5 id="src.backend.masked_set--returns">Returns</h5>
-<p>Array
-    Updated array.  For JAX this is a <strong>new</strong> array; for all other
-    backends it is the same object as <em>x</em> (mutated in-place).</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>x</code>
+            </td>
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Target array to update.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>mask</code>
+            </td>
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Boolean index array.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>values</code>
+            </td>
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Values to write at the masked positions.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>backend</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> or <a class="autorefs autorefs-internal" title="Backend
+
+
+  
+      dataclass
+   (src.backend.Backend)" href="#src.backend.Backend">Backend</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Updated array.  For JAX this is a <strong>new</strong> array; for all other
+backends it is the same object as <em>x</em> (mutated in-place).</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -2363,18 +3572,116 @@ backend : str or Backend</p>
     <div class="doc doc-contents ">
 
         <p>Normalize covariance matrices.</p>
-<h5 id="src.backend.normalize_covariance--parameters">Parameters</h5>
-<p>cov : Array
-    Covariance matrices of shape <code>(..., n_features, n_features)</code>.
-normalization : str or None
-    <code>None</code> / <code>"none"</code> — no normalization.
-    <code>"diag"</code> — normalize so <code>cov[..., 0, 0] == 1</code>.
-    <code>"trace"</code> — normalize so <code>trace(cov) == n_features</code>.
-    <code>"det"</code> — normalize so <code>det(cov) == 1</code>.
-backend : str or Backend
-n_features : int</p>
-<h5 id="src.backend.normalize_covariance--returns">Returns</h5>
-<p>Array</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>cov</code>
+            </td>
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Covariance matrices of shape <code>(..., n_features, n_features)</code>.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>normalization</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> or None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p><code>None</code> / <code>"none"</code> — no normalization.
+<code>"diag"</code> — normalize so <code>cov[..., 0, 0] == 1</code>.
+<code>"trace"</code> — normalize so <code>trace(cov) == n_features</code>.
+<code>"det"</code> — normalize so <code>det(cov) == 1</code>.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>backend</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> or <a class="autorefs autorefs-internal" title="Backend
+
+
+  
+      dataclass
+   (src.backend.Backend)" href="#src.backend.Backend">Backend</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>n_features</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -2512,10 +3819,65 @@ except oom_errors(backend):
 </code></pre></div></td></tr></table></div>
 <p>Returns <code>(MemoryError,)</code> as a safe fallback for backends that do not
 have a specific OOM type.</p>
-<h5 id="src.backend.oom_errors--parameters">Parameters</h5>
-<p>backend : str or Backend</p>
-<h5 id="src.backend.oom_errors--returns">Returns</h5>
-<p>tuple[type, ...]</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>backend</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> or <a class="autorefs autorefs-internal" title="Backend
+
+
+  
+      dataclass
+   (src.backend.Backend)" href="#src.backend.Backend">Backend</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="tuple">tuple</span>[<span title="type">type</span>, ...]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -2605,10 +3967,65 @@ have a specific OOM type.</p>
     <div class="doc doc-contents ">
 
         <p>Return peak GPU memory usage in bytes, or <code>None</code> if unavailable.</p>
-<h5 id="src.backend.peak_memory_bytes--parameters">Parameters</h5>
-<p>backend : str or Backend</p>
-<h5 id="src.backend.peak_memory_bytes--returns">Returns</h5>
-<p>int or None</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>backend</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> or <a class="autorefs autorefs-internal" title="Backend
+
+
+  
+      dataclass
+   (src.backend.Backend)" href="#src.backend.Backend">Backend</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="int">int</span> or None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -2686,13 +4103,97 @@ have a specific OOM type.</p>
     <div class="doc doc-contents ">
 
         <p>Permute array axes, works for all backends.</p>
-<h5 id="src.backend.permute--parameters">Parameters</h5>
-<p>backend : str or Backend
-x : Array
-dims : tuple
-    New axis order (same semantics as <code>np.transpose</code> / <code>torch.permute</code>).</p>
-<h5 id="src.backend.permute--returns">Returns</h5>
-<p>Array</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>backend</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> or <a class="autorefs autorefs-internal" title="Backend
+
+
+  
+      dataclass
+   (src.backend.Backend)" href="#src.backend.Backend">Backend</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>x</code>
+            </td>
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>dims</code>
+            </td>
+            <td>
+                  <code><span title="tuple">tuple</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>New axis order (same semantics as <code>np.transpose</code> / <code>torch.permute</code>).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -2750,8 +4251,42 @@ dims : tuple
     <div class="doc doc-contents ">
 
         <p>Reset peak GPU memory statistics (no-op on non-CUDA / non-CuPy backends).</p>
-<h5 id="src.backend.reset_peak_memory--parameters">Parameters</h5>
-<p>backend : str or Backend</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>backend</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> or <a class="autorefs autorefs-internal" title="Backend
+
+
+  
+      dataclass
+   (src.backend.Backend)" href="#src.backend.Backend">Backend</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -2793,20 +4328,115 @@ dims : tuple
     <div class="doc doc-contents ">
 
         <p>Sample standard normal data on the given backend.</p>
-<h5 id="src.backend.sample_standard_normal--parameters">Parameters</h5>
-<p>n_samples : int
-    Number of samples to draw.
-data_shape : list[int]
-    Shape of one data sample.
-backend : str or Backend
-    Backend specification.
-seed : int, optional
-    Seed for the RNG.  For JAX, <code>seed=None</code> is equivalent to
-    <code>seed=0</code> (deterministic); two calls with <code>seed=None</code> will
-    return the same array.</p>
-<h5 id="src.backend.sample_standard_normal--returns">Returns</h5>
-<p>Array
-    Sampled data on the requested backend.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>n_samples</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Number of samples to draw.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>data_shape</code>
+            </td>
+            <td>
+                  <code><span title="list">list</span>[<span title="int">int</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Shape of one data sample.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>backend</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> or <a class="autorefs autorefs-internal" title="Backend
+
+
+  
+      dataclass
+   (src.backend.Backend)" href="#src.backend.Backend">Backend</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Backend specification.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>seed</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Seed for the RNG.  For JAX, <code>seed=None</code> is equivalent to
+<code>seed=0</code> (deterministic); two calls with <code>seed=None</code> will
+return the same array.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Sampled data on the requested backend.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -2928,23 +4558,146 @@ seed : int, optional
     <div class="doc doc-contents ">
 
         <p>Sample uniform data on the given backend.</p>
-<h5 id="src.backend.sample_uniform--parameters">Parameters</h5>
-<p>n_samples : int
-    Number of samples to draw.
-data_shape : list[int]
-    Shape of one data sample.
-backend : str or Backend
-    Backend specification.
-seed : int, optional
-    Seed for the RNG.  For JAX, <code>seed=None</code> is equivalent to
-    <code>seed=0</code> (deterministic).
-low : float
-    Lower bound of uniform distribution.
-high : float
-    Upper bound of uniform distribution.</p>
-<h5 id="src.backend.sample_uniform--returns">Returns</h5>
-<p>Array
-    Sampled data on the requested backend.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>n_samples</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Number of samples to draw.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>data_shape</code>
+            </td>
+            <td>
+                  <code><span title="list">list</span>[<span title="int">int</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Shape of one data sample.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>backend</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> or <a class="autorefs autorefs-internal" title="Backend
+
+
+  
+      dataclass
+   (src.backend.Backend)" href="#src.backend.Backend">Backend</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Backend specification.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>seed</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Seed for the RNG.  For JAX, <code>seed=None</code> is equivalent to
+<code>seed=0</code> (deterministic).</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>low</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Lower bound of uniform distribution.</p>
+              </div>
+            </td>
+            <td>
+                  <code>0.0</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>high</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Upper bound of uniform distribution.</p>
+              </div>
+            </td>
+            <td>
+                  <code>1.0</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Sampled data on the requested backend.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -3079,13 +4832,81 @@ high : float
 <p>Maps float32 → complex64, float64 → complex128.  If <em>x</em> is already
 complex, returns it unchanged.  Useful when real-valued eigenvalues
 need to be cast back to complex before einsum with complex eigenvectors.</p>
-<h5 id="src.backend.to_complex--parameters">Parameters</h5>
-<p>x : Array
-    Real or complex array.
-backend : str or Backend</p>
-<h5 id="src.backend.to_complex--returns">Returns</h5>
-<p>Array
-    Complex array with the same element size as <em>x</em>.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>x</code>
+            </td>
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Real or complex array.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>backend</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> or <a class="autorefs autorefs-internal" title="Backend
+
+
+  
+      dataclass
+   (src.backend.Backend)" href="#src.backend.Backend">Backend</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Complex array with the same element size as <em>x</em>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -3167,12 +4988,97 @@ backend : str or Backend</p>
     <div class="doc doc-contents ">
 
         <p>Convert <em>X</em> to <em>dtype</em>, handling mixed numpy/torch dtype objects.</p>
-<h5 id="src.backend.to_dtype--parameters">Parameters</h5>
-<p>X : Array
-dtype : np.dtype or torch.dtype
-backend : str or Backend</p>
-<h5 id="src.backend.to_dtype--returns">Returns</h5>
-<p>Array</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>X</code>
+            </td>
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>dtype</code>
+            </td>
+            <td>
+                  <code><span title="numpy.dtype">dtype</span> or <span title="torch.dtype">dtype</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>backend</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> or <a class="autorefs autorefs-internal" title="Backend
+
+
+  
+      dataclass
+   (src.backend.Backend)" href="#src.backend.Backend">Backend</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -3282,11 +5188,60 @@ backend : str or Backend</p>
     <div class="doc doc-contents ">
 
         <p>Extract a plain numpy array from any backend array.</p>
-<h5 id="src.backend.to_numpy--parameters">Parameters</h5>
-<p>x : Array
-    Source array (numpy, torch, cupy, or jax).</p>
-<h5 id="src.backend.to_numpy--returns">Returns</h5>
-<p>np.ndarray</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>x</code>
+            </td>
+            <td>
+                  <code><span title="src.backend.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Source array (numpy, torch, cupy, or jax).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="numpy.ndarray">ndarray</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
@@ -3394,6 +5349,27 @@ device-to-host synchronisation; falls back to <code>float()</code> otherwise.</p
     </div>
 
 </div>
+
+      
+      <p class="page-meta">Last updated June 12, 2026</p>
+      
+
+      
+      <nav class="page-nav" aria-label="Page navigation">
+        
+        <a class="page-nav-prev" href="../plotly_style/">
+          <span class="page-nav-dir">← Previous</span>
+          <span class="page-nav-title">plotly_style</span>
+        </a>
+        
+        
+        <a class="page-nav-next" href="../estimation/">
+          <span class="page-nav-dir">Next →</span>
+          <span class="page-nav-title">estimation</span>
+        </a>
+        
+      </nav>
+      
     </main>
 
     
@@ -3422,5 +5398,20 @@ device-to-host synchronisation; falls back to <code>float()</code> otherwise.</p
 </div>
 
 <script src="../../assets/js/theme.js"></script>
+
+<script>
+  window.MathJax = {
+    tex: {
+      inlineMath:  [["\\(", "\\)"]],
+      displayMath: [["\\[", "\\]"]],
+      processEscapes: true,
+      tags: "ams"
+    },
+    options: { ignoreHtmlClass: ".*", processHtmlClass: "arithmatex" }
+  };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js"
+        integrity="sha384-Wuix6BuhrWbjDBs24bXrjf4ZQ5aFeFWBuKkFekO2t8xFU0iNaLQfp2K6/1Nxveei"
+        crossorigin="anonymous" async></script>
 </body>
 </html>
