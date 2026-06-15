@@ -6,18 +6,31 @@ fixed nominal PFA.  Threshold is calibrated from H0 trials with the
 nominal steering direction.  Produces one PD heatmap per detector.
 
 The angle grid is symmetric and covers both arrays simultaneously.
+
+Backend selection:
+  numpy     → multiprocessing.Pool for H0 (trial chunks) and H1 (angle grid cells)
+  all other → chunked batched path on device
 """
 
 from __future__ import annotations
 
 import logging
 import time
+from multiprocessing import Pool
 from pathlib import Path
 
 import numpy as np
+from rich.progress import BarColumn, Progress, TextColumn, TimeElapsedColumn
 
+from hdrlib.core.backend import get_data_on_device
 from hdrlib.core.estimation import SCMEstimator
-from hdrlib.core.mc import MCResultExporter, init_logging, make_mc_parser
+from hdrlib.core.mc import (
+    MCResultExporter,
+    chunk_trial_ranges,
+    make_mc_parser,
+    maybe_empty_cache,
+    timed_run,
+)
 from hdrlib.sonar import detectors as det
 from hdrlib.sonar import estimation as est
 from hdrlib.sonar import mc as smc
@@ -28,36 +41,189 @@ logger = logging.getLogger(__name__)
 _CHUNK = 200
 
 
-def _build_detectors(m, M, P_nominal):
-    glrt  = det.MNMFGlrt(m, M, P_nominal)
-    rao   = det.MNMFRao(m, M, P_nominal)
-    indep = det.MNMFIndependent(m, M, P_nominal)
+# ---------------------------------------------------------------------------
+# Detector registry
+# ---------------------------------------------------------------------------
 
-    tyl_est = est.TwoArrayTylerEstimator(m)
-    scm_est = SCMEstimator()
+def _build_detectors(m, M, P_nominal, backend_name="numpy"):
+    glrt  = det.MNMFGlrt(m, M, P_nominal, backend_name)
+    rao   = det.MNMFRao(m, M, P_nominal, backend_name)
+    indep = det.MNMFIndependent(m, M, P_nominal, backend_name)
+
+    tyl_est = est.TwoArrayTylerEstimator(m, backend_name=backend_name)
+    scm_est = SCMEstimator(backend_name=backend_name)
 
     return {
         "M-NMF-G":       glrt,
         "M-NMF-R":       rao,
         "M-NMF-I":       indep,
-        "M-ANMF-G-TYL":  det.AdaptiveSonarDetector(det.MNMFGlrt(m, M, P_nominal), tyl_est),
-        "M-ANMF-G-SCM":  det.AdaptiveSonarDetector(det.MNMFGlrt(m, M, P_nominal), scm_est),
+        "M-ANMF-G-TYL":  det.AdaptiveSonarDetector(det.MNMFGlrt(m, M, P_nominal, backend_name), tyl_est),
+        "M-ANMF-G-SCM":  det.AdaptiveSonarDetector(det.MNMFGlrt(m, M, P_nominal, backend_name), scm_est),
     }
 
 
-def _h0_thresholds(n_trials, m, K, M, detectors, tau_shape, tau_scale, pfa, seed):
-    all_stats = {name: [] for name in detectors}
-    chunk = min(_CHUNK, n_trials)
-    for i in range(0, n_trials, chunk):
-        n = min(chunk, n_trials - i)
-        x    = sim.generate_sonar_data_h0(n, m, M, tau_shape, tau_scale, seed=seed + i)
-        xsec = sim.generate_secondary_data(n, K, m, M, seed=seed + 10000 + i)
-        cs   = smc.run_detectors(x, detectors, X_secondary=xsec)
-        for name, s in cs.items():
-            all_stats[name].append(s)
-    stats_h0 = {name: np.concatenate(v) for name, v in all_stats.items()}
-    return {name: smc.threshold_at_pfa(s, pfa) for name, s in stats_h0.items()}
+# ---------------------------------------------------------------------------
+# Pool worker: H0 trial chunk
+# ---------------------------------------------------------------------------
 
+def _worker_h0(args):
+    chunk_seed, n, m, K, M, P_nominal, tau_shape, tau_scale = args
+    dets = _build_detectors(m, M, P_nominal, "numpy")
+    x    = sim.generate_sonar_data_h0(n, m, M, tau_shape, tau_scale, seed=chunk_seed)
+    xsec = sim.generate_secondary_data(n, K, m, M, tau_shape, tau_scale, seed=chunk_seed + 10000)
+    return smc.run_detectors(x, dets, X_secondary=xsec)
+
+
+def _run_pool_h0(n_trials, chunk_size, m, K, M, P_nominal, tau_shape, tau_scale, seed, n_workers):
+    c_starts, chunk, n_chunks = chunk_trial_ranges(n_trials, chunk_size)
+    worker_args = [
+        (seed + c, min(chunk, n_trials - c), m, K, M, P_nominal, tau_shape, tau_scale)
+        for c in c_starts
+    ]
+    all_stats: list[dict] = []
+
+    logger.info(f"H0: {n_trials} trials via Pool ({n_chunks} chunks of ≤{chunk})...")
+    with Progress(
+        TextColumn("[progress.description]{task.description}"),
+        BarColumn(),
+        TextColumn("{task.completed}/{task.total} chunks"),
+        TimeElapsedColumn(),
+    ) as progress:
+        task = progress.add_task("[cyan]H0 trials (Pool)...", total=n_chunks)
+        with Pool(processes=n_workers) as pool:
+            for result in pool.imap_unordered(_worker_h0, worker_args):
+                all_stats.append(result)
+                progress.advance(task)
+
+    return {name: np.concatenate([d[name] for d in all_stats]) for name in all_stats[0]}
+
+
+# ---------------------------------------------------------------------------
+# Pool worker: H1 angle — one (theta1, theta2) cell per worker
+# ---------------------------------------------------------------------------
+
+def _worker_angle(args):
+    i, j, th1, th2, alpha_fixed, n_trials, chunk_size, m, K, M, P_nominal, \
+        tau_shape, tau_scale, seed, thresholds = args
+    P_ij = sim.make_steering_matrix(m, float(th1), float(th2))
+    dets = _build_detectors(m, M, P_nominal, "numpy")
+    h1_stats: dict[str, list] = {name: [] for name in dets}
+    c_starts, chunk, _ = chunk_trial_ranges(n_trials, chunk_size)
+    for c in c_starts:
+        n = min(chunk, n_trials - c)
+        x    = sim.generate_sonar_data_h1(n, m, M, P_ij, alpha_fixed, tau_shape, tau_scale,
+                                           seed=seed + c + i * 100000 + j * 1000)
+        xsec = sim.generate_secondary_data(n, K, m, M, tau_shape, tau_scale,
+                                           seed=seed + 10000 + c + i * 100000 + j * 1000)
+        cs = smc.run_detectors(x, dets, X_secondary=xsec)
+        for name, s in cs.items():
+            h1_stats[name].append(s)
+    h1_stats = {name: np.concatenate(v) for name, v in h1_stats.items()}
+    return i, j, {name: smc.empirical_pd(h1_stats[name], thresholds[name]) for name in dets}
+
+
+def _run_pool_angles(theta_grid, alpha_fixed, n_trials, chunk_size, m, K, M, P_nominal,
+                     tau_shape, tau_scale, seed, thresholds, n_workers):
+    n_ang = len(theta_grid)
+    n_tasks = n_ang * n_ang
+    worker_args = [
+        (i, j, theta_grid[i], theta_grid[j], alpha_fixed, n_trials, chunk_size,
+         m, K, M, P_nominal, tau_shape, tau_scale, seed, thresholds)
+        for i in range(n_ang) for j in range(n_ang)
+    ]
+    det_names = list(thresholds.keys())
+    pd_maps = {name: np.zeros((n_ang, n_ang)) for name in det_names}
+
+    logger.info(f"H1 angle grid: {n_ang}×{n_ang}={n_tasks} cells via Pool...")
+    with Progress(
+        TextColumn("[progress.description]{task.description}"),
+        BarColumn(),
+        TextColumn("{task.completed}/{task.total} cells"),
+        TimeElapsedColumn(),
+    ) as progress:
+        task = progress.add_task("[green]Angle grid (Pool)...", total=n_tasks)
+        with Pool(processes=n_workers) as pool:
+            for i, j, pd_dict in pool.imap_unordered(_worker_angle, worker_args):
+                for name, pd_val in pd_dict.items():
+                    pd_maps[name][i, j] = pd_val
+                progress.advance(task)
+
+    return pd_maps
+
+
+# ---------------------------------------------------------------------------
+# Batched path (non-numpy backends)
+# ---------------------------------------------------------------------------
+
+def _run_batched_h0(n_trials, chunk_size, backend, m, K, M, P_nominal, tau_shape, tau_scale, seed):
+    dets = _build_detectors(m, M, P_nominal, backend)
+    c_starts, chunk, n_chunks = chunk_trial_ranges(n_trials, chunk_size)
+    all_stats: dict[str, list] = {name: [] for name in dets}
+
+    logger.info(f"H0: {n_trials} trials on {backend} ({n_chunks} chunks of ≤{chunk})...")
+    with Progress(
+        TextColumn("[progress.description]{task.description}"),
+        BarColumn(),
+        TextColumn("{task.completed}/{task.total} chunks"),
+        TimeElapsedColumn(),
+    ) as progress:
+        task = progress.add_task(f"[cyan]H0 batched ({backend})...", total=n_chunks)
+        for c in c_starts:
+            n = min(chunk, n_trials - c)
+            x    = sim.generate_sonar_data_h0(n, m, M, tau_shape, tau_scale, seed=seed + c)
+            xsec = sim.generate_secondary_data(n, K, m, M, tau_shape, tau_scale, seed=seed + c + 10000)
+            cs = smc.run_detectors(get_data_on_device(x, backend), dets,
+                                   X_secondary=get_data_on_device(xsec, backend))
+            for name, s in cs.items():
+                all_stats[name].append(s)
+            maybe_empty_cache(backend)
+            progress.advance(task)
+
+    return {name: np.concatenate(v) for name, v in all_stats.items()}
+
+
+def _run_batched_angles(theta_grid, alpha_fixed, n_trials, chunk_size, backend,
+                        m, K, M, P_nominal, tau_shape, tau_scale, seed, thresholds):
+    n_ang = len(theta_grid)
+    det_names = list(thresholds.keys())
+    pd_maps = {name: np.zeros((n_ang, n_ang)) for name in det_names}
+    c_starts, chunk, _ = chunk_trial_ranges(n_trials, chunk_size)
+
+    logger.info(f"H1 angle grid: {n_ang}×{n_ang} cells on {backend}...")
+    with Progress(
+        TextColumn("[progress.description]{task.description}"),
+        BarColumn(),
+        TextColumn("{task.completed}/{task.total} cells"),
+        TimeElapsedColumn(),
+    ) as progress:
+        task = progress.add_task(f"[green]Angle grid ({backend})...", total=n_ang * n_ang)
+        for i, th1 in enumerate(theta_grid):
+            for j, th2 in enumerate(theta_grid):
+                P_ij = sim.make_steering_matrix(m, float(th1), float(th2))
+                dets = _build_detectors(m, M, P_ij, backend)
+                h1_stats: dict[str, list] = {name: [] for name in dets}
+                for c in c_starts:
+                    n = min(chunk, n_trials - c)
+                    x    = sim.generate_sonar_data_h1(n, m, M, P_ij, alpha_fixed, tau_shape, tau_scale,
+                                                       seed=seed + c + i * 100000 + j * 1000)
+                    xsec = sim.generate_secondary_data(n, K, m, M, tau_shape, tau_scale,
+                                                       seed=seed + 10000 + c + i * 100000 + j * 1000)
+                    cs = smc.run_detectors(get_data_on_device(x, backend), dets,
+                                           X_secondary=get_data_on_device(xsec, backend))
+                    for name, s in cs.items():
+                        h1_stats[name].append(s)
+                    maybe_empty_cache(backend)
+                for name in det_names:
+                    s_h1 = np.concatenate(h1_stats[name])
+                    pd_maps[name][i, j] = smc.empirical_pd(s_h1, thresholds[name])
+                progress.advance(task)
+
+    return pd_maps
+
+
+# ---------------------------------------------------------------------------
+# Entry point
+# ---------------------------------------------------------------------------
 
 def main():
     parser = make_mc_parser(__doc__)
@@ -66,76 +232,57 @@ def main():
     parser.add_argument("--n-trials-h0", type=int, default=1000,
         help="Trials for H0 threshold calibration (default 1000).")
     parser.add_argument("--chunk-size", type=int, default=_CHUNK,
-        help=f"Trials per memory chunk (default {_CHUNK}).")
+        help=f"Trials per worker chunk (numpy/Pool) or per GPU memory batch (non-numpy). "
+             f"Default {_CHUNK}.")
     args = parser.parse_args()
 
-    init_logging(args.backend)
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
     m = args.m
     K = smc.resolve_K(args)
     tau_shape, tau_scale = smc.clutter_params(args)
 
     logger.info(f"Sonar PD-vs-angle: m={m}, K={K}, clutter={args.clutter}, "
-                f"snr={args.snr_db} dB, n_angles={args.n_theta}x{args.n_theta}, "
-                f"n_trials={args.n_trials}")
+                f"snr={args.snr_db} dB, n_angles={args.n_theta}×{args.n_theta}, "
+                f"n_trials={args.n_trials}, backend={args.backend}")
 
     M = sim.make_sonar_covariance(m, args.beta, args.rho1, args.rho2)
-    # Nominal steering (used for detector construction and H0 threshold)
     P_nominal = sim.make_steering_matrix(m, args.theta1, args.theta2)
-    detectors = _build_detectors(m, M, P_nominal)
 
-    # Calibrate thresholds from H0
+    # Calibrate thresholds from H0 (nominal steering, no signal)
     logger.info("Calibrating thresholds from H0...")
-    thresholds = _h0_thresholds(
-        args.n_trials_h0, m, K, M, detectors, tau_shape, tau_scale,
-        args.pfa, seed=args.seed,
+    stats_h0, t_h0 = timed_run(
+        args,
+        lambda: _run_pool_h0(args.n_trials_h0, args.chunk_size, m, K, M, P_nominal,
+                             tau_shape, tau_scale, args.seed, args.n_workers),
+        lambda: _run_batched_h0(args.n_trials_h0, args.chunk_size, args.backend, m, K, M, P_nominal,
+                                tau_shape, tau_scale, args.seed),
     )
+    thresholds = {name: smc.threshold_at_pfa(stats_h0[name], args.pfa) for name in stats_h0}
     logger.info(f"Thresholds: { {k: f'{v:.4f}' for k, v in thresholds.items()} }")
 
-    # Build angle grid
-    theta_grid = np.linspace(args.theta_min, args.theta_max, args.n_theta)
-    n_ang = len(theta_grid)
-
-    # Determine signal amplitude for fixed SNR
-    # Use nominal P for SNR normalisation (independent of the scan grid)
-    snr_db_arr, alphas = sim.snr_alpha_sweep(
-        m, M, P_nominal,
-        snr_min_db=args.snr_db, snr_max_db=args.snr_db, n_snr=1,
-    )
+    # Signal amplitude for fixed SNR
+    _, alphas = sim.snr_alpha_sweep(m, M, P_nominal,
+                                    snr_min_db=args.snr_db, snr_max_db=args.snr_db, n_snr=1)
     alpha_fixed = float(alphas[0])
     logger.info(f"Alpha for SNR={args.snr_db} dB: {alpha_fixed:.6f}")
 
-    t0 = time.perf_counter()
+    theta_grid = np.linspace(args.theta_min, args.theta_max, args.n_theta)
 
-    pd_maps = {name: np.zeros((n_ang, n_ang)) for name in detectors}
+    # H1 angle grid
+    pd_maps, t_h1 = timed_run(
+        args,
+        lambda: _run_pool_angles(theta_grid, alpha_fixed, args.n_trials, args.chunk_size,
+                                 m, K, M, P_nominal, tau_shape, tau_scale,
+                                 args.seed + 1, thresholds, args.n_workers),
+        lambda: _run_batched_angles(theta_grid, alpha_fixed, args.n_trials, args.chunk_size,
+                                    args.backend, m, K, M, P_nominal, tau_shape, tau_scale,
+                                    args.seed + 1, thresholds),
+    )
 
-    for i, th1 in enumerate(theta_grid):
-        for j, th2 in enumerate(theta_grid):
-            P_ij = sim.make_steering_matrix(m, float(th1), float(th2))
-            # Generate H1 trials with true signal in direction (th1, th2)
-            h1_stats = {name: [] for name in detectors}
-            chunk = min(args.chunk_size, args.n_trials)
-            for ci in range(0, args.n_trials, chunk):
-                n = min(chunk, args.n_trials - ci)
-                x    = sim.generate_sonar_data_h1(n, m, M, P_ij, alpha_fixed,
-                                                   tau_shape, tau_scale,
-                                                   seed=args.seed + ci + i * 100000 + j * 1000)
-                xsec = sim.generate_secondary_data(n, K, m, M,
-                                                   seed=args.seed + 10000 + ci + i * 100000 + j * 1000)
-                cs = smc.run_detectors(x, detectors, X_secondary=xsec)
-                for name, s in cs.items():
-                    h1_stats[name].append(s)
+    elapsed = t_h0 + t_h1
+    logger.info(f"Done in {elapsed:.1f}s (H0: {t_h0:.1f}s, H1: {t_h1:.1f}s)")
 
-            for name in detectors:
-                s_h1 = np.concatenate(h1_stats[name])
-                pd_maps[name][i, j] = smc.empirical_pd(s_h1, thresholds[name])
-
-        if (i + 1) % 5 == 0 or i == n_ang - 1:
-            logger.info(f"  Angle row {i+1}/{n_ang}  (theta1={th1:.1f} deg)")
-
-    elapsed = time.perf_counter() - t0
-    logger.info(f"Done in {elapsed:.1f}s")
-
-    detector_names = list(detectors.keys())
+    detector_names = list(pd_maps.keys())
     export_stats = {
         "theta_grid":     theta_grid,
         "detector_names": np.array(detector_names),

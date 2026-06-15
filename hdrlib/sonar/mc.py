@@ -5,11 +5,19 @@ from __future__ import annotations
 import argparse
 import logging
 from string import Template
-from typing import Sequence
+from typing import Sequence, Union
 
 import numpy as np
 
 from ..core.mc import add_mc_base_args  # re-export for convenience
+from ..core.backend import (
+    Backend,
+    Array,
+    get_backend_module,
+    get_data_on_device,
+    concatenate,
+    batched_trace,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -159,15 +167,15 @@ def aggregate_pfa_threshold(
 
 
 def tyler_relative_deviations(
-    X_secondary: np.ndarray,
+    X_secondary: Array,
     m: int,
     iter_max: int = 500,
     tol: float = 0.0,  # 0 → run all iter_max steps
+    backend_name: Union[str, Backend] = "numpy",
 ) -> np.ndarray:
     """Track 2TYL relative Frobenius deviation ||M^(k) - M^(k-1)||_F / ||M^(k-1)||_F.
 
-    Runs a single trial (X_secondary shape: (K, 2m)) and records the
-    per-iteration convergence metric.
+    Records the per-iteration convergence metric averaged across trials.
 
     Parameters
     ----------
@@ -177,62 +185,63 @@ def tyler_relative_deviations(
     iter_max : int
     tol : float
         Set to 0 to always run all iter_max steps.
+    backend_name : str or Backend
 
     Returns
     -------
-    deviations : (iter_max,) array
+    deviations : (iter_max,) numpy array
     """
+    be = get_backend_module(backend_name)
+    X = get_data_on_device(X_secondary, backend_name)
 
     p = 2 * m
-    K = X_secondary.shape[-2]
+    K = X.shape[-2]
 
-    if X_secondary.ndim == 2:
-        X = X_secondary[None, :, :]   # (1, K, 2m) — add dummy batch
-    else:
-        X = X_secondary
+    if X.ndim == 2:
+        X = X[None, :, :]   # (1, K, 2m) — add dummy batch
 
     n = X.shape[0]
     x1 = X[:, :, :m]
     x2 = X[:, :, m:]
 
-    M_hat = np.broadcast_to(np.eye(p, dtype=np.complex128), (n, p, p)).copy()
+    M_eye = np.broadcast_to(np.eye(p, dtype=np.complex128), (n, p, p)).copy()
+    M_hat = get_data_on_device(M_eye, backend_name)
     deviations = np.full(iter_max, np.nan)
 
     eps = 1e-30
     for it in range(iter_max):
-        M_inv = np.linalg.inv(M_hat)
+        M_inv = be.linalg.inv(M_hat)
         iM11 = M_inv[:, :m, :m]
         iM12 = M_inv[:, :m, m:]
         iM22 = M_inv[:, m:, m:]
 
-        # Apply iMij to each sample: (n, m, m) @ (n, m, K) → (n, m, K)
-        vx1  = np.swapaxes(iM11 @ np.swapaxes(x1, -1, -2), -1, -2)
-        vx2  = np.swapaxes(iM22 @ np.swapaxes(x2, -1, -2), -1, -2)
-        vx12 = np.swapaxes(iM12 @ np.swapaxes(x2, -1, -2), -1, -2)
+        vx1  = be.swapaxes(iM11 @ be.swapaxes(x1, -1, -2), -1, -2)
+        vx2  = be.swapaxes(iM22 @ be.swapaxes(x2, -1, -2), -1, -2)
+        vx12 = be.swapaxes(iM12 @ be.swapaxes(x2, -1, -2), -1, -2)
 
-        t1  = np.real((x1.conj() * vx1).sum(-1)) / m    # (n, K)
-        t2  = np.real((x2.conj() * vx2).sum(-1)) / m
-        t12 = np.real((x1.conj() * vx12).sum(-1)) / m
+        t1  = be.real((x1.conj() * vx1).sum(-1)) / m    # (n, K)
+        t2  = be.real((x2.conj() * vx2).sum(-1)) / m
+        t12 = be.real((x1.conj() * vx12).sum(-1)) / m
 
-        tau1 = t1 + np.sqrt(t1 / (t2 + eps)) * t12 + eps
-        tau2 = t2 + np.sqrt(t2 / (t1 + eps)) * t12 + eps
+        tau1 = be.abs(t1 + be.sqrt(be.abs(t1) / (be.abs(t2) + eps)) * t12) + eps
+        tau2 = be.abs(t2 + be.sqrt(be.abs(t2) / (be.abs(t1) + eps)) * t12) + eps
 
-        x1s = x1 / np.sqrt(tau1[:, :, None])
-        x2s = x2 / np.sqrt(tau2[:, :, None])
-        xs  = np.concatenate([x1s, x2s], axis=-1)
+        x1s = x1 / be.sqrt(tau1[:, :, None])
+        x2s = x2 / be.sqrt(tau2[:, :, None])
+        xs  = concatenate(backend_name, [x1s, x2s], axis=-1)
 
-        M_new = np.swapaxes(xs, -1, -2).conj() @ xs / K
-        tr = np.real(np.diagonal(M_new, axis1=-2, axis2=-1).sum(-1))
+        M_new = be.swapaxes(xs, -1, -2).conj() @ xs / K
+        tr = be.real(batched_trace(backend_name, M_new))     # (n,)
         M_new = M_new * (p / tr[:, None, None])
 
         diff = M_new - M_hat
-        fd = np.sqrt(np.sum(np.abs(diff.reshape(n, -1)) ** 2, axis=-1))
-        fm = np.sqrt(np.sum(np.abs(M_hat.reshape(n, -1)) ** 2, axis=-1))
+        fd = be.sqrt(be.sum(be.abs(diff.reshape(n, -1)) ** 2, axis=-1))
+        fm = be.sqrt(be.sum(be.abs(M_hat.reshape(n, -1)) ** 2, axis=-1))
         rel = fd / (fm + eps)
-        deviations[it] = float(rel.mean())
+        deviations[it] = float(be.mean(rel))
 
         M_hat = M_new
-        if tol > 0 and float(rel.max()) < tol:
+        if tol > 0 and float(be.max(rel)) < tol:
             deviations[it + 1:] = 0.0
             break
 
@@ -244,9 +253,9 @@ def tyler_relative_deviations(
 # ---------------------------------------------------------------------------
 
 def run_detectors(
-    x: np.ndarray,
+    x: Array,
     detectors: dict,
-    X_secondary: "np.ndarray | None" = None,
+    X_secondary: "Array | None" = None,
 ) -> dict[str, np.ndarray]:
     """Run a dict of detectors on primary data and return statistics.
 
