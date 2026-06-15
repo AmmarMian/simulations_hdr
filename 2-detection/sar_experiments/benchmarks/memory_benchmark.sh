@@ -11,6 +11,14 @@ DATA="${SCRIPT_DIR}/../../data/SAR/Scene_1.npy"
 WINDOW_SIZE=7
 RESULTS_DIR="${SCRIPT_DIR}/memory_results"
 
+# Parse --storage_path / --storage-path from CLI args (qanat passes this).
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --storage_path|--storage-path) RESULTS_DIR="$2"; shift 2 ;;
+    *) shift ;;
+  esac
+done
+
 mkdir -p "$RESULTS_DIR"
 
 SCRIPT_GAUSSIAN="${SCRIPT_DIR}/../compute_detection_real_data/offline_gaussian.py"
@@ -89,20 +97,20 @@ run_cpu_memory "cpu_dcg_no_wavelet" "$SCRIPT_DCG" \
   "--backend torch-cpu --iteration-chunk 512"
 
 run_cpu_memory "cpu_dcg_wavelet" "$SCRIPT_DCG" \
-  "--backend torch-cpu --wavelet --iteration-chunk 512 --splitting '(3,4)'"
+  "--backend torch-cpu --wavelet --iteration-chunk 512 --splitting (3,4)"
 
 # ---- GPU benchmarks ----------------------------------------------------------
 run_gpu_memory "gpu_gaussian_no_wavelet" "$SCRIPT_GAUSSIAN" \
-  "--splitting '(3,3)'"
+  "--splitting (3,3)"
 
 run_gpu_memory "gpu_gaussian_wavelet" "$SCRIPT_GAUSSIAN" \
-  "--wavelet --splitting '(15,15)'"
+  "--wavelet --splitting (15,15)"
 
 run_gpu_memory "gpu_dcg_no_wavelet" "$SCRIPT_DCG" \
-  "--splitting '(15,15)' --iteration-chunk 512"
+  "--splitting (15,15) --iteration-chunk 512"
 
 run_gpu_memory "gpu_dcg_wavelet" "$SCRIPT_DCG" \
-  "--wavelet --splitting '(31,31)' --iteration-chunk 512"
+  "--wavelet --splitting (31,31) --iteration-chunk 512"
 
 echo ""
 echo "Memory benchmark done. Summary:"
