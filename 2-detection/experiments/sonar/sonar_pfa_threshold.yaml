@@ -13,4 +13,10 @@ params:
   K: 256
   n_trials: 1000
   clutter: gaussian
+actions:
+  - plot:
+      name: plot
+      executable: 2-detection/sar_experiments/action_plot.py
+      executable_command: .venv/bin/python
+      description: Run all auto-generated *_plot.py scripts in the run directory
 group: "Sonar · Detection"

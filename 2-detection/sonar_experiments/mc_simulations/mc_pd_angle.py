@@ -15,6 +15,8 @@ Backend selection:
 from __future__ import annotations
 
 import logging
+import math
+import os
 import time
 from multiprocessing import Pool
 from pathlib import Path
@@ -75,18 +77,21 @@ def _worker_h0(args):
 
 
 def _run_pool_h0(n_trials, chunk_size, m, K, M, P_nominal, tau_shape, tau_scale, seed, n_workers):
-    c_starts, chunk, n_chunks = chunk_trial_ranges(n_trials, chunk_size)
+    # One task per worker — chunk_size is for GPU batching only.
+    n_w = n_workers or os.cpu_count() or 1
+    worker_chunk = math.ceil(n_trials / n_w)
+    c_starts, chunk, n_chunks = chunk_trial_ranges(n_trials, worker_chunk)
     worker_args = [
         (seed + c, min(chunk, n_trials - c), m, K, M, P_nominal, tau_shape, tau_scale)
         for c in c_starts
     ]
     all_stats: list[dict] = []
 
-    logger.info(f"H0: {n_trials} trials via Pool ({n_chunks} chunks of ≤{chunk})...")
+    logger.info(f"H0: {n_trials} trials via Pool ({n_chunks} workers, ≤{chunk} trials each)...")
     with Progress(
         TextColumn("[progress.description]{task.description}"),
         BarColumn(),
-        TextColumn("{task.completed}/{task.total} chunks"),
+        TextColumn("{task.completed}/{task.total} workers"),
         TimeElapsedColumn(),
     ) as progress:
         task = progress.add_task("[cyan]H0 trials (Pool)...", total=n_chunks)
