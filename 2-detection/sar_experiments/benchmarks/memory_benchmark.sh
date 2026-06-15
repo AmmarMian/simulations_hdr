@@ -49,7 +49,7 @@ run_cpu_memory() {
   # Use grep -E + head for macOS compatibility (grep -oP is GNU-only).
   local peak
   peak=$(uv run python -m memray stats "$bin" 2>/dev/null \
-    | grep -i "peak memory" \
+    | grep -i "peak memory usage" \
     | grep -Eo '[0-9]+(\.[0-9]+)? [A-Za-z]+' \
     | head -1 || echo "N/A")
   echo "  Peak memory: $peak"
@@ -66,7 +66,7 @@ run_gpu_memory() {
   echo "[$CURRENT/$TOTAL] === $label (GPU torch) ==="
 
   local output
-  output=$(uv run "$script" "$DATA" "$WINDOW_SIZE" \
+  output=$(uv run python "$script" "$DATA" "$WINDOW_SIZE" \
     --backend torch-cuda $extra_args --quiet --report-memory 2>&1)
 
   local peak_bytes
