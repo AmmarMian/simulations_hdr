@@ -11,7 +11,7 @@ import logging
 import matplotlib.pyplot as plt
 from time import perf_counter
 
-from sar_experiments.detection import DeterministicCompoundGaussianGLRT
+from hdrlib.sar.detectors import DeterministicCompoundGaussianGLRT
 from utils import (
     add_common_args,
     setup_run,

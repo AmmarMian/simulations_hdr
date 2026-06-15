@@ -12,7 +12,7 @@ import logging
 import matplotlib.pyplot as plt
 from time import perf_counter
 
-from sar_experiments.detection import OnlineGaussianGLRT
+from hdrlib.sar.detectors import OnlineGaussianGLRT
 from utils import (
     add_common_args,
     setup_run,

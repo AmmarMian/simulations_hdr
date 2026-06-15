@@ -1,0 +1,10 @@
+name: sar_bench_time
+description: Time benchmark for offline Gaussian and DCG GLRT detectors (CPU + GPU)
+path: 2-detection/sar_experiments/benchmarks
+executable: 2-detection/sar_experiments/benchmarks/time_benchmark.sh
+executable_command: bash
+tags:
+  - benchmark
+  - time
+  - SAR
+group: "SAR · Benchmarks"

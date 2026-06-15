@@ -11,7 +11,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from time import perf_counter
 
-from sar_experiments.detection import GaussianGLRT
+from hdrlib.sar.detectors import GaussianGLRT
 from utils import (
     add_common_args,
     setup_run,

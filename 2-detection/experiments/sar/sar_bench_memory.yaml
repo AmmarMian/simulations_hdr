@@ -1,0 +1,10 @@
+name: sar_bench_memory
+description: Memory benchmark for offline Gaussian and DCG GLRT detectors (CPU memray + GPU torch)
+path: 2-detection/sar_experiments/benchmarks
+executable: 2-detection/sar_experiments/benchmarks/memory_benchmark.sh
+executable_command: bash
+tags:
+  - benchmark
+  - memory
+  - SAR
+group: "SAR · Benchmarks"
