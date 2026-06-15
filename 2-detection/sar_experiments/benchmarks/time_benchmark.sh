@@ -53,7 +53,7 @@ run_benchmark "cpu_dcg_no_wavelet" \
   "uv run ${SCRIPT_DCG} ${DATA} ${WINDOW_SIZE} --backend torch-cpu --iteration-chunk 512 --quiet"
 
 run_benchmark "cpu_dcg_wavelet" \
-  "uv run ${SCRIPT_DCG} ${DATA} ${WINDOW_SIZE} --backend torch-cpu --wavelet --iteration-chunk 512 --splitting (3,3) --quiet"
+  "uv run ${SCRIPT_DCG} ${DATA} ${WINDOW_SIZE} --backend torch-cpu --wavelet --iteration-chunk 512 --quiet"
 
 # ---- GPU benchmarks ----------------------------------------------------------
 run_benchmark "gpu_gaussian_no_wavelet" \
