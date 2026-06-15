@@ -2,7 +2,6 @@
 
 import numpy as np
 
-from hdrlib.core.backend import get_backend_module
 from hdrlib.core.manifolds import (
     HermitianPositiveDefinite,
     SpecialHermitianPositiveDefinite,
@@ -19,7 +18,6 @@ class TestHPD:
 
     def test_exp_log_roundtrip_scalar(self):
         """Exponential-logarithm map should roundtrip for scalar input."""
-        be = get_backend_module("numpy")
         manifold = HermitianPositiveDefinite(3, backend_name="numpy")
 
         x = np.random.randn(3, 3) + 1j * np.random.randn(3, 3)
@@ -39,7 +37,6 @@ class TestHPD:
 
     def test_exp_log_roundtrip_batched(self):
         """Exponential-logarithm should roundtrip for batched input."""
-        be = get_backend_module("numpy")
         manifold = HermitianPositiveDefinite(3, backend_name="numpy")
 
         # Batch of 4 HPD matrices
@@ -137,7 +134,7 @@ class TestStrictlyPositiveVectors:
 
         inner = manifold.inner(x, u, u)
         assert inner.shape == batch_shape, f"Expected shape {batch_shape}, got {inner.shape}"
-        assert np.all(inner > 0), f"All inner products should be positive"
+        assert np.all(inner > 0), "All inner products should be positive"
 
     def test_log_exp_roundtrip(self):
         """log and exp should roundtrip."""
@@ -168,8 +165,6 @@ class TestScaledGaussianFIM:
         Sigma = Sigma / (np.linalg.det(Sigma) ** (1 / 3))
 
         tau = np.abs(np.random.randn(5)) + 0.1
-        tau_reshaped = tau.reshape(5, 1)  # (..., n, 1) convention
-
         r_Sigma = np.random.randn(3, 3) + 1j * np.random.randn(3, 3)
         r_Sigma = 0.5 * (r_Sigma + r_Sigma.conj().T)
 

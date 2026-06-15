@@ -13,13 +13,12 @@ Backend selection:
 from __future__ import annotations
 
 import logging
-import time
 from pathlib import Path
 
 import numpy as np
 
 from hdrlib.core.backend import get_data_on_device
-from hdrlib.core.mc import MCResultExporter, chunk_trial_ranges, make_mc_parser, timed_run
+from hdrlib.core.mc import MCResultExporter, make_mc_parser, timed_run
 from hdrlib.sonar import mc as smc
 from hdrlib.sonar import simulation as sim
 

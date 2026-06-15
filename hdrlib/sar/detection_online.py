@@ -104,7 +104,6 @@ class OnlineDCGDetector(OnlineDetector):
 
         n_samples = X.shape[-2]
         n_features = X.shape[-1]
-        batch_shape = X.shape[:-3]
 
         # H0: initialize and update with both dates
         h0_estimator = OnlineScaledGaussianEstimator(

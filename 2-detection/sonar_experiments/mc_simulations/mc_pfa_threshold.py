@@ -15,7 +15,6 @@ from __future__ import annotations
 import logging
 import math
 import os
-import time
 from multiprocessing import Pool
 from pathlib import Path
 
@@ -163,8 +162,6 @@ def main():
 
     M = sim.make_sonar_covariance(m, args.beta, args.rho1, args.rho2)
     P = sim.make_steering_matrix(m, args.theta1, args.theta2)
-
-    t0 = time.perf_counter()
 
     all_stats, elapsed = timed_run(
         args,

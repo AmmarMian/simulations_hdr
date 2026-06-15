@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+from string import Template
 
 import numpy as np
 
@@ -164,8 +165,6 @@ def aggregate_power(
 # H1 power-curve plot template
 # ---------------------------------------------------------------------------
 
-from string import Template
-
 _MC_PLOT_TEMPLATE_H1 = Template("""\
 #!/usr/bin/env python
 # Auto-generated — edit freely to restyle.
@@ -173,28 +172,9 @@ import argparse
 from pathlib import Path
 
 import numpy as np
-import matplotlib as _mpl
 import matplotlib.pyplot as plt
 
-_mpl.rcParams.update({
-    "figure.facecolor": "#14141a", "axes.facecolor": "#14141a",
-    "savefig.facecolor": "#14141a",
-    "text.color": "#dde3f0", "axes.labelcolor": "#dde3f0", "axes.titlecolor": "#dde3f0",
-    "xtick.color": "#48485e", "ytick.color": "#48485e",
-    "xtick.labelcolor": "#dde3f0", "ytick.labelcolor": "#dde3f0",
-    "axes.edgecolor": "#48485e", "axes.spines.top": False, "axes.spines.right": False,
-    "axes.grid": True, "axes.grid.which": "both",
-    "grid.color": "#272733", "grid.linewidth": 0.6, "grid.linestyle": "--",
-    "font.family": "serif",
-    "font.serif": ["STIXTwoText", "STIX Two Text", "DejaVu Serif", "serif"],
-    "mathtext.fontset": "stix", "font.size": 12, "axes.titlesize": 13,
-    "axes.labelsize": 12, "legend.fontsize": 10,
-    "xtick.labelsize": 10, "ytick.labelsize": 10,
-    "lines.linewidth": 1.8, "lines.markersize": 5,
-    "legend.facecolor": "#1c1c27", "legend.edgecolor": "#48485e",
-    "legend.framealpha": 0.9, "savefig.dpi": 200, "savefig.bbox": "tight",
-})
-
+$style_code
 parser = argparse.ArgumentParser("Plot MC power curve results.")
 parser.add_argument("--tikz", action="store_true")
 parser.add_argument("--no-save", action="store_true")

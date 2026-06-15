@@ -8,7 +8,7 @@ packages = ["hdrlib"]
 [project]
 name = "simulations"
 version = "0.1.0"
-description = "Add your description here"
+description = "Simulations and figures for an HDR dissertation on covariance matrices: from multivariate statistics to deep learning."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
@@ -56,6 +56,16 @@ cupy = [
 name = "jax-cuda-releases"
 url = "https://storage.googleapis.com/jax-releases/jax_cuda_releases.html"
 explicit = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W"]
+# Line length is defined above for the formatter but not enforced as a lint
+# error — research scripts intentionally carry long literal/expression lines.
+ignore = ["E501"]
 
 [tool.uv.sources]
 qanat = { git = "https://github.com/ammarmian/qanat" }

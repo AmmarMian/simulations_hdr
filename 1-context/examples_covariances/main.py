@@ -113,8 +113,6 @@ def write_pgfplots_matrix(
 
     # Generate unique data filename if not provided
     if data_filename is None:
-        import os
-
         base_name = os.path.splitext(os.path.basename(tex_filename))[0]
         data_filename = f"{base_name}_matrix.dat"
 
@@ -195,7 +193,7 @@ def write_pgfplots_matrix(
     if verbose:
         print(f"Successfully saved LaTeX code to: {tex_filename}")
         print(f"Matrix plot uses colormap: {colormap}")
-        print(f"Data embedded inline (no external file)")
+        print("Data embedded inline (no external file)")
 
     return tex_filename
 
@@ -219,13 +217,13 @@ def numpy_to_matrix_plot(data, base_filename, **kwargs):
     """
     verbose = kwargs.get("verbose", True)
     if verbose:
-        print(f"Starting numpy to matrix plot conversion...")
+        print("Starting numpy to matrix plot conversion...")
         print(f"Target filename: {base_filename}")
 
     result = write_pgfplots_matrix(data, base_filename, **kwargs)
 
     if verbose:
-        print(f"Matrix plot export completed successfully!")
+        print("Matrix plot export completed successfully!")
 
     return result
 

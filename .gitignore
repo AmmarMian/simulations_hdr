@@ -26,3 +26,7 @@ wheels/
 .venv
 
 .qanat
+
+# MkDocs build output
+site/
+docs/site/

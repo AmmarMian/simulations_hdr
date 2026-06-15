@@ -1,6 +1,7 @@
 # SAR detectors: offline and online
 # Combines detection_offline.py and detection_online.py from sar_experiments/
 
+import logging
 import math
 from dataclasses import dataclass
 from typing import Optional, Union, Any, Tuple
@@ -16,6 +17,8 @@ from ..core.backend import (
 from ..core.detection import Detector, OnlineDetector
 from ..core.estimation import TylerEstimator, StudentTEstimator
 from .estimation_kronecker import kronecker_mm_h0, kronecker_mm_h1
+
+logger = logging.getLogger(__name__)
 
 
 # Gaussian GLRT
@@ -160,10 +163,10 @@ class TwoStepStudentGaussianGLRT(Detector):
         """
         X = get_data_on_device(X, self.backend_name)
         if self.verbosity:
-            print("Computing covariances for all t")
+            logger.info("Computing covariances for all t")
         covariances = self.estimator.compute(X)
         if self.verbosity:
-            print("Computing covariance under H0")
+            logger.info("Computing covariance under H0")
         cov_mean = self.estimator.compute(
             self.be.reshape(X, (*X.shape[:-3], X.shape[-3] * X.shape[-2], X.shape[-1]))
         )
@@ -262,10 +265,10 @@ class TwoStepTylerGaussianGLRT(Detector):
         """
         X = get_data_on_device(X, self.backend_name)
         if self.verbosity:
-            print("Computing covariances for all t")
+            logger.info("Computing covariances for all t")
         covariances = self.estimator.compute(X)
         if self.verbosity:
-            print("Computing covariance under H0")
+            logger.info("Computing covariance under H0")
         cov_mean = self.estimator.compute(
             self.be.reshape(X, (*X.shape[:-3], X.shape[-3] * X.shape[-2], X.shape[-1]))
         )
@@ -446,7 +449,7 @@ class DeterministicCompoundGaussianGLRT(Detector):
 
         # --- H0: MatAndText Tyler ---
         if self.verbosity:
-            print("Computing Σ_0 via MatAndText Tyler (H0)...")
+            logger.info("Computing Σ_0 via MatAndText Tyler (H0)...")
         Sigma_0 = _tyler_matandtext_fixed_point(
             X, tol=self.tol, iter_max=self.iter_max, backend_name=self.backend_name
         )  # (batch..., p, p)
@@ -463,7 +466,7 @@ class DeterministicCompoundGaussianGLRT(Detector):
 
         # --- H1: Standard Tyler per date ---
         if self.verbosity:
-            print("Computing Σ_t via standard Tyler (H1)...")
+            logger.info("Computing Σ_t via standard Tyler (H1)...")
         Sigma_t = self.tyler_estimator.compute(X)  # (batch..., T, p, p)
         iSigma_t = self.be.linalg.inv(Sigma_t)  # (batch..., T, p, p)
 
@@ -553,13 +556,13 @@ class ScaleAndShapeKroneckerGLRT(Detector):
         a, b = self.a, self.b
 
         if self.verbosity:
-            print("Estimating H0 (joint Kronecker MM)...")
+            logger.info("Estimating H0 (joint Kronecker MM)...")
         A0, B0, tau0 = kronecker_mm_h0(
             X, a, b, self.tol, self.iter_max, self.backend_name
         )  # A0: (..., a, a), B0: (..., b, b), tau0: (..., N)
 
         if self.verbosity:
-            print("Estimating H1 (per-date Kronecker MM)...")
+            logger.info("Estimating H1 (per-date Kronecker MM)...")
         At, Bt, tau_t = kronecker_mm_h1(
             X, a, b, self.tol, self.iter_max, self.backend_name
         )  # At: (..., T, a, a), Bt: (..., T, b, b), tau_t: (..., T, N)

@@ -55,13 +55,12 @@ def sqrtm_invsqrtm_psd(
     """Compute inv, sqrtm and invsqrtm without computing EVD two times"""
     be = get_backend_module(backend_name)
     eigenvalues, eigenvectors = eigh_psd(X, backend_name)
-    sqrt_eigvals = be.sqrt(be.abs(eigenvalues))
-    inv_sqrt_eigvals = 1.0 / be.sqrt(be.abs(eigenvalues))
-    inv_eigvals = 1.0 / be.abs(eigenvalues)
+    s = be.sqrt(be.abs(eigenvalues))
+    sqrt_eigvals = s
+    inv_sqrt_eigvals = 1.0 / s
     if is_complex(backend_name, X):
         inv_sqrt_eigvals = cast_like(inv_sqrt_eigvals, eigenvectors, backend_name)
         sqrt_eigvals = cast_like(sqrt_eigvals, eigenvectors, backend_name)
-        inv_eigvals = cast_like(inv_eigvals, eigenvectors, backend_name)
 
     sqrtm = be.einsum(
         "...ab,...bc,...cd->...ad",

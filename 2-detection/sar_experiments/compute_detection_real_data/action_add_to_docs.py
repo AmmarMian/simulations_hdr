@@ -15,11 +15,11 @@ Run:
 from __future__ import annotations
 
 import argparse
-import sys
-from pathlib import Path
-
 import base64
 import io
+import json
+import sys
+from pathlib import Path
 
 import numpy as np
 
@@ -34,7 +34,6 @@ try:
 except ImportError:
     sys.exit("Pillow not found — run: uv add Pillow --dev")
 
-repo_root = Path(__file__).resolve().parents[3]
 from hdrlib.core.plotly_style import BG, MUTED, INK2, FONT_SANS
 
 # ── CLI ───────────────────────────────────────────────────────────────────────
@@ -59,6 +58,7 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
+repo_root = Path(__file__).resolve().parents[3]
 storage = Path(args.storage_path)
 name = args.name or storage.parent.name
 label = args.label
@@ -87,13 +87,10 @@ if args.ground_truth:
     gt_path = repo_root / args.ground_truth
 else:
     if prov_path.exists():
-        import json
-
         prov = json.loads(prov_path.read_text())
         data_path = prov.get("args", {}).get("data_path", "")
         if data_path:
             # e.g. 2-detection/data/SAR/scene1.npy → ground_truth_scene_1.npy
-            scene_file = Path(data_path).name  # scene1.npy
             scene_stem = Path(data_path).stem  # scene1
             gt_name = f"ground_truth_{scene_stem.replace('scene', 'scene_')}.npy"
             gt_path = repo_root / Path(data_path).parent / gt_name

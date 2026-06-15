@@ -28,10 +28,10 @@ try:
 except ImportError:
     sys.exit("plotly not found — run: uv add plotly --dev")
 
-try:
-    import yaml as _yaml
-except ImportError:
-    _yaml = None
+from hdrlib.core.plotly_style import (
+    BG, GRID, AXIS_LINE, MUTED, INK2, ANNO,
+    FONT_SANS, FONT_MONO, C_OFF, C_ON, hex_to_rgba,
+)
 
 # ── CLI ───────────────────────────────────────────────────────────────────────
 parser = argparse.ArgumentParser(description=__doc__)
@@ -46,10 +46,6 @@ parser.add_argument("--label", default=None,
 args = parser.parse_args()
 
 repo_root = Path(__file__).resolve().parents[3]
-from hdrlib.core.plotly_style import (
-    BG, GRID, AXIS_LINE, MUTED, INK2, ANNO,
-    FONT_SANS, FONT_MONO, C_OFF, C_ON, hex_to_rgba,
-)
 storage   = Path(args.storage_path)
 
 # Derive experiment name: results/sar_mc_gauss_h1/run_3 → sar_mc_gauss_h1

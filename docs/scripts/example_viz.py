@@ -39,7 +39,8 @@ T   = np.logspace(np.log10(5), np.log10(600), 45).astype(int)
 def sigmoid(t, t50, slope=2.6):
     return 1 / (1 + np.exp(-slope * (np.log(t) - np.log(t50))))
 
-noise = lambda n: rng.normal(0, 0.012, n)
+def noise(n):
+    return rng.normal(0, 0.012, n)
 
 P_online  = np.clip(sigmoid(T, 60)  + noise(len(T)), 0, 1)
 P_offline = np.clip(sigmoid(T, 38)  + noise(len(T)), 0, 1)

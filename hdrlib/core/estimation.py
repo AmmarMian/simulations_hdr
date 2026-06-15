@@ -76,7 +76,11 @@ class SCMEstimator(Estimator):
 
     def compute(self, X: Array) -> Array:
         if not self.assume_centered:
-            X = X - X.mean(axis=-1, keepdim=True)
+            # Mean over samples (axis=-2), keeping dims for broadcasting.
+            # Avoid backend-specific keepdim/keepdims kwarg: use sum + expand_dims.
+            n_samples = X.shape[-2]
+            mean = self.backend_module.sum(X, axis=-2) / n_samples
+            X = X - expand_dims(self.backend_name, mean, axis=-2)
         return (1 / X.shape[-2]) * self.backend_module.swapaxes(X, -1, -2).conj() @ X
 
 
@@ -113,14 +117,14 @@ def _huber_m_estimator_function(
     backend_name: Union[str, Backend] = "numpy",
     **kwargs,
 ):
-    """Huber M-estimator function as defined for example in
+    r"""Huber M-estimator function as defined for example in
     > Statistiques des estimateurs robustes pour le traitement du signal et des images
     > p 16, Ph.d Thesis, Gordana Draskovic
 
-    It consists of the function defined for a threshold $\\lambda$ and a real $\\beta$
+    It consists of the function defined for a threshold $\lambda$ and a real $\beta$
     by the equation :
     $$
-    u(x)=\\frac{1}{\beta}\\min\\left(1, \\lambda/x\\right)
+    u(x)=\frac{1}{\beta}\min\left(1, \lambda/x\right)
     $$
 
     Parameters

@@ -115,7 +115,8 @@ class Backend:
         # with a complex dtype would crash before get_data_on_device can help.
         if self.lib == "jax":
             try:
-                import os, jax
+                import os
+                import jax
                 # Prevent XLA from pre-allocating ~75% of GPU memory at init.
                 os.environ.setdefault("XLA_PYTHON_CLIENT_PREALLOCATE", "false")
                 platform = "gpu" if self.device == "cuda" else self.device
