@@ -47,8 +47,7 @@ parser.add_argument("--ground-truth", default=None,
 args = parser.parse_args()
 
 repo_root = Path(__file__).resolve().parents[3]
-sys.path.insert(0, str(repo_root / "shared"))
-from plotly_style import BG, MUTED, INK2, FONT_SANS, FONT_MONO  # noqa: E402
+from hdrlib.core.plotly_style import BG, MUTED, INK2, FONT_SANS, FONT_MONO
 storage   = Path(args.storage_path)
 name      = args.name  or storage.parent.name
 label     = args.label

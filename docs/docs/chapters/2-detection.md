@@ -2,23 +2,12 @@
 
 Change-detection in SAR and sonar imagery using robust covariance estimators under Gaussian, DCG, and Kronecker-structured models.
 
-## Library (`src/`)
-
-| Module | Role |
-|--------|------|
-| [`backend`](../api/backend.md) | Multi-backend abstraction — numpy / torch / cupy / jax |
-| [`estimation`](../api/estimation.md) | SCM, Tyler, Student-t, Huber, scaled-Gaussian natural gradient |
-| [`estimation_kronecker`](../api/estimation_kronecker.md) | Kronecker MM algorithm (H0 and H1) |
-| [`estimation_online`](../api/estimation_online.md) | Online estimators for scaled Gaussian and Kronecker models |
-| [`manifolds`](../api/manifolds.md) | Riemannian geometry — HPD, SHPD, product manifolds |
-| [`detection`](../api/detection.md) | `Detector` / `OnlineDetector` ABCs |
-| [`simulation`](../api/simulation.md) | Synthetic data generation — Gaussian / DCG / Kronecker, H0 / H1 |
-| [`exporter`](../api/exporter.md) | Result persistence (.npy + .json provenance + standalone _plot.py) |
-
 ## Experiments
 
 <!-- experiments-start -->
 <div class="exp-chapter">
+<div class="exp-group">
+<h3 class="exp-group-heading">SAR · Real Data</h3>
 <div class="exp-grid">
 <div class="exp-card">
 <div class="exp-card-head">
@@ -85,7 +74,12 @@ Change-detection in SAR and sonar imagery using robust covariance estimators und
 <div class="exp-run"><code>uv run python 2-detection/sar_experiments/compute_detection_real_data/online_kronecker.py</code></div>
 <a class="exp-details-link" href="../../experiments/sar_det_on_kron/">Parameters &amp; details →</a>
 </div>
+</div>
+</div>
 
+<div class="exp-group">
+<h3 class="exp-group-heading">SAR · Monte Carlo</h3>
+<div class="exp-grid">
 <div class="exp-card">
 <div class="exp-card-head">
 <div class="exp-name">sar_mc_dcg_h0</div>
@@ -150,6 +144,61 @@ Change-detection in SAR and sonar imagery using robust covariance estimators und
 <div class="exp-tags"><span class="exp-tag">detection</span><span class="exp-tag">kronecker</span><span class="exp-tag">H1</span><span class="exp-tag">monte-carlo</span><span class="exp-tag">power-curve</span></div>
 <div class="exp-run"><code>uv run python 2-detection/sar_experiments/mc_simulations/mc_kronecker_h1.py</code></div>
 <a class="exp-details-link" href="../../experiments/sar_mc_kron_h1/">Parameters &amp; details →</a>
+</div>
+</div>
+</div>
+
+<div class="exp-group">
+<h3 class="exp-group-heading">Sonar · Detection</h3>
+<div class="exp-grid">
+<div class="exp-card">
+<div class="exp-card-head">
+<div class="exp-name">sonar_pd_angle</div>
+
+</div>
+<div class="exp-desc">MC PD vs (theta1, theta2) angle map for sonar two-array detectors at fixed SNR</div>
+<div class="exp-tags"><span class="exp-tag">sonar</span><span class="exp-tag">detection</span><span class="exp-tag">monte-carlo</span><span class="exp-tag">angle-map</span></div>
+<div class="exp-run"><code>uv run python 2-detection/sonar_experiments/mc_simulations/mc_pd_angle.py</code></div>
+<a class="exp-details-link" href="../../experiments/sonar_pd_angle/">Parameters &amp; details →</a>
+</div>
+
+<div class="exp-card">
+<div class="exp-card-head">
+<div class="exp-name">sonar_pd_snr</div>
+
+</div>
+<div class="exp-desc">MC detection probability vs SNR for sonar two-array detectors (M-NMF-G/R/I, adaptive 2TYL/SCM variants)</div>
+<div class="exp-tags"><span class="exp-tag">sonar</span><span class="exp-tag">detection</span><span class="exp-tag">monte-carlo</span><span class="exp-tag">pd-snr</span></div>
+<div class="exp-run"><code>uv run python 2-detection/sonar_experiments/mc_simulations/mc_pd_snr.py</code></div>
+<a class="exp-details-link" href="../../experiments/sonar_pd_snr/">Parameters &amp; details →</a>
+</div>
+
+<div class="exp-card">
+<div class="exp-card-head">
+<div class="exp-name">sonar_pfa_threshold</div>
+
+</div>
+<div class="exp-desc">MC empirical PFA vs threshold for sonar two-array detectors — matrix-CFAR verification</div>
+<div class="exp-tags"><span class="exp-tag">sonar</span><span class="exp-tag">detection</span><span class="exp-tag">monte-carlo</span><span class="exp-tag">pfa-cfar</span></div>
+<div class="exp-run"><code>uv run python 2-detection/sonar_experiments/mc_simulations/mc_pfa_threshold.py</code></div>
+<a class="exp-details-link" href="../../experiments/sonar_pfa_threshold/">Parameters &amp; details →</a>
+</div>
+</div>
+</div>
+
+<div class="exp-group">
+<h3 class="exp-group-heading">Sonar · Convergence</h3>
+<div class="exp-grid">
+<div class="exp-card">
+<div class="exp-card-head">
+<div class="exp-name">sonar_tyler_conv</div>
+
+</div>
+<div class="exp-desc">2TYL fixed-point convergence — relative Frobenius deviation vs iteration</div>
+<div class="exp-tags"><span class="exp-tag">sonar</span><span class="exp-tag">estimation</span><span class="exp-tag">monte-carlo</span><span class="exp-tag">convergence</span></div>
+<div class="exp-run"><code>uv run python 2-detection/sonar_experiments/mc_simulations/tyler_convergence.py</code></div>
+<a class="exp-details-link" href="../../experiments/sonar_tyler_conv/">Parameters &amp; details →</a>
+</div>
 </div>
 </div>
 </div>

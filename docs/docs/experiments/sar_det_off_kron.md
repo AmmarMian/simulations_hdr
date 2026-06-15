@@ -37,4 +37,4 @@ uv run python 2-detection/sar_experiments/compute_detection_real_data/offline_kr
 
 ## Config
 
-`2-detection/experiments/sar_det_off_kron.yaml`
+`2-detection/experiments/sar/sar_det_off_kron.yaml`

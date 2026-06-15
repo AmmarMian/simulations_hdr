@@ -1,14 +1,8 @@
 # Visualization of the SDP cone for 2x2 matrices
-import sys
-from pathlib import Path
-_SHARED = str(Path(__file__).parent.parent.parent / "shared")
-if _SHARED not in sys.path:
-    sys.path.insert(0, _SHARED)
-
 import numpy as np
 import matplotlib.pyplot as plt
 
-from plot_style import apply_style
+from hdrlib.core.plot_style import apply_style
 apply_style()
 
 

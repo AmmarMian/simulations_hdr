@@ -1,13 +1,6 @@
 # Showing behavior of LWF  on simple data with case dim  > N_obs
 
 import argparse
-import sys
-from pathlib import Path
-
-_SHARED = str(Path(__file__).parent.parent / "shared")
-if _SHARED not in sys.path:
-    sys.path.insert(0, _SHARED)
-
 import numpy as np
 import matplotlib.pyplot as plt
 from rich.progress import Progress
@@ -18,7 +11,7 @@ from multiprocessing import Pool
 from itertools import product
 
 from matplot2tikz import save
-from plot_style import apply_style
+from hdrlib.core.plot_style import apply_style
 
 apply_style()
 

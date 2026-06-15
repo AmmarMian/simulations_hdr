@@ -57,4 +57,4 @@ uv run python 2-detection/sar_experiments/compute_detection_real_data/offline_ga
 
 ## Config
 
-`2-detection/experiments/sar_det_off_gauss.yaml`
+`2-detection/experiments/sar/sar_det_off_gauss.yaml`

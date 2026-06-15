@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en" data-paper="warm" data-type="classic">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>simulation — HDR Simulations</title>
+
+  <!-- Fonts: EB Garamond (classic) + IBM Plex Sans (labels) + IBM Plex Mono (code) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../../../assets/css/theme.css">
+
+  <script>var HDR_BASE = "../../..";</script>
+  <!-- Apply saved theme before paint to avoid flash -->
+  <script>
+    (function(){
+      var p = localStorage.getItem("hdr-paper");
+      if (p) document.documentElement.setAttribute("data-paper", p);
+      var s = parseFloat(localStorage.getItem("hdr-scale"));
+      if (!isNaN(s)) document.documentElement.style.setProperty("--reading-scale", s);
+    })();
+  </script>
+</head>
+<body>
+
+<!-- ░░░ Topbar ░░░ -->
+<header class="topbar">
+  <button class="toolbtn" id="btn-toc" aria-label="Navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+      <path d="M4 6h16M4 12h16M4 18h10"/>
+    </svg>
+  </button>
+
+  <a class="site-title" href="../../../">HDR Simulations</a>
+
+  <div class="topbar-sep"></div>
+
+  <nav class="topbar-nav" aria-label="Site sections">
+    
+      
+        <a class="topbar-link"
+           href="../../..">Home</a>
+      
+    
+      
+        <a class="topbar-link"
+           href="../../../experiments-overview/">Experiments</a>
+      
+    
+      
+        <a class="topbar-link active"
+           href="../../">API</a>
+      
+    
+      
+        <a class="topbar-link"
+           href="../../../kitchen-sink/">Kitchen Sink</a>
+      
+    
+  </nav>
+
+  <div class="topbar-spacer"></div>
+
+  <div class="search-wrap" id="search-wrap">
+    <div class="search-input-wrap" id="search-input-wrap" hidden>
+      <input type="search" id="search-input" placeholder="Search…" autocomplete="off" spellcheck="false">
+    </div>
+    <div class="search-results" id="search-results" hidden></div>
+    <button class="toolbtn" id="btn-search" aria-label="Search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/>
+      </svg>
+    </button>
+  </div>
+
+  <div style="display:inline-flex;align-items:center;gap:2px">
+    <button class="toolbtn" id="btn-az-sm" aria-label="Smaller text">
+      <span class="type-az-sm">A</span>
+    </button>
+    <button class="toolbtn" id="btn-az-lg" aria-label="Larger text">
+      <span class="type-az-lg">A</span>
+    </button>
+  </div>
+
+  <button class="toolbtn" id="btn-theme" aria-label="Toggle dark mode">
+    <svg id="ico-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>
+    </svg>
+    <svg id="ico-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" style="display:none">
+      <circle cx="12" cy="12" r="4"/>
+      <path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.4 1.4M17.6 17.6L19 19M19 5l-1.4 1.4M6.4 17.6L5 19"/>
+    </svg>
+  </button>
+</header>
+
+<div class="progress" id="progress"></div>
+
+<!-- ░░░ TOC drawer ░░░ -->
+<div class="toc-scrim" id="toc-scrim"></div>
+<div class="toc" id="toc" role="navigation" aria-label="Site navigation">
+  <p class="toc-site">HDR Simulations</p>
+  <p class="toc-sub">Companion code documentation for the HDR dissertation</p>
+
+  <nav>
+    
+      
+        <ul>
+          <li>
+            <a href="../../..">
+              Home
+            </a>
+          </li>
+        </ul>
+      
+    
+      
+        <p class="toc-section-label">Experiments</p>
+        <ul>
+          
+            
+              <li>
+                <a href="../../../experiments-overview/">
+                  Overview
+                </a>
+              </li>
+            
+          
+            
+              <li>
+                <a href="../../../chapters/1-context/">
+                  1 · Context
+                </a>
+              </li>
+            
+          
+            
+              <li>
+                <a href="../../../chapters/2-detection/">
+                  2 · Detection
+                </a>
+              </li>
+            
+          
+            
+              <li>
+                <a href="../../../chapters/3-machinelearning/">
+                  3 · Machine Learning
+                </a>
+              </li>
+            
+          
+            
+              <li>
+                <a href="../../../chapters/4-deeplearning/">
+                  4 · Deep Learning
+                </a>
+              </li>
+            
+          
+        </ul>
+      
+    
+      
+        <p class="toc-section-label">API</p>
+        <ul>
+          
+            
+              <li>
+                <a href="../../">
+                  Overview
+                </a>
+              </li>
+            
+          
+            
+              <li class="toc-subsection">
+                <span class="toc-subsection-label">hdrlib.core</span>
+                <ul>
+                  
+                    <li>
+                      <a href="../backend/">
+                        backend
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../detection/">
+                        detection
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../estimation/">
+                        estimation
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../manifolds/">
+                        manifolds
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="./" class="active">
+                        simulation
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../exporter/">
+                        exporter
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../mc/">
+                        mc
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../plot_style/">
+                        plot_style
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../plotly_style/">
+                        plotly_style
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../hardware_ressources/">
+                        hardware_ressources
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../logging_config/">
+                        logging_config
+                      </a>
+                    </li>
+                  
+                </ul>
+              </li>
+            
+          
+            
+              <li class="toc-subsection">
+                <span class="toc-subsection-label">hdrlib.sar</span>
+                <ul>
+                  
+                    <li>
+                      <a href="../../sar/detectors/">
+                        detectors
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../../sar/estimation_kronecker/">
+                        estimation_kronecker
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../../sar/estimation_online/">
+                        estimation_online
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../../sar/detection_online/">
+                        detection_online
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../../sar/simulation/">
+                        simulation
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../../sar/mc/">
+                        mc
+                      </a>
+                    </li>
+                  
+                </ul>
+              </li>
+            
+          
+            
+              <li class="toc-subsection">
+                <span class="toc-subsection-label">hdrlib.sonar</span>
+                <ul>
+                  
+                    <li>
+                      <a href="../../sonar/detectors/">
+                        detectors
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../../sonar/estimation/">
+                        estimation
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../../sonar/simulation/">
+                        simulation
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../../sonar/mc/">
+                        mc
+                      </a>
+                    </li>
+                  
+                </ul>
+              </li>
+            
+          
+        </ul>
+      
+    
+      
+        <ul>
+          <li>
+            <a href="../../../kitchen-sink/">
+              Kitchen Sink
+            </a>
+          </li>
+        </ul>
+      
+    
+  </nav>
+</div>
+
+<!-- ░░░ Page ░░░ -->
+<div class="page-wrap">
+  <div class="page-body">
+
+    <main class="page-content" id="content">
+      <h1 id="hdrlibcoresimulation"><code>hdrlib.core.simulation</code></h1>
+
+
+<div class="doc doc-object doc-module">
+
+
+
+<h2 id="hdrlib.core.simulation" class="doc doc-heading">
+            <code>hdrlib.core.simulation</code>
+
+
+</h2>
+
+    <div class="doc doc-contents first">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="hdrlib.core.simulation.T_vec_logspace" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">T_vec_logspace</span><span class="p">(</span><span class="n">T_min</span><span class="p">,</span> <span class="n">T_max</span><span class="p">,</span> <span class="n">n_T</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Logarithmically spaced unique integer T values in [T_min, T_max].</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>hdrlib/core/simulation.py</code></summary>
+              <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">89</span>
+<span class="normal">90</span>
+<span class="normal">91</span>
+<span class="normal">92</span>
+<span class="normal">93</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">T_vec_logspace</span><span class="p">(</span><span class="n">T_min</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">T_max</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">n_T</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Logarithmically spaced unique integer T values in [T_min, T_max].&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">sorted</span><span class="p">({</span><span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">logspace</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">T_min</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">T_max</span><span class="p">),</span> <span class="n">n_T</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+    <span class="p">)})</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="hdrlib.core.simulation.generate_dcg_data" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">generate_dcg_data</span><span class="p">(</span><span class="n">n_trials</span><span class="p">,</span> <span class="n">T_max</span><span class="p">,</span> <span class="n">n_samples</span><span class="p">,</span> <span class="n">n_features</span><span class="p">,</span> <span class="n">Sigma_true</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">tau_shape</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">tau_scale</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Complex DCG (SIRV) data under H0: X_{t,n} = sqrt(tau_n) * z, z ~ CN(0, Sigma_true).</p>
+<p>tau_n ~ Gamma(tau_shape, tau_scale) per sample, constant across dates — matching the
+MatAndText null hypothesis tested by DeterministicCompoundGaussianGLRT.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>np.ndarray of shape (n_trials, T_max, n_samples, n_features), complex128</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>hdrlib/core/simulation.py</code></summary>
+              <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">61</span>
+<span class="normal">62</span>
+<span class="normal">63</span>
+<span class="normal">64</span>
+<span class="normal">65</span>
+<span class="normal">66</span>
+<span class="normal">67</span>
+<span class="normal">68</span>
+<span class="normal">69</span>
+<span class="normal">70</span>
+<span class="normal">71</span>
+<span class="normal">72</span>
+<span class="normal">73</span>
+<span class="normal">74</span>
+<span class="normal">75</span>
+<span class="normal">76</span>
+<span class="normal">77</span>
+<span class="normal">78</span>
+<span class="normal">79</span>
+<span class="normal">80</span>
+<span class="normal">81</span>
+<span class="normal">82</span>
+<span class="normal">83</span>
+<span class="normal">84</span>
+<span class="normal">85</span>
+<span class="normal">86</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">generate_dcg_data</span><span class="p">(</span>
+    <span class="n">n_trials</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">T_max</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">n_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">n_features</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">Sigma_true</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="n">tau_shape</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+    <span class="n">tau_scale</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Complex DCG (SIRV) data under H0: X_{t,n} = sqrt(tau_n) * z, z ~ CN(0, Sigma_true).</span>
+
+<span class="sd">    tau_n ~ Gamma(tau_shape, tau_scale) per sample, constant across dates — matching the</span>
+<span class="sd">    MatAndText null hypothesis tested by DeterministicCompoundGaussianGLRT.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray of shape (n_trials, T_max, n_samples, n_features), complex128</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    <span class="n">L</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">cholesky</span><span class="p">(</span><span class="n">Sigma_true</span><span class="p">)</span>
+    <span class="n">g</span> <span class="o">=</span> <span class="p">(</span><span class="n">rng</span><span class="o">.</span><span class="n">standard_normal</span><span class="p">((</span><span class="n">n_trials</span><span class="p">,</span> <span class="n">T_max</span><span class="p">,</span> <span class="n">n_samples</span><span class="p">,</span> <span class="n">n_features</span><span class="p">))</span> <span class="o">+</span>
+         <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">rng</span><span class="o">.</span><span class="n">standard_normal</span><span class="p">((</span><span class="n">n_trials</span><span class="p">,</span> <span class="n">T_max</span><span class="p">,</span> <span class="n">n_samples</span><span class="p">,</span> <span class="n">n_features</span><span class="p">)))</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+    <span class="c1"># tau_n fixed per sample across all dates: shape (n_trials, 1, n_samples, 1)</span>
+    <span class="n">tau</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">gamma</span><span class="p">(</span><span class="n">tau_shape</span><span class="p">,</span> <span class="n">tau_scale</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">n_trials</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">n_samples</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">tau</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">g</span> <span class="o">@</span> <span class="n">L</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">conj</span><span class="p">()))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">complex128</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="hdrlib.core.simulation.generate_gaussian_data" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">generate_gaussian_data</span><span class="p">(</span><span class="n">n_trials</span><span class="p">,</span> <span class="n">T_max</span><span class="p">,</span> <span class="n">n_samples</span><span class="p">,</span> <span class="n">n_features</span><span class="p">,</span> <span class="n">Sigma_true</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Complex Gaussian data under H0: X_{t,n} ~ CN(0, Sigma_true) i.i.d.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>np.ndarray of shape (n_trials, T_max, n_samples, n_features), complex128</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>hdrlib/core/simulation.py</code></summary>
+              <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">40</span>
+<span class="normal">41</span>
+<span class="normal">42</span>
+<span class="normal">43</span>
+<span class="normal">44</span>
+<span class="normal">45</span>
+<span class="normal">46</span>
+<span class="normal">47</span>
+<span class="normal">48</span>
+<span class="normal">49</span>
+<span class="normal">50</span>
+<span class="normal">51</span>
+<span class="normal">52</span>
+<span class="normal">53</span>
+<span class="normal">54</span>
+<span class="normal">55</span>
+<span class="normal">56</span>
+<span class="normal">57</span>
+<span class="normal">58</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">generate_gaussian_data</span><span class="p">(</span>
+    <span class="n">n_trials</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">T_max</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">n_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">n_features</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">Sigma_true</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Complex Gaussian data under H0: X_{t,n} ~ CN(0, Sigma_true) i.i.d.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray of shape (n_trials, T_max, n_samples, n_features), complex128</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    <span class="n">L</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">cholesky</span><span class="p">(</span><span class="n">Sigma_true</span><span class="p">)</span>
+    <span class="n">g</span> <span class="o">=</span> <span class="p">(</span><span class="n">rng</span><span class="o">.</span><span class="n">standard_normal</span><span class="p">((</span><span class="n">n_trials</span><span class="p">,</span> <span class="n">T_max</span><span class="p">,</span> <span class="n">n_samples</span><span class="p">,</span> <span class="n">n_features</span><span class="p">))</span> <span class="o">+</span>
+         <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">rng</span><span class="o">.</span><span class="n">standard_normal</span><span class="p">((</span><span class="n">n_trials</span><span class="p">,</span> <span class="n">T_max</span><span class="p">,</span> <span class="n">n_samples</span><span class="p">,</span> <span class="n">n_features</span><span class="p">)))</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">g</span> <span class="o">@</span> <span class="n">L</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">conj</span><span class="p">())</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">complex128</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="hdrlib.core.simulation.make_sigma_true" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">make_sigma_true</span><span class="p">(</span><span class="n">n_features</span><span class="p">,</span> <span class="n">seed</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="s1">&#39;trace&#39;</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Random complex HPD shape matrix.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>n_features</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>seed</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>RNG seed, independent from the data seed.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>normalize</code>
+            </td>
+            <td>
+                  <code>&#39;trace&#39; or &#39;det&#39;</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>"trace" — Tr(Sigma) = p, matches Tyler / DCG trace normalization.
+"det"   — det(Sigma) = 1, matches scaled-Gaussian MLE convention.</p>
+              </div>
+            </td>
+            <td>
+                  <code>&#39;trace&#39;</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>np.ndarray of shape (n_features, n_features), complex128</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>hdrlib/core/simulation.py</code></summary>
+              <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">make_sigma_true</span><span class="p">(</span><span class="n">n_features</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">normalize</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;trace&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Random complex HPD shape matrix.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    n_features : int</span>
+<span class="sd">    seed : int</span>
+<span class="sd">        RNG seed, independent from the data seed.</span>
+<span class="sd">    normalize : &quot;trace&quot; or &quot;det&quot;</span>
+<span class="sd">        &quot;trace&quot; — Tr(Sigma) = p, matches Tyler / DCG trace normalization.</span>
+<span class="sd">        &quot;det&quot;   — det(Sigma) = 1, matches scaled-Gaussian MLE convention.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray of shape (n_features, n_features), complex128</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    <span class="n">A</span> <span class="o">=</span> <span class="p">(</span><span class="n">rng</span><span class="o">.</span><span class="n">standard_normal</span><span class="p">((</span><span class="n">n_features</span><span class="p">,</span> <span class="n">n_features</span><span class="p">))</span> <span class="o">+</span>
+         <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">rng</span><span class="o">.</span><span class="n">standard_normal</span><span class="p">((</span><span class="n">n_features</span><span class="p">,</span> <span class="n">n_features</span><span class="p">)))</span>
+    <span class="n">Sigma</span> <span class="o">=</span> <span class="n">A</span> <span class="o">@</span> <span class="n">A</span><span class="o">.</span><span class="n">conj</span><span class="p">()</span><span class="o">.</span><span class="n">T</span> <span class="o">/</span> <span class="n">n_features</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">n_features</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">normalize</span> <span class="o">==</span> <span class="s2">&quot;trace&quot;</span><span class="p">:</span>
+        <span class="n">Sigma</span> <span class="o">*=</span> <span class="n">n_features</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">trace</span><span class="p">(</span><span class="n">Sigma</span><span class="p">)</span><span class="o">.</span><span class="n">real</span>
+    <span class="k">elif</span> <span class="n">normalize</span> <span class="o">==</span> <span class="s2">&quot;det&quot;</span><span class="p">:</span>
+        <span class="n">Sigma</span> <span class="o">/=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">det</span><span class="p">(</span><span class="n">Sigma</span><span class="p">))</span> <span class="o">**</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">n_features</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">Sigma</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">complex128</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+      
+
+      
+      <nav class="page-nav" aria-label="Page navigation">
+        
+        <a href="../manifolds/">← manifolds</a>
+        
+        
+        <a href="../exporter/">exporter →</a>
+        
+      </nav>
+      
+    </main>
+
+    
+    <aside class="page-aside">
+      <nav class="aside-toc" aria-label="On this page">
+        <p class="aside-toc-label">On this page</p>
+        <ul>
+          
+            <li>
+              <a href="#hdrlibcoresimulation">hdrlib.core.simulation</a>
+              
+                <ul>
+                  
+                    <li><a href="#hdrlib.core.simulation">simulation</a></li>
+                  
+                </ul>
+              
+            </li>
+          
+        </ul>
+      </nav>
+    </aside>
+    
+
+  </div>
+</div>
+
+<script src="../../../assets/js/theme.js"></script>
+
+<script>
+  window.MathJax = {
+    tex: {
+      inlineMath:  [["\\(", "\\)"]],
+      displayMath: [["\\[", "\\]"]],
+      processEscapes: true,
+      tags: "ams"
+    },
+    options: { ignoreHtmlClass: ".*", processHtmlClass: "arithmatex" }
+  };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js"
+        integrity="sha384-Wuix6BuhrWbjDBs24bXrjf4ZQ5aFeFWBuKkFekO2t8xFU0iNaLQfp2K6/1Nxveei"
+        crossorigin="anonymous" async></script>
+</body>
+</html>

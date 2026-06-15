@@ -14,17 +14,9 @@ from matplotlib.image import AxesImage
 import torch
 import logging
 
-# Add project root to path so src module is accessible
-_project_root = str(Path(__file__).parent.parent)
-if _project_root not in sys.path:
-    sys.path.insert(0, _project_root)
-_shared = str(Path(__file__).parent.parent.parent / "shared")
-if _shared not in sys.path:
-    sys.path.insert(0, _shared)
-
-from src.backend import Array, Backend
-from src.exporter import ResultExporter
-from plot_style import apply_style
+from hdrlib.core.backend import Array, Backend
+from hdrlib.core.exporter import ResultExporter
+from hdrlib.core.plot_style import apply_style
 from sar_experiments.wavelets import apply_wavelet_to_sits
 
 try:

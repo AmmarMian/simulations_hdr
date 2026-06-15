@@ -1,0 +1,16 @@
+name: sonar_pfa_threshold
+description: MC empirical PFA vs threshold for sonar two-array detectors — matrix-CFAR verification
+path: 2-detection/sonar_experiments/mc_simulations
+executable: 2-detection/sonar_experiments/mc_simulations/mc_pfa_threshold.py
+executable_command: .venv/bin/python
+tags:
+  - sonar
+  - detection
+  - monte-carlo
+  - pfa-cfar
+params:
+  m: 64
+  K: 256
+  n_trials: 1000
+  clutter: gaussian
+group: "Sonar · Detection"
