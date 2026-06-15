@@ -1,8 +1,48 @@
 # HDR Simulations
 
-Cette page regroupe la documentation qui accompagne ma dissertation d'HDR intitulée:
-> Matrices de covariances : des statistiques multivariées à l'apprentissage profond
 
+<div style="display: flex; gap: 2rem; align-items: flex-start; flex-wrap: wrap;">
+
+  <!-- LEFT: IMAGE -->
+  <div style="flex: 0 0 300px;">
+    <img id="theme-img" src="./assets/flow_light.png" style="width: 100%;">
+  </div>
+
+<script>
+function updateImg() {
+  const img = document.getElementById('theme-img');
+  const isDark = document.documentElement.getAttribute('data-paper') === 'dark';
+  img.src = isDark ? './assets/flow_dark.png' : './assets/flow_light.png';
+}
+updateImg();
+new MutationObserver(updateImg).observe(document.documentElement, { attributes: true, attributeFilter: ['data-paper'] });
+</script>
+
+  <!-- RIGHT: TEXT -->
+  <div style="flex: 1; min-width: 300px;">
+
+    <p>
+      This page groups documentation that accompany my dissertation for the diploma of Habilitation à Diriger des recherches (HDR) called:
+      <br><br>
+      <b>Matrices de covariances : des statistiques multivariées à l'apprentissage profond</b>,
+      <br><br>
+      for which the PDF is available <a href="#">here</a>
+      <label for="sn-1" class="sidenote-number"></label>
+      <input type="checkbox" id="sn-1" class="margin-toggle"/>
+      <span class="sidenote">
+        Only available in French language. The documentation being useful to a broader community outside of France has been done in English.
+      </span>
+    </p>
+
+  </div>
+
+</div>
+
+
+Given that the numerous results presented depend on numerical experimenting, this sidecar allows to any interested reader to be able to reproduce, play and experiment each of them<label for="sn-2" class="sidenote-number"></label><input type="checkbox" id="sn-3" class="margin-toggle"/><span class="sidenote">To the exception of experiments on real Sonar and GPR data, not having been granted permission to share the datasets.</span>. The aim is to have a diversity of useful code for working on covariance matrices, done with several concerns in mind :
+
+* **reproducibility:** the ability to obtain same results and conclusions on any given computer;
+* **scalability:** being able to run on a small laptop or take advantage of CPU/GPU parallelisation when available<label for="sn-3" class="sidenote-number"></label><input type="checkbox" id="sn-3" class="margin-toggle"/><span class="sidenote">We omit the case of HPC parallelisation which introduce a specialized layer that obfuscate the algorithms used.</span>;
 
 
 ## Installation
