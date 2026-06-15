@@ -19,7 +19,7 @@ from utils import (
     DetectionMapExporter,
     plot_glrt_map,
 )
-from hdrlib.core.backend import get_data_on_device, reset_peak_memory, peak_memory_bytes, oom_errors
+from hdrlib.core.backend import get_data_on_device, reset_peak_memory, peak_memory_bytes
 from hdrlib.core.hardware_ressources import ImageCPURessourceManager, ImageGPURessourceManager
 from hdrlib.core.logging_config import setup_logging, log_arguments
 

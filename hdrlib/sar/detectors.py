@@ -2,9 +2,7 @@
 # Combines detection_offline.py and detection_online.py from sar_experiments/
 
 import math
-import sys
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Optional, Union, Any, Tuple
 
 from ..core.backend import (

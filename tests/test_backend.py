@@ -25,10 +25,8 @@ from hdrlib.core.backend import (
     batched_trace,
     batched_det,
     normalize_covariance,
-    BACKEND_TYPES,
 )
 from conftest import (
-    ALL_BACKEND_PARAMS,
     as_numpy_for_compare,
     jax_available,
     cupy_available,

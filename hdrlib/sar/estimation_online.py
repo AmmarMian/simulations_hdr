@@ -9,7 +9,6 @@ from ..core.backend import (
     Array,
     get_backend_module,
     get_data_on_device,
-    make_writable_copy,
     to_scalar,
 )
 from ..core.estimation import (

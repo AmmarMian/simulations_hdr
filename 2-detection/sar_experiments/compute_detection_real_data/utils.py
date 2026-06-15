@@ -10,7 +10,6 @@ from pathlib import Path
 
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.image import AxesImage
 import torch
 import logging
 
@@ -104,7 +103,9 @@ def add_common_args(parser: argparse.ArgumentParser) -> None:
         help="Also save a TikZ/PGFPlots figure (.tex) alongside the exported data.",
     )
     parser.add_argument(
-        "--storage-path", "--storage_path", "--export-path",
+        "--storage-path",
+        "--storage_path",
+        "--export-path",
         dest="export_path",
         type=str,
         default="./exports",
@@ -550,26 +551,3 @@ def require_time_first(data_path: str) -> str:
         f"  uv run sar_experiments/compute_detection_real_data/prepare_data.py {data_path}\n"
     )
     sys.exit(1)
-
-
-def plot_pauli(sar_data: Array) -> AxesImage:
-    """Plot Pauli representation of an SLC SAR image by mapping:
-        * Red <- |HH-VV|
-        * Green <- |HV|
-        * Blue <- |HH+VV|
-
-    Parameters
-    ----------
-    sar_data : Array
-        data of shape (n_rows, n_cols, 3), with third dimension in order HH/HV/VV
-
-    Returns
-    -------
-    AxesImage
-        The plotted image object thanks to matplotlib
-    """
-    R = np.abs(sar_data[:, :, 0] - sar_data[:, :, 2])
-    G = np.abs(sar_data[:, :, 1])
-    B = np.abs(sar_data[:, :, 0] + sar_data[:, :, 2])
-
-    return plt.imshow(np.dstack([R, G, B]), aspect="auto")

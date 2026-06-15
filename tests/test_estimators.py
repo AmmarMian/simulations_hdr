@@ -5,8 +5,6 @@
 import pytest
 import numpy as np
 import torch
-import sys
-from pathlib import Path
 
 from hdrlib.core.estimation import (
     TylerEstimator,
@@ -18,7 +16,6 @@ from hdrlib.core.estimation import (
     _huber_m_estimator_function,
 )
 from hdrlib.sar.estimation_online import OnlineScaledGaussianEstimator
-from hdrlib.core.backend import get_data_on_device
 
 
 @pytest.fixture

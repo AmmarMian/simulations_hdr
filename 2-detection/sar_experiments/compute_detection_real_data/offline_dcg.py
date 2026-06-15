@@ -5,6 +5,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
+import numpy as np
 import argparse
 import logging
 import matplotlib.pyplot as plt
@@ -18,13 +19,23 @@ from utils import (
     DetectionMapExporter,
     plot_glrt_map,
 )
-from hdrlib.core.backend import get_data_on_device, reset_peak_memory, peak_memory_bytes, oom_errors
-from hdrlib.core.hardware_ressources import ImageCPURessourceManager, ImageGPURessourceManager
+from hdrlib.core.backend import (
+    get_data_on_device,
+    reset_peak_memory,
+    peak_memory_bytes,
+    oom_errors,
+)
+from hdrlib.core.hardware_ressources import (
+    ImageCPURessourceManager,
+    ImageGPURessourceManager,
+)
 from hdrlib.core.logging_config import setup_logging, log_arguments
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser("Offline DCG GLRT change detection on CPU or GPU backend.")
+    parser = argparse.ArgumentParser(
+        "Offline DCG GLRT change detection on CPU or GPU backend."
+    )
     add_common_args(parser)
     parser.add_argument(
         "--iter-max",
@@ -48,7 +59,9 @@ if __name__ == "__main__":
 
     logger.info("Loading SITS data...")
     sits_np = load_sits(args)  # (n_times, n_rows, n_cols, n_features)
-    sits_data = np.ascontiguousarray(sits_np.transpose(0, 3, 1, 2))  # (T, p, H, W) — CPU, splits moved to GPU on demand
+    sits_data = np.ascontiguousarray(
+        sits_np.transpose(0, 3, 1, 2)
+    )  # (T, p, H, W) — CPU, splits moved to GPU on demand
     sits_np = None
     logger.info(
         f"Data loaded: image size {sits_data.shape[-2]}×{sits_data.shape[-1]}, "
@@ -96,7 +109,9 @@ if __name__ == "__main__":
     if args.report_memory and cfg.is_gpu:
         mem = peak_memory_bytes(cfg.backend)
         if mem is not None:
-            logger.info(f"Peak GPU memory: {mem / 1e9:.2f} GB (PEAK_GPU_MEMORY_BYTES={mem})")
+            logger.info(
+                f"Peak GPU memory: {mem / 1e9:.2f} GB (PEAK_GPU_MEMORY_BYTES={mem})"
+            )
 
     if args.show_interactive:
         plt.show()

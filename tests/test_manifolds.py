@@ -1,7 +1,6 @@
 """Tests for Riemannian manifolds, focusing on batch dimension support."""
 
 import numpy as np
-import pytest
 
 from hdrlib.core.backend import get_backend_module
 from hdrlib.core.manifolds import (

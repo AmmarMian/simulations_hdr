@@ -3,25 +3,20 @@
 # Date: 22/10/2025
 
 import logging
-from types import ModuleType
-from typing import Any, Callable, List, Optional, Tuple, Union
+from typing import Any, Callable, Optional, Tuple, Union
 
 from .backend import (
     Backend,
     Array,
     get_backend_module,
-    get_diagembed,
-    is_complex,
     make_writable_copy,
     masked_set,
     expand_dims,
     get_data_on_device,
-    batched_eigh,
     concatenate,
     normalize_covariance,
     create_scalar_array,
     to_dtype,
-    to_scalar,
 )
 from .manifolds import invsqrtm_psd, ScaledGaussianFIM
 from abc import ABC, abstractmethod

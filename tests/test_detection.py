@@ -5,12 +5,10 @@
 import pytest
 import numpy as np
 import torch
-import sys
-from pathlib import Path
 from scipy import stats
 
 from hdrlib.core.detection import Detector
-from hdrlib.core.backend import Array, get_backend_module
+from hdrlib.core.backend import Array
 
 
 class DummyDetector(Detector):

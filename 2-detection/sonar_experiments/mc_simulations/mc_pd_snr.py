@@ -18,7 +18,7 @@ from pathlib import Path
 
 import numpy as np
 
-from hdrlib.core.mc import MCResultExporter, add_mc_base_args, init_logging, make_mc_parser
+from hdrlib.core.mc import MCResultExporter, init_logging, make_mc_parser
 from hdrlib.sonar import detectors as det
 from hdrlib.sonar import estimation as est
 from hdrlib.sonar import mc as smc

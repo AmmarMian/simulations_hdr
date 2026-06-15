@@ -5,8 +5,6 @@
 import pytest
 import numpy as np
 import torch
-import sys
-from pathlib import Path
 
 from hdrlib.core.backend import (
     Backend,

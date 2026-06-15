@@ -9,7 +9,7 @@ from typing import Sequence
 
 import numpy as np
 
-from ..core.mc import add_mc_base_args, MCResultExporter  # re-export for convenience
+from ..core.mc import add_mc_base_args  # re-export for convenience
 
 logger = logging.getLogger(__name__)
 
@@ -182,7 +182,6 @@ def tyler_relative_deviations(
     -------
     deviations : (iter_max,) array
     """
-    from .estimation import two_array_tyler  # local import avoids circular deps
 
     p = 2 * m
     K = X_secondary.shape[-2]
