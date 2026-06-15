@@ -79,46 +79,166 @@ def _collect_add_argument_calls(tree_nodes) -> list[dict]:
     return results
 
 
-def _find_helper_functions(script_tree, script_dir: Path) -> list[ast.AST]:
+def _build_import_map(tree, script_dir: Path) -> dict[str, Path]:
+    """Map imported names → source file path.
+
+    Handles both absolute imports (searches script dir then repo root) and
+    relative imports (e.g. ``from ..core.mc import`` resolves via level+parent).
     """
-    Find helper functions (e.g. add_mc_args) called with a parser argument
-    in the script, and return their AST subtrees from imported modules.
-    """
-    # Map imported names → source module path
     import_map: dict[str, Path] = {}
-    for node in ast.walk(script_tree):
-        if isinstance(node, ast.ImportFrom) and node.module:
-            mod_path = script_dir / (node.module.replace(".", "/") + ".py")
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.ImportFrom) or not node.module:
+            continue
+        rel = node.module.replace(".", "/") + ".py"
+        candidates: list[Path] = []
+        if node.level:
+            # Relative import: go up `level` directories from script_dir
+            base = script_dir
+            for _ in range(node.level - 1):
+                base = base.parent
+            candidates.append(base / rel)
+        else:
+            # Absolute import: try script dir, then repo root
+            candidates = [script_dir / rel, REPO_ROOT / rel]
+        for mod_path in candidates:
             if mod_path.exists():
                 for alias in node.names:
                     import_map[alias.asname or alias.name] = mod_path
+                break
+    return import_map
 
-    # Find calls where a 'parser'-named variable is an argument
-    helper_names: list[str] = []
-    for node in ast.walk(script_tree):
-        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
+
+def _parser_passing_calls(tree_node) -> list[str]:
+    """Return names of functions called with a 'parser'-named argument.
+
+    Handles both plain calls (``add_mc_args(parser)``) and attribute calls
+    (``smc.add_mc_args(parser)``), returning the function name in both cases.
+    """
+    names = []
+    for node in ast.walk(tree_node):
+        if not isinstance(node, ast.Call):
+            continue
+        if isinstance(node.func, ast.Name):
             fn = node.func.id
-            if fn == "add_argument":
-                continue
-            for arg in node.args:
-                if isinstance(arg, ast.Name) and "parser" in arg.id.lower():
-                    helper_names.append(fn)
-                    break
+        elif isinstance(node.func, ast.Attribute):
+            fn = node.func.attr
+        else:
+            continue
+        if fn == "add_argument":
+            continue
+        for arg in node.args:
+            if isinstance(arg, ast.Name) and "parser" in arg.id.lower():
+                names.append(fn)
+                break
+    return names
+
+
+def _build_module_alias_map(tree, script_dir: Path) -> dict[str, Path]:
+    """Map module aliases to their source file (e.g. ``import mc as smc`` → mc.py)."""
+    alias_map: dict[str, Path] = {}
+    search_roots = [script_dir, REPO_ROOT]
+    for node in ast.walk(tree):
+        # ``from hdrlib.sonar import mc as smc``
+        if isinstance(node, ast.ImportFrom) and node.module:
+            base_rel = node.module.replace(".", "/")
+            for alias in node.names:
+                name = alias.asname or alias.name
+                rel = f"{base_rel}/{alias.name}.py"
+                if node.level:
+                    base = script_dir
+                    for _ in range(node.level - 1):
+                        base = base.parent
+                    candidates = [base / rel]
+                else:
+                    candidates = [script_dir / rel, REPO_ROOT / rel]
+                for p in candidates:
+                    if p.exists():
+                        alias_map[name] = p
+                        break
+        # ``import hdrlib.sonar.mc as smc``
+        elif isinstance(node, ast.Import):
+            for alias in node.names:
+                name = alias.asname or alias.name.split(".")[-1]
+                rel = alias.name.replace(".", "/") + ".py"
+                for root in search_roots:
+                    p = root / rel
+                    if p.exists():
+                        alias_map[name] = p
+                        break
+    return alias_map
+
+
+def _find_helper_functions(script_tree, script_dir: Path) -> list[ast.AST]:
+    """Return AST FunctionDef nodes for all helpers that add argparse arguments.
+
+    Follows the call chain recursively: if add_mc_args calls add_mc_base_args,
+    both function bodies are returned so their add_argument() calls are captured.
+    Handles plain calls (add_mc_args(parser)) and attribute calls (smc.add_mc_args(parser)).
+    """
+    import_map   = _build_import_map(script_tree, script_dir)
+    module_aliases = _build_module_alias_map(script_tree, script_dir)
+
+    def _resolve(fn_name: str, call_node: ast.Call,
+                 imap: dict[str, Path], mmap: dict[str, Path]) -> "Path | None":
+        """Return the source file for a parser-passing call."""
+        func = call_node.func
+        if isinstance(func, ast.Attribute) and isinstance(func.value, ast.Name):
+            # smc.add_mc_args(parser) → look up the module alias
+            return mmap.get(func.value.id)
+        return imap.get(fn_name)
 
     subtrees: list[ast.AST] = []
-    seen_files: set[Path] = set()
-    for name in helper_names:
-        mod_path = import_map.get(name)
-        if not mod_path or mod_path in seen_files:
+    seen: set[tuple[Path, str]] = set()
+    # Seed the queue from the top-level script
+    queue: list[tuple[str, "Path | None", dict, dict]] = []
+    for node in ast.walk(script_tree):
+        if not isinstance(node, ast.Call):
             continue
-        seen_files.add(mod_path)
+        if isinstance(node.func, ast.Name):
+            fn = node.func.id
+        elif isinstance(node.func, ast.Attribute):
+            fn = node.func.attr
+        else:
+            continue
+        if fn == "add_argument":
+            continue
+        for arg in node.args:
+            if isinstance(arg, ast.Name) and "parser" in arg.id.lower():
+                queue.append((fn, _resolve(fn, node, import_map, module_aliases),
+                              import_map, module_aliases))
+                break
+
+    while queue:
+        name, mod_path, imap, mmap = queue.pop()
+        if not mod_path or (mod_path, name) in seen:
+            continue
+        seen.add((mod_path, name))
         try:
             mod_tree = ast.parse(mod_path.read_text())
-            for node in ast.walk(mod_tree):
-                if isinstance(node, ast.FunctionDef) and node.name == name:
-                    subtrees.append(node)
         except Exception:
-            pass
+            continue
+        mod_imap = _build_import_map(mod_tree, mod_path.parent)
+        mod_mmap = _build_module_alias_map(mod_tree, mod_path.parent)
+        for node in ast.walk(mod_tree):
+            if isinstance(node, ast.FunctionDef) and node.name == name:
+                subtrees.append(node)
+                for child in ast.walk(node):
+                    if not isinstance(child, ast.Call):
+                        continue
+                    if isinstance(child.func, ast.Name):
+                        cfn = child.func.id
+                    elif isinstance(child.func, ast.Attribute):
+                        cfn = child.func.attr
+                    else:
+                        continue
+                    if cfn == "add_argument":
+                        continue
+                    for arg in child.args:
+                        if isinstance(arg, ast.Name) and "parser" in arg.id.lower():
+                            queue.append((cfn,
+                                          _resolve(cfn, child, mod_imap, mod_mmap),
+                                          mod_imap, mod_mmap))
+                            break
     return subtrees
 
 
@@ -328,7 +448,7 @@ def _load_experiments(chapter_dir: Path) -> list[dict]:
     if not exp_dir.is_dir():
         return []
     result = []
-    for f in sorted(exp_dir.glob("*.yaml")):
+    for f in sorted(exp_dir.rglob("*.yaml")):
         try:
             data = yaml.safe_load(f.read_text()) or {}
             data["_yaml"] = str(f.relative_to(REPO_ROOT))
@@ -362,16 +482,29 @@ def _inject(chapter_md: Path, cards_html: str) -> bool:
 def _chapter_block(exps: list[dict], label: str) -> str:
     if not exps:
         return (
-            f'<div class="exp-chapter">\n'
-            f'<p class="exp-empty">No experiments registered yet.</p>\n'
-            f'</div>'
+            '<div class="exp-chapter">\n'
+            '<p class="exp-empty">No experiments registered yet.</p>\n'
+            '</div>'
         )
-    cards = "\n\n".join(_card(e) for e in exps)
-    return (
-        f'<div class="exp-chapter">\n'
-        f'<div class="exp-grid">\n{cards}\n</div>\n'
-        f'</div>'
-    )
+
+    # Group by the optional `group` field; ungrouped experiments go under "".
+    groups: dict[str, list[dict]] = {}
+    for exp in exps:
+        g = exp.get("group", "")
+        groups.setdefault(g, []).append(exp)
+
+    sections: list[str] = []
+    for group_name, group_exps in groups.items():
+        cards = "\n\n".join(_card(e) for e in group_exps)
+        grid  = f'<div class="exp-grid">\n{cards}\n</div>'
+        if group_name:
+            header = f'<h3 class="exp-group-heading">{group_name}</h3>'
+            sections.append(f'<div class="exp-group">\n{header}\n{grid}\n</div>')
+        else:
+            sections.append(f'<div class="exp-group">\n{grid}\n</div>')
+
+    inner = "\n\n".join(sections)
+    return f'<div class="exp-chapter">\n{inner}\n</div>'
 
 
 def main() -> None:

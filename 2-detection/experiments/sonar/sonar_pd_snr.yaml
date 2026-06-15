@@ -1,0 +1,21 @@
+name: sonar_pd_snr
+description: MC detection probability vs SNR for sonar two-array detectors (M-NMF-G/R/I, adaptive 2TYL/SCM variants)
+path: 2-detection/sonar_experiments/mc_simulations
+executable: 2-detection/sonar_experiments/mc_simulations/mc_pd_snr.py
+executable_command: .venv/bin/python
+tags:
+  - sonar
+  - detection
+  - monte-carlo
+  - pd-snr
+params:
+  m: 64
+  K: 256
+  n_trials_h0: 1000
+  n_trials_h1: 10000
+  n_snr: 150
+  snr_min: -25.0
+  snr_max: 5.0
+  pfa: 0.01
+  clutter: gaussian
+group: "Sonar · Detection"

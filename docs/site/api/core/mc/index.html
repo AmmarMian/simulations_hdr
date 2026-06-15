@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en" data-paper="warm" data-type="classic">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>mc — HDR Simulations</title>
+
+  <!-- Fonts: EB Garamond (classic) + IBM Plex Sans (labels) + IBM Plex Mono (code) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../../../assets/css/theme.css">
+
+  <script>var HDR_BASE = "../../..";</script>
+  <!-- Apply saved theme before paint to avoid flash -->
+  <script>
+    (function(){
+      var p = localStorage.getItem("hdr-paper");
+      if (p) document.documentElement.setAttribute("data-paper", p);
+      var s = parseFloat(localStorage.getItem("hdr-scale"));
+      if (!isNaN(s)) document.documentElement.style.setProperty("--reading-scale", s);
+    })();
+  </script>
+</head>
+<body>
+
+<!-- ░░░ Topbar ░░░ -->
+<header class="topbar">
+  <button class="toolbtn" id="btn-toc" aria-label="Navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+      <path d="M4 6h16M4 12h16M4 18h10"/>
+    </svg>
+  </button>
+
+  <a class="site-title" href="../../../">HDR Simulations</a>
+
+  <div class="topbar-sep"></div>
+
+  <nav class="topbar-nav" aria-label="Site sections">
+    
+      
+        <a class="topbar-link"
+           href="../../..">Home</a>
+      
+    
+      
+        <a class="topbar-link"
+           href="../../../experiments-overview/">Experiments</a>
+      
+    
+      
+        <a class="topbar-link active"
+           href="../../">API</a>
+      
+    
+      
+        <a class="topbar-link"
+           href="../../../kitchen-sink/">Kitchen Sink</a>
+      
+    
+  </nav>
+
+  <div class="topbar-spacer"></div>
+
+  <div class="search-wrap" id="search-wrap">
+    <div class="search-input-wrap" id="search-input-wrap" hidden>
+      <input type="search" id="search-input" placeholder="Search…" autocomplete="off" spellcheck="false">
+    </div>
+    <div class="search-results" id="search-results" hidden></div>
+    <button class="toolbtn" id="btn-search" aria-label="Search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/>
+      </svg>
+    </button>
+  </div>
+
+  <div style="display:inline-flex;align-items:center;gap:2px">
+    <button class="toolbtn" id="btn-az-sm" aria-label="Smaller text">
+      <span class="type-az-sm">A</span>
+    </button>
+    <button class="toolbtn" id="btn-az-lg" aria-label="Larger text">
+      <span class="type-az-lg">A</span>
+    </button>
+  </div>
+
+  <button class="toolbtn" id="btn-theme" aria-label="Toggle dark mode">
+    <svg id="ico-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>
+    </svg>
+    <svg id="ico-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" style="display:none">
+      <circle cx="12" cy="12" r="4"/>
+      <path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.4 1.4M17.6 17.6L19 19M19 5l-1.4 1.4M6.4 17.6L5 19"/>
+    </svg>
+  </button>
+</header>
+
+<div class="progress" id="progress"></div>
+
+<!-- ░░░ TOC drawer ░░░ -->
+<div class="toc-scrim" id="toc-scrim"></div>
+<div class="toc" id="toc" role="navigation" aria-label="Site navigation">
+  <p class="toc-site">HDR Simulations</p>
+  <p class="toc-sub">Companion code documentation for the HDR dissertation</p>
+
+  <nav>
+    
+      
+        <ul>
+          <li>
+            <a href="../../..">
+              Home
+            </a>
+          </li>
+        </ul>
+      
+    
+      
+        <p class="toc-section-label">Experiments</p>
+        <ul>
+          
+            
+              <li>
+                <a href="../../../experiments-overview/">
+                  Overview
+                </a>
+              </li>
+            
+          
+            
+              <li>
+                <a href="../../../chapters/1-context/">
+                  1 · Context
+                </a>
+              </li>
+            
+          
+            
+              <li>
+                <a href="../../../chapters/2-detection/">
+                  2 · Detection
+                </a>
+              </li>
+            
+          
+            
+              <li>
+                <a href="../../../chapters/3-machinelearning/">
+                  3 · Machine Learning
+                </a>
+              </li>
+            
+          
+            
+              <li>
+                <a href="../../../chapters/4-deeplearning/">
+                  4 · Deep Learning
+                </a>
+              </li>
+            
+          
+        </ul>
+      
+    
+      
+        <p class="toc-section-label">API</p>
+        <ul>
+          
+            
+              <li>
+                <a href="../../">
+                  Overview
+                </a>
+              </li>
+            
+          
+            
+              <li class="toc-subsection">
+                <span class="toc-subsection-label">hdrlib.core</span>
+                <ul>
+                  
+                    <li>
+                      <a href="../backend/">
+                        backend
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../detection/">
+                        detection
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../estimation/">
+                        estimation
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../manifolds/">
+                        manifolds
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../simulation/">
+                        simulation
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../exporter/">
+                        exporter
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="./" class="active">
+                        mc
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../plot_style/">
+                        plot_style
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../plotly_style/">
+                        plotly_style
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../hardware_ressources/">
+                        hardware_ressources
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../logging_config/">
+                        logging_config
+                      </a>
+                    </li>
+                  
+                </ul>
+              </li>
+            
+          
+            
+              <li class="toc-subsection">
+                <span class="toc-subsection-label">hdrlib.sar</span>
+                <ul>
+                  
+                    <li>
+                      <a href="../../sar/detectors/">
+                        detectors
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../../sar/estimation_kronecker/">
+                        estimation_kronecker
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../../sar/estimation_online/">
+                        estimation_online
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../../sar/detection_online/">
+                        detection_online
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../../sar/simulation/">
+                        simulation
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../../sar/mc/">
+                        mc
+                      </a>
+                    </li>
+                  
+                </ul>
+              </li>
+            
+          
+            
+              <li class="toc-subsection">
+                <span class="toc-subsection-label">hdrlib.sonar</span>
+                <ul>
+                  
+                    <li>
+                      <a href="../../sonar/detectors/">
+                        detectors
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../../sonar/estimation/">
+                        estimation
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../../sonar/simulation/">
+                        simulation
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../../sonar/mc/">
+                        mc
+                      </a>
+                    </li>
+                  
+                </ul>
+              </li>
+            
+          
+        </ul>
+      
+    
+      
+        <ul>
+          <li>
+            <a href="../../../kitchen-sink/">
+              Kitchen Sink
+            </a>
+          </li>
+        </ul>
+      
+    
+  </nav>
+</div>
+
+<!-- ░░░ Page ░░░ -->
+<div class="page-wrap">
+  <div class="page-body">
+
+    <main class="page-content" id="content">
+      <h1 id="hdrlibcoremc"><code>hdrlib.core.mc</code></h1>
+
+
+<div class="doc doc-object doc-module">
+
+
+
+<h2 id="hdrlib.core.mc" class="doc doc-heading">
+            <code>hdrlib.core.mc</code>
+
+
+</h2>
+
+    <div class="doc doc-contents first">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="hdrlib.core.mc.MCResultExporter" class="doc doc-heading">
+            <code>MCResultExporter</code>
+
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>Save MC stats with provenance sidecar and standalone plot script.</p>
+<p>Saves three files per result:
+  {stem}.npz       — stats arrays
+  {stem}.json      — provenance (git SHA, script path, args, timing)
+  {stem}_plot.py   — standalone plot script; supports --tikz for PGFPlots export</p>
+<p>Pass plot_template to override the default H0 convergence template (e.g. for H1 power curves).</p>
+
+
+
+
+
+
+
+
+              <details class="mkdocstrings-source">
+                <summary>Source code in <code>hdrlib/core/mc.py</code></summary>
+                <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">170</span>
+<span class="normal">171</span>
+<span class="normal">172</span>
+<span class="normal">173</span>
+<span class="normal">174</span>
+<span class="normal">175</span>
+<span class="normal">176</span>
+<span class="normal">177</span>
+<span class="normal">178</span>
+<span class="normal">179</span>
+<span class="normal">180</span>
+<span class="normal">181</span>
+<span class="normal">182</span>
+<span class="normal">183</span>
+<span class="normal">184</span>
+<span class="normal">185</span>
+<span class="normal">186</span>
+<span class="normal">187</span>
+<span class="normal">188</span>
+<span class="normal">189</span>
+<span class="normal">190</span>
+<span class="normal">191</span>
+<span class="normal">192</span>
+<span class="normal">193</span>
+<span class="normal">194</span>
+<span class="normal">195</span>
+<span class="normal">196</span>
+<span class="normal">197</span>
+<span class="normal">198</span>
+<span class="normal">199</span>
+<span class="normal">200</span>
+<span class="normal">201</span>
+<span class="normal">202</span>
+<span class="normal">203</span>
+<span class="normal">204</span>
+<span class="normal">205</span>
+<span class="normal">206</span>
+<span class="normal">207</span>
+<span class="normal">208</span>
+<span class="normal">209</span>
+<span class="normal">210</span>
+<span class="normal">211</span>
+<span class="normal">212</span>
+<span class="normal">213</span>
+<span class="normal">214</span>
+<span class="normal">215</span>
+<span class="normal">216</span>
+<span class="normal">217</span>
+<span class="normal">218</span>
+<span class="normal">219</span>
+<span class="normal">220</span>
+<span class="normal">221</span>
+<span class="normal">222</span>
+<span class="normal">223</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">MCResultExporter</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Save MC stats with provenance sidecar and standalone plot script.</span>
+
+<span class="sd">    Saves three files per result:</span>
+<span class="sd">      {stem}.npz       — stats arrays</span>
+<span class="sd">      {stem}.json      — provenance (git SHA, script path, args, timing)</span>
+<span class="sd">      {stem}_plot.py   — standalone plot script; supports --tikz for PGFPlots export</span>
+
+<span class="sd">    Pass plot_template to override the default H0 convergence template (e.g. for H1 power curves).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">export_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">stem_suffix</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+                 <span class="n">plot_template</span><span class="p">:</span> <span class="s2">&quot;Template | None&quot;</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_args</span> <span class="o">=</span> <span class="n">args</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_export_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">export_path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_stem_suffix</span> <span class="o">=</span> <span class="n">stem_suffix</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_plot_template</span> <span class="o">=</span> <span class="n">plot_template</span> <span class="k">if</span> <span class="n">plot_template</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">_MC_PLOT_TEMPLATE</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_provenance_base</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;git_sha&quot;</span><span class="p">:</span> <span class="n">_git_sha</span><span class="p">(),</span>
+            <span class="s2">&quot;script&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">resolve</span><span class="p">()),</span>
+            <span class="s2">&quot;args&quot;</span><span class="p">:</span> <span class="nb">vars</span><span class="p">(</span><span class="n">args</span><span class="p">),</span>
+        <span class="p">}</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">active</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_args</span><span class="p">,</span> <span class="s2">&quot;export&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stats</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">stem</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">elapsed</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Path | None&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">active</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_export_path</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">full_stem</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">stem</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_stem_suffix</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_export_path</span> <span class="o">/</span> <span class="n">full_stem</span>
+
+        <span class="n">np</span><span class="o">.</span><span class="n">savez</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">out</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;.npz&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">stats</span><span class="p">)</span>
+
+        <span class="n">provenance</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_provenance_base</span><span class="p">,</span> <span class="s2">&quot;elapsed_s&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">elapsed</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="n">title</span><span class="p">}</span>
+        <span class="k">if</span> <span class="s2">&quot;T&quot;</span> <span class="ow">in</span> <span class="n">stats</span><span class="p">:</span>
+            <span class="n">provenance</span><span class="o">.</span><span class="n">update</span><span class="p">({</span>
+                <span class="s2">&quot;T_min&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">stats</span><span class="p">[</span><span class="s2">&quot;T&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">()),</span>
+                <span class="s2">&quot;T_max&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">stats</span><span class="p">[</span><span class="s2">&quot;T&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()),</span>
+                <span class="s2">&quot;n_T&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">stats</span><span class="p">[</span><span class="s2">&quot;T&quot;</span><span class="p">])),</span>
+            <span class="p">})</span>
+        <span class="n">Path</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">out</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;.json&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">provenance</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+        <span class="n">Path</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">out</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;_plot.py&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_plot_template</span><span class="o">.</span><span class="n">substitute</span><span class="p">(</span><span class="n">stem_repr</span><span class="o">=</span><span class="nb">repr</span><span class="p">(</span><span class="n">full_stem</span><span class="p">),</span> <span class="n">title_repr</span><span class="o">=</span><span class="nb">repr</span><span class="p">(</span><span class="n">title</span><span class="p">))</span>
+        <span class="p">)</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Exported to </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_export_path</span><span class="si">}</span><span class="s2">/&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">full_stem</span><span class="si">}</span><span class="s2">.npz      — stats arrays&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">full_stem</span><span class="si">}</span><span class="s2">.json     — provenance sidecar&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">full_stem</span><span class="si">}</span><span class="s2">_plot.py  — standalone plot script&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">out</span>
+</code></pre></div></td></tr></table></div>
+              </details>
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="hdrlib.core.mc.add_mc_base_args" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">add_mc_base_args</span><span class="p">(</span><span class="n">parser</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Add common base MC simulation CLI arguments to <em>parser</em>.</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>hdrlib/core/mc.py</code></summary>
+              <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">230</span>
+<span class="normal">231</span>
+<span class="normal">232</span>
+<span class="normal">233</span>
+<span class="normal">234</span>
+<span class="normal">235</span>
+<span class="normal">236</span>
+<span class="normal">237</span>
+<span class="normal">238</span>
+<span class="normal">239</span>
+<span class="normal">240</span>
+<span class="normal">241</span>
+<span class="normal">242</span>
+<span class="normal">243</span>
+<span class="normal">244</span>
+<span class="normal">245</span>
+<span class="normal">246</span>
+<span class="normal">247</span>
+<span class="normal">248</span>
+<span class="normal">249</span>
+<span class="normal">250</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">add_mc_base_args</span><span class="p">(</span><span class="n">parser</span><span class="p">:</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Add common base MC simulation CLI arguments to *parser*.&quot;&quot;&quot;</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--n-trials&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">10000</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Number of Monte-Carlo trials (default 10000).&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--seed&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;RNG seed for data generation (default 42).&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;--backend&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;numpy&quot;</span><span class="p">,</span>
+        <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;numpy&quot;</span><span class="p">,</span> <span class="s2">&quot;torch-cpu&quot;</span><span class="p">,</span> <span class="s2">&quot;torch-cuda&quot;</span><span class="p">,</span> <span class="s2">&quot;torch-mps&quot;</span><span class="p">,</span>
+                 <span class="s2">&quot;jax-cpu&quot;</span><span class="p">,</span> <span class="s2">&quot;jax-cuda&quot;</span><span class="p">,</span> <span class="s2">&quot;jax-metal&quot;</span><span class="p">,</span> <span class="s2">&quot;cupy&quot;</span><span class="p">],</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Compute backend. numpy → multiprocessing.Pool (one worker per trial); &quot;</span>
+             <span class="s2">&quot;all others → trials stacked in leading batch dimension (default numpy).&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--n-workers&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Pool workers for numpy backend (default: os.cpu_count()).&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--export&quot;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="n">argparse</span><span class="o">.</span><span class="n">BooleanOptionalAction</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Save .npz results + provenance sidecar + plot script (default: True).&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--storage-path&quot;</span><span class="p">,</span> <span class="s2">&quot;--storage_path&quot;</span><span class="p">,</span> <span class="s2">&quot;--export-path&quot;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;export_path&quot;</span><span class="p">,</span>
+        <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;./exports&quot;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Directory for exported results; --storage-path is the qanat alias (default: ./exports).&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--show-interactive&quot;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Display figures interactively at the end of the simulation.&quot;</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="hdrlib.core.mc.chunk_trial_ranges" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">chunk_trial_ranges</span><span class="p">(</span><span class="n">n_trials</span><span class="p">,</span> <span class="n">chunk_trials</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Return (c_starts, chunk_size, n_chunks) for iterating over trial chunks.</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>hdrlib/core/mc.py</code></summary>
+              <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">chunk_trial_ranges</span><span class="p">(</span>
+    <span class="n">n_trials</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">chunk_trials</span><span class="p">:</span> <span class="s2">&quot;int | None&quot;</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;tuple[list[int], int, int]&quot;</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return (c_starts, chunk_size, n_chunks) for iterating over trial chunks.&quot;&quot;&quot;</span>
+    <span class="n">chunk</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">chunk_trials</span> <span class="k">if</span> <span class="n">chunk_trials</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">n_trials</span><span class="p">,</span> <span class="n">n_trials</span><span class="p">)</span>
+    <span class="n">c_starts</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_trials</span><span class="p">,</span> <span class="n">chunk</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">c_starts</span><span class="p">,</span> <span class="n">chunk</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">c_starts</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="hdrlib.core.mc.init_logging" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">init_logging</span><span class="p">(</span><span class="n">backend</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Configure root logging and emit the GPU disclaimer when needed.</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>hdrlib/core/mc.py</code></summary>
+              <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">265</span>
+<span class="normal">266</span>
+<span class="normal">267</span>
+<span class="normal">268</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">init_logging</span><span class="p">(</span><span class="n">backend</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configure root logging and emit the GPU disclaimer when needed.&quot;&quot;&quot;</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%(levelname)s</span><span class="s2"> </span><span class="si">%(message)s</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">warn_gpu_not_optimized</span><span class="p">(</span><span class="n">backend</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="hdrlib.core.mc.make_mc_parser" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">make_mc_parser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Return an ArgumentParser with the standard MC docstring formatter.</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>hdrlib/core/mc.py</code></summary>
+              <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">257</span>
+<span class="normal">258</span>
+<span class="normal">259</span>
+<span class="normal">260</span>
+<span class="normal">261</span>
+<span class="normal">262</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">make_mc_parser</span><span class="p">(</span><span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return an ArgumentParser with the standard MC docstring formatter.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">,</span>
+        <span class="n">formatter_class</span><span class="o">=</span><span class="n">argparse</span><span class="o">.</span><span class="n">RawDescriptionHelpFormatter</span><span class="p">,</span>
+    <span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="hdrlib.core.mc.maybe_empty_cache" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">maybe_empty_cache</span><span class="p">(</span><span class="n">backend</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Release PyTorch's cached (but unused) GPU memory after each T-loop step.</p>
+<p>PyTorch's caching allocator retains freed tensors to amortise system calls.
+Across many iterations of a T-loop each allocating hundreds of MB of
+intermediates this cache can exhaust GPU memory even though live tensors are
+small.  Calling this after every offline.compute() prevents that build-up.
+No-op for non-CUDA backends.</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>hdrlib/core/mc.py</code></summary>
+              <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">50</span>
+<span class="normal">51</span>
+<span class="normal">52</span>
+<span class="normal">53</span>
+<span class="normal">54</span>
+<span class="normal">55</span>
+<span class="normal">56</span>
+<span class="normal">57</span>
+<span class="normal">58</span>
+<span class="normal">59</span>
+<span class="normal">60</span>
+<span class="normal">61</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">maybe_empty_cache</span><span class="p">(</span><span class="n">backend</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Release PyTorch&#39;s cached (but unused) GPU memory after each T-loop step.</span>
+
+<span class="sd">    PyTorch&#39;s caching allocator retains freed tensors to amortise system calls.</span>
+<span class="sd">    Across many iterations of a T-loop each allocating hundreds of MB of</span>
+<span class="sd">    intermediates this cache can exhaust GPU memory even though live tensors are</span>
+<span class="sd">    small.  Calling this after every offline.compute() prevents that build-up.</span>
+<span class="sd">    No-op for non-CUDA backends.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="s2">&quot;cuda&quot;</span> <span class="ow">in</span> <span class="n">backend</span><span class="p">:</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">empty_cache</span><span class="p">()</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="hdrlib.core.mc.timed_run" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">timed_run</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">pool_fn</span><span class="p">,</span> <span class="n">batched_fn</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Dispatch to pool or batched runner; return (result, elapsed_seconds).</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>hdrlib/core/mc.py</code></summary>
+              <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">271</span>
+<span class="normal">272</span>
+<span class="normal">273</span>
+<span class="normal">274</span>
+<span class="normal">275</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">timed_run</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">pool_fn</span><span class="p">,</span> <span class="n">batched_fn</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Dispatch to pool or batched runner; return (result, elapsed_seconds).&quot;&quot;&quot;</span>
+    <span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">pool_fn</span><span class="p">()</span> <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">backend</span> <span class="o">==</span> <span class="s2">&quot;numpy&quot;</span> <span class="k">else</span> <span class="n">batched_fn</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">result</span><span class="p">,</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">t0</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="hdrlib.core.mc.warn_gpu_not_optimized" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">warn_gpu_not_optimized</span><span class="p">(</span><span class="n">backend</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Warn when a GPU/accelerator backend is selected.</p>
+<p>The batched GPU path is functionally correct but not memory- or
+kernel-optimized: the MM loop iterates sequentially over T checkpoints
+rather than exploiting GPU parallelism across T, so utilization will be
+low.  For large n_trials, --backend numpy + Pool is often faster.</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>hdrlib/core/mc.py</code></summary>
+              <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span>
+<span class="normal">38</span>
+<span class="normal">39</span>
+<span class="normal">40</span>
+<span class="normal">41</span>
+<span class="normal">42</span>
+<span class="normal">43</span>
+<span class="normal">44</span>
+<span class="normal">45</span>
+<span class="normal">46</span>
+<span class="normal">47</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">warn_gpu_not_optimized</span><span class="p">(</span><span class="n">backend</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Warn when a GPU/accelerator backend is selected.</span>
+
+<span class="sd">    The batched GPU path is functionally correct but not memory- or</span>
+<span class="sd">    kernel-optimized: the MM loop iterates sequentially over T checkpoints</span>
+<span class="sd">    rather than exploiting GPU parallelism across T, so utilization will be</span>
+<span class="sd">    low.  For large n_trials, --backend numpy + Pool is often faster.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">backend</span> <span class="o">!=</span> <span class="s2">&quot;numpy&quot;</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Backend &#39;</span><span class="si">{</span><span class="n">backend</span><span class="si">}</span><span class="s2">&#39;: GPU/accelerator path is NOT optimized for these MC &quot;</span>
+            <span class="s2">&quot;simulations. Operations run sequentially per T checkpoint; GPU utilization &quot;</span>
+            <span class="s2">&quot;will be low. For large n_trials, --backend numpy (Pool) may be faster.&quot;</span>
+        <span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+      
+
+      
+      <nav class="page-nav" aria-label="Page navigation">
+        
+        <a href="../exporter/">← exporter</a>
+        
+        
+        <a href="../plot_style/">plot_style →</a>
+        
+      </nav>
+      
+    </main>
+
+    
+    <aside class="page-aside">
+      <nav class="aside-toc" aria-label="On this page">
+        <p class="aside-toc-label">On this page</p>
+        <ul>
+          
+            <li>
+              <a href="#hdrlibcoremc">hdrlib.core.mc</a>
+              
+                <ul>
+                  
+                    <li><a href="#hdrlib.core.mc">mc</a></li>
+                  
+                </ul>
+              
+            </li>
+          
+        </ul>
+      </nav>
+    </aside>
+    
+
+  </div>
+</div>
+
+<script src="../../../assets/js/theme.js"></script>
+
+<script>
+  window.MathJax = {
+    tex: {
+      inlineMath:  [["\\(", "\\)"]],
+      displayMath: [["\\[", "\\]"]],
+      processEscapes: true,
+      tags: "ams"
+    },
+    options: { ignoreHtmlClass: ".*", processHtmlClass: "arithmatex" }
+  };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js"
+        integrity="sha384-Wuix6BuhrWbjDBs24bXrjf4ZQ5aFeFWBuKkFekO2t8xFU0iNaLQfp2K6/1Nxveei"
+        crossorigin="anonymous" async></script>
+</body>
+</html>

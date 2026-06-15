@@ -1,0 +1,22 @@
+name: sonar_pd_angle
+description: MC PD vs (theta1, theta2) angle map for sonar two-array detectors at fixed SNR
+path: 2-detection/sonar_experiments/mc_simulations
+executable: 2-detection/sonar_experiments/mc_simulations/mc_pd_angle.py
+executable_command: .venv/bin/python
+tags:
+  - sonar
+  - detection
+  - monte-carlo
+  - angle-map
+params:
+  m: 64
+  K: 256
+  n_trials: 1000
+  n_trials_h0: 1000
+  n_theta: 51
+  theta_min: -75.0
+  theta_max: 75.0
+  snr_db: -12.0
+  pfa: 0.01
+  clutter: gaussian
+group: "Sonar · Detection"

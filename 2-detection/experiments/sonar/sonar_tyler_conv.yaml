@@ -1,0 +1,17 @@
+name: sonar_tyler_conv
+description: 2TYL fixed-point convergence — relative Frobenius deviation vs iteration
+path: 2-detection/sonar_experiments/mc_simulations
+executable: 2-detection/sonar_experiments/mc_simulations/tyler_convergence.py
+executable_command: .venv/bin/python
+tags:
+  - sonar
+  - estimation
+  - monte-carlo
+  - convergence
+params:
+  m: 64
+  K: 256
+  n_trials: 100
+  iter_max: 500
+  clutter: gaussian
+group: "Sonar · Convergence"

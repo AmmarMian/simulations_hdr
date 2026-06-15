@@ -3,7 +3,6 @@
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 sys.path.insert(0, str(Path(__file__).parent))
 
 import argparse
@@ -20,9 +19,9 @@ from utils import (
     DetectionMapExporter,
     plot_glrt_map,
 )
-from src.backend import get_data_on_device, reset_peak_memory, peak_memory_bytes, oom_errors
-from src.hardware_ressources import ImageCPURessourceManager, ImageGPURessourceManager
-from src.logging_config import setup_logging, log_arguments
+from hdrlib.core.backend import get_data_on_device, reset_peak_memory, peak_memory_bytes
+from hdrlib.core.hardware_ressources import ImageCPURessourceManager, ImageGPURessourceManager
+from hdrlib.core.logging_config import setup_logging, log_arguments
 
 
 if __name__ == "__main__":

@@ -1,0 +1,24 @@
+name: sar_det_on_gauss
+description: Online Gaussian GLRT change detection on real SAR data
+path: 2-detection/sar_experiments/compute_detection_real_data
+executable: 2-detection/sar_experiments/compute_detection_real_data/online_gaussian.py
+executable_command: .venv/bin/python
+tags:
+  - detection
+  - gaussian
+  - online
+  - real-data
+  - SAR
+actions:
+  - plot:
+      name: plot
+      executable: 2-detection/sar_experiments/action_plot.py
+      executable_command: .venv/bin/python
+      description: Plot detection maps found in the run directory
+
+  - add_to_docs:
+      name: add_to_docs
+      executable: 2-detection/sar_experiments/compute_detection_real_data/action_add_to_docs.py
+      executable_command: .venv/bin/python
+      description: Publish detection map figure to the docs
+group: "SAR · Real Data"

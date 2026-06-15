@@ -176,18 +176,72 @@
           
             
               <li class="toc-subsection">
-                <span class="toc-subsection-label">Shared</span>
+                <span class="toc-subsection-label">hdrlib.core</span>
                 <ul>
                   
                     <li>
-                      <a href="../../api/plot_style/">
+                      <a href="../../api/core/backend/">
+                        backend
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../../api/core/detection/">
+                        detection
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../../api/core/estimation/">
+                        estimation
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../../api/core/manifolds/">
+                        manifolds
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../../api/core/simulation/">
+                        simulation
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../../api/core/exporter/">
+                        exporter
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../../api/core/mc/">
+                        mc
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../../api/core/plot_style/">
                         plot_style
                       </a>
                     </li>
                   
                     <li>
-                      <a href="../../api/plotly_style/">
+                      <a href="../../api/core/plotly_style/">
                         plotly_style
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../../api/core/hardware_ressources/">
+                        hardware_ressources
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../../api/core/logging_config/">
+                        logging_config
                       </a>
                     </li>
                   
@@ -197,54 +251,75 @@
           
             
               <li class="toc-subsection">
-                <span class="toc-subsection-label">2 · Detection</span>
+                <span class="toc-subsection-label">hdrlib.sar</span>
                 <ul>
                   
                     <li>
-                      <a href="../../api/backend/">
-                        backend
+                      <a href="../../api/sar/detectors/">
+                        detectors
                       </a>
                     </li>
                   
                     <li>
-                      <a href="../../api/estimation/">
-                        estimation
-                      </a>
-                    </li>
-                  
-                    <li>
-                      <a href="../../api/estimation_kronecker/">
+                      <a href="../../api/sar/estimation_kronecker/">
                         estimation_kronecker
                       </a>
                     </li>
                   
                     <li>
-                      <a href="../../api/estimation_online/">
+                      <a href="../../api/sar/estimation_online/">
                         estimation_online
                       </a>
                     </li>
                   
                     <li>
-                      <a href="../../api/manifolds/">
-                        manifolds
+                      <a href="../../api/sar/detection_online/">
+                        detection_online
                       </a>
                     </li>
                   
                     <li>
-                      <a href="../../api/detection/">
-                        detection
-                      </a>
-                    </li>
-                  
-                    <li>
-                      <a href="../../api/simulation/">
+                      <a href="../../api/sar/simulation/">
                         simulation
                       </a>
                     </li>
                   
                     <li>
-                      <a href="../../api/exporter/">
-                        exporter
+                      <a href="../../api/sar/mc/">
+                        mc
+                      </a>
+                    </li>
+                  
+                </ul>
+              </li>
+            
+          
+            
+              <li class="toc-subsection">
+                <span class="toc-subsection-label">hdrlib.sonar</span>
+                <ul>
+                  
+                    <li>
+                      <a href="../../api/sonar/detectors/">
+                        detectors
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../../api/sonar/estimation/">
+                        estimation
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../../api/sonar/simulation/">
+                        simulation
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../../api/sonar/mc/">
+                        mc
                       </a>
                     </li>
                   
@@ -291,16 +366,28 @@
 </thead>
 <tbody>
 <tr>
+<td><code>--sigma2-seed</code></td>
+<td>int</td>
+<td><code>1</code></td>
+<td>Seed for Sigma_2 (H1 distribution, default 1 — different from --sigma-seed).</td>
+</tr>
+<tr>
+<td><code>--change-fraction</code></td>
+<td>float</td>
+<td><code>0.5</code></td>
+<td>Change point as a fraction of T, so n_change_dates = max(2, int(T * change_fraction)). Default 0.5 — change at midpoint, ensuring equal pre/post evidence at every T.</td>
+</tr>
+<tr>
+<td><code>--pfa</code></td>
+<td>float</td>
+<td><code>0.001</code></td>
+<td>Target false alarm probability for power estimation (default 1e-3). Reliable threshold estimation requires at least 10/PFA H0 trials.</td>
+</tr>
+<tr>
 <td><code>--n-features</code></td>
 <td>int</td>
 <td><code>8</code></td>
 <td>Feature dimension p; n_samples is fixed to 2*p+1 (default 8).</td>
-</tr>
-<tr>
-<td><code>--n-trials</code></td>
-<td>int</td>
-<td><code>10000</code></td>
-<td>Number of Monte-Carlo trials (default 10000).</td>
 </tr>
 <tr>
 <td><code>--T-max</code></td>
@@ -321,16 +408,22 @@
 <td>Number of T values in log scale (default 30).</td>
 </tr>
 <tr>
-<td><code>--seed</code></td>
-<td>int</td>
-<td><code>42</code></td>
-<td>RNG seed for data generation (default 42).</td>
-</tr>
-<tr>
 <td><code>--sigma-seed</code></td>
 <td>int</td>
 <td><code>0</code></td>
 <td>Seed for Sigma_true generation, independent from --seed (default 0).</td>
+</tr>
+<tr>
+<td><code>--n-trials</code></td>
+<td>int</td>
+<td><code>10000</code></td>
+<td>Number of Monte-Carlo trials (default 10000).</td>
+</tr>
+<tr>
+<td><code>--seed</code></td>
+<td>int</td>
+<td><code>42</code></td>
+<td>RNG seed for data generation (default 42).</td>
 </tr>
 <tr>
 <td><code>--backend</code></td>
@@ -367,13 +460,16 @@
 <h2 id="results">Results</h2>
 <p><span class="marginnote">
   <span class="mn-label">Parameters</span>
+  <code>--sigma2-seed</code> <span class='mn-default'>1</span><br>
+  <code>--change-fraction</code> <span class='mn-default'>0.5</span><br>
+  <code>--pfa</code> <span class='mn-default'>0.001</span><br>
   <code>--n-features</code> <span class='mn-default'>8</span><br>
-  <code>--n-trials</code> <span class='mn-default'>100</span><br>
   <code>--T-max</code> <span class='mn-default'>1000</span><br>
   <code>--T-min</code> <span class='mn-default'>5</span><br>
   <code>--n-T</code> <span class='mn-default'>30</span><br>
-  <code>--seed</code> <span class='mn-default'>42</span><br>
   <code>--sigma-seed</code> <span class='mn-default'>0</span><br>
+  <code>--n-trials</code> <span class='mn-default'>100</span><br>
+  <code>--seed</code> <span class='mn-default'>42</span><br>
   <code>--backend</code> <span class='mn-default'>numpy</span><br>
   <code>--n-workers</code><br>
   <code>--export</code> <span class='mn-default'>True</span><br>
@@ -383,13 +479,16 @@
 
 <p><span class="marginnote">
   <span class="mn-label">Run · n100</span>
+  <code>--sigma2-seed</code> <span class='mn-default'>1</span><br>
+  <code>--change-fraction</code> <span class='mn-default'>0.5</span><br>
+  <code>--pfa</code> <span class='mn-default'>0.001</span><br>
   <code>--n-features</code> <span class='mn-default'>8</span><br>
-  <code>--n-trials</code> <span class='mn-default'>100</span><br>
   <code>--T-max</code> <span class='mn-default'>200</span><br>
   <code>--T-min</code> <span class='mn-default'>5</span><br>
   <code>--n-T</code> <span class='mn-default'>30</span><br>
-  <code>--seed</code> <span class='mn-default'>42</span><br>
   <code>--sigma-seed</code> <span class='mn-default'>0</span><br>
+  <code>--n-trials</code> <span class='mn-default'>100</span><br>
+  <code>--seed</code> <span class='mn-default'>42</span><br>
   <code>--backend</code> <span class='mn-default'>numpy</span><br>
   <code>--n-workers</code><br>
   <code>--export</code> <span class='mn-default'>True</span><br>
@@ -399,13 +498,16 @@
 
 <p><span class="marginnote">
   <span class="mn-label">Run · n1000</span>
+  <code>--sigma2-seed</code> <span class='mn-default'>1</span><br>
+  <code>--change-fraction</code> <span class='mn-default'>0.5</span><br>
+  <code>--pfa</code> <span class='mn-default'>0.001</span><br>
   <code>--n-features</code> <span class='mn-default'>8</span><br>
-  <code>--n-trials</code> <span class='mn-default'>100</span><br>
   <code>--T-max</code> <span class='mn-default'>1000</span><br>
   <code>--T-min</code> <span class='mn-default'>5</span><br>
   <code>--n-T</code> <span class='mn-default'>30</span><br>
-  <code>--seed</code> <span class='mn-default'>42</span><br>
   <code>--sigma-seed</code> <span class='mn-default'>0</span><br>
+  <code>--n-trials</code> <span class='mn-default'>100</span><br>
+  <code>--seed</code> <span class='mn-default'>42</span><br>
   <code>--backend</code> <span class='mn-default'>numpy</span><br>
   <code>--n-workers</code><br>
   <code>--export</code> <span class='mn-default'>True</span><br>
@@ -414,7 +516,7 @@
 <div class="plotly-wrap" data-src="../../assets/data/sar_mc_gauss_h1.n1000.json" data-title="sar_mc_gauss_h1 — n1000"></div>
 
 <h2 id="config">Config</h2>
-<p><code>2-detection/experiments/sar_mc_gauss_h1.yaml</code></p>
+<p><code>2-detection/experiments/sar/sar_mc_gauss_h1.yaml</code></p>
 
       
       <p class="page-meta">Last updated June 12, 2026</p>

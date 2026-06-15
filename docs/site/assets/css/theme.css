@@ -1380,44 +1380,31 @@ h4:hover .heading-anchor { opacity: 1; }
 
 /* ── Prev / Next page navigation ──────────────────────────── */
 .page-nav {
-  display: flex; gap: 1em; margin-top: 3.5em;
-  padding-top: 1.5em; border-top: 1px solid var(--rule);
-}
-.page-nav-prev,
-.page-nav-next {
-  flex: 1; display: flex; flex-direction: column; gap: .2em;
-  padding: .9em 1.1em; border-radius: 8px;
-  border: 1px solid var(--rule); background: var(--panel);
-  text-decoration: none; transition: border-color .15s, background .15s;
-}
-.page-nav-prev { align-items: flex-start; }
-.page-nav-next { align-items: flex-end; margin-left: auto; }
-.page-nav-prev:hover,
-.page-nav-next:hover { border-color: var(--accent); background: var(--panel-2); }
-.page-nav-dir {
-  font-family: var(--font-label); font-size: 11px; letter-spacing: .06em;
+  display: flex; justify-content: space-between; margin-top: 3.5em;
+  padding-top: 1.2em; border-top: 1px solid var(--rule);
+  font-family: var(--font-label); font-size: 12px; letter-spacing: .04em;
   text-transform: uppercase; color: var(--muted);
 }
-.page-nav-title {
-  font-size: calc(var(--body-size) * .9 * var(--reading-scale));
-  color: var(--ink-2); font-weight: 500;
+.page-nav a {
+  color: var(--ink-2); background-image: none !important;
+  letter-spacing: .04em; font-weight: 500;
 }
+.page-nav a:hover { color: var(--accent); }
 
 /* ── Last-modified date ────────────────────────────────────── */
 .page-meta {
-  margin-top: 2.5em; padding-top: 1em;
+  margin-top: 1.2em;
   font-family: var(--font-label); font-size: 12px; letter-spacing: .04em;
-  color: var(--muted); border-top: 1px solid var(--rule);
+  color: var(--muted);
 }
 
 /* ── 404 page ──────────────────────────────────────────────── */
 .not-found-links {
-  display: flex; gap: 1em; margin-top: 2em; flex-wrap: wrap;
+  margin-top: 1.5em;
+  font-family: var(--font-label); font-size: 14px; letter-spacing: .03em;
+  color: var(--muted);
 }
 .not-found-links a {
-  padding: .6em 1.2em; border-radius: 6px;
-  border: 1px solid var(--rule); background: var(--panel);
-  color: var(--ink-2); text-decoration: none; font-weight: 500;
-  transition: border-color .15s, background .15s;
+  color: var(--ink-2); background-image: none !important; font-weight: 500;
 }
-.not-found-links a:hover { border-color: var(--accent); background: var(--panel-2); }
+.not-found-links a:hover { color: var(--accent); }

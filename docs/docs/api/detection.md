@@ -1,3 +1,0 @@
-# `detection`
-
-::: src.detection

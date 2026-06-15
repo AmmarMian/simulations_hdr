@@ -12,32 +12,19 @@ Backend selection:
 from __future__ import annotations
 
 import logging
-import sys
 from multiprocessing import Pool
 from pathlib import Path
 
 import numpy as np
 from rich.progress import BarColumn, Progress, TextColumn, TimeElapsedColumn
 
-_HERE = Path(__file__).parent
-_ROOT = str(_HERE.parent.parent)
-for _p in (_ROOT, str(_HERE)):
-    if _p not in sys.path:
-        sys.path.insert(0, _p)
 
-from src.backend import get_data_on_device, to_numpy
-from src.simulation import T_vec_logspace, generate_dcg_data, make_sigma_true
-from sar_experiments.detection_offline import DeterministicCompoundGaussianGLRT
-from src.detection_online import OnlineDCGDetector
-from utils import (
-    MCResultExporter,
-    add_mc_args,
-    finish_h0,
-    init_logging,
-    make_mc_parser,
-    online_single_pass,
-    timed_run,
-)
+from hdrlib.core.backend import get_data_on_device, to_numpy
+from hdrlib.core.simulation import T_vec_logspace, generate_dcg_data, make_sigma_true
+from hdrlib.sar.detectors import DeterministicCompoundGaussianGLRT
+from hdrlib.sar.detection_online import OnlineDCGDetector
+from hdrlib.core.mc import MCResultExporter, init_logging, make_mc_parser, timed_run
+from hdrlib.sar.mc import add_mc_args, finish_h0, online_single_pass
 
 logger = logging.getLogger(__name__)
 

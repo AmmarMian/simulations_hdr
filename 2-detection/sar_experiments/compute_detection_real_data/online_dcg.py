@@ -5,7 +5,6 @@
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 sys.path.insert(0, str(Path(__file__).parent))
 
 import argparse
@@ -13,13 +12,13 @@ import logging
 import matplotlib.pyplot as plt
 from time import perf_counter
 
-from src.detection_online import OnlineDCGDetector
-from src.backend import get_data_on_device, peak_memory_bytes, reset_peak_memory
-from src.hardware_ressources import (
+from hdrlib.sar.detection_online import OnlineDCGDetector
+from hdrlib.core.backend import get_data_on_device, peak_memory_bytes, reset_peak_memory
+from hdrlib.core.hardware_ressources import (
     OnlineImageResourceManager,
     OnlineImageGPURessourceManager,
 )
-from src.logging_config import setup_logging, log_arguments
+from hdrlib.core.logging_config import setup_logging, log_arguments
 from utils import (
     add_common_args,
     setup_run,

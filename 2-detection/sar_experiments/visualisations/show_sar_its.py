@@ -8,7 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from utils import plot_pauli
+from hdrlib.sar.plotting import plot_pauli
 
 
 if __name__ == "__main__":

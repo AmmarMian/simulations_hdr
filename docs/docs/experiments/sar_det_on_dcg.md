@@ -36,4 +36,4 @@ uv run python 2-detection/sar_experiments/compute_detection_real_data/online_dcg
 
 ## Config
 
-`2-detection/experiments/sar_det_on_dcg.yaml`
+`2-detection/experiments/sar/sar_det_on_dcg.yaml`

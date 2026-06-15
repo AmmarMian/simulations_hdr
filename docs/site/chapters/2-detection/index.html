@@ -176,18 +176,72 @@
           
             
               <li class="toc-subsection">
-                <span class="toc-subsection-label">Shared</span>
+                <span class="toc-subsection-label">hdrlib.core</span>
                 <ul>
                   
                     <li>
-                      <a href="../../api/plot_style/">
+                      <a href="../../api/core/backend/">
+                        backend
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../../api/core/detection/">
+                        detection
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../../api/core/estimation/">
+                        estimation
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../../api/core/manifolds/">
+                        manifolds
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../../api/core/simulation/">
+                        simulation
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../../api/core/exporter/">
+                        exporter
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../../api/core/mc/">
+                        mc
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../../api/core/plot_style/">
                         plot_style
                       </a>
                     </li>
                   
                     <li>
-                      <a href="../../api/plotly_style/">
+                      <a href="../../api/core/plotly_style/">
                         plotly_style
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../../api/core/hardware_ressources/">
+                        hardware_ressources
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../../api/core/logging_config/">
+                        logging_config
                       </a>
                     </li>
                   
@@ -197,54 +251,75 @@
           
             
               <li class="toc-subsection">
-                <span class="toc-subsection-label">2 · Detection</span>
+                <span class="toc-subsection-label">hdrlib.sar</span>
                 <ul>
                   
                     <li>
-                      <a href="../../api/backend/">
-                        backend
+                      <a href="../../api/sar/detectors/">
+                        detectors
                       </a>
                     </li>
                   
                     <li>
-                      <a href="../../api/estimation/">
-                        estimation
-                      </a>
-                    </li>
-                  
-                    <li>
-                      <a href="../../api/estimation_kronecker/">
+                      <a href="../../api/sar/estimation_kronecker/">
                         estimation_kronecker
                       </a>
                     </li>
                   
                     <li>
-                      <a href="../../api/estimation_online/">
+                      <a href="../../api/sar/estimation_online/">
                         estimation_online
                       </a>
                     </li>
                   
                     <li>
-                      <a href="../../api/manifolds/">
-                        manifolds
+                      <a href="../../api/sar/detection_online/">
+                        detection_online
                       </a>
                     </li>
                   
                     <li>
-                      <a href="../../api/detection/">
-                        detection
-                      </a>
-                    </li>
-                  
-                    <li>
-                      <a href="../../api/simulation/">
+                      <a href="../../api/sar/simulation/">
                         simulation
                       </a>
                     </li>
                   
                     <li>
-                      <a href="../../api/exporter/">
-                        exporter
+                      <a href="../../api/sar/mc/">
+                        mc
+                      </a>
+                    </li>
+                  
+                </ul>
+              </li>
+            
+          
+            
+              <li class="toc-subsection">
+                <span class="toc-subsection-label">hdrlib.sonar</span>
+                <ul>
+                  
+                    <li>
+                      <a href="../../api/sonar/detectors/">
+                        detectors
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../../api/sonar/estimation/">
+                        estimation
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../../api/sonar/simulation/">
+                        simulation
+                      </a>
+                    </li>
+                  
+                    <li>
+                      <a href="../../api/sonar/mc/">
+                        mc
                       </a>
                     </li>
                   
@@ -275,52 +350,11 @@
     <main class="page-content" id="content">
       <h1 id="chapter-2-detection">Chapter 2 · Detection</h1>
 <p>Change-detection in SAR and sonar imagery using robust covariance estimators under Gaussian, DCG, and Kronecker-structured models.</p>
-<h2 id="library-src">Library (<code>src/</code>)</h2>
-<table>
-<thead>
-<tr>
-<th>Module</th>
-<th>Role</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><a href="../../api/backend/"><code>backend</code></a></td>
-<td>Multi-backend abstraction — numpy / torch / cupy / jax</td>
-</tr>
-<tr>
-<td><a href="../../api/estimation/"><code>estimation</code></a></td>
-<td>SCM, Tyler, Student-t, Huber, scaled-Gaussian natural gradient</td>
-</tr>
-<tr>
-<td><a href="../../api/estimation_kronecker/"><code>estimation_kronecker</code></a></td>
-<td>Kronecker MM algorithm (H0 and H1)</td>
-</tr>
-<tr>
-<td><a href="../../api/estimation_online/"><code>estimation_online</code></a></td>
-<td>Online estimators for scaled Gaussian and Kronecker models</td>
-</tr>
-<tr>
-<td><a href="../../api/manifolds/"><code>manifolds</code></a></td>
-<td>Riemannian geometry — HPD, SHPD, product manifolds</td>
-</tr>
-<tr>
-<td><a href="../../api/detection/"><code>detection</code></a></td>
-<td><code>Detector</code> / <code>OnlineDetector</code> ABCs</td>
-</tr>
-<tr>
-<td><a href="../../api/simulation/"><code>simulation</code></a></td>
-<td>Synthetic data generation — Gaussian / DCG / Kronecker, H0 / H1</td>
-</tr>
-<tr>
-<td><a href="../../api/exporter/"><code>exporter</code></a></td>
-<td>Result persistence (.npy + .json provenance + standalone _plot.py)</td>
-</tr>
-</tbody>
-</table>
 <h2 id="experiments">Experiments</h2>
 <!-- experiments-start -->
 <div class="exp-chapter">
+<div class="exp-group">
+<h3 class="exp-group-heading">SAR · Real Data</h3>
 <div class="exp-grid">
 <div class="exp-card">
 <div class="exp-card-head">
@@ -387,7 +421,12 @@
 <div class="exp-run"><code>uv run python 2-detection/sar_experiments/compute_detection_real_data/online_kronecker.py</code></div>
 <a class="exp-details-link" href="../../experiments/sar_det_on_kron/">Parameters &amp; details →</a>
 </div>
+</div>
+</div>
 
+<div class="exp-group">
+<h3 class="exp-group-heading">SAR · Monte Carlo</h3>
+<div class="exp-grid">
 <div class="exp-card">
 <div class="exp-card-head">
 <div class="exp-name">sar_mc_dcg_h0</div>
@@ -455,6 +494,61 @@
 </div>
 </div>
 </div>
+
+<div class="exp-group">
+<h3 class="exp-group-heading">Sonar · Detection</h3>
+<div class="exp-grid">
+<div class="exp-card">
+<div class="exp-card-head">
+<div class="exp-name">sonar_pd_angle</div>
+
+</div>
+<div class="exp-desc">MC PD vs (theta1, theta2) angle map for sonar two-array detectors at fixed SNR</div>
+<div class="exp-tags"><span class="exp-tag">sonar</span><span class="exp-tag">detection</span><span class="exp-tag">monte-carlo</span><span class="exp-tag">angle-map</span></div>
+<div class="exp-run"><code>uv run python 2-detection/sonar_experiments/mc_simulations/mc_pd_angle.py</code></div>
+<a class="exp-details-link" href="../../experiments/sonar_pd_angle/">Parameters &amp; details →</a>
+</div>
+
+<div class="exp-card">
+<div class="exp-card-head">
+<div class="exp-name">sonar_pd_snr</div>
+
+</div>
+<div class="exp-desc">MC detection probability vs SNR for sonar two-array detectors (M-NMF-G/R/I, adaptive 2TYL/SCM variants)</div>
+<div class="exp-tags"><span class="exp-tag">sonar</span><span class="exp-tag">detection</span><span class="exp-tag">monte-carlo</span><span class="exp-tag">pd-snr</span></div>
+<div class="exp-run"><code>uv run python 2-detection/sonar_experiments/mc_simulations/mc_pd_snr.py</code></div>
+<a class="exp-details-link" href="../../experiments/sonar_pd_snr/">Parameters &amp; details →</a>
+</div>
+
+<div class="exp-card">
+<div class="exp-card-head">
+<div class="exp-name">sonar_pfa_threshold</div>
+
+</div>
+<div class="exp-desc">MC empirical PFA vs threshold for sonar two-array detectors — matrix-CFAR verification</div>
+<div class="exp-tags"><span class="exp-tag">sonar</span><span class="exp-tag">detection</span><span class="exp-tag">monte-carlo</span><span class="exp-tag">pfa-cfar</span></div>
+<div class="exp-run"><code>uv run python 2-detection/sonar_experiments/mc_simulations/mc_pfa_threshold.py</code></div>
+<a class="exp-details-link" href="../../experiments/sonar_pfa_threshold/">Parameters &amp; details →</a>
+</div>
+</div>
+</div>
+
+<div class="exp-group">
+<h3 class="exp-group-heading">Sonar · Convergence</h3>
+<div class="exp-grid">
+<div class="exp-card">
+<div class="exp-card-head">
+<div class="exp-name">sonar_tyler_conv</div>
+
+</div>
+<div class="exp-desc">2TYL fixed-point convergence — relative Frobenius deviation vs iteration</div>
+<div class="exp-tags"><span class="exp-tag">sonar</span><span class="exp-tag">estimation</span><span class="exp-tag">monte-carlo</span><span class="exp-tag">convergence</span></div>
+<div class="exp-run"><code>uv run python 2-detection/sonar_experiments/mc_simulations/tyler_convergence.py</code></div>
+<a class="exp-details-link" href="../../experiments/sonar_tyler_conv/">Parameters &amp; details →</a>
+</div>
+</div>
+</div>
+</div>
 <!-- experiments-end -->
 
 <h2 id="real-data-pipeline">Real-data pipeline</h2>
@@ -480,16 +574,10 @@ uv<span class="w"> </span>run<span class="w"> </span>sar_experiments/compute_det
       
       <nav class="page-nav" aria-label="Page navigation">
         
-        <a class="page-nav-prev" href="../1-context/">
-          <span class="page-nav-dir">← Previous</span>
-          <span class="page-nav-title">1 · Context</span>
-        </a>
+        <a href="../1-context/">← 1 · Context</a>
         
         
-        <a class="page-nav-next" href="../3-machinelearning/">
-          <span class="page-nav-dir">Next →</span>
-          <span class="page-nav-title">3 · Machine Learning</span>
-        </a>
+        <a href="../3-machinelearning/">3 · Machine Learning →</a>
         
       </nav>
       
@@ -505,8 +593,6 @@ uv<span class="w"> </span>run<span class="w"> </span>sar_experiments/compute_det
               <a href="#chapter-2-detection">Chapter 2 · Detection</a>
               
                 <ul>
-                  
-                    <li><a href="#library-src">Library (src/)</a></li>
                   
                     <li><a href="#experiments">Experiments</a></li>
                   

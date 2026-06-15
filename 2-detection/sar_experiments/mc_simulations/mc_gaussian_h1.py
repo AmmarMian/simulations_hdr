@@ -13,39 +13,26 @@ Thresholds are set at the (1-PFA) percentile of H0 stats for each T.
 from __future__ import annotations
 
 import logging
-import sys
 from multiprocessing import Pool
 from pathlib import Path
 
 import numpy as np
 from rich.progress import BarColumn, Progress, TextColumn, TimeElapsedColumn
 
-_HERE = Path(__file__).parent
-_ROOT = str(_HERE.parent.parent)
-for _p in (_ROOT, str(_HERE)):
-    if _p not in sys.path:
-        sys.path.insert(0, _p)
 
-from src.backend import get_data_on_device, to_numpy
-from src.simulation import (
-    T_vec_logspace,
-    generate_gaussian_data,
-    generate_gaussian_data_h1,
-    make_sigma_true,
-)
-from sar_experiments.detection_offline import GaussianGLRT
-from sar_experiments.detection_online import OnlineGaussianGLRT
-from utils import (
-    MCResultExporter,
+from hdrlib.core.backend import get_data_on_device, to_numpy
+from hdrlib.core.simulation import T_vec_logspace, generate_gaussian_data, make_sigma_true
+from hdrlib.sar.simulation import generate_gaussian_data_h1
+from hdrlib.sar.detectors import GaussianGLRT
+from hdrlib.sar.detectors import OnlineGaussianGLRT
+from hdrlib.core.mc import MCResultExporter, init_logging, make_mc_parser, timed_run
+from hdrlib.sar.mc import (
     _MC_PLOT_TEMPLATE_H1,
     add_mc_args,
     add_mc_h1_args,
     finish_h1,
-    init_logging,
-    make_mc_parser,
     online_run,
     online_single_pass,
-    timed_run,
 )
 
 logger = logging.getLogger(__name__)
