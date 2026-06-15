@@ -49,8 +49,9 @@ run_cpu_memory() {
   # Use grep -E + head for macOS compatibility (grep -oP is GNU-only).
   local peak
   peak=$(uv run python -m memray stats "$bin" 2>/dev/null \
-    | grep -i "peak memory usage" \
-    | grep -Eo '[0-9]+(\.[0-9]+)? [A-Za-z]+' \
+    | grep -i "peak memory usage" -A1 \
+    | tail -1 \
+    | grep -Eo '[0-9]+(\.[0-9]+)?[A-Za-z]+' \
     | head -1 || echo "N/A")
   echo "  Peak memory: $peak"
   echo "${label},${peak}" >>"${RESULTS_DIR}/memory_summary.csv"
