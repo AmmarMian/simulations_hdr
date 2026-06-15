@@ -2,6 +2,18 @@
 
 Change-detection in SAR and sonar imagery using robust covariance estimators under Gaussian, DCG, and Kronecker-structured models.
 
+
+## Real-data pipeline
+
+SAR scenes (Scene 1, 2, 3, 4 and 4-cropped) must be downloaded and reformatted before running detection experiments:
+
+```sh
+cd 2-detection
+bash data/download_sar.sh
+uv run sar_experiments/compute_detection_real_data/prepare_data.py data/SAR/Scene1.npy
+```
+
+
 ## Experiments
 
 <!-- experiments-start -->
@@ -204,19 +216,3 @@ Change-detection in SAR and sonar imagery using robust covariance estimators und
 </div>
 <!-- experiments-end -->
 
-## Real-data pipeline
-
-SAR scenes (Scene 1, 2, 4-cropped) must be downloaded and reformatted before running detection experiments:
-
-```sh
-cd 2-detection
-bash data/download_sar.sh
-uv run sar_experiments/compute_detection_real_data/prepare_data.py data/SAR/scene1.npy
-```
-
-## Adding a new backend
-
-1. Add an optional extra to `pyproject.toml`.
-2. Register the array type in `src/backend.py` → `BACKEND_TYPES`.
-3. Implement the dispatch branches in `get_backend_module`, `get_data_on_device`, and `empty_cache`.
-4. All estimators and detectors inherit the new backend automatically.

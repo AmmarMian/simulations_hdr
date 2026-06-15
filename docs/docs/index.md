@@ -4,8 +4,11 @@
 <div style="display: flex; gap: 2rem; align-items: flex-start; flex-wrap: wrap;">
 
   <!-- LEFT: IMAGE -->
-  <div style="flex: 0 0 300px;">
+  <div style="flex: 0 0 400px;">
+    <figure>
     <img id="theme-img" src="./assets/flow_light.png" style="width: 100%;">
+    <figcaption>A flow particle simulation on the sphere</figcaption>
+    </figure>
   </div>
 
 <script>
@@ -39,7 +42,7 @@ new MutationObserver(updateImg).observe(document.documentElement, { attributes: 
 </div>
 
 
-Given that the numerous results presented depend on numerical experimenting, this sidecar allows to any interested reader to be able to reproduce, play and experiment each of them<label for="sn-2" class="sidenote-number"></label><input type="checkbox" id="sn-3" class="margin-toggle"/><span class="sidenote">To the exception of experiments on real Sonar and GPR data, not having been granted permission to share the datasets.</span>. The aim is to have a diversity of useful code for working on covariance matrices, done with several concerns in mind :
+Given that the numerous results presented depend on numerical experimenting, this sidecar allows, for any interested reader, to be able to reproduce, play and experiment each of them<label for="sn-2" class="sidenote-number"></label><input type="checkbox" id="sn-2" class="margin-toggle"/><span class="sidenote">To the exception of experiments on real Sonar and GPR data, not having been granted permission to share the datasets.</span>. The aim is to have a diversity of useful code for working on covariance matrices. This is done with several concerns in mind :
 
 * **reproducibility:** the ability to obtain same results and conclusions on any given computer;
 * **scalability:** being able to run on a small laptop or take advantage of CPU/GPU parallelisation when available<label for="sn-3" class="sidenote-number"></label><input type="checkbox" id="sn-3" class="margin-toggle"/><span class="sidenote">We omit the case of HPC parallelisation which introduce a specialized layer that obfuscate the algorithms used.</span>;

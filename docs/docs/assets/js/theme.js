@@ -482,12 +482,5 @@
       h.appendChild(a);
     });
 
-    /* ── Figure auto-numbering ──────────────────────────────────── */
-    var figIdx = 0;
-    document.querySelectorAll(".page-content figure figcaption").forEach(function (cap) {
-      figIdx++;
-      cap.innerHTML = "<strong>Figure " + figIdx + " — </strong>" + cap.innerHTML;
-    });
-
   });
 })();

@@ -194,6 +194,16 @@
     </div>
   </a>
 
+  <a class="api-card" href="sar/plotting/">
+    <div class="api-card-head">
+      <span class="api-mod">sar.plotting</span>
+      <span class="api-badge">utility</span>
+    </div>
+    <div class="api-card-body">
+      <p class="api-desc">SAR plotting utilities.</p>
+    </div>
+  </a>
+
   </div>
 </div>
 
