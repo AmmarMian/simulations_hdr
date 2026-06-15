@@ -16,7 +16,7 @@ import logging
 from hdrlib.core.backend import Array, Backend
 from hdrlib.core.exporter import ResultExporter
 from hdrlib.core.plot_style import apply_style
-from sar_experiments.wavelets import apply_wavelet_to_sits
+from hdrlib.sar.wavelets import apply_wavelet_to_sits
 
 try:
     import matplot2tikz as _matplot2tikz
