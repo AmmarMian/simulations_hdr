@@ -31,16 +31,16 @@ run_cpu_memory() {
   local bin="${RESULTS_DIR}/${label}.bin"
   local html="${RESULTS_DIR}/${label}.html"
 
-  uv run memray run --force -o "$bin" \
+  uv run python -m memray run --force -o "$bin" \
     "$script" "$DATA" "$WINDOW_SIZE" $extra_args --quiet
 
-  uv run memray flamegraph --force -o "$html" "$bin"
+  uv run python -m memray flamegraph --force -o "$html" "$bin"
   echo "  Flamegraph: $html"
 
   # Extract peak memory from memray stats.
   # Use grep -E + head for macOS compatibility (grep -oP is GNU-only).
   local peak
-  peak=$(uv run memray stats "$bin" 2>/dev/null \
+  peak=$(uv run python -m memray stats "$bin" 2>/dev/null \
     | grep -i "peak memory" \
     | grep -Eo '[0-9]+(\.[0-9]+)? [A-Za-z]+' \
     | head -1 || echo "N/A")
