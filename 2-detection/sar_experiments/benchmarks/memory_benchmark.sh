@@ -98,20 +98,20 @@ run_cpu_memory "cpu_dcg_no_wavelet" "$SCRIPT_DCG" \
   "--backend torch-cpu --iteration-chunk 512"
 
 run_cpu_memory "cpu_dcg_wavelet" "$SCRIPT_DCG" \
-  "--backend torch-cpu --wavelet --iteration-chunk 512 --splitting (3,4)"
+  "--backend torch-cpu --wavelet --iteration-chunk 512 --splitting (3,3)"
 
 # ---- GPU benchmarks ----------------------------------------------------------
 run_gpu_memory "gpu_gaussian_no_wavelet" "$SCRIPT_GAUSSIAN" \
-  "--splitting (3,3)"
+  "--splitting (1,1)"
 
 run_gpu_memory "gpu_gaussian_wavelet" "$SCRIPT_GAUSSIAN" \
-  "--wavelet --splitting (15,15)"
+  "--wavelet --splitting (1,1)"
 
 run_gpu_memory "gpu_dcg_no_wavelet" "$SCRIPT_DCG" \
-  "--splitting (15,15) --iteration-chunk 512"
+  "--splitting (3,3) --iteration-chunk 512"
 
 run_gpu_memory "gpu_dcg_wavelet" "$SCRIPT_DCG" \
-  "--wavelet --splitting (31,31) --iteration-chunk 512"
+  "--wavelet --splitting (6,6) --iteration-chunk 512"
 
 echo ""
 echo "Memory benchmark done. Summary:"

@@ -53,20 +53,20 @@ run_benchmark "cpu_dcg_no_wavelet" \
   "uv run ${SCRIPT_DCG} ${DATA} ${WINDOW_SIZE} --backend torch-cpu --iteration-chunk 512 --quiet"
 
 run_benchmark "cpu_dcg_wavelet" \
-  "uv run ${SCRIPT_DCG} ${DATA} ${WINDOW_SIZE} --backend torch-cpu --wavelet --iteration-chunk 512 --splitting (3,4) --quiet"
+  "uv run ${SCRIPT_DCG} ${DATA} ${WINDOW_SIZE} --backend torch-cpu --wavelet --iteration-chunk 512 --splitting (3,3) --quiet"
 
 # ---- GPU benchmarks ----------------------------------------------------------
 run_benchmark "gpu_gaussian_no_wavelet" \
-  "uv run ${SCRIPT_GAUSSIAN} ${DATA} ${WINDOW_SIZE} --backend torch-cuda --splitting (3,3) --quiet"
+  "uv run ${SCRIPT_GAUSSIAN} ${DATA} ${WINDOW_SIZE} --backend torch-cuda --splitting (1,1) --quiet"
 
 run_benchmark "gpu_gaussian_wavelet" \
-  "uv run ${SCRIPT_GAUSSIAN} ${DATA} ${WINDOW_SIZE} --backend torch-cuda --wavelet --splitting (15,15) --quiet"
+  "uv run ${SCRIPT_GAUSSIAN} ${DATA} ${WINDOW_SIZE} --backend torch-cuda --wavelet --splitting (1,1) --quiet"
 
 run_benchmark "gpu_dcg_no_wavelet" \
-  "uv run ${SCRIPT_DCG} ${DATA} ${WINDOW_SIZE} --backend torch-cuda --splitting (15,15) --iteration-chunk 512 --quiet"
+  "uv run ${SCRIPT_DCG} ${DATA} ${WINDOW_SIZE} --backend torch-cuda --splitting (3,3) --iteration-chunk 512 --quiet"
 
 run_benchmark "gpu_dcg_wavelet" \
-  "uv run ${SCRIPT_DCG} ${DATA} ${WINDOW_SIZE} --backend torch-cuda --wavelet --splitting (31,31) --iteration-chunk 512 --quiet"
+  "uv run ${SCRIPT_DCG} ${DATA} ${WINDOW_SIZE} --backend torch-cuda --wavelet --splitting (6,6) --iteration-chunk 512 --quiet"
 
 echo ""
 echo "All benchmarks done. Aggregating results and generating chart..."
