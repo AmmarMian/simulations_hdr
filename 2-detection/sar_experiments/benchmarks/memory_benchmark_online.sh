@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# Memory benchmark for detection scripts.
+# Memory benchmark for online detection scripts.
 # CPU: uses memray -- generates flamegraph + peak summary.
 # GPU: uses torch.cuda.max_memory_allocated() reported by the script itself.
+# Kronecker requires --wavelet (no no_wavelet case).
 # Results saved per config, summary printed at end.
 
 set -euo pipefail
@@ -9,7 +10,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DATA="${SCRIPT_DIR}/../../data/SAR/Scene_1.npy"
 WINDOW_SIZE=7
-RESULTS_DIR="${SCRIPT_DIR}/memory_results"
+RESULTS_DIR="${SCRIPT_DIR}/memory_online_results"
 
 # Parse --storage_path / --storage-path from CLI args (qanat passes this).
 while [[ $# -gt 0 ]]; do
@@ -21,9 +22,9 @@ done
 
 mkdir -p "$RESULTS_DIR"
 
-SCRIPT_GAUSSIAN="${SCRIPT_DIR}/../compute_detection_real_data/offline_gaussian.py"
-SCRIPT_DCG="${SCRIPT_DIR}/../compute_detection_real_data/offline_dcg.py"
-SCRIPT_KRONECKER="${SCRIPT_DIR}/../compute_detection_real_data/offline_kronecker.py"
+SCRIPT_GAUSSIAN="${SCRIPT_DIR}/../compute_detection_real_data/online_gaussian.py"
+SCRIPT_DCG="${SCRIPT_DIR}/../compute_detection_real_data/online_dcg.py"
+SCRIPT_KRONECKER="${SCRIPT_DIR}/../compute_detection_real_data/online_kronecker.py"
 
 TOTAL=10
 CURRENT=0
@@ -46,8 +47,6 @@ run_cpu_memory() {
   uv run python -m memray flamegraph --force -o "$html" "$bin"
   echo "  Flamegraph: $html"
 
-  # Extract peak memory from memray stats.
-  # Use grep -E + head for macOS compatibility (grep -oP is GNU-only).
   local peak
   peak=$(uv run python -m memray stats "$bin" 2>/dev/null \
     | grep -i "peak memory usage" -A1 \
@@ -55,7 +54,7 @@ run_cpu_memory() {
     | grep -Eo '[0-9]+(\.[0-9]+)?[A-Za-z]+' \
     | head -1 || echo "N/A")
   echo "  Peak memory: $peak"
-  echo "${label},${peak}" >>"${RESULTS_DIR}/memory_summary.csv"
+  echo "${label},${peak}" >>"${RESULTS_DIR}/memory_online_summary.csv"
 }
 
 # ---- GPU: script prints PEAK_GPU_MEMORY_BYTES=<n>, we parse it ---------------
@@ -78,15 +77,15 @@ run_gpu_memory() {
     local peak_mb
     peak_mb=$(echo "scale=1; $peak_bytes / 1048576" | bc)
     echo "  Peak GPU memory: ${peak_mb} MB (${peak_bytes} bytes)"
-    echo "${label},${peak_mb} MB" >>"${RESULTS_DIR}/memory_summary.csv"
+    echo "${label},${peak_mb} MB" >>"${RESULTS_DIR}/memory_online_summary.csv"
   else
     echo "  Could not parse GPU memory."
-    echo "${label},N/A" >>"${RESULTS_DIR}/memory_summary.csv"
+    echo "${label},N/A" >>"${RESULTS_DIR}/memory_online_summary.csv"
   fi
 }
 
 # ---- Init summary CSV --------------------------------------------------------
-echo "label,peak_memory" >"${RESULTS_DIR}/memory_summary.csv"
+echo "label,peak_memory" >"${RESULTS_DIR}/memory_online_summary.csv"
 
 # ---- CPU benchmarks ----------------------------------------------------------
 run_cpu_memory "cpu_gaussian_no_wavelet" "$SCRIPT_GAUSSIAN" \
@@ -96,10 +95,10 @@ run_cpu_memory "cpu_gaussian_wavelet" "$SCRIPT_GAUSSIAN" \
   "--backend torch-cpu --wavelet"
 
 run_cpu_memory "cpu_dcg_no_wavelet" "$SCRIPT_DCG" \
-  "--backend torch-cpu --iteration-chunk 512"
+  "--backend torch-cpu"
 
 run_cpu_memory "cpu_dcg_wavelet" "$SCRIPT_DCG" \
-  "--backend torch-cpu --wavelet --iteration-chunk 512"
+  "--backend torch-cpu --wavelet"
 
 run_cpu_memory "cpu_kronecker_wavelet" "$SCRIPT_KRONECKER" \
   "--backend torch-cpu --wavelet"
@@ -112,16 +111,16 @@ run_gpu_memory "gpu_gaussian_wavelet" "$SCRIPT_GAUSSIAN" \
   "--wavelet --splitting (1,1)"
 
 run_gpu_memory "gpu_dcg_no_wavelet" "$SCRIPT_DCG" \
-  "--splitting (3,3) --iteration-chunk 512"
+  "--splitting (3,3)"
 
 run_gpu_memory "gpu_dcg_wavelet" "$SCRIPT_DCG" \
-  "--wavelet --splitting (6,6) --iteration-chunk 512"
+  "--wavelet --splitting (3,3)"
 
 run_gpu_memory "gpu_kronecker_wavelet" "$SCRIPT_KRONECKER" \
-  "--wavelet --splitting (6,6)"
+  "--wavelet --splitting (3,3)"
 
 echo ""
 echo "Memory benchmark done. Summary:"
-cat "${RESULTS_DIR}/memory_summary.csv"
+cat "${RESULTS_DIR}/memory_online_summary.csv"
 echo ""
 echo "Flamegraphs and raw .bin profiles saved in ${RESULTS_DIR}/"

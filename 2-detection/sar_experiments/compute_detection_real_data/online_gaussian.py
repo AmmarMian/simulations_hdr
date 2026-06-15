@@ -77,7 +77,7 @@ if __name__ == "__main__":
     if args.report_memory and cfg.is_gpu:
         mem = peak_memory_bytes(cfg.backend)
         if mem is not None:
-            logger.info(f"Peak GPU memory: {mem / 1e9:.2f} GB (PEAK_GPU_MEMORY_BYTES={mem})")
+            print(f"PEAK_GPU_MEMORY_BYTES={mem}")
 
     if args.show_interactive:
         plt.show()

@@ -1,0 +1,11 @@
+name: sar_bench_online_memory
+description: Memory benchmark for online Gaussian, DCG and Kronecker detectors (CPU memray + GPU torch)
+path: 2-detection/sar_experiments/benchmarks
+executable: 2-detection/sar_experiments/benchmarks/memory_benchmark_online.sh
+executable_command: bash
+tags:
+  - benchmark
+  - memory
+  - online
+  - SAR
+group: "SAR · Benchmarks"

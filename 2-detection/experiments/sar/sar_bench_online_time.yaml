@@ -1,0 +1,11 @@
+name: sar_bench_online_time
+description: Time benchmark for online Gaussian, DCG and Kronecker detectors (CPU + GPU)
+path: 2-detection/sar_experiments/benchmarks
+executable: 2-detection/sar_experiments/benchmarks/time_benchmark_online.sh
+executable_command: bash
+tags:
+  - benchmark
+  - time
+  - online
+  - SAR
+group: "SAR · Benchmarks"
