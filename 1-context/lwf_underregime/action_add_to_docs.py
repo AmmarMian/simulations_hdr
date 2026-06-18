@@ -84,6 +84,7 @@ fig.update_layout(
     xaxis=dict(
         title=dict(text="Dimension <i>d</i>", font=TITLE, standoff=14),
         type="log", tickfont=TICK,
+        range=[np.log10(d_vec.min() * 0.8), np.log10(d_vec.max() * 1.2)],
         ticks="outside", ticklen=5, tickwidth=1, tickcolor=AXIS_LINE,
         linecolor=AXIS_LINE, linewidth=1, showline=True,
         showgrid=False, zeroline=False,
@@ -91,6 +92,8 @@ fig.update_layout(
     yaxis=dict(
         title=dict(text="Condition number", font=TITLE, standoff=14),
         type="log", tickfont=TICK,
+        range=[np.log10(max(cond_lwf.min(), 1) * 0.5),
+               np.log10(cond_scm.max() * 2)],
         ticks="outside", ticklen=5, tickwidth=1, tickcolor=AXIS_LINE,
         linecolor=AXIS_LINE, linewidth=1, showline=True,
         showgrid=True, gridcolor=GRID, gridwidth=1, zeroline=False,

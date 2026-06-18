@@ -28,7 +28,7 @@ Background figures illustrating core statistical concepts from the dissertation 
 <div class="exp-card">
 <div class="exp-card-head">
 <div class="exp-name">context_lwf_underregime</div>
-
+<span class="exp-results-badge">Results available</span>
 </div>
 <div class="exp-desc">Condition number of SCM vs LWF-regularised covariance in the under-regime (d > N)</div>
 <div class="exp-tags"><span class="exp-tag">context</span><span class="exp-tag">lwf</span><span class="exp-tag">regularisation</span><span class="exp-tag">under-regime</span><span class="exp-tag">monte-carlo</span></div>
@@ -44,7 +44,7 @@ Background figures illustrating core statistical concepts from the dissertation 
 <div class="exp-card">
 <div class="exp-card-head">
 <div class="exp-name">context_scm_grandnombres</div>
-
+<span class="exp-results-badge">Results available</span>
 </div>
 <div class="exp-desc">MC convergence of SCM mean/covariance estimators as N → ∞ (grand-nombre regime)</div>
 <div class="exp-tags"><span class="exp-tag">context</span><span class="exp-tag">scm</span><span class="exp-tag">monte-carlo</span><span class="exp-tag">convergence</span></div>
@@ -55,7 +55,7 @@ Background figures illustrating core statistical concepts from the dissertation 
 <div class="exp-card">
 <div class="exp-card-head">
 <div class="exp-name">context_scm_underregime</div>
-
+<span class="exp-results-badge">Results available</span>
 </div>
 <div class="exp-desc">SCM estimator behavior in the under-regime (d > N) — mean, covariance, condition number errors</div>
 <div class="exp-tags"><span class="exp-tag">context</span><span class="exp-tag">scm</span><span class="exp-tag">under-regime</span><span class="exp-tag">monte-carlo</span></div>
