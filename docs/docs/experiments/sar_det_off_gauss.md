@@ -36,21 +36,21 @@ uv run python 2-detection/sar_experiments/compute_detection_real_data/offline_ga
 
 <span class="marginnote">
   <span class="mn-label">Run · scene1_w7</span>
-  <code>data_path</code> <span class='mn-default'>2-detection/data/SAR/scene1.npy</span><br>
-  <code>window_size</code> <span class='mn-default'>7</span><br>
+  <code>data_path</code><br>
+  <code>window_size</code><br>
   <code>--backend</code> <span class='mn-default'>numpy</span><br>
-  <code>--show-interactive</code> <span class='mn-default'>False</span><br>
+  <code>--show-interactive</code><br>
   <code>--export</code> <span class='mn-default'>True</span><br>
-  <code>--export-tikz</code> <span class='mn-default'>False</span><br>
-  <code>--debug</code> <span class='mn-default'>False</span><br>
+  <code>--export-tikz</code><br>
+  <code>--debug</code><br>
   <code>--splitting</code><br>
-  <code>--wavelet</code> <span class='mn-default'>False</span><br>
+  <code>--wavelet</code><br>
   <code>--wavelet-R</code> <span class='mn-default'>2</span><br>
   <code>--wavelet-L</code> <span class='mn-default'>2</span><br>
-  <code>--wavelet-no-decimate</code> <span class='mn-default'>False</span><br>
-  <code>--quiet</code> <span class='mn-default'>False</span><br>
-  <code>--log-debug</code> <span class='mn-default'>False</span><br>
-  <code>--report-memory</code> <span class='mn-default'>False</span><br>
+  <code>--wavelet-no-decimate</code><br>
+  <code>--quiet</code><br>
+  <code>--log-debug</code><br>
+  <code>--report-memory</code><br>
   <code>--repeat-times</code> <span class='mn-default'>1</span><br>
 </span>
 <div class="plotly-wrap" data-src="../../assets/data/sar_det_off_gauss.scene1_w7.json" data-title="sar_det_off_gauss — scene1_w7"></div>

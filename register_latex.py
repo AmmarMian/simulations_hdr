@@ -2,8 +2,8 @@
 """Qanat action: stage a figure for the HDR LaTeX dissertation.
 
 Copies the PGFPlots .tex + merged provenance JSON from a qanat run directory
-into ./hdr_exports/<id>/.  The user then manually copies/rsyncs from
-hdr_exports/ to the dissertation repo's figures/generated/ when on the
+into ./hdr_exports/<exp_name>/<id>/.  The user then manually copies/rsyncs from
+hdr_exports/ to the dissertation repo's gfx/generated/ when on the
 right machine.
 
 Run via qanat:
@@ -20,7 +20,7 @@ so it works on any machine (cluster, laptop, remote) without needing the
 dissertation repo to be present.
 
 Copy command (example):
-    rsync -av hdr_exports/ ../hdr/figures/generated/
+    rsync -av --exclude figures.toml hdr_exports/ ../Dissertation/gfx/generated/
 
 Requires a PGFPlots .tex file in the run directory (produced by --export-tikz
 or --tikz when running the experiment).  The exporter .json sidecar is optional
@@ -31,6 +31,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import shutil
 import sys
 from datetime import datetime, timezone
@@ -48,7 +49,7 @@ parser.add_argument("--storage_path", required=True,
     help="Run directory injected by qanat (e.g. results/exp_name/run_1).")
 parser.add_argument("--id", required=True, dest="fig_id",
     help="Stable figure id used in LaTeX, e.g. 'scm-mean-error'. "
-         "Becomes hdr_exports/<id>/ and figures/generated/<id>/ in the hdr repo.")
+         "Becomes hdr_exports/<exp>/<id>/ and gfx/generated/<exp>/<id>/ in the hdr repo.")
 parser.add_argument("--stem", default=None,
     help="Base filename of the .tex (without extension). "
          "Auto-detected when exactly one .tex is present; required when several exist.")
@@ -156,15 +157,35 @@ prov = {
 }
 
 # ── Write into hdr_exports/ ───────────────────────────────────────────────────
-dest_dir = export_base / fig_id
+dest_dir = export_base / exp_name / fig_id
 dest_dir.mkdir(parents=True, exist_ok=True)
 
-shutil.copy2(tex_path, dest_dir / "plot.tex")
 (dest_dir / "prov.json").write_text(json.dumps(prov, indent=2, default=str))
+
+# Copy assets referenced by the .tex (PNGs from matplot2tikz, etc.)
+# Sanitize filenames (_ -> -) and rewrite paths relative to dissertation root.
+tex_content = tex_path.read_text()
+asset_patterns = re.findall(r'\{([^}]+\.(?:png|jpg|jpeg|pdf|eps))\}', tex_content)
+dest_rel = f"gfx/generated/{exp_name}/{fig_id}"
+copied_assets = []
+for asset_name in set(asset_patterns):
+    asset_path = tex_path.parent / asset_name
+    if asset_path.exists():
+        clean_name = asset_name.replace("_", "-")
+        shutil.copy2(asset_path, dest_dir / clean_name)
+        tex_content = tex_content.replace(
+            "{" + asset_name + "}",
+            "{" + dest_rel + "/" + clean_name + "}",
+        )
+        copied_assets.append(clean_name)
+
+(dest_dir / "plot.tex").write_text(tex_content)
 
 print(f"Written to {dest_dir}/")
 print(f"  plot.tex")
 print(f"  prov.json")
+for a in sorted(copied_assets):
+    print(f"  {a}")
 
 if args.embed_npy:
     if npy_path.exists():
@@ -173,55 +194,46 @@ if args.embed_npy:
     else:
         print(f"  [warn] --embed-npy requested but {npy_path.name} not found; skipping.")
 
-# ── Update hdr_exports/figures.toml ──────────────────────────────────────────
+# ── Regenerate hdr_exports/figures.toml from all prov.json files ─────────────
 toml_path = export_base / "figures.toml"
-existing = toml_path.read_text().splitlines() if toml_path.exists() else [
+header = [
     "# figures.toml — staged figures for the HDR dissertation",
-    "# Copy hdr_exports/ → hdr/figures/generated/ then run 'just figures' in the hdr repo.",
+    "# Auto-generated from prov.json files — do not edit by hand.",
     "#",
-    "# rsync -av hdr_exports/ ../hdr/figures/generated/",
+    "# rsync -av --exclude figures.toml hdr_exports/ ../Dissertation/gfx/generated/",
     "",
 ]
 
-# Remove stale block for this fig_id
-new_lines: list[str] = []
-skip = False
-for line in existing:
-    if line.strip() == f"[figures.{fig_id}]":
-        skip = True
-    elif skip and line.strip().startswith("["):
-        skip = False
-    if not skip:
-        new_lines.append(line)
+entries: list[str] = []
+for prov_file in sorted(export_base.rglob("prov.json")):
+    prov_data = json.loads(prov_file.read_text())
+    h = prov_data.get("hdr", {})
+    fid = h.get("id", prov_file.parent.name)
+    entries += [
+        f"[figures.{fid}]",
+        f'exp       = "{h.get("exp", "")}"',
+        f'run_id    = {h.get("run_id", "?")}',
+        f'sha       = "{h.get("sha_short", "")}"',
+        f'run_date  = "{h.get("run_date", "")}"',
+        f'seed      = "{h.get("seed", "")}"',
+        f"embed_npy = {'true' if h.get('embed_npy') else 'false'}",
+        "",
+    ]
 
-while new_lines and not new_lines[-1].strip():
-    new_lines.pop()
-
-new_lines += [
-    "",
-    f"[figures.{fig_id}]",
-    f'exp      = "{exp_name}"',
-    f"run_id   = {run_id}",
-    f'sha      = "{sha_short}"',
-    f'run_date = "{run_date}"',
-    f'seed     = "{seed_str}"',
-    f'stem     = "{stem}"',
-    f"embed_npy = {'true' if args.embed_npy else 'false'}",
-]
-toml_path.write_text("\n".join(new_lines) + "\n")
-print(f"  {toml_path}  →  [{fig_id}]")
+toml_path.write_text("\n".join(header + entries))
+print(f"  {toml_path}  (regenerated from {len(entries) // 8} figure(s))")
 
 # ── Summary ───────────────────────────────────────────────────────────────────
 print(f"\n✓  Staged '{fig_id}'")
 print(f"   exp={exp_name}  run={run_id}  sha={sha_short}  seed={seed_str}")
 print()
 print(f"Copy to the hdr repo when ready:")
-print(f"  rsync -av {export_base}/ ../hdr/figures/generated/")
-print(f"Then run in the hdr repo:")
-print(f"  just figures")
+print(f"  rsync -av --exclude figures.toml {export_base}/ ../Dissertation/gfx/generated/")
+print(f"Then in the Dissertation repo:")
+print(f"  just figures   # regenerate figures.toml")
 print()
 print(f"In your chapter:")
 print(f"  \\begin{{figure}}")
-print(f"    \\input{{figures/generated/{fig_id}/plot.tex}}")
+print(f"    \\input{{gfx/generated/{exp_name}/{fig_id}/plot.tex}}")
 print(f"    \\caption{{...\\dataref{{{fig_id}}}}}")
 print(f"  \\end{{figure}}")

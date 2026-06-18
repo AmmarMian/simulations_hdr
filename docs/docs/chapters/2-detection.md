@@ -19,6 +19,55 @@ uv run sar_experiments/compute_detection_real_data/prepare_data.py data/SAR/Scen
 <!-- experiments-start -->
 <div class="exp-chapter">
 <div class="exp-group">
+<h3 class="exp-group-heading">SAR · Benchmarks</h3>
+<div class="exp-grid">
+<div class="exp-card">
+<div class="exp-card-head">
+<div class="exp-name">sar_bench_memory</div>
+
+</div>
+<div class="exp-desc">Memory benchmark for offline Gaussian and DCG GLRT detectors (CPU memray + GPU torch)</div>
+<div class="exp-tags"><span class="exp-tag">benchmark</span><span class="exp-tag">memory</span><span class="exp-tag">SAR</span></div>
+<div class="exp-run"><code>uv run python 2-detection/sar_experiments/benchmarks/memory_benchmark.sh</code></div>
+<a class="exp-details-link" href="../../experiments/sar_bench_memory/">Parameters &amp; details →</a>
+</div>
+
+<div class="exp-card">
+<div class="exp-card-head">
+<div class="exp-name">sar_bench_online_memory</div>
+
+</div>
+<div class="exp-desc">Memory benchmark for online Gaussian, DCG and Kronecker detectors (CPU memray + GPU torch)</div>
+<div class="exp-tags"><span class="exp-tag">benchmark</span><span class="exp-tag">memory</span><span class="exp-tag">online</span><span class="exp-tag">SAR</span></div>
+<div class="exp-run"><code>uv run python 2-detection/sar_experiments/benchmarks/memory_benchmark_online.sh</code></div>
+<a class="exp-details-link" href="../../experiments/sar_bench_online_memory/">Parameters &amp; details →</a>
+</div>
+
+<div class="exp-card">
+<div class="exp-card-head">
+<div class="exp-name">sar_bench_online_time</div>
+
+</div>
+<div class="exp-desc">Time benchmark for online Gaussian, DCG and Kronecker detectors (CPU + GPU)</div>
+<div class="exp-tags"><span class="exp-tag">benchmark</span><span class="exp-tag">time</span><span class="exp-tag">online</span><span class="exp-tag">SAR</span></div>
+<div class="exp-run"><code>uv run python 2-detection/sar_experiments/benchmarks/time_benchmark_online.sh</code></div>
+<a class="exp-details-link" href="../../experiments/sar_bench_online_time/">Parameters &amp; details →</a>
+</div>
+
+<div class="exp-card">
+<div class="exp-card-head">
+<div class="exp-name">sar_bench_time</div>
+
+</div>
+<div class="exp-desc">Time benchmark for offline Gaussian and DCG GLRT detectors (CPU + GPU)</div>
+<div class="exp-tags"><span class="exp-tag">benchmark</span><span class="exp-tag">time</span><span class="exp-tag">SAR</span></div>
+<div class="exp-run"><code>uv run python 2-detection/sar_experiments/benchmarks/time_benchmark.sh</code></div>
+<a class="exp-details-link" href="../../experiments/sar_bench_time/">Parameters &amp; details →</a>
+</div>
+</div>
+</div>
+
+<div class="exp-group">
 <h3 class="exp-group-heading">SAR · Real Data</h3>
 <div class="exp-grid">
 <div class="exp-card">
