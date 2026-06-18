@@ -18,6 +18,15 @@ uv run python 1-context/examples_covariances/main.py
 | `--show-interactive` | — | — | Show plots interactively with matplotlib. |
 | `--export` | — | `True` | Save TikZ/PGFPlots figure (.tex) (default: True). |
 
+## Results
+
+<span class="marginnote">
+  <span class="mn-label">Parameters</span>
+  <code>--show-interactive</code><br>
+  <code>--export</code> <span class='mn-default'>True</span><br>
+</span>
+<div class="plotly-wrap" data-src="../../assets/data/context_example_covariances.json" data-title="context_example_covariances — power curve"></div>
+
 ## Config
 
 `1-context/experiments/context_example_covariances.yaml`
