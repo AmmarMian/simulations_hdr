@@ -92,6 +92,14 @@ if __name__ == "__main__":
     cond_lwf_std = np.stack([results[results[:, 0] == d, 2].std() for d in d_vec])
     print("Done.")
 
+    # Save results
+    np.savez(
+        os.path.join(args.output_dir, "results.npz"),
+        d_vec=d_vec, N=N, n_trials=n_trials, alpha=args.alpha,
+        cond_scm_mean=cond_scm_mean, cond_scm_std=cond_scm_std,
+        cond_lwf_mean=cond_lwf_mean, cond_lwf_std=cond_lwf_std,
+    )
+
     # Plotting
     fig = plt.figure()
     plt.scatter(

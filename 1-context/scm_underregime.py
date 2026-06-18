@@ -94,6 +94,15 @@ if __name__ == "__main__":
     cond_cov_std = np.stack([results[results[:, 0] == d, 3].std() for d in d_vec])
     print("Done.")
 
+    # Save results
+    np.savez(
+        os.path.join(args.output_dir, "results.npz"),
+        d_vec=d_vec, N=N, n_trials=n_trials,
+        error_mean_mean=error_mean_mean, error_mean_std=error_mean_std,
+        error_cov_mean=error_cov_mean, error_cov_std=error_cov_std,
+        cond_cov_mean=cond_cov_mean, cond_cov_std=cond_cov_std,
+    )
+
     # Plotting
     fig = plt.figure()
     plt.scatter(d_vec, error_mean_mean, marker="o", facecolors="none", edgecolors="k")
