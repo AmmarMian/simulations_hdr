@@ -7,7 +7,7 @@ MC convergence of SCM mean/covariance estimators as N → ∞ (grand-nombre regi
 ## Run
 
 ```sh
-uv run python 1-context/scm_grandnombres.py
+uv run python 1-context/scm_grandnombres/main.py
 ```
 
 ## Parameters

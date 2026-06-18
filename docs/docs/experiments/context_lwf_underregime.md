@@ -7,7 +7,7 @@ Condition number of SCM vs LWF-regularised covariance in the under-regime (d > N
 ## Run
 
 ```sh
-uv run python 1-context/lwf_underregime.py
+uv run python 1-context/lwf_underregime/main.py
 ```
 
 ## Parameters

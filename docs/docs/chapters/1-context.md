@@ -32,7 +32,7 @@ Background figures illustrating core statistical concepts from the dissertation 
 </div>
 <div class="exp-desc">Condition number of SCM vs LWF-regularised covariance in the under-regime (d > N)</div>
 <div class="exp-tags"><span class="exp-tag">context</span><span class="exp-tag">lwf</span><span class="exp-tag">regularisation</span><span class="exp-tag">under-regime</span><span class="exp-tag">monte-carlo</span></div>
-<div class="exp-run"><code>uv run python 1-context/lwf_underregime.py</code></div>
+<div class="exp-run"><code>uv run python 1-context/lwf_underregime/main.py</code></div>
 <a class="exp-details-link" href="../../experiments/context_lwf_underregime/">Parameters &amp; details →</a>
 </div>
 </div>
@@ -48,7 +48,7 @@ Background figures illustrating core statistical concepts from the dissertation 
 </div>
 <div class="exp-desc">MC convergence of SCM mean/covariance estimators as N → ∞ (grand-nombre regime)</div>
 <div class="exp-tags"><span class="exp-tag">context</span><span class="exp-tag">scm</span><span class="exp-tag">monte-carlo</span><span class="exp-tag">convergence</span></div>
-<div class="exp-run"><code>uv run python 1-context/scm_grandnombres.py</code></div>
+<div class="exp-run"><code>uv run python 1-context/scm_grandnombres/main.py</code></div>
 <a class="exp-details-link" href="../../experiments/context_scm_grandnombres/">Parameters &amp; details →</a>
 </div>
 
@@ -59,7 +59,7 @@ Background figures illustrating core statistical concepts from the dissertation 
 </div>
 <div class="exp-desc">SCM estimator behavior in the under-regime (d > N) — mean, covariance, condition number errors</div>
 <div class="exp-tags"><span class="exp-tag">context</span><span class="exp-tag">scm</span><span class="exp-tag">under-regime</span><span class="exp-tag">monte-carlo</span></div>
-<div class="exp-run"><code>uv run python 1-context/scm_underregime.py</code></div>
+<div class="exp-run"><code>uv run python 1-context/scm_underregime/main.py</code></div>
 <a class="exp-details-link" href="../../experiments/context_scm_underregime/">Parameters &amp; details →</a>
 </div>
 </div>

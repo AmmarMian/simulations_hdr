@@ -7,7 +7,7 @@ SCM estimator behavior in the under-regime (d > N) — mean, covariance, conditi
 ## Run
 
 ```sh
-uv run python 1-context/scm_underregime.py
+uv run python 1-context/scm_underregime/main.py
 ```
 
 ## Parameters
