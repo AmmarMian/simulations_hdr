@@ -365,8 +365,16 @@ def _write_exp_page(exp: dict) -> None:
         lines += ["## Results", ""]
         for stem, label in figures:
             actual_args = _load_actual_args(stem)
-            fig_title = f"{name} — {label}" if label else f"{name} — power curve"
+            fig_title = f"{name} — {label}" if label else name
+            json_path = DATA_DIR / f"{stem}.json"
+            run_date = ""
+            if json_path.exists():
+                from datetime import datetime
+                mtime = json_path.stat().st_mtime
+                run_date = datetime.fromtimestamp(mtime).strftime("%Y-%m-%d")
             mn_rows = ""
+            if run_date:
+                mn_rows += f'  <span class="mn-date">Generated: {run_date}</span><br>\n'
             if params:
                 for arg in params:
                     flag = arg["names"][0]

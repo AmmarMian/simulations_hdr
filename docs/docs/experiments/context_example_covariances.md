@@ -22,10 +22,11 @@ uv run python 1-context/examples_covariances/main.py
 
 <span class="marginnote">
   <span class="mn-label">Parameters</span>
+  <span class="mn-date">Generated: 2026-06-18</span><br>
   <code>--show-interactive</code><br>
   <code>--export</code> <span class='mn-default'>True</span><br>
 </span>
-<div class="plotly-wrap" data-src="../../assets/data/context_example_covariances.json" data-title="context_example_covariances — power curve"></div>
+<div class="plotly-wrap" data-src="../../assets/data/context_example_covariances.json" data-title="context_example_covariances"></div>
 
 ## Config
 

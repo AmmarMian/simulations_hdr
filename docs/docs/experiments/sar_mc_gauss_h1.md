@@ -34,6 +34,7 @@ uv run python 2-detection/sar_experiments/mc_simulations/mc_gaussian_h1.py
 
 <span class="marginnote">
   <span class="mn-label">Parameters</span>
+  <span class="mn-date">Generated: 2026-06-13</span><br>
   <code>--sigma2-seed</code> <span class='mn-default'>1</span><br>
   <code>--change-fraction</code> <span class='mn-default'>0.5</span><br>
   <code>--pfa</code> <span class='mn-default'>0.001</span><br>
@@ -49,10 +50,11 @@ uv run python 2-detection/sar_experiments/mc_simulations/mc_gaussian_h1.py
   <code>--export</code> <span class='mn-default'>True</span><br>
   <code>--show-interactive</code><br>
 </span>
-<div class="plotly-wrap" data-src="../../assets/data/sar_mc_gauss_h1.json" data-title="sar_mc_gauss_h1 — power curve"></div>
+<div class="plotly-wrap" data-src="../../assets/data/sar_mc_gauss_h1.json" data-title="sar_mc_gauss_h1"></div>
 
 <span class="marginnote">
   <span class="mn-label">Run · n100</span>
+  <span class="mn-date">Generated: 2026-06-13</span><br>
   <code>--sigma2-seed</code> <span class='mn-default'>1</span><br>
   <code>--change-fraction</code> <span class='mn-default'>0.5</span><br>
   <code>--pfa</code> <span class='mn-default'>0.001</span><br>
@@ -72,6 +74,7 @@ uv run python 2-detection/sar_experiments/mc_simulations/mc_gaussian_h1.py
 
 <span class="marginnote">
   <span class="mn-label">Run · n1000</span>
+  <span class="mn-date">Generated: 2026-06-13</span><br>
   <code>--sigma2-seed</code> <span class='mn-default'>1</span><br>
   <code>--change-fraction</code> <span class='mn-default'>0.5</span><br>
   <code>--pfa</code> <span class='mn-default'>0.001</span><br>

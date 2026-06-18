@@ -36,6 +36,7 @@ uv run python 2-detection/sar_experiments/compute_detection_real_data/offline_ga
 
 <span class="marginnote">
   <span class="mn-label">Run · scene1_w7</span>
+  <span class="mn-date">Generated: 2026-06-13</span><br>
   <code>data_path</code><br>
   <code>window_size</code><br>
   <code>--backend</code> <span class='mn-default'>numpy</span><br>
