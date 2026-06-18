@@ -14,4 +14,9 @@ actions:
       executable: 2-detection/sar_experiments/action_plot.py
       executable_command: .venv/bin/python
       description: Plot all convergence curves found in the run directory
+  - register:
+      name: register
+      executable: register_latex.py
+      executable_command: .venv/bin/python
+      description: Copy a chosen figure + provenance into the HDR LaTeX repo
 group: "SAR · Monte Carlo"

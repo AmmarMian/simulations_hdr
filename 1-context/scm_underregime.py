@@ -41,12 +41,24 @@ if __name__ == "__main__":
     parser.add_argument("--N", type=int, default=30, help="Number of observations.")
     parser.add_argument("--n_trials", type=int, default=50, help="Number of MC-trials.")
     parser.add_argument(
-        "--output_dir",
+        "--storage_path",
         type=str,
         default="outputs/error_estimation_scm_underregime",
-        help="Directory for LaTeX exports.",
+        help="Output directory for LaTeX exports (injected by qanat, or set manually).",
+    )
+    parser.add_argument(
+        "--show-interactive",
+        action="store_true",
+        help="Show plots interactively with matplotlib.",
+    )
+    parser.add_argument(
+        "--export",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Save TikZ/PGFPlots figures (.tex) (default: True).",
     )
     args = parser.parse_args()
+    args.output_dir = args.storage_path  # alias for references below
 
     # Create output directory if not existing
     if not os.path.exists(args.output_dir):
@@ -93,9 +105,10 @@ if __name__ == "__main__":
     plt.xscale("log")
     plt.yscale("log")
     plt.title(f"Error of mean estimation with {n_trials} Monte-carlo trials")
-    save_path = os.path.join(args.output_dir, "mean.tex")
-    save(save_path)
-    print(f"Saved mean error in {save_path}")
+    if args.export:
+        save_path = os.path.join(args.output_dir, "mean.tex")
+        save(save_path)
+        print(f"Saved mean error in {save_path}")
 
     fig = plt.figure()
     plt.scatter(d_vec, error_cov_mean, marker="o", facecolors="none", edgecolors="k")
@@ -107,9 +120,10 @@ if __name__ == "__main__":
         r"$\|\hat{\boldsymbol{\Sigma}}_\mathcal{X} - \boldsymbol{\Sigma}_\mathcal{X}\|_2$"
     )
     plt.title(f"Error of mean estimation with {n_trials} Monte-carlo trials")
-    save_path = os.path.join(args.output_dir, "cov.tex")
-    save(save_path)
-    print(f"Saved cov error in {save_path}")
+    if args.export:
+        save_path = os.path.join(args.output_dir, "cov.tex")
+        save(save_path)
+        print(f"Saved cov error in {save_path}")
 
     fig = plt.figure()
     plt.scatter(d_vec, cond_cov_mean, marker="o", facecolors="none", edgecolors="k")
@@ -125,8 +139,10 @@ if __name__ == "__main__":
         f"Condition number of estimated covariance with {n_trials} Monte-carlo trials"
     )
     plt.legend()
-    save_path = os.path.join(args.output_dir, "cond.tex")
-    save(save_path)
-    print(f"Saved cov error in {save_path}")
+    if args.export:
+        save_path = os.path.join(args.output_dir, "cond.tex")
+        save(save_path)
+        print(f"Saved cov error in {save_path}")
 
-    plt.show()
+    if args.show_interactive:
+        plt.show()

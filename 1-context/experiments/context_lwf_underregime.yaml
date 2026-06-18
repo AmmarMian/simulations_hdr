@@ -1,0 +1,22 @@
+name: context_lwf_underregime
+description: Condition number of SCM vs LWF-regularised covariance in the under-regime (d > N)
+path: 1-context
+executable: 1-context/lwf_underregime.py
+executable_command: .venv/bin/python
+tags:
+  - context
+  - lwf
+  - regularisation
+  - under-regime
+  - monte-carlo
+params:
+  N: 30
+  n_trials: 50
+  alpha: 0.1
+actions:
+  - register:
+      name: register
+      executable: register_latex.py
+      executable_command: .venv/bin/python
+      description: Stage a chosen figure (.tex) to hdr_exports/ for the LaTeX dissertation
+group: "Context · LWF"

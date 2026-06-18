@@ -20,4 +20,9 @@ actions:
       executable: 2-detection/sar_experiments/compute_detection_real_data/action_add_to_docs.py
       executable_command: .venv/bin/python
       description: Publish detection map figure to the docs
+  - register:
+      name: register
+      executable: register_latex.py
+      executable_command: .venv/bin/python
+      description: Copy a chosen figure + provenance into the HDR LaTeX repo
 group: "SAR · Real Data"

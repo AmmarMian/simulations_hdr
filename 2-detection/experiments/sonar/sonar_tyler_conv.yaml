@@ -20,4 +20,9 @@ actions:
       executable: 2-detection/sar_experiments/action_plot.py
       executable_command: .venv/bin/python
       description: Run all auto-generated *_plot.py scripts in the run directory
+  - register:
+      name: register
+      executable: register_latex.py
+      executable_command: .venv/bin/python
+      description: Copy a chosen figure + provenance into the HDR LaTeX repo
 group: "Sonar · Convergence"

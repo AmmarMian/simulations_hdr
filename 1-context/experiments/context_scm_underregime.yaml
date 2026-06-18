@@ -1,0 +1,20 @@
+name: context_scm_underregime
+description: SCM estimator behavior in the under-regime (d > N) — mean, covariance, condition number errors
+path: 1-context
+executable: 1-context/scm_underregime.py
+executable_command: .venv/bin/python
+tags:
+  - context
+  - scm
+  - under-regime
+  - monte-carlo
+params:
+  N: 30
+  n_trials: 50
+actions:
+  - register:
+      name: register
+      executable: register_latex.py
+      executable_command: .venv/bin/python
+      description: Stage a chosen figure (.tex) to hdr_exports/ for the LaTeX dissertation
+group: "Context · SCM"

@@ -24,6 +24,7 @@ if TYPE_CHECKING:
     try:
         import cupy as _cupy_t
         import jax as _jax_t
+
         type Array = npt.NDArray | torch.Tensor | _cupy_t.ndarray | _jax_t.Array  # type: ignore[no-redef]
         type ArrayLike = npt.ArrayLike | torch.Tensor | _cupy_t.ndarray | _jax_t.Array  # type: ignore[no-redef]
     except ImportError:
@@ -35,12 +36,14 @@ if TYPE_CHECKING:
 BACKEND_TYPES: dict = {"numpy": np.ndarray, "torch": torch.Tensor}
 try:
     import cupy as _cupy_reg
+
     BACKEND_TYPES["cupy"] = _cupy_reg.ndarray
     del _cupy_reg
 except ImportError:
     pass
 try:
     import jax as _jax_reg
+
     BACKEND_TYPES["jax"] = _jax_reg.Array
     del _jax_reg
 except ImportError:
@@ -48,6 +51,7 @@ except ImportError:
 
 
 # ── Private helpers ───────────────────────────────────────────────────────────
+
 
 def _is_cupy_array(x) -> bool:
     """True if *x* is a CuPy ndarray (duck-typed; no cupy import needed)."""
@@ -65,6 +69,7 @@ def _is_torch_module(m: ModuleType) -> bool:
 
 
 # ── Backend dataclass ─────────────────────────────────────────────────────────
+
 
 @dataclass(frozen=True)
 class Backend:
@@ -95,14 +100,11 @@ class Backend:
         valid = {
             "numpy": {"cpu"},
             "torch": {"cpu", "cuda", "mps"},
-            "cupy":  {"cuda"},
-            "jax":   {"cpu", "cuda", "metal"},
+            "cupy": {"cuda"},
+            "jax": {"cpu", "cuda", "metal"},
         }
         if self.lib not in valid:
-            raise ValueError(
-                f"Unknown lib {self.lib!r}. "
-                f"Valid choices: {sorted(valid)}"
-            )
+            raise ValueError(f"Unknown lib {self.lib!r}. Valid choices: {sorted(valid)}")
         if self.device not in valid[self.lib]:
             raise ValueError(
                 f"Device {self.device!r} is not valid for lib={self.lib!r}. "
@@ -117,6 +119,7 @@ class Backend:
             try:
                 import os
                 import jax
+
                 # Prevent XLA from pre-allocating ~75% of GPU memory at init.
                 os.environ.setdefault("XLA_PYTHON_CLIENT_PREALLOCATE", "false")
                 platform = "gpu" if self.device == "cuda" else self.device
@@ -208,6 +211,7 @@ class Backend:
         if not self.is_jax:
             raise AttributeError("jax_device is only valid for jax backends")
         import jax
+
         # JAX uses "gpu" as the platform name for CUDA devices.
         platform = "gpu" if self.device == "cuda" else self.device
         return jax.devices(platform)[0]
@@ -218,21 +222,18 @@ class Backend:
     def from_str(cls, s: str) -> "Backend":
         """Parse a backend string into a :class:`Backend` object."""
         _map = {
-            "numpy":      cls.numpy,
-            "torch-cpu":  cls.torch_cpu,
+            "numpy": cls.numpy,
+            "torch-cpu": cls.torch_cpu,
             "torch-cuda": cls.torch_cuda,
-            "torch-mps":  cls.torch_mps,
-            "cupy":       cls.cupy_cuda,
-            "cupy-cuda":  cls.cupy_cuda,
-            "jax-cpu":    cls.jax_cpu,
-            "jax-cuda":   cls.jax_cuda,
-            "jax-metal":  cls.jax_metal,
+            "torch-mps": cls.torch_mps,
+            "cupy": cls.cupy_cuda,
+            "cupy-cuda": cls.cupy_cuda,
+            "jax-cpu": cls.jax_cpu,
+            "jax-cuda": cls.jax_cuda,
+            "jax-metal": cls.jax_metal,
         }
         if s not in _map:
-            raise ValueError(
-                f"Unknown backend string: {s!r}. "
-                f"Valid choices: {sorted(_map)}"
-            )
+            raise ValueError(f"Unknown backend string: {s!r}. Valid choices: {sorted(_map)}")
         return _map[s]()
 
     def __str__(self) -> str:
@@ -243,6 +244,7 @@ class Backend:
 
 # ── Internal normalisation helper ─────────────────────────────────────────────
 
+
 def _normalize_backend(backend: Union[str, "Backend"]) -> "Backend":
     """Convert string or Backend to Backend object."""
     if isinstance(backend, Backend):
@@ -251,6 +253,7 @@ def _normalize_backend(backend: Union[str, "Backend"]) -> "Backend":
 
 
 # ── Module accessor ───────────────────────────────────────────────────────────
+
 
 def get_backend_module(backend: Union[str, "Backend"]) -> ModuleType:
     """Return the compute module for a given backend.
@@ -280,15 +283,16 @@ def get_backend_module(backend: Union[str, "Backend"]) -> ModuleType:
     if b.lib == "cupy":
         try:
             import cupy
+
             return cupy
         except ImportError:
             raise ImportError(
-                "Backend 'cupy' requires CuPy. "
-                "Install it with: uv sync --extra cupy"
+                "Backend 'cupy' requires CuPy. Install it with: uv sync --extra cupy"
             ) from None
     if b.lib == "jax":
         try:
             import jax.numpy as jnp
+
             # Default device already pinned in Backend.__post_init__.
             return jnp
         except ImportError:
@@ -297,9 +301,11 @@ def get_backend_module(backend: Union[str, "Backend"]) -> ModuleType:
                 "Install it with: uv sync --extra jax  (CPU/CUDA) or "
                 "uv sync --extra jax-metal  (Apple Silicon)"
             ) from None
+    raise ValueError(f"backend {backend} not found.")
 
 
 # ── Data movement ─────────────────────────────────────────────────────────────
+
 
 def get_data_on_device(data: Array, backend: Union[str, "Backend"]) -> Array:
     """Move *data* to the requested backend and device.
@@ -343,8 +349,7 @@ def get_data_on_device(data: Array, backend: Union[str, "Backend"]) -> Array:
             import cupy as cp
         except ImportError:
             raise ImportError(
-                "Backend 'cupy' requires CuPy. "
-                "Install it with: uv sync --extra cupy"
+                "Backend 'cupy' requires CuPy. Install it with: uv sync --extra cupy"
             ) from None
         if _is_cupy_array(data):
             return data  # already a cupy array (single-GPU assumed)
@@ -389,6 +394,7 @@ def get_data_on_device(data: Array, backend: Union[str, "Backend"]) -> Array:
 
 # ── Central numpy extraction ──────────────────────────────────────────────────
 
+
 def to_numpy(x: Array) -> np.ndarray:
     """Extract a plain numpy array from any backend array.
 
@@ -407,6 +413,7 @@ def to_numpy(x: Array) -> np.ndarray:
         return x.detach().cpu().numpy()
     if _is_cupy_array(x):
         import cupy as cp
+
         return cp.asnumpy(x)
     if _is_jax_array(x):
         return np.asarray(x)
@@ -415,6 +422,7 @@ def to_numpy(x: Array) -> np.ndarray:
 
 
 # ── Random sampling ───────────────────────────────────────────────────────────
+
 
 def sample_standard_normal(
     n_samples: int,
@@ -454,11 +462,13 @@ def sample_standard_normal(
 
     if b.is_cupy:
         import cupy as cp
+
         rng = cp.random.default_rng(seed)
         return rng.standard_normal(shape)
 
     if b.is_jax:
         import jax
+
         key = jax.random.PRNGKey(seed if seed is not None else 0)
         arr = jax.random.normal(key, shape=shape)
         return jax.device_put(arr, b.jax_device)
@@ -511,11 +521,13 @@ def sample_uniform(
 
     if b.is_cupy:
         import cupy as cp
+
         rng = cp.random.default_rng(seed)
         return rng.uniform(low=low, high=high, size=shape)
 
     if b.is_jax:
         import jax
+
         key = jax.random.PRNGKey(seed if seed is not None else 0)
         arr = jax.random.uniform(key, shape=shape, minval=low, maxval=high)
         return jax.device_put(arr, b.jax_device)
@@ -526,6 +538,7 @@ def sample_uniform(
 
 
 # ── Array manipulation helpers ────────────────────────────────────────────────
+
 
 def expand_dims(backend: Union[str, "Backend"], x: Array, axis: int) -> Array:
     """Add a new axis to an array, works for all backends.
@@ -623,9 +636,7 @@ def permute(backend: Union[str, "Backend"], x: Array, dims: tuple) -> Array:
     return bm.transpose(x, dims)
 
 
-def concatenate(
-    backend: Union[str, "Backend"], arrays: list[Array], axis: int = 0
-) -> Array:
+def concatenate(backend: Union[str, "Backend"], arrays: list[Array], axis: int = 0) -> Array:
     """Concatenate arrays along an axis, works for all backends.
 
     Parameters
@@ -645,6 +656,7 @@ def concatenate(
 
 
 # ── Linear algebra helpers ────────────────────────────────────────────────────
+
 
 def batched_eigh(
     backend: Union[str, "Backend"], X: Array, max_batch_size: int = 16000
@@ -680,6 +692,7 @@ def batched_eigh(
     # JAX: vmap for efficient batched eigh on any device (Metal supported natively)
     if b.is_jax:
         import jax
+
         batch_dims = len(X.shape) - 2
         eigh_fn = bm.linalg.eigh
         for _ in range(batch_dims):
@@ -706,9 +719,7 @@ def batched_eigh(
                 eigvecs_list.append(evec)
 
             if _is_torch_module(bm):
-                eigenvalues = bm.cat(eigvals_list, dim=0).reshape(
-                    batch_shape + (X.shape[-1],)
-                )
+                eigenvalues = bm.cat(eigvals_list, dim=0).reshape(batch_shape + (X.shape[-1],))
                 eigenvectors = bm.cat(eigvecs_list, dim=0).reshape(X.shape)
             else:
                 eigenvalues = bm.concatenate(eigvals_list, axis=0).reshape(
@@ -779,6 +790,7 @@ def batched_det(backend: Union[str, "Backend"], X: Array) -> Array:
 
 
 # ── Type/scalar utilities ─────────────────────────────────────────────────────
+
 
 def is_complex(backend: Union[str, "Backend"], X: Array) -> bool:
     """Return True if *X* has a complex dtype.
@@ -1006,6 +1018,7 @@ def normalize_covariance(
 
 # ── Memory / device management helpers ───────────────────────────────────────
 
+
 def empty_cache(backend: Union[str, "Backend"]) -> None:
     """Release unused GPU memory held by the backend's allocator.
 
@@ -1024,6 +1037,7 @@ def empty_cache(backend: Union[str, "Backend"]) -> None:
     elif b.is_cupy:
         try:
             import cupy
+
             cupy.get_default_memory_pool().free_all_blocks()
         except ImportError:
             pass
@@ -1059,6 +1073,7 @@ def peak_memory_bytes(backend: Union[str, "Backend"]) -> Optional[int]:
     if b.is_cupy:
         try:
             import cupy
+
             return cupy.get_default_memory_pool().used_bytes()
         except ImportError:
             pass
@@ -1102,6 +1117,7 @@ def oom_errors(backend: Union[str, "Backend"]) -> tuple:
     if b.is_cupy:
         try:
             from cupy.cuda.memory import OutOfMemoryError as CupyOOM
+
             errors.append(CupyOOM)
         except ImportError:
             pass
@@ -1109,6 +1125,7 @@ def oom_errors(backend: Union[str, "Backend"]) -> tuple:
 
 
 # ── 2-D sliding-window extractor ─────────────────────────────────────────────
+
 
 class Unfold2D:
     """Backend-agnostic 2-D sliding-window extractor.
@@ -1146,7 +1163,7 @@ class Unfold2D:
         patches = self._torch_unfold(data)  # (T, C*k², L)
         return (
             patches.view(T, C, k * k, -1)  # (T, C, k², L)
-            .permute(3, 0, 2, 1)           # (L, T, k², C)
+            .permute(3, 0, 2, 1)  # (L, T, k², C)
             .contiguous()
         )
 
@@ -1159,11 +1176,7 @@ class Unfold2D:
         if self.stride > 1:
             patches = patches[:, :, :: self.stride, :: self.stride]
         T, C, out_h, out_w, k, _ = patches.shape
-        return (
-            patches.transpose(2, 3, 0, 4, 5, 1)
-            .reshape(out_h * out_w, T, k * k, C)
-            .copy()
-        )
+        return patches.transpose(2, 3, 0, 4, 5, 1).reshape(out_h * out_w, T, k * k, C).copy()
 
     def _call_jax(self, data, b: "Backend") -> Array:
         """JAX path: compute on numpy host, then device_put result.
@@ -1176,6 +1189,7 @@ class Unfold2D:
         not support complex dtypes).
         """
         import jax
+
         data_np = to_numpy(data)
         patches_np = self._call_numpy_like(data_np, np)
         return jax.device_put(patches_np, b.jax_device)

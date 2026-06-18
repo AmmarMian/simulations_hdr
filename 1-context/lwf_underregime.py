@@ -39,15 +39,27 @@ if __name__ == "__main__":
     parser.add_argument("--N", type=int, default=30, help="Number of observations.")
     parser.add_argument("--n_trials", type=int, default=50, help="Number of MC-trials.")
     parser.add_argument(
-        "--output_dir",
+        "--storage_path",
         type=str,
         default="outputs/error_estimation_lwf_underregime",
-        help="Directory for LaTeX exports.",
+        help="Output directory for LaTeX exports (injected by qanat, or set manually).",
     )
     parser.add_argument(
         "--alpha", type=float, default=0.1, help="Coefficient of regularization."
     )
+    parser.add_argument(
+        "--show-interactive",
+        action="store_true",
+        help="Show plots interactively with matplotlib.",
+    )
+    parser.add_argument(
+        "--export",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Save TikZ/PGFPlots figures (.tex) (default: True).",
+    )
     args = parser.parse_args()
+    args.output_dir = args.storage_path  # alias for references below
 
     # Create output directory if not existing
     if not os.path.exists(args.output_dir):
@@ -105,8 +117,10 @@ if __name__ == "__main__":
         f"Condition number of estimated covariance with {n_trials} Monte-carlo trials"
     )
     plt.legend()
-    save_path = os.path.join(args.output_dir, "cond.tex")
-    save(save_path)
-    print(f"Saved cov error in {save_path}")
+    if args.export:
+        save_path = os.path.join(args.output_dir, "cond.tex")
+        save(save_path)
+        print(f"Saved cov error in {save_path}")
 
-    plt.show()
+    if args.show_interactive:
+        plt.show()

@@ -20,4 +20,9 @@ actions:
       executable: 2-detection/sar_experiments/mc_simulations/action_add_to_docs.py
       executable_command: .venv/bin/python
       description: Publish power curve figure to the docs (pins run via docs_figure in YAML)
+  - register:
+      name: register
+      executable: register_latex.py
+      executable_command: .venv/bin/python
+      description: Copy a chosen figure + provenance into the HDR LaTeX repo
 group: "SAR · Monte Carlo"

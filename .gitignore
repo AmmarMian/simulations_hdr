@@ -5,6 +5,9 @@
 **/exports/
 results
 
+# LaTeX figure staging area — copy to hdr/figures/generated/ then run 'just figures'
+hdr_exports/
+
 # Output plots and benchmark results
 *.png
 **/benchmark_results/

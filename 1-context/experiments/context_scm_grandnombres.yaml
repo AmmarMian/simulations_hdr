@@ -1,0 +1,20 @@
+name: context_scm_grandnombres
+description: MC convergence of SCM mean/covariance estimators as N → ∞ (grand-nombre regime)
+path: 1-context
+executable: 1-context/scm_grandnombres.py
+executable_command: .venv/bin/python
+tags:
+  - context
+  - scm
+  - monte-carlo
+  - convergence
+params:
+  d: 7
+  n_trials: 10000
+actions:
+  - register:
+      name: register
+      executable: register_latex.py
+      executable_command: .venv/bin/python
+      description: Stage a chosen figure (.tex) to hdr_exports/ for the LaTeX dissertation
+group: "Context · SCM"
