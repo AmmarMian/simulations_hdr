@@ -13,8 +13,6 @@ from itertools import product
 from matplot2tikz import clean_figure, save
 from hdrlib.core.plot_style import apply_style
 
-apply_style()
-
 
 def compute_estimation(params):
     d, N, trial_no = params
@@ -60,6 +58,9 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     args.output_dir = args.storage_path  # alias for legacy references below
+
+    if args.show_interactive:
+        apply_style()
 
     # Create output directory if not existing
     if not os.path.exists(args.output_dir):
