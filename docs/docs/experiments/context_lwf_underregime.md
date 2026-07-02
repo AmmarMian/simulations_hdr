@@ -20,6 +20,7 @@ uv run python 1-context/lwf_underregime/main.py
 | `--alpha` | float | `0.1` | Coefficient of regularization. |
 | `--show-interactive` | — | — | Show plots interactively with matplotlib. |
 | `--export` | — | `True` | Save TikZ/PGFPlots figures (.tex) (default: True). |
+| `--seed` | int | `42` | random seed generation base seed |
 
 ## Config
 

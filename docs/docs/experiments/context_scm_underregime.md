@@ -19,6 +19,7 @@ uv run python 1-context/scm_underregime/main.py
 | `--storage_path` | str | `outputs/error_estimation_scm_underregime` | Output directory for LaTeX exports (injected by qanat, or set manually). |
 | `--show-interactive` | — | — | Show plots interactively with matplotlib. |
 | `--export` | — | `True` | Save TikZ/PGFPlots figures (.tex) (default: True). |
+| `--seed` | int | `42` | random seed generation base seed |
 
 ## Config
 

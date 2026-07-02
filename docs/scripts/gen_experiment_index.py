@@ -16,6 +16,7 @@ Run from the repo root:
 from __future__ import annotations
 
 import ast
+import html
 import re
 import sys
 from pathlib import Path
@@ -292,6 +293,31 @@ def _load_actual_args(stem: str) -> dict:
         return {}
 
 
+LOG_MAX_CHARS = 20000
+
+
+def _load_run_logs(stem: str) -> dict:
+    """Read stdout.txt/stderr.txt from the run directory that produced this figure.
+
+    The run directory is the parent of the .npz recorded in the source sidecar.
+    """
+    source_txt = DATA_DIR / f"{stem}.source.txt"
+    if not source_txt.exists():
+        return {}
+    npz_path = Path(source_txt.read_text().strip())
+    run_dir = npz_path.parent
+    logs = {}
+    for kind in ("stdout", "stderr"):
+        log_path = run_dir / f"{kind}.txt"
+        if not log_path.exists():
+            continue
+        text = log_path.read_text(errors="replace")
+        if len(text) > LOG_MAX_CHARS:
+            text = "… (truncated) …\n" + text[-LOG_MAX_CHARS:]
+        logs[kind] = text
+    return logs
+
+
 def _figure_stems(name: str) -> list[tuple[str, str]]:
     """Return (stem, label) pairs for all published figures for this experiment.
 
@@ -391,11 +417,26 @@ def _write_exp_page(exp: dict) -> None:
                 f'{mn_rows}'
                 '</span>\n'
             ) if mn_rows else ""
+            logs = _load_run_logs(stem)
+            log_blocks = ""
+            for kind in ("stdout", "stderr"):
+                text = logs.get(kind)
+                if not text:
+                    continue
+                log_blocks += (
+                    f'<details class="exp-log">\n'
+                    f'<summary>{kind}</summary>\n'
+                    f'<div class="exp-log-text">{html.escape(text)}</div>\n'
+                    f'</details>\n'
+                )
             lines += [
                 marginnote +
+                '<div class="exp-result-card">\n'
                 f'<div class="plotly-wrap" '
                 f'data-src="../../assets/data/{stem}.json" '
-                f'data-title="{fig_title}"></div>',
+                f'data-title="{fig_title}"></div>\n'
+                f'{log_blocks}'
+                '</div>',
                 "",
             ]
 

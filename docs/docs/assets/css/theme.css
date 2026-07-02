@@ -943,6 +943,33 @@ details.exp-params[open] > summary::before { transform: rotate(90deg); }
   background: none; border: none; padding: 0;
 }
 
+/* Run log dropdowns (stdout/stderr) — nested inside .exp-result-card */
+details.exp-log {
+  border-top: 1px solid var(--rule);
+  padding: 10px 20px;
+}
+details.exp-log > summary {
+  cursor: pointer; list-style: none;
+  font-family: var(--font-label); font-size: 10px; letter-spacing: .06em;
+  text-transform: uppercase; font-weight: 600;
+  color: var(--muted); user-select: none;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+details.exp-log > summary::-webkit-details-marker { display: none; }
+details.exp-log > summary::before {
+  content: "▶"; font-size: 7px; color: var(--accent);
+  transition: transform .15s; display: inline-block;
+}
+details.exp-log[open] > summary::before { transform: rotate(90deg); }
+.exp-log-text {
+  margin-top: 8px; padding: 10px 12px;
+  background: var(--paper-2); border: 1px solid var(--rule); border-radius: 8px;
+  font-family: var(--font-mono); font-size: 11px; line-height: 1.55;
+  color: var(--ink-3);
+  max-height: 280px; overflow: auto;
+  white-space: pre-wrap; word-break: break-word;
+}
+
 /* ── Floating page-TOC (FAB) ────────────────────────────────── */
 .toc-fab {
   position: fixed; bottom: 28px; right: 28px; z-index: 38;
@@ -1242,8 +1269,7 @@ details.exp-params[open] > summary::before { transform: rotate(90deg); }
   margin-top: 0;
 }
 /* ── Plotly figures ─────────────────────────────────────────── */
-.plotly-wrap {
-  width: 100%;
+.exp-result-card {
   margin: 2.4em 0;
   background: linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%);
   border: 1px solid var(--rule);
@@ -1251,6 +1277,7 @@ details.exp-params[open] > summary::before { transform: rotate(90deg); }
   box-shadow: var(--shadow);
   overflow: hidden;
 }
+.plotly-wrap { width: 100%; }
 .plotly-wrap .figtop {
   background: var(--panel);
 }
