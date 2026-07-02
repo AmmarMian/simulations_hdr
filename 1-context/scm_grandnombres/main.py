@@ -109,7 +109,8 @@ if __name__ == "__main__":
     # Plotting
     fig = plt.figure()
     plt.scatter(N_vec, error_mean_mean, marker="o", facecolors="none", edgecolors="k")
-    plt.errorbar(N_vec, error_mean_mean, yerr=error_mean_std, linestyle="", capsize=5)
+    errline, _, _ = plt.errorbar(N_vec, error_mean_mean, yerr=error_mean_std, linestyle="", capsize=5)
+    errline.set_visible(False)
     plt.xlabel(r"$N$")
     plt.ylabel(r"$\|\hat{\boldsymbol{\mu}}_\mathcal{X} - \boldsymbol{\mu}_\mathcal{X}\|_2$")
     plt.xscale("log")
@@ -122,7 +123,8 @@ if __name__ == "__main__":
 
     fig = plt.figure()
     plt.scatter(N_vec, error_cov_mean, marker="o", facecolors="none", edgecolors="k")
-    plt.errorbar(N_vec, error_cov_mean, yerr=error_cov_std, linestyle="", capsize=5)
+    errline, _, _ = plt.errorbar(N_vec, error_cov_mean, yerr=error_cov_std, linestyle="", capsize=5)
+    errline.set_visible(False)
     plt.xlabel("$N$")
     plt.xscale("log")
     plt.ylabel(r"$\|\hat{\boldsymbol{\Sigma}}_\mathcal{X} - \boldsymbol{\Sigma}_\mathcal{X}\|_2$")
