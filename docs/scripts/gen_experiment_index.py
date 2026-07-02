@@ -278,19 +278,33 @@ DATA_DIR       = REPO_ROOT / "docs" / "docs" / "assets" / "data"
 
 
 def _load_actual_args(stem: str) -> dict:
-    """Read actual run args from the provenance JSON recorded in the source sidecar."""
+    """Read actual run args from the provenance JSON recorded in the source sidecar.
+
+    Prefers a sidecar matching the data file's own stem (e.g. gaussian_offline.npy
+    + gaussian_offline.json, written by ResultExporter). Falls back to any *.json
+    sidecar in the run directory with an "args" key — scripts using the simpler
+    write_prov_sidecar() helper name sidecars after each figure (mean.json,
+    cov.json, ...) rather than after the shared results.npz/npy.
+    """
     source_txt = DATA_DIR / f"{stem}.source.txt"
     if not source_txt.exists():
         return {}
-    npz_path = Path(source_txt.read_text().strip())
-    prov_path = npz_path.with_suffix(".json")
-    if not prov_path.exists():
-        return {}
-    try:
-        import json
-        return json.loads(prov_path.read_text()).get("args", {})
-    except Exception:
-        return {}
+    data_path = Path(source_txt.read_text().strip())
+    import json
+
+    candidates = [data_path.with_suffix(".json")]
+    if data_path.parent.is_dir():
+        candidates += sorted(data_path.parent.glob("*.json"))
+    for prov_path in candidates:
+        if not prov_path.exists():
+            continue
+        try:
+            args = json.loads(prov_path.read_text()).get("args", {})
+        except Exception:
+            continue
+        if args:
+            return args
+    return {}
 
 
 LOG_MAX_CHARS = 20000
