@@ -31,6 +31,33 @@ def _git_sha() -> str:
         return "unknown"
 
 
+def write_prov_sidecar(stem_path, args) -> None:
+    """Write a minimal provenance sidecar ``{stem}.json`` next to a saved figure.
+
+    For scripts too simple to warrant :class:`ResultExporter` (e.g. the
+    1-context illustration scripts), call this right after saving each
+    ``.tex`` figure so ``register_latex.py`` can recover the run's ``seed``
+    and the dissertation's ``gen_figures.py`` can print every CLI parameter.
+
+    Parameters
+    ----------
+    stem_path : str or Path
+        Path to the saved figure, with or without extension
+        (e.g. ``outputs/mean.tex`` or ``outputs/mean``).
+    args : argparse.Namespace
+        Full parsed CLI args — stored verbatim as ``"args"``.
+    """
+    stem_path = Path(stem_path)
+    provenance = {
+        "git_sha": _git_sha(),
+        "script": str(Path(sys.argv[0]).resolve()),
+        "args": vars(args),
+    }
+    stem_path.with_suffix(".json").write_text(
+        json.dumps(provenance, indent=2, default=str)
+    )
+
+
 class ResultExporter(ABC):
     """Base class for saving experiment results with full provenance.
 

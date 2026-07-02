@@ -12,6 +12,7 @@ from itertools import product
 
 from matplot2tikz import save
 from hdrlib.core.plot_style import apply_style
+from hdrlib.core.exporter import write_prov_sidecar
 
 
 def compute_estimation(params):
@@ -130,6 +131,7 @@ if __name__ == "__main__":
     if args.export:
         save_path = os.path.join(args.output_dir, "cond.tex")
         save(save_path)
+        write_prov_sidecar(save_path, args)
         print(f"Saved cov error in {save_path}")
 
     if args.show_interactive:

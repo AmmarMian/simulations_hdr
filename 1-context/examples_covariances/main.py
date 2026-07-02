@@ -4,6 +4,7 @@ import numpy as np
 from scipy.linalg import toeplitz
 import matplotlib.pyplot as plt
 from matplot2tikz import save
+from hdrlib.core.exporter import write_prov_sidecar
 import os
 
 
@@ -64,7 +65,9 @@ if __name__ == "__main__":
     fig.tight_layout()
 
     if _args.export:
-        save(os.path.join(_args.storage_path, "all_covariances.tex"))
+        save_path = os.path.join(_args.storage_path, "all_covariances.tex")
+        save(save_path)
+        write_prov_sidecar(save_path, _args)
 
     if _args.show_interactive:
         plt.show()
