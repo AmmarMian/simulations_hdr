@@ -28,7 +28,7 @@ uv run sar_experiments/compute_detection_real_data/prepare_data.py data/SAR/Scen
 </div>
 <div class="exp-desc">Memory benchmark for offline Gaussian and DCG GLRT detectors (CPU memray + GPU torch)</div>
 <div class="exp-tags"><span class="exp-tag">benchmark</span><span class="exp-tag">memory</span><span class="exp-tag">SAR</span></div>
-<div class="exp-run"><code>uv run python 2-detection/sar_experiments/benchmarks/memory_benchmark.sh</code></div>
+<div class="exp-run"><code>bash 2-detection/sar_experiments/benchmarks/memory_benchmark.sh</code></div>
 <a class="exp-details-link" href="../../experiments/sar_bench_memory/">Parameters &amp; details →</a>
 </div>
 
@@ -39,7 +39,7 @@ uv run sar_experiments/compute_detection_real_data/prepare_data.py data/SAR/Scen
 </div>
 <div class="exp-desc">Memory benchmark for online Gaussian, DCG and Kronecker detectors (CPU memray + GPU torch)</div>
 <div class="exp-tags"><span class="exp-tag">benchmark</span><span class="exp-tag">memory</span><span class="exp-tag">online</span><span class="exp-tag">SAR</span></div>
-<div class="exp-run"><code>uv run python 2-detection/sar_experiments/benchmarks/memory_benchmark_online.sh</code></div>
+<div class="exp-run"><code>bash 2-detection/sar_experiments/benchmarks/memory_benchmark_online.sh</code></div>
 <a class="exp-details-link" href="../../experiments/sar_bench_online_memory/">Parameters &amp; details →</a>
 </div>
 
@@ -50,7 +50,7 @@ uv run sar_experiments/compute_detection_real_data/prepare_data.py data/SAR/Scen
 </div>
 <div class="exp-desc">Time benchmark for online Gaussian, DCG and Kronecker detectors (CPU + GPU)</div>
 <div class="exp-tags"><span class="exp-tag">benchmark</span><span class="exp-tag">time</span><span class="exp-tag">online</span><span class="exp-tag">SAR</span></div>
-<div class="exp-run"><code>uv run python 2-detection/sar_experiments/benchmarks/time_benchmark_online.sh</code></div>
+<div class="exp-run"><code>bash 2-detection/sar_experiments/benchmarks/time_benchmark_online.sh</code></div>
 <a class="exp-details-link" href="../../experiments/sar_bench_online_time/">Parameters &amp; details →</a>
 </div>
 
@@ -61,7 +61,7 @@ uv run sar_experiments/compute_detection_real_data/prepare_data.py data/SAR/Scen
 </div>
 <div class="exp-desc">Time benchmark for offline Gaussian and DCG GLRT detectors (CPU + GPU)</div>
 <div class="exp-tags"><span class="exp-tag">benchmark</span><span class="exp-tag">time</span><span class="exp-tag">SAR</span></div>
-<div class="exp-run"><code>uv run python 2-detection/sar_experiments/benchmarks/time_benchmark.sh</code></div>
+<div class="exp-run"><code>bash 2-detection/sar_experiments/benchmarks/time_benchmark.sh</code></div>
 <a class="exp-details-link" href="../../experiments/sar_bench_time/">Parameters &amp; details →</a>
 </div>
 </div>
@@ -84,7 +84,7 @@ uv run sar_experiments/compute_detection_real_data/prepare_data.py data/SAR/Scen
 <div class="exp-card">
 <div class="exp-card-head">
 <div class="exp-name">sar_det_off_gauss</div>
-<span class="exp-results-badge">Results available</span>
+
 </div>
 <div class="exp-desc">Offline Gaussian GLRT change detection on real SAR data</div>
 <div class="exp-tags"><span class="exp-tag">detection</span><span class="exp-tag">gaussian</span><span class="exp-tag">offline</span><span class="exp-tag">real-data</span><span class="exp-tag">SAR</span></div>
@@ -177,7 +177,7 @@ uv run sar_experiments/compute_detection_real_data/prepare_data.py data/SAR/Scen
 <div class="exp-card">
 <div class="exp-card-head">
 <div class="exp-name">sar_mc_gauss_h1</div>
-<span class="exp-results-badge">Results available</span>
+
 </div>
 <div class="exp-desc">MC power curve — OnlineGaussianGLRT vs GaussianGLRT under H1 (change detection)</div>
 <div class="exp-tags"><span class="exp-tag">detection</span><span class="exp-tag">gaussian</span><span class="exp-tag">H1</span><span class="exp-tag">monte-carlo</span><span class="exp-tag">power-curve</span></div>

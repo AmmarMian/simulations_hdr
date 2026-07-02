@@ -7,7 +7,7 @@ Memory benchmark for online Gaussian, DCG and Kronecker detectors (CPU memray + 
 ## Run
 
 ```sh
-uv run python 2-detection/sar_experiments/benchmarks/memory_benchmark_online.sh
+bash 2-detection/sar_experiments/benchmarks/memory_benchmark_online.sh
 ```
 
 ## Config

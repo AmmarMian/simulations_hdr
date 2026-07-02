@@ -1,1 +1,0 @@
-/Users/ammarmian/Research/HDR/simulations_hdr/results/context_scm_underregime/run_16/results.npz

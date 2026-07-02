@@ -30,68 +30,6 @@ uv run python 2-detection/sar_experiments/mc_simulations/mc_gaussian_h1.py
 | `--storage-path` / `--storage_path` / `--export-path` | str | `./exports` | Directory for exported results; --storage-path is the qanat alias (default: ./exports). |
 | `--show-interactive` | — | — | Display figures interactively at the end of the simulation. |
 
-## Results
-
-<span class="marginnote">
-  <span class="mn-label">Parameters</span>
-  <span class="mn-date">Generated: 2026-06-13</span><br>
-  <code>--sigma2-seed</code> <span class='mn-default'>1</span><br>
-  <code>--change-fraction</code> <span class='mn-default'>0.5</span><br>
-  <code>--pfa</code> <span class='mn-default'>0.001</span><br>
-  <code>--n-features</code> <span class='mn-default'>8</span><br>
-  <code>--T-max</code> <span class='mn-default'>1000</span><br>
-  <code>--T-min</code> <span class='mn-default'>5</span><br>
-  <code>--n-T</code> <span class='mn-default'>30</span><br>
-  <code>--sigma-seed</code> <span class='mn-default'>0</span><br>
-  <code>--n-trials</code> <span class='mn-default'>10000</span><br>
-  <code>--seed</code> <span class='mn-default'>42</span><br>
-  <code>--backend</code> <span class='mn-default'>numpy</span><br>
-  <code>--n-workers</code><br>
-  <code>--export</code> <span class='mn-default'>True</span><br>
-  <code>--show-interactive</code><br>
-</span>
-<div class="plotly-wrap" data-src="../../assets/data/sar_mc_gauss_h1.json" data-title="sar_mc_gauss_h1"></div>
-
-<span class="marginnote">
-  <span class="mn-label">Run · n100</span>
-  <span class="mn-date">Generated: 2026-06-13</span><br>
-  <code>--sigma2-seed</code> <span class='mn-default'>1</span><br>
-  <code>--change-fraction</code> <span class='mn-default'>0.5</span><br>
-  <code>--pfa</code> <span class='mn-default'>0.001</span><br>
-  <code>--n-features</code> <span class='mn-default'>8</span><br>
-  <code>--T-max</code> <span class='mn-default'>1000</span><br>
-  <code>--T-min</code> <span class='mn-default'>5</span><br>
-  <code>--n-T</code> <span class='mn-default'>30</span><br>
-  <code>--sigma-seed</code> <span class='mn-default'>0</span><br>
-  <code>--n-trials</code> <span class='mn-default'>10000</span><br>
-  <code>--seed</code> <span class='mn-default'>42</span><br>
-  <code>--backend</code> <span class='mn-default'>numpy</span><br>
-  <code>--n-workers</code><br>
-  <code>--export</code> <span class='mn-default'>True</span><br>
-  <code>--show-interactive</code><br>
-</span>
-<div class="plotly-wrap" data-src="../../assets/data/sar_mc_gauss_h1.n100.json" data-title="sar_mc_gauss_h1 — n100"></div>
-
-<span class="marginnote">
-  <span class="mn-label">Run · n1000</span>
-  <span class="mn-date">Generated: 2026-06-13</span><br>
-  <code>--sigma2-seed</code> <span class='mn-default'>1</span><br>
-  <code>--change-fraction</code> <span class='mn-default'>0.5</span><br>
-  <code>--pfa</code> <span class='mn-default'>0.001</span><br>
-  <code>--n-features</code> <span class='mn-default'>8</span><br>
-  <code>--T-max</code> <span class='mn-default'>1000</span><br>
-  <code>--T-min</code> <span class='mn-default'>5</span><br>
-  <code>--n-T</code> <span class='mn-default'>30</span><br>
-  <code>--sigma-seed</code> <span class='mn-default'>0</span><br>
-  <code>--n-trials</code> <span class='mn-default'>10000</span><br>
-  <code>--seed</code> <span class='mn-default'>42</span><br>
-  <code>--backend</code> <span class='mn-default'>numpy</span><br>
-  <code>--n-workers</code><br>
-  <code>--export</code> <span class='mn-default'>True</span><br>
-  <code>--show-interactive</code><br>
-</span>
-<div class="plotly-wrap" data-src="../../assets/data/sar_mc_gauss_h1.n1000.json" data-title="sar_mc_gauss_h1 — n1000"></div>
-
 ## Config
 
 `2-detection/experiments/sar/sar_mc_gauss_h1.yaml`

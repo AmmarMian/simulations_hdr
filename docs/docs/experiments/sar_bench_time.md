@@ -7,7 +7,7 @@ Time benchmark for offline Gaussian and DCG GLRT detectors (CPU + GPU)
 ## Run
 
 ```sh
-uv run python 2-detection/sar_experiments/benchmarks/time_benchmark.sh
+bash 2-detection/sar_experiments/benchmarks/time_benchmark.sh
 ```
 
 ## Config

@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.12"
 resolution-markers = [
     "python_full_version >= '3.13'",
@@ -1609,7 +1609,7 @@ wheels = [
 [[package]]
 name = "qanat"
 version = "0.1.0"
-source = { git = "https://github.com/ammarmian/qanat#bdba511295361bf0a5675a1095c3233fd58f00e6" }
+source = { git = "https://github.com/ammarmian/qanat#77c97dfc7988a2ebb1ba4725606069b3cef34c1f" }
 dependencies = [
     { name = "art" },
     { name = "filelock" },

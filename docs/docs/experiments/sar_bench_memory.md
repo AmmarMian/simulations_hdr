@@ -7,7 +7,7 @@ Memory benchmark for offline Gaussian and DCG GLRT detectors (CPU memray + GPU t
 ## Run
 
 ```sh
-uv run python 2-detection/sar_experiments/benchmarks/memory_benchmark.sh
+bash 2-detection/sar_experiments/benchmarks/memory_benchmark.sh
 ```
 
 ## Config

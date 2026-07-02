@@ -15,9 +15,9 @@ from hdrlib.core.plot_style import apply_style
 
 
 def compute_estimation(params):
-    d, N, trial_no, alpha = params
+    d, N, trial_no, alpha, base_seed = params
     rng = np.random.default_rng(
-        d + N + trial_no
+        d + N + trial_no + base_seed
     )  # To be sure the generation of data is different
     mean = np.ones((d, N))
     data = mean + rng.standard_normal((d, N))
@@ -56,6 +56,7 @@ if __name__ == "__main__":
         default=True,
         help="Save TikZ/PGFPlots figures (.tex) (default: True).",
     )
+    parser.add_argument("--seed", type=int, default=42, help="random seed generation base seed")
     args = parser.parse_args()
     args.output_dir = args.storage_path  # alias for references below
 
@@ -74,7 +75,7 @@ if __name__ == "__main__":
     # Montecarlo with progressbar.
     # Inspired from: https://github.com/Textualize/rich/discussions/884#discussioncomment-269200
     print("Launching simulation")
-    param_grid = product(d_vec, [N], list(range(n_trials)), [args.alpha])
+    param_grid = product(d_vec, [N], list(range(n_trials)), [args.alpha], [args.seed])
     results = []
     with Progress() as progress:
         task_id = progress.add_task("[cyan]Working...", total=len(d_vec) * n_trials)
@@ -96,7 +97,7 @@ if __name__ == "__main__":
     # Save results
     np.savez(
         os.path.join(args.output_dir, "results.npz"),
-        d_vec=d_vec, N=N, n_trials=n_trials, alpha=args.alpha,
+        d_vec=d_vec, N=N, n_trials=n_trials, alpha=args.alpha, seed=args.seed,
         cond_scm_mean=cond_scm_mean, cond_scm_std=cond_scm_std,
         cond_lwf_mean=cond_lwf_mean, cond_lwf_std=cond_lwf_std,
     )

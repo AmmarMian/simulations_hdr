@@ -482,5 +482,27 @@
       h.appendChild(a);
     });
 
+    /* ── Experiments TOC: hover/focus preview panel ───────────────── */
+    (function () {
+      var toc = document.getElementById("xp-toc");
+      if (!toc) return;
+      var items  = Array.from(toc.querySelectorAll(".xp-toc-item"));
+      var panels = Array.from(toc.querySelectorAll(".xp-toc-panel"));
+
+      function show(id) {
+        items.forEach(function (a) {
+          a.classList.toggle("is-active", a.dataset.panel === id);
+        });
+        panels.forEach(function (p) {
+          p.hidden = p.id !== id;
+        });
+      }
+
+      items.forEach(function (a) {
+        a.addEventListener("mouseenter", function () { show(a.dataset.panel); });
+        a.addEventListener("focus",      function () { show(a.dataset.panel); });
+      });
+    })();
+
   });
 })();

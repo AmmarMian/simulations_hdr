@@ -32,30 +32,6 @@ uv run python 2-detection/sar_experiments/compute_detection_real_data/offline_ga
 | `--report-memory` | — | — | Print peak GPU memory at the end (torch-cuda only). |
 | `--repeat-times` | int | `1` | Repeat the time axis N times using a palindrome bounce (e.g. T=68, repeat=2 → 136 frames: 0..67, 66..1, 0..1, ...). Materialises the full repeated array in RAM. |
 
-## Results
-
-<span class="marginnote">
-  <span class="mn-label">Run · scene1_w7</span>
-  <span class="mn-date">Generated: 2026-06-13</span><br>
-  <code>data_path</code><br>
-  <code>window_size</code><br>
-  <code>--backend</code> <span class='mn-default'>numpy</span><br>
-  <code>--show-interactive</code><br>
-  <code>--export</code> <span class='mn-default'>True</span><br>
-  <code>--export-tikz</code><br>
-  <code>--debug</code><br>
-  <code>--splitting</code><br>
-  <code>--wavelet</code><br>
-  <code>--wavelet-R</code> <span class='mn-default'>2</span><br>
-  <code>--wavelet-L</code> <span class='mn-default'>2</span><br>
-  <code>--wavelet-no-decimate</code><br>
-  <code>--quiet</code><br>
-  <code>--log-debug</code><br>
-  <code>--report-memory</code><br>
-  <code>--repeat-times</code> <span class='mn-default'>1</span><br>
-</span>
-<div class="plotly-wrap" data-src="../../assets/data/sar_det_off_gauss.scene1_w7.json" data-title="sar_det_off_gauss — scene1_w7"></div>
-
 ## Config
 
 `2-detection/experiments/sar/sar_det_off_gauss.yaml`

@@ -2,7 +2,7 @@ name: sonar_pd_angle
 description: MC PD vs (theta1, theta2) angle map for sonar two-array detectors at fixed SNR
 path: 2-detection/sonar_experiments/mc_simulations
 executable: 2-detection/sonar_experiments/mc_simulations/mc_pd_angle.py
-executable_command: .venv/bin/python
+executable_command: uv run python
 tags:
   - sonar
   - detection
@@ -23,11 +23,11 @@ actions:
   - plot:
       name: plot
       executable: 2-detection/sar_experiments/action_plot.py
-      executable_command: .venv/bin/python
+      executable_command: uv run python
       description: Run all auto-generated *_plot.py scripts in the run directory
   - register:
       name: register
       executable: register_latex.py
-      executable_command: .venv/bin/python
+      executable_command: uv run python
       description: Copy a chosen figure + provenance into the HDR LaTeX repo
 group: "Sonar · Detection"

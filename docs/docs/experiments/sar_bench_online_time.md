@@ -7,7 +7,7 @@ Time benchmark for online Gaussian, DCG and Kronecker detectors (CPU + GPU)
 ## Run
 
 ```sh
-uv run python 2-detection/sar_experiments/benchmarks/time_benchmark_online.sh
+bash 2-detection/sar_experiments/benchmarks/time_benchmark_online.sh
 ```
 
 ## Config

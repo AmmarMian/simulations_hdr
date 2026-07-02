@@ -2,7 +2,7 @@ name: context_example_covariances
 description: PGFPlots matrix visualisations of covariance regimes — identity, Toeplitz, random
 path: 1-context/examples_covariances
 executable: 1-context/examples_covariances/main.py
-executable_command: .venv/bin/python
+executable_command: uv run python
 tags:
   - context
   - covariance
@@ -11,11 +11,11 @@ actions:
   - register:
       name: register
       executable: register_latex.py
-      executable_command: .venv/bin/python
+      executable_command: uv run python
       description: Stage a chosen figure (.tex) to hdr_exports/ for the LaTeX dissertation
   - add_to_docs:
       name: add_to_docs
       executable: 1-context/examples_covariances/action_add_to_docs.py
-      executable_command: .venv/bin/python
+      executable_command: uv run python
       description: Export covariance matrix heatmaps as Plotly JSON for the docs site
 group: "Context · Illustrations"

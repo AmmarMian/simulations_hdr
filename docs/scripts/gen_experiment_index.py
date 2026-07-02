@@ -331,6 +331,7 @@ def _write_exp_page(exp: dict) -> None:
     tags  = exp.get("tags", []) or []
     exe   = exp.get("executable", "")
     yaml_ = exp.get("_yaml", "")
+    cmd_prefix = exp.get("executable_command") or "uv run python"
 
     params = extract_args(exe) if exe else []
 
@@ -350,7 +351,7 @@ def _write_exp_page(exp: dict) -> None:
             "## Run",
             "",
             "```sh",
-            f"uv run python {exe}",
+            f"{cmd_prefix} {exe}",
             "```",
             "",
         ]
@@ -418,11 +419,12 @@ def _card(exp: dict) -> str:
     desc  = exp.get("description", "")
     tags  = exp.get("tags", []) or []
     exe   = exp.get("executable", "")
+    cmd_prefix = exp.get("executable_command") or "uv run python"
 
     tag_html = "".join(f'<span class="exp-tag">{t}</span>' for t in tags)
     tags_block = f'<div class="exp-tags">{tag_html}</div>' if tags else ""
 
-    run_cmd = f'<div class="exp-run"><code>uv run python {exe}</code></div>' if exe else ""
+    run_cmd = f'<div class="exp-run"><code>{cmd_prefix} {exe}</code></div>' if exe else ""
 
     has_results = bool(_figure_stems(name))
     results_badge = (

@@ -15,9 +15,9 @@ from hdrlib.core.plot_style import apply_style
 
 
 def compute_estimation(params):
-    d, N, trial_no = params
+    d, N, trial_no, base_seed = params
     rng = np.random.default_rng(
-        d + N + trial_no
+        d + N + trial_no + base_seed
     )  # To be sure the generation of data is different
     mean = np.ones((d, N))
     data = mean + rng.standard_normal((d, N))
@@ -36,9 +36,7 @@ if __name__ == "__main__":
         "MC simulation of estimating mean and covariance with increasing samples."
     )
     parser.add_argument("--d", type=int, default=7, help="Dimension of vector.")
-    parser.add_argument(
-        "--n_trials", type=int, default=10000, help="Number of MC-trials."
-    )
+    parser.add_argument("--n_trials", type=int, default=10000, help="Number of MC-trials.")
     parser.add_argument(
         "--storage_path",
         type=str,
@@ -56,6 +54,7 @@ if __name__ == "__main__":
         default=True,
         help="Save TikZ/PGFPlots figures (.tex) (default: True).",
     )
+    parser.add_argument("--seed", type=int, default=42, help="random seed generation base seed")
     args = parser.parse_args()
     args.output_dir = args.storage_path  # alias for legacy references below
 
@@ -74,7 +73,7 @@ if __name__ == "__main__":
     # Montecarlo with progressbar.
     # Inspired from: https://github.com/Textualize/rich/discussions/884#discussioncomment-269200
     print("Launching simulation")
-    param_grid = product([d], N_vec, list(range(n_trials)))
+    param_grid = product([d], N_vec, list(range(n_trials)), [args.seed])
     results = []
     with Progress() as progress:
         task_id = progress.add_task("[cyan]Working...", total=len(N_vec) * n_trials)
@@ -96,9 +95,14 @@ if __name__ == "__main__":
     # Save results
     np.savez(
         os.path.join(args.output_dir, "results.npz"),
-        N_vec=N_vec, d=d, n_trials=n_trials,
-        error_mean_mean=error_mean_mean, error_mean_std=error_mean_std,
-        error_cov_mean=error_cov_mean, error_cov_std=error_cov_std,
+        N_vec=N_vec,
+        d=d,
+        n_trials=n_trials,
+        seed=args.seed,
+        error_mean_mean=error_mean_mean,
+        error_mean_std=error_mean_std,
+        error_cov_mean=error_cov_mean,
+        error_cov_std=error_cov_std,
     )
 
     # Plotting
@@ -106,9 +110,7 @@ if __name__ == "__main__":
     plt.scatter(N_vec, error_mean_mean, marker="o", facecolors="none", edgecolors="k")
     plt.errorbar(N_vec, error_mean_mean, yerr=error_mean_std, linestyle="", capsize=5)
     plt.xlabel(r"$N$")
-    plt.ylabel(
-        r"$\|\hat{\boldsymbol{\mu}}_\mathcal{X} - \boldsymbol{\mu}_\mathcal{X}\|_2$"
-    )
+    plt.ylabel(r"$\|\hat{\boldsymbol{\mu}}_\mathcal{X} - \boldsymbol{\mu}_\mathcal{X}\|_2$")
     plt.xscale("log")
     plt.title(f"Error of mean estimation with {n_trials} Monte-carlo trials")
     if args.export:
@@ -122,9 +124,7 @@ if __name__ == "__main__":
     plt.errorbar(N_vec, error_cov_mean, yerr=error_cov_std, linestyle="", capsize=5)
     plt.xlabel("$N$")
     plt.xscale("log")
-    plt.ylabel(
-        r"$\|\hat{\boldsymbol{\Sigma}}_\mathcal{X} - \boldsymbol{\Sigma}_\mathcal{X}\|_2$"
-    )
+    plt.ylabel(r"$\|\hat{\boldsymbol{\Sigma}}_\mathcal{X} - \boldsymbol{\Sigma}_\mathcal{X}\|_2$")
     plt.title(f"Error of mean estimation with {n_trials} Monte-carlo trials")
     if args.export:
         clean_figure(fig)

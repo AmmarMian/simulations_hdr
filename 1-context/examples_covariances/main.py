@@ -29,8 +29,10 @@ if __name__ == "__main__":
         default=True,
         help="Save TikZ/PGFPlots figure (.tex) (default: True).",
     )
+    parser.add_argument("--seed", type=int, default=42, help="random seed generation base seed")
     _args = parser.parse_args()
     os.makedirs(_args.storage_path, exist_ok=True)
+    rng = np.random.default_rng(_args.seed)
 
     # Constant(s)
     d = 7
@@ -40,7 +42,7 @@ if __name__ == "__main__":
     cov_id = np.eye(d)
     cov_toeplitz = toeplitz(np.power(rho, np.arange(0, d)))
     cov_rd = np.empty((d, d))
-    cov_rd[np.tril_indices(d)] = 2 * np.random.rand(int(d * (d + 1) / 2)) - 1
+    cov_rd[np.tril_indices(d)] = 2 * rng.random(int(d * (d + 1) / 2)) - 1
     cov_rd[np.triu_indices(d)] = cov_rd[np.tril_indices(d)]
     cov_rd[np.diag_indices(d)] = 1
     cov_rd = 0.5 * (cov_rd + cov_rd.T)

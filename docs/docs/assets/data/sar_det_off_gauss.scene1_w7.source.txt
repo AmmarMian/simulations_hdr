@@ -1,1 +1,0 @@
-/Users/ammarmian/Research/simulations_hdr/results/sar_det_off_gauss/run_2/gaussian_numpy_scene1_20260612_103309.npy
