@@ -10,3 +10,7 @@ register-experiments:
         echo "=== $f ==="; \
         uv run qanat experiment new -f "$f"; \
     done
+
+# Regenerate experiment doc pages and chapter cards from YAML configs
+docs:
+    uv run python docs/scripts/gen_experiment_index.py

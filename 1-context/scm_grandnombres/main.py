@@ -10,7 +10,7 @@ from multiprocessing import Pool
 
 from itertools import product
 
-from matplot2tikz import clean_figure, save
+from matplot2tikz import save
 from hdrlib.core.plot_style import apply_style
 from hdrlib.core.exporter import write_prov_sidecar
 
@@ -115,7 +115,6 @@ if __name__ == "__main__":
     plt.xscale("log")
     plt.title(f"Error of mean estimation with {n_trials} Monte-carlo trials")
     if args.export:
-        clean_figure(fig)
         save_path = os.path.join(args.output_dir, "mean.tex")
         save(save_path)
         write_prov_sidecar(save_path, args)
@@ -129,7 +128,6 @@ if __name__ == "__main__":
     plt.ylabel(r"$\|\hat{\boldsymbol{\Sigma}}_\mathcal{X} - \boldsymbol{\Sigma}_\mathcal{X}\|_2$")
     plt.title(f"Error of mean estimation with {n_trials} Monte-carlo trials")
     if args.export:
-        clean_figure(fig)
         save_path = os.path.join(args.output_dir, "cov.tex")
         save(save_path)
         write_prov_sidecar(save_path, args)

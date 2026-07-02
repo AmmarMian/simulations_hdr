@@ -12,7 +12,7 @@ Background figures illustrating core statistical concepts from the dissertation 
 <div class="exp-card">
 <div class="exp-card-head">
 <div class="exp-name">context_example_covariances</div>
-
+<span class="exp-results-badge">Results available</span>
 </div>
 <div class="exp-desc">PGFPlots matrix visualisations of covariance regimes — identity, Toeplitz, random</div>
 <div class="exp-tags"><span class="exp-tag">context</span><span class="exp-tag">covariance</span><span class="exp-tag">illustration</span></div>

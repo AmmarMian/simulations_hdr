@@ -19,6 +19,19 @@ uv run python 1-context/examples_covariances/main.py
 | `--export` | — | `True` | Save TikZ/PGFPlots figure (.tex) (default: True). |
 | `--seed` | int | `42` | random seed generation base seed |
 
+## Results
+
+<span class="marginnote">
+  <span class="mn-label">Parameters</span>
+  <span class="mn-date">Generated: 2026-07-02</span><br>
+  <code>--show-interactive</code><br>
+  <code>--export</code> <span class='mn-default'>True</span><br>
+  <code>--seed</code> <span class='mn-default'>42</span><br>
+</span>
+<div class="exp-result-card">
+<div class="plotly-wrap" data-src="../../assets/data/context_example_covariances.json" data-title="context_example_covariances"></div>
+</div>
+
 ## Config
 
 `1-context/experiments/context_example_covariances.yaml`
