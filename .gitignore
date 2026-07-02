@@ -5,12 +5,14 @@
 **/exports/
 results
 
-# LaTeX figure staging area — copy to hdr/figures/generated/ then run 'just figures'
-hdr_exports/
-
 # Output plots and benchmark results
 *.png
 **/benchmark_results/
+
+# hdr_exports/ IS tracked: it's the staged LaTeX figure hand-off point between
+# machines (run experiments anywhere, commit hdr_exports/, pull on the machine
+# with ../Dissertation, then rsync + `just figures`). Un-ignore its PNGs too.
+!hdr_exports/**/*.png
 
 # Mac os thumbnails
 ._*
@@ -29,6 +31,9 @@ wheels/
 .venv
 
 .qanat
+
+# AI assistant config/skills — keep the repo AI-tool-independent
+.claude/
 
 # MkDocs build output
 site/

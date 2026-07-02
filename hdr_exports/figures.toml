@@ -1,0 +1,44 @@
+# figures.toml — staged figures for the HDR dissertation
+# Auto-generated from prov.json files — do not edit by hand.
+#
+# rsync -av --exclude figures.toml hdr_exports/ ../Dissertation/gfx/generated/
+
+[figures.covmatexamples]
+exp       = "context_example_covariances"
+run_id    = 5
+sha       = "9bcab17"
+run_date  = "2026-07-02"
+seed      = "42"
+embed_npy = false
+
+[figures.lwfcond]
+exp       = "context_lwf_underregime"
+run_id    = 3
+sha       = "5dd225a"
+run_date  = "2026-07-02"
+seed      = "42"
+embed_npy = false
+
+[figures.scmcov]
+exp       = "context_scm_grandnombres"
+run_id    = 7
+sha       = "7e9acc6"
+run_date  = "2026-07-02"
+seed      = "42"
+embed_npy = false
+
+[figures.scmmean]
+exp       = "context_scm_grandnombres"
+run_id    = 7
+sha       = "7e9acc6"
+run_date  = "2026-07-02"
+seed      = "42"
+embed_npy = false
+
+[figures.scmcond]
+exp       = "context_scm_underregime"
+run_id    = 2
+sha       = "5dd225a"
+run_date  = "2026-07-02"
+seed      = "42"
+embed_npy = false

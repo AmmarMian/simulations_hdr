@@ -1,0 +1,25 @@
+{
+  "git_sha": "5dd225a",
+  "script": "/Users/ammarmian/Research/HDR/simulations_hdr/1-context/scm_underregime/main.py",
+  "args": {
+    "N": 30,
+    "n_trials": 10000,
+    "storage_path": "/Users/ammarmian/Research/HDR/simulations_hdr/results/context_scm_underregime/run_2",
+    "show_interactive": false,
+    "export": true,
+    "seed": 42,
+    "output_dir": "/Users/ammarmian/Research/HDR/simulations_hdr/results/context_scm_underregime/run_2"
+  },
+  "hdr": {
+    "id": "scmcond",
+    "exp": "context_scm_underregime",
+    "run_id": 2,
+    "commit_sha": "5dd225a59ca1d32799771726fe15ed90e0966cd0",
+    "sha_short": "5dd225a",
+    "run_date": "2026-07-02",
+    "run_month": "2026-07",
+    "seed": "42",
+    "embed_npy": false,
+    "registered_at": "2026-07-02T13:14:13Z"
+  }
+}

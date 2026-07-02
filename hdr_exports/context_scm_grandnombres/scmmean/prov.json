@@ -1,0 +1,25 @@
+{
+  "git_sha": "7e9acc6",
+  "script": "/Users/ammarmian/Research/HDR/simulations_hdr/1-context/scm_grandnombres/main.py",
+  "args": {
+    "d": 7,
+    "n_trials": 10000,
+    "storage_path": "/Users/ammarmian/Research/HDR/simulations_hdr/results/context_scm_grandnombres/run_7",
+    "show_interactive": false,
+    "export": true,
+    "seed": 42,
+    "output_dir": "/Users/ammarmian/Research/HDR/simulations_hdr/results/context_scm_grandnombres/run_7"
+  },
+  "hdr": {
+    "id": "scmmean",
+    "exp": "context_scm_grandnombres",
+    "run_id": 7,
+    "commit_sha": "7e9acc6561ca6a0d8ca0bc4914c2613167ad7025",
+    "sha_short": "7e9acc6",
+    "run_date": "2026-07-02",
+    "run_month": "2026-07",
+    "seed": "42",
+    "embed_npy": false,
+    "registered_at": "2026-07-02T13:18:31Z"
+  }
+}

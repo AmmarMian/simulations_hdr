@@ -1,0 +1,22 @@
+{
+  "git_sha": "9bcab17",
+  "script": "/Users/ammarmian/Research/HDR/simulations_hdr/1-context/examples_covariances/main.py",
+  "args": {
+    "storage_path": "/Users/ammarmian/Research/HDR/simulations_hdr/results/context_example_covariances/run_5",
+    "show_interactive": false,
+    "export": true,
+    "seed": 42
+  },
+  "hdr": {
+    "id": "covmatexamples",
+    "exp": "context_example_covariances",
+    "run_id": 5,
+    "commit_sha": "9bcab176f095b43bb5e452b892708ee42bd1836f",
+    "sha_short": "9bcab17",
+    "run_date": "2026-07-02",
+    "run_month": "2026-07",
+    "seed": "42",
+    "embed_npy": false,
+    "registered_at": "2026-07-02T13:03:56Z"
+  }
+}
