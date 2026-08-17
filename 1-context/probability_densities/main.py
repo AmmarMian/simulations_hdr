@@ -38,8 +38,8 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--n_samples", type=int, default=50,
-        help="Number of samples drawn per regime. Stored in results.npz and shown on "
-             "the docs page; the exported figure keeps the contours alone.",
+        help="Number of samples drawn per regime. Drawn as hollow markers so the "
+             "isodensity contours stay readable underneath.",
     )
     parser.add_argument(
         "--rho", type=float, default=0.8, help="Correlation coefficient of the correlated regime."
@@ -103,21 +103,33 @@ if __name__ == "__main__":
         rng.multivariate_normal(mean, cov, size=args.n_samples) for cov in covariances
     ]
 
-    # Common extent so the three panels are visually comparable: framed by the
-    # widest outer contour rather than by the draws, which keeps the framing
-    # independent of --n_samples and --seed.
+    # Common extent so the three panels are visually comparable. The outer
+    # contour sets a floor so the framing stays stable across --seed and
+    # --n_samples, and the draws widen it only when they fall outside.
     outer_radius = np.sqrt(chi2.ppf(probabilities.max(), df=2))
-    limit = 1.15 * outer_radius * max(
+    contour_extent = outer_radius * max(
         np.sqrt(np.linalg.eigvalsh(cov)).max() for cov in covariances
     )
+    limit = 1.1 * max(contour_extent, np.abs(np.concatenate(samples)).max())
     axis_grid = np.linspace(-limit, limit, 400)
     grid_x, grid_y = np.meshgrid(axis_grid, axis_grid)
 
     # Single figure with all three regimes
     fig, axes = plt.subplots(1, 3, figsize=(12, 4), sharex=True, sharey=True)
 
-    for i, (ax, cov, title) in enumerate(zip(axes, covariances, titles)):
+    for i, (ax, cov, data, title) in enumerate(zip(axes, covariances, samples, titles)):
         density = gaussian_pdf(grid_x, grid_y, mean, cov)
+
+        # Hollow markers so the isodensity contours stay readable underneath
+        ax.scatter(
+            data[:, 0],
+            data[:, 1],
+            marker="o",
+            s=14,
+            facecolors="none",
+            edgecolors="C0",
+            linewidths=0.7,
+        )
         ax.contour(
             grid_x,
             grid_y,
@@ -126,6 +138,18 @@ if __name__ == "__main__":
             colors="C1",
             linewidths=1.2,
         )
+
+        # Principal axes, scaled by the square root of the eigenvalues
+        eigvals, eigvecs = np.linalg.eigh(cov)
+        for eigval, eigvec in zip(eigvals, eigvecs.T):
+            axis_end = np.sqrt(eigval) * eigvec
+            ax.plot(
+                [-axis_end[0], axis_end[0]],
+                [-axis_end[1], axis_end[1]],
+                color="C3",
+                linewidth=1.0,
+                linestyle="--",
+            )
 
         ax.set_aspect("equal")
         ax.set_xlim(-limit, limit)
