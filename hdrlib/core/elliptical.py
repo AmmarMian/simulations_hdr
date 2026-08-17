@@ -1,0 +1,505 @@
+# Real-valued elliptical distributions: backend-agnostic sampling and geometry.
+#
+# Everything here follows the stochastic representation
+#
+#     x = mu + sqrt(Q) * Xi^{1/2} u,     u ~ Uniform(S^{d-1}),
+#
+# where the modular variate Q carries the whole dependence on the density
+# generator g, with density  p_Q(q) ∝ q^{d/2-1} g(q).  A distribution therefore
+# only has to say how to draw Q; the sampler and the isodensity geometry are
+# shared.
+#
+# Backend policy, matching the rest of hdrlib:
+#   * everything that produces *arrays* (draws) goes through the primitives of
+#     hdrlib.core.backend, so it runs on numpy / torch / cupy / jax and lands
+#     on the requested device.  The only randomness primitives assumed are
+#     standard normal and uniform draws, from which chi-squared and gamma
+#     variates are built here.
+#   * everything that produces *scalars* (quantiles, moments) is host-side and
+#     uses scipy.  These are O(1) quantities used to place isodensity contours
+#     and to normalise the scale, never in an inner loop, so keeping them on
+#     the CPU costs nothing and avoids reimplementing special functions per
+#     backend.
+#
+# Note that hdrlib.core.simulation provides the *complex* circular Gaussian and
+# DCG generators used by the detection experiments.  This module is the
+# real-valued counterpart, matching the elliptical model of the context chapter.
+
+from __future__ import annotations
+
+from abc import ABC, abstractmethod
+from typing import Optional, Union
+
+import numpy as np
+from scipy.integrate import quad
+from scipy.optimize import brentq
+from scipy.special import gamma as gamma_function
+from scipy.stats import chi2, f as fisher_dist, gamma as gamma_dist, invgamma
+
+from .backend import (
+    Array,
+    Backend,
+    cast_like,
+    get_backend_module,
+    sample_standard_normal,
+    sample_uniform,
+)
+
+
+# ---------------------------------------------------------------------------
+# Random primitives built on top of the backend's normal/uniform draws
+# ---------------------------------------------------------------------------
+
+def _spawn_seeds(seed: Optional[int], n: int) -> list[Optional[int]]:
+    """Derive ``n`` independent seeds from a single one.
+
+    Returning ``None`` when no seed was given preserves the backend's own
+    "unseeded" semantics.
+    """
+    if seed is None:
+        return [None] * n
+    sequence = np.random.SeedSequence(seed)
+    return [int(s.generate_state(1)[0]) for s in sequence.spawn(n)]
+
+
+def sample_gamma(
+    shape_param: float,
+    n_samples: int,
+    backend: Union[str, "Backend"],
+    seed: Optional[int] = None,
+    scale: float = 1.0,
+    max_rounds: int = 40,
+) -> Array:
+    """Draw gamma variates on any backend, via Marsaglia-Tsang.
+
+    The algorithm needs only standard normal and uniform draws, which every
+    backend provides, so no per-backend special-function support is required.
+    Rejection is vectorised: a full batch is drawn per round and only the
+    still-missing entries are filled in, which converges in a couple of rounds
+    since the acceptance rate exceeds 95 percent.
+
+    Parameters
+    ----------
+    shape_param : float
+        Shape ``a`` of the gamma law. Values below 1 are handled by the
+        standard boosting trick ``Gamma(a) = Gamma(a+1) * U^(1/a)``.
+    n_samples : int
+    backend : str or Backend
+    seed : int, optional
+    scale : float
+        Scale ``theta``; the mean of the result is ``a * theta``.
+    max_rounds : int
+        Safety bound on the number of rejection rounds.
+
+    Returns
+    -------
+    Array of shape (n_samples,) on the requested backend.
+    """
+    xp = get_backend_module(backend)
+
+    if shape_param < 1.0:
+        boost_seed, gamma_seed = _spawn_seeds(seed, 2)
+        boosted = sample_gamma(
+            shape_param + 1.0, n_samples, backend, seed=gamma_seed, scale=scale
+        )
+        uniforms = sample_uniform(n_samples, [], backend, seed=boost_seed)
+        return boosted * uniforms ** (1.0 / shape_param)
+
+    d = shape_param - 1.0 / 3.0
+    c = 1.0 / np.sqrt(9.0 * d)
+
+    result = None
+    filled = None
+    seeds = _spawn_seeds(seed, 2 * max_rounds)
+    for round_index in range(max_rounds):
+        normals = sample_standard_normal(
+            n_samples, [], backend, seed=seeds[2 * round_index]
+        )
+        uniforms = sample_uniform(
+            n_samples, [], backend, seed=seeds[2 * round_index + 1]
+        )
+        v = (1.0 + c * normals) ** 3
+        positive = v > 0
+        # Guard the logarithm on the rejected entries; they are masked out below.
+        safe_v = xp.where(positive, v, xp.ones_like(v))
+        accepted = positive & (
+            xp.log(uniforms)
+            < 0.5 * normals**2 + d - d * safe_v + d * xp.log(safe_v)
+        )
+        candidate = d * safe_v
+
+        if result is None:
+            result = xp.where(accepted, candidate, xp.zeros_like(candidate))
+            filled = accepted
+        else:
+            take = accepted & (~filled)
+            result = xp.where(take, candidate, result)
+            filled = filled | accepted
+
+        if bool(xp.all(filled)):
+            break
+    else:
+        raise RuntimeError(
+            f"Gamma sampling did not converge in {max_rounds} rounds "
+            f"(shape={shape_param})."
+        )
+
+    return scale * result
+
+
+def sample_chi2(
+    df: float,
+    n_samples: int,
+    backend: Union[str, "Backend"],
+    seed: Optional[int] = None,
+) -> Array:
+    """Draw chi-squared variates on any backend.
+
+    Integer degrees of freedom use the exact sum-of-squared-normals definition,
+    which avoids rejection entirely; non-integer ones fall back to the gamma
+    sampler through ``chi2_k = 2 * Gamma(k/2)``.
+    """
+    xp = get_backend_module(backend)
+    if float(df).is_integer():
+        normals = sample_standard_normal(n_samples, [int(df)], backend, seed=seed)
+        return xp.sum(normals**2, axis=-1)
+    return sample_gamma(df / 2.0, n_samples, backend, seed=seed, scale=2.0)
+
+
+def sample_uniform_sphere(
+    n_samples: int,
+    n_features: int,
+    backend: Union[str, "Backend"],
+    seed: Optional[int] = None,
+) -> Array:
+    """Draw uniformly on the unit sphere ``S^{d-1}``, shape (n_samples, d)."""
+    xp = get_backend_module(backend)
+    directions = sample_standard_normal(n_samples, [n_features], backend, seed=seed)
+    norms = xp.sqrt(xp.sum(directions**2, axis=-1))
+    return directions / norms[:, None]
+
+
+# ---------------------------------------------------------------------------
+# Distributions
+# ---------------------------------------------------------------------------
+
+class EllipticalDistribution(ABC):
+    """Base class for a real elliptical distribution in dimension ``d``.
+
+    Subclasses describe the law of the modular variate ``Q``, the only thing
+    distinguishing two elliptical distributions that share a scatter matrix.
+
+    Parameters
+    ----------
+    n_features : int
+        Dimension ``d``.
+    normalize : bool
+        When True, rescale so that ``E{Q} = d``, i.e. so that the covariance
+        matrix equals the scatter matrix.  This is what makes distributions
+        comparable at fixed scatter matrix; it needs a finite second-order
+        moment.
+    backend_name : str or Backend
+        Backend on which draws are produced.
+    """
+
+    label: str = "elliptical"
+
+    def __init__(
+        self,
+        n_features: int,
+        normalize: bool = True,
+        backend_name: Union[str, "Backend"] = "numpy",
+    ) -> None:
+        self.n_features = n_features
+        self.normalize = normalize
+        self.backend_name = backend_name
+        self.backend_module = get_backend_module(backend_name)
+        self._scale = self._normalisation_scale() if normalize else 1.0
+
+    # -- to be provided by subclasses ---------------------------------------
+
+    @abstractmethod
+    def density_generator(self, t):
+        """Density generator ``g(t)``, up to a multiplicative constant."""
+
+    @abstractmethod
+    def _sample_standard_modular(self, n_samples: int, seed: Optional[int]) -> Array:
+        """Draw the modular variate before the ``E{Q} = d`` rescaling."""
+
+    @abstractmethod
+    def _standard_modular_quantile(self, probability: float) -> float:
+        """Host-side quantile of the modular variate before rescaling."""
+
+    @abstractmethod
+    def _standard_modular_mean(self) -> float:
+        """``E{Q}`` before rescaling; may be infinite."""
+
+    # -- shared -------------------------------------------------------------
+
+    def _normalisation_scale(self) -> float:
+        mean = self._standard_modular_mean()
+        if not np.isfinite(mean) or mean <= 0:
+            raise ValueError(
+                f"{type(self).__name__} has no finite second-order moment: "
+                "the covariance matrix is undefined, use normalize=False."
+            )
+        return self.n_features / mean
+
+    def sample_modular_variate(self, n_samples: int, seed: Optional[int] = None) -> Array:
+        """Draw ``n_samples`` realisations of ``Q`` on the configured backend."""
+        return self._scale * self._sample_standard_modular(n_samples, seed)
+
+    def modular_quantile(self, probability: float) -> float:
+        """Host-side ``q`` such that ``P(Q <= q) = probability``."""
+        return self._scale * self._standard_modular_quantile(probability)
+
+
+class CompoundGaussian(EllipticalDistribution):
+    """Elliptical distribution written as ``x = mu + sqrt(tau) z``.
+
+    Subclasses give the texture ``tau`` twice: as a backend-side sampler for
+    draws, and as a frozen ``scipy.stats`` law for the host-side quantiles.
+    The modular variate factorises as ``Q = tau * chi2_d``.
+    """
+
+    @abstractmethod
+    def sample_texture(self, n_samples: int, seed: Optional[int]) -> Array:
+        """Backend-side draw of the texture."""
+
+    @abstractmethod
+    def texture_law(self):
+        """Frozen ``scipy.stats`` law of the texture, for host-side scalars."""
+
+    def _sample_standard_modular(self, n_samples, seed):
+        texture_seed, chi2_seed = _spawn_seeds(seed, 2)
+        texture = self.sample_texture(n_samples, texture_seed)
+        return texture * sample_chi2(
+            self.n_features, n_samples, self.backend_name, seed=chi2_seed
+        )
+
+    def _standard_modular_mean(self):
+        return self.n_features * float(self.texture_law().mean())
+
+    def _standard_modular_cdf(self, q: float) -> float:
+        """``P(Q <= q) = E_tau{ F_{chi2_d}(q / tau) }``, by quadrature."""
+        law = self.texture_law()
+        lower, upper = law.ppf(1e-10), law.ppf(1 - 1e-10)
+        value, _ = quad(
+            lambda tau: chi2.cdf(q / tau, df=self.n_features) * law.pdf(tau),
+            lower, upper, limit=200,
+        )
+        return value
+
+    def _standard_modular_quantile(self, probability):
+        low, high = 1e-8, float(chi2.ppf(probability, df=self.n_features))
+        while self._standard_modular_cdf(high) < probability:
+            high *= 4.0
+        return brentq(
+            lambda q: self._standard_modular_cdf(q) - probability, low, high
+        )
+
+
+class GaussianDistribution(EllipticalDistribution):
+    """Gaussian: ``g(t) = exp(-t/2)``, modular variate ``Q ~ chi2_d``."""
+
+    label = "gaussienne"
+
+    def density_generator(self, t):
+        return np.exp(-np.asarray(t) / 2)
+
+    def _sample_standard_modular(self, n_samples, seed):
+        return sample_chi2(self.n_features, n_samples, self.backend_name, seed=seed)
+
+    def _standard_modular_quantile(self, probability):
+        return float(chi2.ppf(probability, df=self.n_features))
+
+    def _standard_modular_mean(self):
+        return float(self.n_features)
+
+
+class StudentTDistribution(CompoundGaussian):
+    """Student t with ``dof`` degrees of freedom.
+
+    ``g(t) = (1 + t/nu)^{-(d+nu)/2}``, obtained for the inverse-gamma texture
+    ``tau = nu / w`` with ``w ~ chi2_nu``.  The second-order moment exists only
+    for ``nu > 2``.
+    """
+
+    label = "t de Student"
+
+    def __init__(self, n_features, dof=3.0, normalize=True, backend_name="numpy"):
+        self.dof = float(dof)
+        super().__init__(n_features, normalize, backend_name)
+
+    def density_generator(self, t):
+        return (1 + np.asarray(t) / self.dof) ** (-(self.n_features + self.dof) / 2)
+
+    def sample_texture(self, n_samples, seed):
+        # tau = nu / w with w ~ chi2_nu, built from the backend chi-squared.
+        return self.dof / sample_chi2(
+            self.dof, n_samples, self.backend_name, seed=seed
+        )
+
+    def texture_law(self):
+        return invgamma(a=self.dof / 2, scale=self.dof / 2)
+
+    def _standard_modular_quantile(self, probability):
+        # Closed form: Q = d * F(d, nu), no quadrature needed.
+        return float(
+            self.n_features * fisher_dist.ppf(probability, self.n_features, self.dof)
+        )
+
+    def _standard_modular_mean(self):
+        if self.dof <= 2:
+            return np.inf
+        return self.n_features * self.dof / (self.dof - 2)
+
+
+class KDistribution(CompoundGaussian):
+    """K-distribution with texture shape ``dof``.
+
+    Gamma texture with unit mean, ``tau ~ Gamma(nu, 1/nu)``.  The density
+    generator involves a modified Bessel function of the second kind.
+    """
+
+    label = "K"
+
+    def __init__(self, n_features, dof=2.0, normalize=True, backend_name="numpy"):
+        self.dof = float(dof)
+        super().__init__(n_features, normalize, backend_name)
+
+    def density_generator(self, t):
+        from scipy.special import kv
+
+        order = self.dof - self.n_features / 2
+        t = np.asarray(t, dtype=float)
+        return t ** (order / 2) * kv(order, np.sqrt(2 * self.dof * t))
+
+    def sample_texture(self, n_samples, seed):
+        return sample_gamma(
+            self.dof, n_samples, self.backend_name, seed=seed, scale=1.0 / self.dof
+        )
+
+    def texture_law(self):
+        return gamma_dist(a=self.dof, scale=1.0 / self.dof)
+
+
+class GeneralizedGaussianDistribution(EllipticalDistribution):
+    """Generalized Gaussian: ``g(t) = exp(-t^s / (2b))``.
+
+    Not written as a compound-Gaussian here: the modular variate is available
+    in closed form, since ``Q = u^{1/s}`` with ``u ~ Gamma(d/(2s), 2b)``.
+    ``s = 1, b = 1`` recovers the Gaussian; ``s < 1`` gives heavier tails.
+    """
+
+    label = "gaussienne généralisée"
+
+    def __init__(
+        self, n_features, shape=0.5, scale=None, normalize=True, backend_name="numpy"
+    ):
+        self.shape = float(shape)
+        # Default scale already gives E{Q} = d, so normalize=False stays
+        # comparable to the Gaussian.
+        self.scale = float(scale) if scale is not None else self._unit_scale(n_features)
+        super().__init__(n_features, normalize, backend_name)
+
+    def _unit_scale(self, n_features) -> float:
+        s = self.shape
+        ratio = gamma_function(n_features / (2 * s)) / gamma_function(
+            (n_features + 2) / (2 * s)
+        )
+        return 0.5 * (n_features * ratio) ** s
+
+    def density_generator(self, t):
+        return np.exp(-np.asarray(t) ** self.shape / (2 * self.scale))
+
+    @property
+    def _gamma_shape(self) -> float:
+        return self.n_features / (2 * self.shape)
+
+    def _gamma_law(self):
+        return gamma_dist(a=self._gamma_shape, scale=2 * self.scale)
+
+    def _sample_standard_modular(self, n_samples, seed):
+        gammas = sample_gamma(
+            self._gamma_shape,
+            n_samples,
+            self.backend_name,
+            seed=seed,
+            scale=2 * self.scale,
+        )
+        return gammas ** (1.0 / self.shape)
+
+    def _standard_modular_quantile(self, probability):
+        return float(self._gamma_law().ppf(probability) ** (1 / self.shape))
+
+    def _standard_modular_mean(self):
+        return float(
+            (2 * self.scale) ** (1 / self.shape)
+            * gamma_function(self._gamma_shape + 1 / self.shape)
+            / gamma_function(self._gamma_shape)
+        )
+
+
+# ---------------------------------------------------------------------------
+# Sampling and geometry
+# ---------------------------------------------------------------------------
+
+def sample_elliptical(
+    n_samples: int,
+    mean: Array,
+    scatter: Array,
+    distribution: EllipticalDistribution,
+    seed: Optional[int] = None,
+) -> Array:
+    """Draw from an elliptical distribution via its stochastic representation.
+
+    ``mean`` and ``scatter`` must already live on the distribution's backend;
+    use ``hdrlib.core.backend.get_data_on_device`` if needed.
+
+    Returns
+    -------
+    Array of shape (n_samples, d) on the distribution's backend.
+    """
+    xp = distribution.backend_module
+    backend = distribution.backend_name
+    direction_seed, modular_seed = _spawn_seeds(seed, 2)
+
+    cholesky = xp.linalg.cholesky(scatter)
+    directions = sample_uniform_sphere(
+        n_samples, distribution.n_features, backend, seed=direction_seed,
+    )
+    modular = distribution.sample_modular_variate(n_samples, seed=modular_seed)
+    # Backends do not agree on a default float width — torch draws float32
+    # while a scatter matrix coming from numpy is float64 — so align the draws
+    # on the scatter matrix rather than assuming either.
+    directions = cast_like(directions, scatter, backend)
+    modular = cast_like(modular, scatter, backend)
+    return mean + xp.sqrt(modular)[:, None] * (
+        directions @ xp.swapaxes(cholesky, -1, -2)
+    )
+
+
+def isodensity_ellipse(
+    scatter: np.ndarray,
+    distribution: EllipticalDistribution,
+    probability: float,
+    n_points: int = 300,
+) -> np.ndarray:
+    """Centered isodensity curve enclosing a given probability mass.
+
+    Host-side plotting helper: the curve is a small numpy array regardless of
+    the distribution's backend.
+
+    Because the d.d.p depends on the data only through the quadratic form, the
+    curve is the ellipse ``{x : x^T Xi^{-1} x = q}`` where ``q`` is the
+    corresponding quantile of the modular variate.
+
+    Returns
+    -------
+    np.ndarray of shape (2, n_points), for a 2-dimensional scatter matrix.
+    """
+    radius = np.sqrt(distribution.modular_quantile(probability))
+    angles = np.linspace(0, 2 * np.pi, n_points)
+    circle = radius * np.stack([np.cos(angles), np.sin(angles)])
+    return np.linalg.cholesky(np.asarray(scatter)) @ circle

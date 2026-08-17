@@ -1,0 +1,28 @@
+name: context_elliptical_examples
+description: Isodensity contours and draws for elliptical distributions sharing one scatter matrix
+path: 1-context/elliptical_examples
+executable: 1-context/elliptical_examples/main.py
+executable_command: uv run python
+tags:
+  - context
+  - elliptical
+  - distributions
+  - illustration
+params:
+  n_samples: 50
+  rho: 0.8
+  dof_student: 3
+  dof_k: 2
+  shape_gengauss: 0.5
+actions:
+  - register:
+      name: register
+      executable: register_latex.py
+      executable_command: uv run python
+      description: Stage a chosen figure (.tex) to hdr_exports/ for the LaTeX dissertation
+  - add_to_docs:
+      name: add_to_docs
+      executable: 1-context/elliptical_examples/action_add_to_docs.py
+      executable_command: uv run python
+      description: Export the elliptical distribution panels as Plotly JSON for the docs site
+group: "Context · Illustrations"
