@@ -1,0 +1,34 @@
+{
+  "git_sha": "7dfc9eb",
+  "script": "/Users/ammarmian/Research/HDR/simulations_hdr/1-context/elliptical_examples/main.py",
+  "args": {
+    "distributions": [
+      "gaussian",
+      "student",
+      "k",
+      "gengauss"
+    ],
+    "n_samples": 50,
+    "rho": 0.8,
+    "dof_student": 3.0,
+    "dof_k": 2.0,
+    "shape_gengauss": 0.5,
+    "storage_path": "/Users/ammarmian/Research/HDR/simulations_hdr/results/context_elliptical_examples/run_13",
+    "show_interactive": false,
+    "export": true,
+    "backend": "numpy",
+    "seed": 42
+  },
+  "hdr": {
+    "id": "ellipticaltails",
+    "exp": "context_elliptical_examples",
+    "run_id": 13,
+    "commit_sha": "7dfc9eb0462c83ab222c976f78c020d3403495fd",
+    "sha_short": "7dfc9eb",
+    "run_date": "2026-08-17",
+    "run_month": "2026-08",
+    "seed": "42",
+    "embed_npy": false,
+    "registered_at": "2026-08-17T16:22:05Z"
+  }
+}

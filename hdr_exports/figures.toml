@@ -3,6 +3,14 @@
 #
 # Sync with `just sync-figures` (new figures only) — never a bare rsync.
 
+[figures.ellipticaltails]
+exp       = "context_elliptical_examples"
+run_id    = 13
+sha       = "7dfc9eb"
+run_date  = "2026-08-17"
+seed      = "42"
+embed_npy = false
+
 [figures.covmatexamples]
 exp       = "context_example_covariances"
 run_id    = 5

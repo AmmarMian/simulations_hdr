@@ -11,6 +11,17 @@ Background figures illustrating core statistical concepts from the dissertation 
 <div class="exp-grid">
 <div class="exp-card">
 <div class="exp-card-head">
+<div class="exp-name">context_elliptical_examples</div>
+<span class="exp-results-badge">Results available</span>
+</div>
+<div class="exp-desc">Isodensity contours and draws for elliptical distributions sharing one scatter matrix</div>
+<div class="exp-tags"><span class="exp-tag">context</span><span class="exp-tag">elliptical</span><span class="exp-tag">distributions</span><span class="exp-tag">illustration</span></div>
+<div class="exp-run"><code>uv run python 1-context/elliptical_examples/main.py</code></div>
+<a class="exp-details-link" href="../../experiments/context_elliptical_examples/">Parameters &amp; details →</a>
+</div>
+
+<div class="exp-card">
+<div class="exp-card-head">
 <div class="exp-name">context_example_covariances</div>
 <span class="exp-results-badge">Results available</span>
 </div>
