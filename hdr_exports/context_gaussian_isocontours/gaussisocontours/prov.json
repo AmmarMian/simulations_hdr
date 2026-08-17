@@ -1,0 +1,25 @@
+{
+  "git_sha": "5d050cb",
+  "script": "/Users/ammarmian/Research/HDR/simulations_hdr/1-context/probability_densities/main.py",
+  "args": {
+    "n_samples": 50,
+    "rho": 0.8,
+    "condition": 50.0,
+    "storage_path": "/Users/ammarmian/Research/HDR/simulations_hdr/results/context_gaussian_isocontours/run_12",
+    "show_interactive": false,
+    "export": true,
+    "seed": 42
+  },
+  "hdr": {
+    "id": "gaussisocontours",
+    "exp": "context_gaussian_isocontours",
+    "run_id": 12,
+    "commit_sha": "5d050cbfcb27708cbdc5654b3e3272a24f5afe2a",
+    "sha_short": "5d050cb",
+    "run_date": "2026-08-17",
+    "run_month": "2026-08",
+    "seed": "42",
+    "embed_npy": false,
+    "registered_at": "2026-08-17T15:30:31Z"
+  }
+}

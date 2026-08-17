@@ -1,13 +1,21 @@
 # figures.toml — staged figures for the HDR dissertation
 # Auto-generated from prov.json files — do not edit by hand.
 #
-# rsync -av --exclude figures.toml hdr_exports/ ../Dissertation/gfx/generated/
+# Sync with `just sync-figures` (new figures only) — never a bare rsync.
 
 [figures.covmatexamples]
 exp       = "context_example_covariances"
 run_id    = 5
 sha       = "9bcab17"
 run_date  = "2026-07-02"
+seed      = "42"
+embed_npy = false
+
+[figures.gaussisocontours]
+exp       = "context_gaussian_isocontours"
+run_id    = 12
+sha       = "5d050cb"
+run_date  = "2026-08-17"
 seed      = "42"
 embed_npy = false
 
