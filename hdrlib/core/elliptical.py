@@ -222,6 +222,21 @@ class EllipticalDistribution(ABC):
     def density_generator(self, t):
         """Density generator ``g(t)``, up to a multiplicative constant."""
 
+    def weight_function(self, x, **kwargs):
+        """Maximum-likelihood weight ``u(t) = -2 g'(t)/g(t)``, real convention.
+
+        Signature matches the ``m_estimator_function`` hook of
+        ``hdrlib.core.estimation.fixed_point_m_estimation_centered``, so the
+        fixed-point engine can be reused directly::
+
+            fixed_point_m_estimation_centered(
+                X, m_estimator_function=distribution.weight_function,
+            )
+        """
+        raise NotImplementedError(
+            f"No closed-form weight function for {type(self).__name__}."
+        )
+
     @abstractmethod
     def _sample_standard_modular(self, n_samples: int, seed: Optional[int]) -> Array:
         """Draw the modular variate before the ``E{Q} = d`` rescaling."""
@@ -307,6 +322,9 @@ class GaussianDistribution(EllipticalDistribution):
     def density_generator(self, t):
         return np.exp(-np.asarray(t) / 2)
 
+    def weight_function(self, x, **kwargs):
+        return gaussian_weight(x)
+
     def _sample_standard_modular(self, n_samples, seed):
         return sample_chi2(self.n_features, n_samples, self.backend_name, seed=seed)
 
@@ -333,6 +351,9 @@ class StudentTDistribution(CompoundGaussian):
 
     def density_generator(self, t):
         return (1 + np.asarray(t) / self.dof) ** (-(self.n_features + self.dof) / 2)
+
+    def weight_function(self, x, **kwargs):
+        return student_t_weight_real(x, df=self.dof, n_features=self.n_features)
 
     def sample_texture(self, n_samples, seed):
         # tau = nu / w with w ~ chi2_nu, built from the backend chi-squared.
@@ -375,6 +396,11 @@ class KDistribution(CompoundGaussian):
         t = np.asarray(t, dtype=float)
         return t ** (order / 2) * kv(order, np.sqrt(2 * self.dof * t))
 
+    def weight_function(self, x, **kwargs):
+        return k_distribution_weight_real(
+            x, df=self.dof, n_features=self.n_features
+        )
+
     def sample_texture(self, n_samples, seed):
         return sample_gamma(
             self.dof, n_samples, self.backend_name, seed=seed, scale=1.0 / self.dof
@@ -416,6 +442,11 @@ class GeneralizedGaussianDistribution(EllipticalDistribution):
     @property
     def _gamma_shape(self) -> float:
         return self.n_features / (2 * self.shape)
+
+    def weight_function(self, x, **kwargs):
+        return generalized_gaussian_weight_real(
+            x, shape=self.shape, scale=self.scale
+        )
 
     def _gamma_law(self):
         return gamma_dist(a=self._gamma_shape, scale=2 * self.scale)
@@ -503,3 +534,80 @@ def isodensity_ellipse(
     angles = np.linspace(0, 2 * np.pi, n_points)
     circle = radius * np.stack([np.cos(angles), np.sin(angles)])
     return np.linalg.cholesky(np.asarray(scatter)) @ circle
+
+
+# ---------------------------------------------------------------------------
+# M-estimation weight functions, real convention
+# ---------------------------------------------------------------------------
+#
+# hdrlib.core.estimation holds the complex-circular weight functions used by
+# the detection experiments, and its fixed-point engine takes the weight as a
+# parameter, so the real counterparts live here rather than duplicating or
+# modifying anything there:
+#
+#     from hdrlib.core.estimation import fixed_point_m_estimation_centered
+#     Sigma = fixed_point_m_estimation_centered(
+#         X, m_estimator_function=student_t_weight_real, df=3, n_features=d,
+#     )
+#
+# Tyler's weight u(t) = d/t is deliberately absent: it is identical in the real
+# and complex conventions, so estimation.TylerEstimator applies unchanged.
+
+def student_t_weight_real(x, df: float = 3, n_features: int = 1, **kwargs):
+    r"""Real Student-t maximum-likelihood weight, ``u(t) = (d + nu) / (t + nu)``.
+
+    Derived from ``u(t) = -2 g'(t)/g(t)`` with the real generator
+    ``g(t) = (1 + t/nu)^{-(d+nu)/2}``.  The complex counterpart in
+    ``hdrlib.core.estimation`` reads ``(p + nu/2)/(t + nu/2)`` instead, because
+    both the generator and the factor relating ``u`` to ``g'/g`` differ; the
+    two are genuinely distinct functions, not a reparametrisation.
+
+    Signature matches what ``fixed_point_m_estimation_centered`` passes to its
+    ``m_estimator_function``.
+
+    Parameters
+    ----------
+    x : Array
+        Quadratic forms, shape (..., n_samples).
+    df : float
+        Degrees of freedom ``nu``.
+    n_features : int
+        Dimension ``d``.
+
+    Returns
+    -------
+    Array
+        Weights, same shape as ``x``.
+    """
+    return (n_features + df) / (x + df)
+
+
+def gaussian_weight(x, **kwargs):
+    """Gaussian weight, ``u(t) = 1`` — the fixed point is then the SCM."""
+    return np.ones_like(np.asarray(x))
+
+
+def generalized_gaussian_weight_real(x, shape: float = 0.5, scale: float = 1.0, **kwargs):
+    r"""Generalized Gaussian weight, ``u(t) = s t^{s-1} / b``.
+
+    From ``u(t) = -2 g'(t)/g(t)`` with ``g(t) = exp(-t^s/(2b))``.
+    """
+    return shape * np.asarray(x) ** (shape - 1) / scale
+
+
+def k_distribution_weight_real(x, df: float = 2, n_features: int = 1, **kwargs):
+    r"""K-distribution weight, ``u(t) = c K_{a-1}(c sqrt t) / (sqrt t K_a(c sqrt t))``.
+
+    With ``a = nu - d/2`` and ``c = sqrt(2 nu)``, obtained from
+    ``u(t) = -2 g'(t)/g(t)`` using ``K_a'(z) = -K_{a-1}(z) - (a/z) K_a(z)``.
+
+    Unlike the other weights this one needs scipy's Bessel function, so it is
+    numpy-only; the fixed-point engine still runs on any backend when given one
+    of the closed-form weights above.
+    """
+    from scipy.special import kv
+
+    order = df - n_features / 2
+    c = np.sqrt(2 * df)
+    root = np.sqrt(np.asarray(x))
+    return c * kv(order - 1, c * root) / (root * kv(order, c * root))

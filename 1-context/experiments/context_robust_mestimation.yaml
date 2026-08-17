@@ -1,0 +1,28 @@
+name: context_robust_mestimation
+description: Concentration ellipses of the SCM, the model MLE and Tyler's estimator on a single draw
+path: 1-context/robust_mestimation
+executable: 1-context/robust_mestimation/main.py
+executable_command: uv run python
+tags:
+  - context
+  - robust
+  - m-estimation
+  - illustration
+params:
+  n_samples: 50
+  rho: 0.8
+  dof_student: 2.1
+  dof_k: 0.1
+  shape_gengauss: 0.15
+actions:
+  - register:
+      name: register
+      executable: register_latex.py
+      executable_command: uv run python
+      description: Stage a chosen figure (.tex) to hdr_exports/ for the LaTeX dissertation
+  - add_to_docs:
+      name: add_to_docs
+      executable: 1-context/robust_mestimation/action_add_to_docs.py
+      executable_command: uv run python
+      description: Export the estimated concentration ellipses as Plotly JSON for the docs site
+group: "Context · Illustrations"
