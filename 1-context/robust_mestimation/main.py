@@ -236,7 +236,13 @@ if __name__ == "__main__":
     for ax in axes[n_panels:]:
         ax.set_visible(False)
 
-    axes[0].legend(loc="upper left", fontsize=8)
+    # Legend outside the grid, below it. It is attached to a single axis
+    # rather than to the figure because matplot2tikz exports axis legends but
+    # silently drops figure-level ones.
+    axes[0].legend(
+        loc="lower left", bbox_to_anchor=(0.0, 1.14),
+        ncol=len(styles), frameon=False, fontsize=9,
+    )
     fig.tight_layout()
 
     # Errors, printed and stored, so the visual reading can be checked

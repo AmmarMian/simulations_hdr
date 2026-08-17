@@ -35,6 +35,14 @@ run_date  = "2026-07-02"
 seed      = "42"
 embed_npy = false
 
+[figures.scmvstyler]
+exp       = "context_robust_mestimation"
+run_id    = 14
+sha       = "fc547a9"
+run_date  = "2026-08-17"
+seed      = "42"
+embed_npy = false
+
 [figures.scmcov]
 exp       = "context_scm_grandnombres"
 run_id    = 7

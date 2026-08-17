@@ -41,6 +41,17 @@ Background figures illustrating core statistical concepts from the dissertation 
 <div class="exp-run"><code>uv run python 1-context/probability_densities/main.py</code></div>
 <a class="exp-details-link" href="../../experiments/context_gaussian_isocontours/">Parameters &amp; details →</a>
 </div>
+
+<div class="exp-card">
+<div class="exp-card-head">
+<div class="exp-name">context_robust_mestimation</div>
+<span class="exp-results-badge">Results available</span>
+</div>
+<div class="exp-desc">Concentration ellipses of the SCM, the model MLE and Tyler's estimator on a single draw</div>
+<div class="exp-tags"><span class="exp-tag">context</span><span class="exp-tag">robust</span><span class="exp-tag">m-estimation</span><span class="exp-tag">illustration</span></div>
+<div class="exp-run"><code>uv run python 1-context/robust_mestimation/main.py</code></div>
+<a class="exp-details-link" href="../../experiments/context_robust_mestimation/">Parameters &amp; details →</a>
+</div>
 </div>
 </div>
 
