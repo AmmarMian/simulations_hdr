@@ -2,8 +2,8 @@
 """Qanat action: stage a figure for the HDR LaTeX dissertation.
 
 Copies the PGFPlots .tex + merged provenance JSON from a qanat run directory
-into ./hdr_exports/<exp_name>/<id>/.  The user then manually copies/rsyncs from
-hdr_exports/ to the dissertation repo's gfx/generated/ when on the
+into ./hdr_exports/<exp_name>/<id>/.  The user then syncs hdr_exports/ into the
+dissertation repo's gfx/generated/ with `just sync-figures` when on the
 right machine.
 
 Run via qanat:
@@ -19,8 +19,9 @@ The action is intentionally repo-agnostic: it only writes to ./hdr_exports/
 so it works on any machine (cluster, laptop, remote) without needing the
 dissertation repo to be present.
 
-Copy command (example):
-    rsync -av --exclude figures.toml hdr_exports/ ../Dissertation/gfx/generated/
+Sync command (from the repo root):
+    just sync-figures          # new figures only — never overwrites a tweaked plot.tex
+    just sync-figure <exp> <id>  # deliberate replacement, keeps a .bak
 
 Requires a PGFPlots .tex file in the run directory (produced by --export-tikz
 or --tikz when running the experiment).  The exporter .json sidecar is optional
@@ -200,7 +201,7 @@ header = [
     "# figures.toml — staged figures for the HDR dissertation",
     "# Auto-generated from prov.json files — do not edit by hand.",
     "#",
-    "# rsync -av --exclude figures.toml hdr_exports/ ../Dissertation/gfx/generated/",
+    "# Sync with `just sync-figures` (new figures only) — never a bare rsync.",
     "",
 ]
 
@@ -228,7 +229,8 @@ print(f"\n✓  Staged '{fig_id}'")
 print(f"   exp={exp_name}  run={run_id}  sha={sha_short}  seed={seed_str}")
 print()
 print(f"Copy to the hdr repo when ready:")
-print(f"  rsync -av --exclude figures.toml {export_base}/ ../Dissertation/gfx/generated/")
+print(f"  just sync-figures            # new figures only, never overwrites")
+print(f"  just sync-figure {exp_name} {fig_id}   # if replacing an already-synced figure")
 print(f"Then in the Dissertation repo:")
 print(f"  just figures   # regenerate figures.toml")
 print()
