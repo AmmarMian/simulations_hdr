@@ -11,6 +11,17 @@ Background figures illustrating core statistical concepts from the dissertation 
 <div class="exp-grid">
 <div class="exp-card">
 <div class="exp-card-head">
+<div class="exp-name">context_complex_circularity</div>
+<span class="exp-results-badge">Results available</span>
+</div>
+<div class="exp-desc">Same covariance, four pseudo-covariances — what circularity buys and what it hides</div>
+<div class="exp-tags"><span class="exp-tag">context</span><span class="exp-tag">complex</span><span class="exp-tag">circularity</span><span class="exp-tag">illustration</span></div>
+<div class="exp-run"><code>uv run python 1-context/complex_circularity/main.py</code></div>
+<a class="exp-details-link" href="../../experiments/context_complex_circularity/">Parameters &amp; details →</a>
+</div>
+
+<div class="exp-card">
+<div class="exp-card-head">
 <div class="exp-name">context_elliptical_examples</div>
 <span class="exp-results-badge">Results available</span>
 </div>

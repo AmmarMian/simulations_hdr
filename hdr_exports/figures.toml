@@ -3,6 +3,14 @@
 #
 # Sync with `just sync-figures` (new figures only) — never a bare rsync.
 
+[figures.circularity]
+exp       = "context_complex_circularity"
+run_id    = 17
+sha       = "d9c2943"
+run_date  = "2026-08-18"
+seed      = "42"
+embed_npy = false
+
 [figures.ellipticaltails]
 exp       = "context_elliptical_examples"
 run_id    = 13

@@ -1,0 +1,37 @@
+{
+  "git_sha": "d9c2943",
+  "script": "/Users/ammarmian/Research/HDR/simulations_hdr/1-context/complex_circularity/main.py",
+  "args": {
+    "rho": [
+      0.0,
+      0.5,
+      0.5,
+      0.9
+    ],
+    "phase": [
+      0.0,
+      0.0,
+      0.3333,
+      0.3333
+    ],
+    "gamma": 1.0,
+    "n_samples": 600,
+    "probability": 0.9,
+    "storage_path": "/Users/ammarmian/Research/HDR/simulations_hdr/results/context_complex_circularity/run_17",
+    "show_interactive": false,
+    "export": true,
+    "seed": 42
+  },
+  "hdr": {
+    "id": "circularity",
+    "exp": "context_complex_circularity",
+    "run_id": 17,
+    "commit_sha": "d9c29432b8a2657a017fe05b3c37c23ac67abc3a",
+    "sha_short": "d9c2943",
+    "run_date": "2026-08-18",
+    "run_month": "2026-08",
+    "seed": "42",
+    "embed_npy": false,
+    "registered_at": "2026-08-18T12:32:31Z"
+  }
+}

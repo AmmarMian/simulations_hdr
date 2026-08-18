@@ -105,6 +105,16 @@ if __name__ == "__main__":
         "--export", action=argparse.BooleanOptionalAction, default=True,
         help="Save TikZ/PGFPlots figure (.tex) (default: True).",
     )
+    parser.add_argument(
+        "--axis_width", type=str, default="0.45\\textwidth",
+        help="Width of a single panel in the exported PGFPlots figure. Set "
+             "here rather than patched into the .tex afterwards, so that a "
+             "re-sync into the dissertation does not undo it.",
+    )
+    parser.add_argument(
+        "--axis_height", type=str, default="4.6cm",
+        help="Height of a single panel in the exported PGFPlots figure.",
+    )
     parser.add_argument("--seed", type=int, default=42, help="random seed generation base seed")
     args = parser.parse_args()
 
@@ -214,7 +224,7 @@ if __name__ == "__main__":
 
     if args.export:
         save_path = os.path.join(args.storage_path, "circularity.tex")
-        save(save_path)
+        save(save_path, axis_width=args.axis_width, axis_height=args.axis_height)
         write_prov_sidecar(save_path, args)
         print(f"Saved circularity panels in {save_path}")
 
