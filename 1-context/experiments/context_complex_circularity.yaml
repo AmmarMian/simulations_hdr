@@ -1,0 +1,26 @@
+name: context_complex_circularity
+description: Same covariance, four pseudo-covariances — what circularity buys and what it hides
+path: 1-context/complex_circularity
+executable: 1-context/complex_circularity/main.py
+executable_command: uv run python
+tags:
+  - context
+  - complex
+  - circularity
+  - illustration
+params:
+  gamma: 1.0
+  n_samples: 600
+  probability: 0.9
+actions:
+  - register:
+      name: register
+      executable: register_latex.py
+      executable_command: uv run python
+      description: Stage a chosen figure (.tex) to hdr_exports/ for the LaTeX dissertation
+  - add_to_docs:
+      name: add_to_docs
+      executable: 1-context/complex_circularity/action_add_to_docs.py
+      executable_command: uv run python
+      description: Export the circularity panels as Plotly JSON for the docs site
+group: "Context · Illustrations"
