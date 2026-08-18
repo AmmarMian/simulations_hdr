@@ -55,7 +55,7 @@ uv run python 1-context/robust_mestimation/main.py
   student   scm=0.504  mle=0.089  tyler=0.048
   k         scm=0.694  mle=0.144  tyler=0.158
   gengauss  scm=0.322  mle=0.151  tyler=0.103
-Saved ellipses in /Users/ammarmian/Research/HDR/simulations_hdr/results/context_robust_mestimation/run_14/scmvstyler.tex
+Saved ellipses in /Users/ammarmian/Research/HDR/simulations_hdr/results/context_robust_mestimation/run_15/scmvstyler.tex
 </div>
 </details>
 </div>

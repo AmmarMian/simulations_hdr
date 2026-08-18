@@ -37,8 +37,8 @@ embed_npy = false
 
 [figures.scmvstyler]
 exp       = "context_robust_mestimation"
-run_id    = 14
-sha       = "fc547a9"
+run_id    = 15
+sha       = "f81a05e"
 run_date  = "2026-08-17"
 seed      = "42"
 embed_npy = false

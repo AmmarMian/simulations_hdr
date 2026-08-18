@@ -1,5 +1,5 @@
 {
-  "git_sha": "fc547a9",
+  "git_sha": "f81a05e",
   "script": "/Users/ammarmian/Research/HDR/simulations_hdr/1-context/robust_mestimation/main.py",
   "args": {
     "distributions": [
@@ -15,7 +15,7 @@
     "shape_gengauss": 0.15,
     "iter_max": 100,
     "tol": 1e-08,
-    "storage_path": "/Users/ammarmian/Research/HDR/simulations_hdr/results/context_robust_mestimation/run_14",
+    "storage_path": "/Users/ammarmian/Research/HDR/simulations_hdr/results/context_robust_mestimation/run_15",
     "show_interactive": false,
     "export": true,
     "backend": "numpy",
@@ -24,13 +24,13 @@
   "hdr": {
     "id": "scmvstyler",
     "exp": "context_robust_mestimation",
-    "run_id": 14,
-    "commit_sha": "fc547a9afc24b9e018e62af67f623dcc9f529f1d",
-    "sha_short": "fc547a9",
+    "run_id": 15,
+    "commit_sha": "f81a05e2646bdea129748131af69e3923865e38d",
+    "sha_short": "f81a05e",
     "run_date": "2026-08-17",
     "run_month": "2026-08",
     "seed": "42",
     "embed_npy": false,
-    "registered_at": "2026-08-17T16:52:10Z"
+    "registered_at": "2026-08-17T16:54:59Z"
   }
 }

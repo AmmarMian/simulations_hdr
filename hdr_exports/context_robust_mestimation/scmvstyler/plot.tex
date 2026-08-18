@@ -6,19 +6,19 @@
 \definecolor{darkorange25512714}{RGB}{255,127,14}
 \definecolor{forestgreen4416044}{RGB}{44,160,44}
 \definecolor{gray127}{RGB}{127,127,127}
-\definecolor{lightgray204}{RGB}{204,204,204}
 \definecolor{steelblue31119180}{RGB}{31,119,180}
 
 \begin{groupplot}[group style={group size=2 by 2}]
 \nextgroupplot[
 legend cell align={left},
+legend columns=4,
 legend style={
   fill opacity=0.8,
   draw opacity=1,
   text opacity=1,
-  at={(0.03,0.97)},
-  anchor=north west,
-  draw=lightgray204
+  at={(0,1.14)},
+  anchor=south west,
+  draw=none
 },
 scaled x ticks=manual:{}{\pgfmathparse{#1}},
 tick align=outside,
