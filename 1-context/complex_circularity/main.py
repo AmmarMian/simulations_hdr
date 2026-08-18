@@ -3,7 +3,7 @@
 # One panel per value of the pseudo-covariance, all sharing the *same*
 # covariance. The dashed circle is what the covariance alone predicts; the
 # solid ellipse is the actual concentration curve. They coincide only in the
-# leftmost panel, where the pseudo-covariance vanishes — that is, only under
+# first panel, where the pseudo-covariance vanishes — that is, only under
 # circularity.
 #
 # Everything is done in the scalar case d = 1, where the whole second-order
@@ -143,9 +143,14 @@ if __name__ == "__main__":
         ellipses.append(concentration_ellipse(covariance, args.probability))
         empirical.append((np.mean(np.abs(z) ** 2), np.mean(z * z)))
 
+    # A 2-column grid rather than a single row: the dissertation's text block
+    # is narrow, and four panels side by side overflow it.
     n_panels = len(pseudos)
+    n_cols = min(2, n_panels)
+    n_rows = int(np.ceil(n_panels / n_cols))
     fig, axes = plt.subplots(
-        1, n_panels, figsize=(2.6 * n_panels, 3.0), sharex=True, sharey=True
+        n_rows, n_cols, figsize=(3.4 * n_cols, 3.4 * n_rows),
+        sharex=True, sharey=True,
     )
     axes = np.atleast_1d(axes).ravel()
 
@@ -172,15 +177,19 @@ if __name__ == "__main__":
         ax.set_aspect("equal")
         ax.set_xlim(-limit, limit)
         ax.set_ylim(-limit, limit)
-        ax.set_xlabel(r"$\mathrm{Re}\,z$")
-        if index == 0:
+        if index // n_cols == n_rows - 1:
+            ax.set_xlabel(r"$\mathrm{Re}\,z$")
+        if index % n_cols == 0:
             ax.set_ylabel(r"$\mathrm{Im}\,z$")
         ax.set_title(panel_title(rho, phase))
+
+    for ax in axes[n_panels:]:
+        ax.set_visible(False)
 
     # Legend attached to an axis, not to the figure: matplot2tikz exports the
     # former and silently drops the latter.
     axes[0].legend(
-        loc="lower left", bbox_to_anchor=(0.0, 1.18),
+        loc="lower left", bbox_to_anchor=(0.0, 1.14),
         ncol=2, frameon=False, fontsize=9,
     )
     fig.tight_layout()

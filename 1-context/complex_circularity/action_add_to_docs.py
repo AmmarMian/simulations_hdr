@@ -3,7 +3,7 @@
 
 Reads results.npz — one draw per pseudo-covariance, the matching concentration
 ellipses, and the single reference circle predicted by the covariance alone.
-Produces a 1xN row of subplots.
+Produces a 2-column grid of subplots.
 
 Output: docs/docs/assets/data/context_complex_circularity.json
 """
@@ -62,16 +62,18 @@ TICK = dict(family=FONT_MONO, size=12, color=MUTED)
 TITLE = dict(family=FONT_SANS, size=13, color=INK2)
 
 n_panels = len(rho)
+n_cols = min(2, n_panels)
+n_rows = int(np.ceil(n_panels / n_cols))
 fig = make_subplots(
-    rows=1, cols=n_panels,
-    horizontal_spacing=0.04,
+    rows=n_rows, cols=n_cols,
+    horizontal_spacing=0.09, vertical_spacing=0.13,
     subplot_titles=[title(i) for i in range(n_panels)],
 )
 
 limit = 1.15 * max(np.quantile(np.abs(data), 0.999) for data in samples)
 
 for index in range(n_panels):
-    col = index + 1
+    row, col = index // n_cols + 1, index % n_cols + 1
     data = samples[index]
 
     fig.add_trace(go.Scatter(
@@ -83,7 +85,7 @@ for index in range(n_panels):
         ),
         hovertemplate="Re z=%{x:.2f}<br>Im z=%{y:.2f}<extra></extra>",
         showlegend=False,
-    ), row=1, col=col)
+    ), row=row, col=col)
 
     fig.add_trace(go.Scatter(
         x=reference[0].tolist(), y=reference[1].tolist(),
@@ -91,7 +93,7 @@ for index in range(n_panels):
         line=dict(color=MUTED, width=1.6, dash="dash"),
         hovertemplate="prédit par Γ seule<extra></extra>",
         showlegend=(index == 0),
-    ), row=1, col=col)
+    ), row=row, col=col)
 
     fig.add_trace(go.Scatter(
         x=ellipses[index][0].tolist(), y=ellipses[index][1].tolist(),
@@ -99,7 +101,7 @@ for index in range(n_panels):
         line=dict(color=C_ON, width=2.0),
         hovertemplate="concentration réelle<extra></extra>",
         showlegend=(index == 0),
-    ), row=1, col=col)
+    ), row=row, col=col)
 
 for ann in fig.layout.annotations:
     ann.font = dict(family=FONT_SANS, size=13, color=MUTED)
@@ -116,13 +118,17 @@ for index in range(n_panels):
     suffix = "" if index == 0 else str(index + 1)
     layout_axes[f"xaxis{suffix}"] = {
         **axis_common,
-        "title": dict(text="Re <i>z</i>", font=TITLE, standoff=12),
+        "title": dict(
+            text="Re <i>z</i>" if index // n_cols == n_rows - 1 else "",
+            font=TITLE, standoff=12,
+        ),
     }
     layout_axes[f"yaxis{suffix}"] = {
         **axis_common,
         "scaleanchor": f"x{suffix}",
         "title": dict(
-            text="Im <i>z</i>" if index == 0 else "", font=TITLE, standoff=12
+            text="Im <i>z</i>" if index % n_cols == 0 else "",
+            font=TITLE, standoff=12,
         ),
     }
 
@@ -130,7 +136,7 @@ fig.update_layout(
     paper_bgcolor=BG, plot_bgcolor=BG,
     margin=dict(t=70, r=20, b=60, l=60),
     font=dict(family=FONT_SANS, size=13, color=INK2),
-    height=330, width=1000,
+    height=760, width=800,
     legend=dict(
         orientation="h", yanchor="bottom", y=1.12, xanchor="right", x=1,
         font=dict(family=FONT_SANS, size=12, color=MUTED),
