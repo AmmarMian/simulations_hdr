@@ -21,9 +21,8 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-from matplot2tikz import save
 from hdrlib.core.plot_style import apply_style
-from hdrlib.core.exporter import write_prov_sidecar
+from hdrlib.core.exporter import save_tikz, write_prov_sidecar
 from hdrlib.core.backend import get_data_on_device, to_numpy
 from hdrlib.core.manifolds import HermitianPositiveDefinite, logm_psd
 
@@ -216,7 +215,17 @@ if __name__ == "__main__":
     ax.set_xlabel(r"$t$")
     ax.set_ylabel(r"$\det$")
     ax.set_title("déterminant le long du chemin")
-    ax.legend(loc="upper left", frameon=False, fontsize=7)
+
+    # Legend below the grid rather than inside a panel: the panels are barely
+    # five centimetres wide once exported, and an inner legend either covers
+    # the curves or spills over the frame. It is attached to the panel whose
+    # curves it names, and pushed left of it so that it spans the whole width:
+    # matplot2tikz only exports entries for the labelled curves of the very
+    # axis the legend belongs to.
+    ax.legend(
+        loc="upper left", bbox_to_anchor=(-1.3, -0.45), ncol=3,
+        frameon=False, fontsize=8,
+    )
 
     fig.tight_layout()
 
@@ -241,7 +250,9 @@ if __name__ == "__main__":
 
     if args.export:
         save_path = os.path.join(args.storage_path, "interpolation.tex")
-        save(save_path, axis_width=args.axis_width, axis_height=args.axis_height)
+        save_tikz(
+            save_path, axis_width=args.axis_width, axis_height=args.axis_height
+        )
         write_prov_sidecar(save_path, args)
         print(f"Saved interpolation paths in {save_path}")
 

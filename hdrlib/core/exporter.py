@@ -7,6 +7,7 @@
 
 import json
 import logging
+import re
 import subprocess
 import sys
 from abc import ABC, abstractmethod
@@ -140,3 +141,91 @@ class ResultExporter(ABC):
     def _plot_script(self, stem: str, **kwargs) -> str:
         """Return source code of a self-contained standalone plot script."""
         ...
+
+
+# ---------------------------------------------------------------------------
+# TikZ export
+# ---------------------------------------------------------------------------
+
+_MATH_GROUP = re.compile(r"\\\(\\displaystyle(.*?)\\\)", re.DOTALL)
+
+
+def _repair_math(code: str) -> str:
+    r"""Undo matplot2tikz's escaping of ``_`` and ``^`` inside math groups.
+
+    ``matplot2tikz`` escapes every underscore of a label *before* it splits
+    text mode from math mode, so a perfectly ordinary ``$x_1$`` comes out as
+    ``\(\displaystyle x\_1\)`` and typesets as a literal underscore. Text mode
+    still needs the escape, so the repair is applied inside math groups only.
+    """
+    def unescape(match: "re.Match[str]") -> str:
+        body = match.group(1).replace(r"\_", "_").replace(r"\^", "^")
+        return rf"\(\displaystyle{body}\)"
+
+    return _MATH_GROUP.sub(unescape, code)
+
+
+def save_tikz(
+    filepath,
+    axis_width: str = r"0.45\textwidth",
+    axis_height: str = "4.6cm",
+    horizontal_sep: str = "1.4cm",
+    vertical_sep: str = "1.5cm",
+    legend_font: str = r"\footnotesize",
+    extra_axis_parameters=None,
+    **kwargs,
+) -> None:
+    r"""Save the current figure as PGFPlots code, with this repo's defaults.
+
+    Wraps :func:`matplot2tikz.save` with what every figure of the dissertation
+    needs and nothing more:
+
+    * a panel size given here rather than patched into the ``.tex`` afterwards,
+      so that a re-sync into the dissertation does not undo it;
+    * enough separation between the panels of a grid for a title not to land on
+      the axis label of the panel above it;
+    * a legend without a frame, opaque, and in the same size as the caption,
+      since the exported one otherwise keeps matplotlib's proportions and lets
+      the curves run through its entries;
+    * the math repair of :func:`_repair_math`.
+
+    Parameters
+    ----------
+    filepath : str or Path
+        Destination ``.tex`` file.
+    axis_width, axis_height : str
+        Size of a single panel, as LaTeX lengths.
+    horizontal_sep, vertical_sep : str
+        Separation between the panels of a grid.
+    legend_font : str
+        Font size command used inside the legend.
+    extra_axis_parameters : iterable of str, optional
+        Appended to the per-axis options.
+    **kwargs
+        Passed through to :func:`matplot2tikz.get_tikz_code`.
+    """
+    from matplot2tikz import get_tikz_code
+
+    axis_parameters = [
+        # An opaque legend: the exported one is transparent by default and
+        # the curves run straight through the entries.
+        "legend style={draw=none, fill=white, fill opacity=0.9, "
+        f"text opacity=1, font={legend_font}}}",
+        r"label style={font=\footnotesize}",
+        r"tick label style={font=\scriptsize}",
+        r"title style={font=\footnotesize, yshift=-2pt}",
+    ]
+    axis_parameters += list(extra_axis_parameters or [])
+
+    code = get_tikz_code(
+        filepath=filepath,
+        axis_width=axis_width,
+        axis_height=axis_height,
+        extra_axis_parameters=axis_parameters,
+        extra_groupstyle_parameters=[
+            f"horizontal sep={horizontal_sep}",
+            f"vertical sep={vertical_sep}",
+        ],
+        **kwargs,
+    )
+    Path(filepath).write_text(_repair_math(code))

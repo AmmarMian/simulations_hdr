@@ -23,9 +23,8 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-from matplot2tikz import save
 from hdrlib.core.plot_style import apply_style
-from hdrlib.core.exporter import write_prov_sidecar
+from hdrlib.core.exporter import save_tikz, write_prov_sidecar
 from hdrlib.core.backend import get_data_on_device, to_numpy
 from hdrlib.core.estimation import (
     minimize_tyler_fixed_point,
@@ -185,7 +184,12 @@ if __name__ == "__main__":
     for ax in axes:
         ax.set_yscale("log")
     axes[0].set_ylim(bottom=0.5 * floor)
-    axes[0].legend(loc="lower right", frameon=False, fontsize=7)
+    # Legend below the panels: exported at this size, an inner one covers the
+    # tick labels of the very axis it sits in.
+    axes[0].legend(
+        loc="upper left", bbox_to_anchor=(0.0, -0.45), ncol=2,
+        frameon=False, fontsize=8,
+    )
 
     fig.tight_layout()
 
@@ -226,7 +230,9 @@ if __name__ == "__main__":
 
     if args.export:
         save_path = os.path.join(args.storage_path, "convergence.tex")
-        save(save_path, axis_width=args.axis_width, axis_height=args.axis_height)
+        save_tikz(
+            save_path, axis_width=args.axis_width, axis_height=args.axis_height
+        )
         write_prov_sidecar(save_path, args)
         print(f"Saved convergence curves in {save_path}")
 

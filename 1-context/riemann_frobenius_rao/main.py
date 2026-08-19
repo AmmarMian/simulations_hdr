@@ -23,9 +23,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from rich.progress import Progress
 
-from matplot2tikz import save
 from hdrlib.core.plot_style import apply_style
-from hdrlib.core.exporter import write_prov_sidecar
+from hdrlib.core.exporter import save_tikz, write_prov_sidecar
 from hdrlib.core.backend import get_data_on_device, to_numpy
 from hdrlib.core.estimation import SCMEstimator, minimize_tyler_fixed_point
 from hdrlib.core.elliptical import StudentTDistribution, sample_elliptical
@@ -182,7 +181,12 @@ if __name__ == "__main__":
         ax.set_xlabel(r"$N$")
         ax.set_title(titles[metric])
     axes[0].set_ylabel("erreur moyenne")
-    axes[0].legend(loc="lower left", frameon=False, fontsize=9)
+    # Legend below the panels rather than inside one of them, see the other
+    # Riemannian figures: at this width an inner legend covers the curves.
+    axes[0].legend(
+        loc="upper left", bbox_to_anchor=(0.0, -0.45), ncol=2,
+        frameon=False, fontsize=8,
+    )
 
     fig.tight_layout()
 
@@ -209,7 +213,9 @@ if __name__ == "__main__":
 
     if args.export:
         save_path = os.path.join(args.storage_path, "erreurrao.tex")
-        save(save_path, axis_width=args.axis_width, axis_height=args.axis_height)
+        save_tikz(
+            save_path, axis_width=args.axis_width, axis_height=args.axis_height
+        )
         write_prov_sidecar(save_path, args)
         print(f"Saved error curves in {save_path}")
 

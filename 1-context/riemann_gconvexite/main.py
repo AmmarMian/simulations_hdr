@@ -21,9 +21,8 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-from matplot2tikz import save
 from hdrlib.core.plot_style import apply_style
-from hdrlib.core.exporter import write_prov_sidecar
+from hdrlib.core.exporter import save_tikz, write_prov_sidecar
 from hdrlib.core.backend import get_data_on_device, to_numpy
 from hdrlib.core.estimation import tyler_cost
 from hdrlib.core.elliptical import StudentTDistribution, sample_elliptical
@@ -207,7 +206,9 @@ if __name__ == "__main__":
 
     if args.export:
         save_path = os.path.join(args.storage_path, "gconvexite.tex")
-        save(save_path, axis_width=args.axis_width, axis_height=args.axis_height)
+        save_tikz(
+            save_path, axis_width=args.axis_width, axis_height=args.axis_height
+        )
         write_prov_sidecar(save_path, args)
         print(f"Saved cost profiles in {save_path}")
 

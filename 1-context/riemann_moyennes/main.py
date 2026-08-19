@@ -21,9 +21,8 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-from matplot2tikz import save
 from hdrlib.core.plot_style import apply_style
-from hdrlib.core.exporter import write_prov_sidecar
+from hdrlib.core.exporter import save_tikz, write_prov_sidecar
 from hdrlib.core.backend import get_data_on_device, to_numpy
 from hdrlib.core.estimation import frechet_mean_affine_invariant
 from hdrlib.core.manifolds import HermitianPositiveDefinite, logm_psd, multiherm
@@ -187,7 +186,7 @@ if __name__ == "__main__":
         curve = concentration_ellipse(matrix, args.radius)
         ax.plot(
             curve[0], curve[1], color=colors[name], linewidth=1.6, zorder=3,
-            linestyle=linestyles[name],
+            linestyle=linestyles[name], label=name,
         )
     ax.set_aspect("equal")
     # Framed on a high quantile rather than the maximum: one very elongated
@@ -214,20 +213,24 @@ if __name__ == "__main__":
     ax.plot(
         np.arange(1, args.n_matrices + 1), np.sort(determinants),
         marker="o", markersize=3, linestyle="none", color="C0",
-        label="échantillon",
     )
     for name, matrix in means.items():
         ax.axhline(
             np.linalg.det(matrix), color=colors[name], linewidth=1.4,
-            linestyle=linestyles[name], label=name,
+            linestyle=linestyles[name],
         )
     ax.set_yscale("log")
-    ax.set_xlabel("matrices, triées par déterminant")
+    ax.set_xlabel("matrices triées")
     ax.set_ylabel(r"$\det$")
     ax.set_title("déterminants")
-    # Legend on this panel rather than above the grid: the ellipses fill their
-    # own frame, and matplot2tikz exports axis legends but drops figure ones.
-    ax.legend(loc="lower right", frameon=False, fontsize=8)
+    # Legend below the panels rather than inside one of them: exported at this
+    # size, an inner legend either covers the data or spills over the frame.
+    # It is attached to an axis and not to the figure, since matplot2tikz
+    # exports axis legends and silently drops figure ones.
+    axes[0].legend(
+        loc="upper left", bbox_to_anchor=(0.0, -0.45), ncol=2,
+        frameon=False, fontsize=8,
+    )
 
     fig.tight_layout()
 
@@ -259,7 +262,9 @@ if __name__ == "__main__":
 
     if args.export:
         save_path = os.path.join(args.storage_path, "moyennes.tex")
-        save(save_path, axis_width=args.axis_width, axis_height=args.axis_height)
+        save_tikz(
+            save_path, axis_width=args.axis_width, axis_height=args.axis_height
+        )
         write_prov_sidecar(save_path, args)
         print(f"Saved means in {save_path}")
 
