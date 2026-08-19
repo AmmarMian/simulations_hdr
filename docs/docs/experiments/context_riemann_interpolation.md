@@ -50,7 +50,7 @@ uv run python 1-context/riemann_interpolation/main.py
   euclidienne        det at t=1/2: 3.791   max: 3.791
   affine invariante  det at t=1/2: 1.000   max: 1.000
   log-euclidienne    det at t=1/2: 1.000   max: 1.000
-Saved interpolation paths in /Users/ammarmian/Research/HDR/simulations_hdr/results/context_riemann_interpolation/run_19/interpolation.tex
+Saved interpolation paths in /Users/ammarmian/Research/HDR/simulations_hdr/results/context_riemann_interpolation/run_24/interpolation.tex
 </div>
 </details>
 </div>

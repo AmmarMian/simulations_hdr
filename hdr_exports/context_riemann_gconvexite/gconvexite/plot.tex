@@ -9,15 +9,6 @@
 \begin{groupplot}[group style={group size=2 by 1}]
 \nextgroupplot[
 height=4.6cm,
-legend cell align={left},
-legend style={
-  fill opacity=0.8,
-  draw opacity=1,
-  text opacity=1,
-  at={(0.5,0.91)},
-  anchor=north,
-  draw=none
-},
 tick align=outside,
 tick pos=left,
 title={segment euclidien},
@@ -31,7 +22,7 @@ ylabel={\(\displaystyle L\)},
 ymin=0.38937564836453, ymax=9.69140677310581,
 ytick style={color=black}
 ]
-\addplot [semithick, darkorange25512714, forget plot]
+\addplot [semithick, darkorange25512714]
 table {%
 0 7.22321310791446
 0.005 3.66392482041289
@@ -240,9 +231,6 @@ table {%
 0.015 3.50057139068436
 0.955 4.47195284125547
 };
-\addlegendentry{minima locaux}
-\addlegendimage{/pgfplots/refstyle=minima locaux_plot}
-\addlegendentry{minima locaux}
 
 \nextgroupplot[
 height=4.6cm,
@@ -468,7 +456,6 @@ table {%
 table {%
 0.45 0.812195244943679
 };
-\label{minima locaux_plot}
 \end{groupplot}
 
 \end{tikzpicture}

@@ -1,5 +1,5 @@
 {
-  "git_sha": "c917f02",
+  "git_sha": "f845fa1",
   "script": "/Users/ammarmian/Research/HDR/simulations_hdr/1-context/riemann_moyennes/main.py",
   "args": {
     "n_matrices": 15,
@@ -8,7 +8,7 @@
     "radius": 1.0,
     "iter_max": 100,
     "tol": 1e-10,
-    "storage_path": "/Users/ammarmian/Research/HDR/simulations_hdr/results/context_riemann_moyennes/run_20",
+    "storage_path": "/Users/ammarmian/Research/HDR/simulations_hdr/results/context_riemann_moyennes/run_25",
     "show_interactive": false,
     "export": true,
     "axis_width": "0.45\\textwidth",
@@ -19,13 +19,13 @@
   "hdr": {
     "id": "moyennes",
     "exp": "context_riemann_moyennes",
-    "run_id": 20,
-    "commit_sha": "c917f02c3ef5350ef5505bd6a60fc398ccb94480",
-    "sha_short": "c917f02",
+    "run_id": 25,
+    "commit_sha": "f845fa160f0330ed8fe613f27e8bdeae7d6a048a",
+    "sha_short": "f845fa1",
     "run_date": "2026-08-19",
     "run_month": "2026-08",
     "seed": "42",
     "embed_npy": false,
-    "registered_at": "2026-08-19T08:36:11Z"
+    "registered_at": "2026-08-19T08:44:00Z"
   }
 }
