@@ -22,6 +22,8 @@ uv run python 1-context/complex_circularity/main.py
 | `--storage_path` | str | `outputs/complex_circularity` | Output directory for LaTeX exports (injected by qanat, or set manually). |
 | `--show-interactive` | — | — | Show plots interactively with matplotlib. |
 | `--export` | — | `True` | Save TikZ/PGFPlots figure (.tex) (default: True). |
+| `--axis_width` | str | `0.45\textwidth` | Width of a single panel in the exported PGFPlots figure. Set here rather than patched into the .tex afterwards, so that a re-sync into the dissertation does not undo it. |
+| `--axis_height` | str | `4.6cm` | Height of a single panel in the exported PGFPlots figure. |
 | `--seed` | int | `42` | random seed generation base seed |
 
 ## Results
@@ -36,6 +38,8 @@ uv run python 1-context/complex_circularity/main.py
   <code>--probability</code> <span class='mn-default'>0.9</span><br>
   <code>--show-interactive</code> <span class='mn-default'>False</span><br>
   <code>--export</code> <span class='mn-default'>True</span><br>
+  <code>--axis_width</code> <span class='mn-default'>0.45\textwidth</span><br>
+  <code>--axis_height</code> <span class='mn-default'>4.6cm</span><br>
   <code>--seed</code> <span class='mn-default'>42</span><br>
 </span>
 <div class="exp-result-card">
@@ -47,7 +51,7 @@ uv run python 1-context/complex_circularity/main.py
   |C|/Gamma=0.5  arg C=0      pi  Gamma_hat=0.998  C_hat=0.510 exp(j0.000pi)
   |C|/Gamma=0.5  arg C=0.3333 pi  Gamma_hat=0.953  C_hat=0.444 exp(j0.376pi)
   |C|/Gamma=0.9  arg C=0.3333 pi  Gamma_hat=0.995  C_hat=0.889 exp(j0.337pi)
-Saved circularity panels in /Users/ammarmian/Research/HDR/simulations_hdr/results/context_complex_circularity/run_17/circularity.tex
+Saved circularity panels in /Users/ammarmian/Research/HDR/simulations_hdr/results/context_complex_circularity/run_18/circularity.tex
 </div>
 </details>
 </div>

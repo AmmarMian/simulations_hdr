@@ -5,8 +5,8 @@
 
 [figures.circularity]
 exp       = "context_complex_circularity"
-run_id    = 17
-sha       = "d9c2943"
+run_id    = 18
+sha       = "7812a73"
 run_date  = "2026-08-18"
 seed      = "42"
 embed_npy = false

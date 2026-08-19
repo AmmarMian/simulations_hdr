@@ -8,6 +8,7 @@
 
 \begin{groupplot}[group style={group size=2 by 2}]
 \nextgroupplot[
+height=4.6cm,
 legend cell align={left},
 legend columns=2,
 legend style={
@@ -22,6 +23,7 @@ scaled x ticks=manual:{}{\pgfmathparse{#1}},
 tick align=outside,
 tick pos=left,
 title={\(\displaystyle C = 0\)},
+width=0.45\textwidth,
 x grid style={darkgray176},
 xmin=-2.995566311271, xmax=2.995566311271,
 xtick style={color=black},
@@ -1445,11 +1447,13 @@ table {%
 \addlegendentry{concentration réelle}
 
 \nextgroupplot[
+height=4.6cm,
 scaled x ticks=manual:{}{\pgfmathparse{#1}},
 scaled y ticks=manual:{}{\pgfmathparse{#1}},
 tick align=outside,
 tick pos=left,
 title={\(\displaystyle |C|/\Gamma = 0.5,\ \arg C = 0\pi\)},
+width=0.45\textwidth,
 x grid style={darkgray176},
 xmin=-2.995566311271, xmax=2.995566311271,
 xtick style={color=black},
@@ -2871,9 +2875,11 @@ table {%
 };
 
 \nextgroupplot[
+height=4.6cm,
 tick align=outside,
 tick pos=left,
 title={\(\displaystyle |C|/\Gamma = 0.5,\ \arg C = 0.3333\pi\)},
+width=0.45\textwidth,
 x grid style={darkgray176},
 xlabel={\(\displaystyle \mathrm{Re}\,z\)},
 xmin=-2.995566311271, xmax=2.995566311271,
@@ -4295,10 +4301,12 @@ table {%
 };
 
 \nextgroupplot[
+height=4.6cm,
 scaled y ticks=manual:{}{\pgfmathparse{#1}},
 tick align=outside,
 tick pos=left,
 title={\(\displaystyle |C|/\Gamma = 0.9,\ \arg C = 0.3333\pi\)},
+width=0.45\textwidth,
 x grid style={darkgray176},
 xlabel={\(\displaystyle \mathrm{Re}\,z\)},
 xmin=-2.995566311271, xmax=2.995566311271,
