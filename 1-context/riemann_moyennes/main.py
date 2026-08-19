@@ -227,7 +227,7 @@ if __name__ == "__main__":
     ax.set_title("déterminants")
     # Legend on this panel rather than above the grid: the ellipses fill their
     # own frame, and matplot2tikz exports axis legends but drops figure ones.
-    ax.legend(loc="upper left", frameon=False, fontsize=8)
+    ax.legend(loc="lower right", frameon=False, fontsize=8)
 
     fig.tight_layout()
 

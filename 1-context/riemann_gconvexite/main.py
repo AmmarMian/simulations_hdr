@@ -176,13 +176,11 @@ if __name__ == "__main__":
         minima = local_minima(times, values)
         ax.plot(
             times[minima], values[minima],
-            marker="o", markersize=4, linestyle="none", color="C7",
-            label="minima locaux", zorder=3,
+            marker="o", markersize=4, linestyle="none", color="C7", zorder=3,
         )
         ax.set_xlabel(r"$t$")
         ax.set_title(name)
     axes[0].set_ylabel(r"$L$")
-    axes[0].legend(loc="upper center", frameon=False, fontsize=9)
 
     fig.tight_layout()
 

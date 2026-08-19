@@ -168,12 +168,14 @@ if __name__ == "__main__":
 
     n_samples = np.array(args.n_samples)
     fig, axes = plt.subplots(1, 2, figsize=(3.4 * 2, 3.4))
-    for ax, metric in zip(axes, ("frobenius", "rao")):
+    for column, (ax, metric) in enumerate(zip(axes, ("frobenius", "rao"))):
         for name in estimators:
+            # Labelled on the left panel only: matplot2tikz gathers the
+            # labelled curves of every axis into the one exported legend.
             ax.plot(
                 n_samples, means[(name, metric)],
                 color=colors[name], marker=markers[name], markersize=4,
-                linewidth=1.4, label=name,
+                linewidth=1.4, label=name if column == 0 else None,
             )
         ax.set_xscale("log")
         ax.set_yscale("log")

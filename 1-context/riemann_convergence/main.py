@@ -166,12 +166,17 @@ if __name__ == "__main__":
     fig, axes = plt.subplots(1, 2, figsize=(3.4 * 2, 3.4), sharey=True)
     for name, history in histories.items():
         gap = np.maximum(np.array(history["cost"]) - optimum, floor)
-        for ax, abscissa in zip(axes, [np.arange(len(gap)), np.array(history["time"])]):
-            ax.plot(
+        # The label is attached to the left panel only: matplot2tikz collects
+        # the labelled curves of every axis into the single exported legend,
+        # so labelling both panels lists each algorithm twice.
+        for column, abscissa in enumerate(
+            [np.arange(len(gap)), np.array(history["time"])]
+        ):
+            axes[column].plot(
                 abscissa, gap,
                 color=colors[name], linewidth=1.4,
                 marker=markers[name], markersize=3, markevery=10,
-                label=name,
+                label=name if column == 0 else None,
             )
     axes[0].set_xlabel("itération")
     axes[0].set_ylabel(r"$L - L^{\star}$")
@@ -180,7 +185,7 @@ if __name__ == "__main__":
     for ax in axes:
         ax.set_yscale("log")
     axes[0].set_ylim(bottom=0.5 * floor)
-    axes[0].legend(loc="lower right", frameon=False, fontsize=8)
+    axes[0].legend(loc="lower right", frameon=False, fontsize=7)
 
     fig.tight_layout()
 

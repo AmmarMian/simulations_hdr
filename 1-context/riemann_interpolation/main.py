@@ -174,12 +174,12 @@ if __name__ == "__main__":
         for path in paths.values() for matrix in path
     )
 
-    for ax, (name, path) in zip(axes, paths.items()):
-        for index, matrix in enumerate(path):
+    for index, (ax, (name, path)) in enumerate(zip(axes, paths.items())):
+        for step, matrix in enumerate(path):
             curve = concentration_ellipse(matrix, args.radius)
             # The endpoints are shared by the three panels and drawn alike, so
             # that only what happens between them distinguishes the metrics.
-            endpoint = index in (0, len(path) - 1)
+            endpoint = step in (0, len(path) - 1)
             ax.plot(
                 curve[0], curve[1],
                 color="C7" if endpoint else colors[name],
@@ -191,8 +191,12 @@ if __name__ == "__main__":
         ax.set_xlim(-limit, limit)
         ax.set_ylim(-limit, limit)
         ax.set_title(name)
-        ax.set_xlabel(r"$x_1$")
-        ax.set_ylabel(r"$x_2$")
+        # Outer labels only: with four panels stacked in a text block this
+        # narrow, an inner label runs into the title of the panel below it.
+        if index >= 2:
+            ax.set_xlabel(r"$x_1$")
+        if index % 2 == 0:
+            ax.set_ylabel(r"$x_2$")
 
     ax = axes[3]
     fine_times = np.linspace(0.0, 1.0, 101)
@@ -212,7 +216,7 @@ if __name__ == "__main__":
     ax.set_xlabel(r"$t$")
     ax.set_ylabel(r"$\det$")
     ax.set_title("déterminant le long du chemin")
-    ax.legend(loc="upper center", frameon=False, fontsize=9)
+    ax.legend(loc="upper left", frameon=False, fontsize=7)
 
     fig.tight_layout()
 
