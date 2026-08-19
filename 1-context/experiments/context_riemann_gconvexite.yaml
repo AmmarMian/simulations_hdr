@@ -1,0 +1,27 @@
+name: context_riemann_gconvexite
+description: Tyler's cost read along a Euclidean segment and along an affine-invariant geodesic
+path: 1-context/riemann_gconvexite
+executable: 1-context/riemann_gconvexite/main.py
+executable_command: uv run python
+tags:
+  - context
+  - riemann
+  - robust
+  - illustration
+params:
+  n_features: 3
+  n_samples: 10
+  dof: 3.0
+  condition: 10000.0
+actions:
+  - register:
+      name: register
+      executable: register_latex.py
+      executable_command: uv run python
+      description: Stage a chosen figure (.tex) to hdr_exports/ for the LaTeX dissertation
+  - add_to_docs:
+      name: add_to_docs
+      executable: 1-context/riemann_gconvexite/action_add_to_docs.py
+      executable_command: uv run python
+      description: Export Tyler's cost along both paths as Plotly JSON for the docs site
+group: "Context · Illustrations"

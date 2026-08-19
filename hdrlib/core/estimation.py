@@ -3,6 +3,8 @@
 # Date: 22/10/2025
 
 import logging
+import math
+from time import perf_counter
 from typing import Any, Callable, Optional, Tuple, Union
 
 from .backend import (
@@ -17,8 +19,19 @@ from .backend import (
     normalize_covariance,
     create_scalar_array,
     to_dtype,
+    batched_eigh,
+    get_diagembed,
+    is_complex,
+    cast_like,
+    to_scalar,
 )
-from .manifolds import invsqrtm_psd, ScaledGaussianFIM
+from .manifolds import (
+    invsqrtm_psd,
+    logm_psd,
+    multiherm,
+    HermitianPositiveDefinite,
+    ScaledGaussianFIM,
+)
 from abc import ABC, abstractmethod
 from rich.progress import (
     Progress,
@@ -1191,3 +1204,463 @@ class ScaledGaussianNaturalGradientEstimator(Estimator):
             verbosity=self.verbosity,
             backend_name=self.backend_name,
         )
+
+
+# ============================================================================
+# Affine-invariant geometry of the cone: hand-written minimisers
+#
+# What the illustrations of the Riemannian chapter show is the *algorithm*
+# rather than its result, so the routines below record a history — cost,
+# gradient norm and elapsed time at every iteration — and none of them
+# delegates the optimisation to a manifold library: the gradient, the step
+# rule and the retraction are written out explicitly.
+#
+# They all work on a single matrix (no batch dimension) and on any backend,
+# and they are equally valid for real symmetric and complex Hermitian data.
+# ============================================================================
+
+
+def _tyler_quadratic_forms(X: Array, Sigma: Array, be) -> Array:
+    """Quadratic forms ``q_i = x_i^H Sigma^{-1} x_i``, of shape (n_samples,)."""
+    i_Sigma = be.linalg.inv(Sigma)
+    return be.real(be.einsum("ni,ij,nj->n", X.conj(), i_Sigma, X))
+
+
+def _project_on_cone(
+    Sigma: Array, backend_name: Union[str, Backend], floor: float = 1e-10
+) -> Array:
+    """Nearest point of the cone: symmetrise, then floor the eigenvalues.
+
+    This is the projection a Euclidean method has to apply after each step to
+    stay in ``SPD(d)``, and the operation the Riemannian methods never need.
+    """
+    be = get_backend_module(backend_name)
+    Sigma = multiherm(Sigma, backend_name)
+    eigenvalues, eigenvectors = batched_eigh(backend_name, Sigma)
+    clipped = be.clip(be.real(eigenvalues), floor, None)
+    if is_complex(backend_name, Sigma):
+        clipped = cast_like(clipped, eigenvectors, backend_name)
+    return multiherm(
+        be.einsum(
+            "ab,bc,cd->ad",
+            eigenvectors,
+            get_diagembed(backend_name, clipped),
+            be.swapaxes(eigenvectors, -1, -2).conj(),
+        ),
+        backend_name,
+    )
+
+
+def tyler_cost(
+    X: Array, Sigma: Array, backend_name: Union[str, Backend] = "numpy"
+) -> float:
+    r"""Tyler's cost function, evaluated at a single scatter matrix.
+
+    .. math::
+        L(\Sigma) = \log\det\Sigma
+        + \frac{d}{N}\sum_{i=1}^{N}\log\left(x_i^H\Sigma^{-1}x_i\right).
+
+    This is the negative log-likelihood of the angular central Gaussian up to
+    an affine transformation, the scaling being chosen so that the fixed-point
+    iteration of :func:`minimize_tyler_fixed_point` is a Riemannian gradient
+    step of unit length. Like the estimator itself, the cost is invariant under
+    ``Sigma -> c Sigma`` for ``c > 0``.
+
+    Parameters
+    ----------
+    X : Array of shape (n_samples, n_features)
+        Centered data.
+    Sigma : Array of shape (n_features, n_features)
+        Point of the cone where the cost is evaluated.
+    backend_name : str or Backend, optional
+        Backend specification. By default "numpy".
+
+    Returns
+    -------
+    float
+        Value of the cost.
+    """
+    be = get_backend_module(backend_name)
+    n_samples, n_features = X.shape[-2], X.shape[-1]
+    q = _tyler_quadratic_forms(X, Sigma, be)
+    log_det = be.real(be.linalg.slogdet(Sigma)[1])
+    return to_scalar(log_det + n_features * be.sum(be.log(q)) / n_samples)
+
+
+def tyler_riemannian_gradient(
+    X: Array, Sigma: Array, backend_name: Union[str, Backend] = "numpy"
+) -> Array:
+    r"""Riemannian gradient of :func:`tyler_cost` for the affine-invariant metric.
+
+    .. math::
+        \mathrm{grad}\,L(\Sigma) = \Sigma
+        - \frac{d}{N}\sum_{i=1}^{N}
+        \frac{x_i x_i^H}{x_i^H\Sigma^{-1}x_i}.
+
+    The conversion from the Euclidean gradient is the congruence
+    ``Sigma @ egrad @ Sigma`` of the chapter, already carried out here: what
+    remains is the difference between the current point and the fixed-point
+    map, which is why a unit step recovers Tyler's iteration exactly.
+
+    Parameters
+    ----------
+    X : Array of shape (n_samples, n_features)
+    Sigma : Array of shape (n_features, n_features)
+    backend_name : str or Backend, optional
+
+    Returns
+    -------
+    Array of shape (n_features, n_features)
+    """
+    be = get_backend_module(backend_name)
+    n_samples, n_features = X.shape[-2], X.shape[-1]
+    q = _tyler_quadratic_forms(X, Sigma, be)
+    weights = cast_like(1.0 / q, X, backend_name)
+    weighted = X * weights[:, None]
+    fixed_point = (
+        n_features * (be.swapaxes(X, -1, -2).conj() @ weighted) / n_samples
+    )
+    return multiherm(Sigma - fixed_point, backend_name)
+
+
+def _tyler_history_entry(
+    history: dict, X: Array, Sigma: Array, manifold, start: float, backend_name
+) -> None:
+    """Append cost, Riemannian gradient norm and elapsed time to a history."""
+    gradient = tyler_riemannian_gradient(X, Sigma, backend_name)
+    history["cost"].append(tyler_cost(X, Sigma, backend_name))
+    history["gradient_norm"].append(to_scalar(manifold.norm(Sigma, gradient)))
+    history["time"].append(perf_counter() - start)
+
+
+def _initial_scatter(
+    X: Array, init: Optional[Array], backend_name: Union[str, Backend]
+) -> Array:
+    """Starting point of the Tyler minimisers: the identity unless given."""
+    be = get_backend_module(backend_name)
+    n_features = X.shape[-1]
+    if init is not None:
+        return normalize_covariance(init, "det", backend_name, n_features)
+    return get_data_on_device(be.eye(n_features, dtype=X.dtype), backend_name)
+
+
+def minimize_tyler_fixed_point(
+    X: Array,
+    init: Optional[Array] = None,
+    iter_max: int = 50,
+    tol: float = 1e-10,
+    backend_name: Union[str, Backend] = "numpy",
+) -> Tuple[Array, dict]:
+    r"""Tyler's fixed-point iteration, unrolled so that its history is kept.
+
+    The update is ``Sigma <- (d/N) sum_i x_i x_i^H / (x_i^H Sigma^{-1} x_i)``,
+    which is exactly ``Sigma - grad L(Sigma)``: a Riemannian gradient step of
+    unit length taken with the first-order retraction. The iterates are
+    normalised to unit determinant, which the cost is blind to, and which
+    fixes the scale Tyler's estimator leaves free.
+
+    Parameters
+    ----------
+    X : Array of shape (n_samples, n_features)
+    init : Array, optional
+        Starting point, identity by default.
+    iter_max : int, optional
+    tol : float, optional
+        Stop when the Riemannian gradient norm falls below this value.
+    backend_name : str or Backend, optional
+
+    Returns
+    -------
+    Sigma : Array of shape (n_features, n_features)
+    history : dict
+        Lists ``cost``, ``gradient_norm`` and ``time``, one entry per iterate,
+        starting at the initial point.
+    """
+    be = get_backend_module(backend_name)
+    n_features = X.shape[-1]
+    manifold = HermitianPositiveDefinite(n_features, backend_name=backend_name)
+
+    Sigma = _initial_scatter(X, init, backend_name)
+    history = {"cost": [], "gradient_norm": [], "time": []}
+    start = perf_counter()
+    _tyler_history_entry(history, X, Sigma, manifold, start, backend_name)
+
+    for _ in range(iter_max):
+        gradient = tyler_riemannian_gradient(X, Sigma, backend_name)
+        Sigma = normalize_covariance(
+            Sigma - gradient, "det", backend_name, n_features
+        )
+        _tyler_history_entry(history, X, Sigma, manifold, start, backend_name)
+        if history["gradient_norm"][-1] < tol:
+            break
+
+    return Sigma, history
+
+
+def minimize_tyler_riemannian(
+    X: Array,
+    init: Optional[Array] = None,
+    iter_max: int = 50,
+    tol: float = 1e-10,
+    alpha_0: float = 1.0,
+    armijo_c: float = 1e-4,
+    armijo_rho: float = 0.5,
+    armijo_max_backtracks: int = 30,
+    retraction: str = "second_order",
+    backend_name: Union[str, Backend] = "numpy",
+) -> Tuple[Array, dict]:
+    r"""Riemannian gradient descent on :func:`tyler_cost`, with backtracking.
+
+    Same descent direction as :func:`minimize_tyler_fixed_point` — there is
+    only one gradient — but the step length is chosen by an Armijo line
+    search instead of being fixed to one, and the iterate is brought back onto
+    the cone by a genuine retraction.
+
+    Parameters
+    ----------
+    X : Array of shape (n_samples, n_features)
+    init : Array, optional
+    iter_max : int, optional
+    tol : float, optional
+        Stop when the Riemannian gradient norm falls below this value.
+    alpha_0 : float, optional
+        Initial step length of the line search.
+    armijo_c, armijo_rho : float, optional
+        Sufficient-decrease constant and backtracking factor.
+    armijo_max_backtracks : int, optional
+    retraction : str, optional
+        ``"second_order"`` for ``Sigma + xi + xi Sigma^{-1} xi / 2``,
+        ``"exp"`` for the Riemannian exponential, ``"first_order"`` for the
+        plain sum, which is the one the fixed point uses.
+    backend_name : str or Backend, optional
+
+    Returns
+    -------
+    Sigma : Array
+    history : dict
+        As in :func:`minimize_tyler_fixed_point`, plus ``step`` — the step
+        length accepted at each iteration.
+    """
+    n_features = X.shape[-1]
+    manifold = HermitianPositiveDefinite(n_features, backend_name=backend_name)
+    retractions = {
+        "second_order": manifold.retr,
+        "exp": manifold.exp,
+        "first_order": lambda x, u: x + u,
+    }
+    if retraction not in retractions:
+        raise ValueError(
+            f"Unknown retraction {retraction!r}; "
+            f"expected one of {sorted(retractions)}"
+        )
+    move = retractions[retraction]
+
+    Sigma = _initial_scatter(X, init, backend_name)
+    history = {"cost": [], "gradient_norm": [], "time": [], "step": []}
+    start = perf_counter()
+    _tyler_history_entry(history, X, Sigma, manifold, start, backend_name)
+
+    for _ in range(iter_max):
+        gradient = tyler_riemannian_gradient(X, Sigma, backend_name)
+        squared_norm = to_scalar(manifold.inner(Sigma, gradient, gradient))
+        cost = history["cost"][-1]
+
+        # Armijo backtracking, written out: halve the step until the decrease
+        # is at least a fraction of what the gradient promises.
+        alpha, accepted = alpha_0, None
+        for _ in range(armijo_max_backtracks):
+            candidate = normalize_covariance(
+                move(Sigma, -alpha * gradient), "det", backend_name, n_features
+            )
+            candidate_cost = tyler_cost(X, candidate, backend_name)
+            if math.isfinite(candidate_cost) and (
+                candidate_cost <= cost - armijo_c * alpha * squared_norm
+            ):
+                accepted = candidate
+                break
+            alpha *= armijo_rho
+
+        if accepted is None:
+            break
+
+        Sigma = accepted
+        _tyler_history_entry(history, X, Sigma, manifold, start, backend_name)
+        history["step"].append(alpha)
+        if history["gradient_norm"][-1] < tol:
+            break
+
+    return Sigma, history
+
+
+def minimize_tyler_euclidean(
+    X: Array,
+    init: Optional[Array] = None,
+    iter_max: int = 50,
+    tol: float = 1e-10,
+    alpha_0: float = 1.0,
+    armijo_c: float = 1e-4,
+    armijo_rho: float = 0.5,
+    armijo_max_backtracks: int = 60,
+    floor: float = 1e-10,
+    backend_name: Union[str, Backend] = "numpy",
+) -> Tuple[Array, dict]:
+    r"""Euclidean gradient descent on :func:`tyler_cost`, with projection.
+
+    The comparison point of the Riemannian methods: the same cost is minimised
+    with the Euclidean gradient
+    ``Sigma^{-1} - (d/N) sum_i Sigma^{-1} x_i x_i^H Sigma^{-1} / q_i``,
+    a straight step, and a projection back onto the cone — symmetrisation
+    followed by an eigenvalue floor — since nothing prevents the step from
+    leaving it. The stopping criterion remains the *Riemannian* gradient norm,
+    so that the three methods are compared on the same quantity.
+
+    Parameters
+    ----------
+    X : Array of shape (n_samples, n_features)
+    init : Array, optional
+    iter_max, tol, alpha_0, armijo_c, armijo_rho, armijo_max_backtracks
+        As in :func:`minimize_tyler_riemannian`.
+    floor : float, optional
+        Smallest eigenvalue the projection allows.
+    backend_name : str or Backend, optional
+
+    Returns
+    -------
+    Sigma : Array
+    history : dict
+    """
+    be = get_backend_module(backend_name)
+    n_features = X.shape[-1]
+    manifold = HermitianPositiveDefinite(n_features, backend_name=backend_name)
+
+    Sigma = _initial_scatter(X, init, backend_name)
+    history = {"cost": [], "gradient_norm": [], "time": [], "step": []}
+    start = perf_counter()
+    _tyler_history_entry(history, X, Sigma, manifold, start, backend_name)
+
+    for _ in range(iter_max):
+        i_Sigma = be.linalg.inv(Sigma)
+        gradient = i_Sigma @ tyler_riemannian_gradient(
+            X, Sigma, backend_name
+        ) @ i_Sigma
+        squared_norm = to_scalar(
+            be.real(be.sum(gradient * gradient.conj()))
+        )
+        cost = history["cost"][-1]
+
+        alpha, accepted = alpha_0, None
+        for _ in range(armijo_max_backtracks):
+            candidate = normalize_covariance(
+                _project_on_cone(Sigma - alpha * gradient, backend_name, floor),
+                "det",
+                backend_name,
+                n_features,
+            )
+            candidate_cost = tyler_cost(X, candidate, backend_name)
+            if math.isfinite(candidate_cost) and (
+                candidate_cost <= cost - armijo_c * alpha * squared_norm
+            ):
+                accepted = candidate
+                break
+            alpha *= armijo_rho
+
+        if accepted is None:
+            break
+
+        Sigma = accepted
+        _tyler_history_entry(history, X, Sigma, manifold, start, backend_name)
+        history["step"].append(alpha)
+        if history["gradient_norm"][-1] < tol:
+            break
+
+    return Sigma, history
+
+
+def frechet_mean_affine_invariant(
+    covariances: Array,
+    init: Optional[Array] = None,
+    iter_max: int = 100,
+    tol: float = 1e-10,
+    step: float = 1.0,
+    backend_name: Union[str, Backend] = "numpy",
+) -> Tuple[Array, dict]:
+    r"""Fréchet mean of a set of scatter matrices, by Riemannian descent.
+
+    Minimises the Fréchet variance
+    ``F(M) = (1/N) sum_i delta^2(M, Sigma_i)`` for the affine-invariant
+    distance, whose Riemannian gradient is ``-2/N sum_i log_M(Sigma_i)``.
+    The iteration is therefore
+
+    .. math::
+        M \leftarrow \exp_M\!\left(
+            \frac{\gamma}{N}\sum_{i=1}^{N}\log_M(\Sigma_i)
+        \right),
+
+    a gradient step of length ``gamma / 2``. The initial point is the
+    log-Euclidean mean, which is exact when the matrices commute and a good
+    starting guess otherwise.
+
+    Parameters
+    ----------
+    covariances : Array of shape (n_matrices, n_features, n_features)
+    init : Array, optional
+        Starting point; log-Euclidean mean by default.
+    iter_max : int, optional
+    tol : float, optional
+        Stop when the norm of the mean logarithm falls below this value.
+    step : float, optional
+        ``gamma`` above. One is the usual choice and converges in a handful of
+        iterations on well-conditioned sets.
+    backend_name : str or Backend, optional
+
+    Returns
+    -------
+    mean : Array of shape (n_features, n_features)
+    history : dict
+        Lists ``variance``, ``gradient_norm`` and ``time``.
+    """
+    be = get_backend_module(backend_name)
+    n_features = covariances.shape[-1]
+    manifold = HermitianPositiveDefinite(n_features, backend_name=backend_name)
+
+    if init is None:
+        mean = logm_psd(covariances, backend_name)
+        mean = be.sum(mean, axis=0) / covariances.shape[0]
+        eigenvalues, eigenvectors = batched_eigh(backend_name, multiherm(mean, backend_name))
+        exp_eigenvalues = be.exp(be.real(eigenvalues))
+        if is_complex(backend_name, covariances):
+            exp_eigenvalues = cast_like(exp_eigenvalues, eigenvectors, backend_name)
+        mean = multiherm(
+            be.einsum(
+                "ab,bc,cd->ad",
+                eigenvectors,
+                get_diagembed(backend_name, exp_eigenvalues),
+                be.swapaxes(eigenvectors, -1, -2).conj(),
+            ),
+            backend_name,
+        )
+    else:
+        mean = init
+
+    history = {"variance": [], "gradient_norm": [], "time": []}
+    start = perf_counter()
+
+    for _ in range(iter_max + 1):
+        broadcast = be.broadcast_to(mean, covariances.shape)
+        logarithms = manifold.log(broadcast, covariances)
+        direction = multiherm(
+            be.sum(logarithms, axis=0) / covariances.shape[0], backend_name
+        )
+        distances = manifold.dist(broadcast, covariances)
+
+        history["variance"].append(
+            to_scalar(be.sum(distances**2) / covariances.shape[0])
+        )
+        history["gradient_norm"].append(to_scalar(manifold.norm(mean, direction)))
+        history["time"].append(perf_counter() - start)
+
+        if history["gradient_norm"][-1] < tol:
+            break
+        mean = manifold.exp(mean, step * direction)
+
+    return mean, history

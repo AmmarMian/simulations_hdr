@@ -1,0 +1,28 @@
+name: context_riemann_convergence
+description: Fixed point, Riemannian descent and projected Euclidean descent on Tyler's cost
+path: 1-context/riemann_convergence
+executable: 1-context/riemann_convergence/main.py
+executable_command: uv run python
+tags:
+  - context
+  - riemann
+  - optimisation
+  - robust
+params:
+  n_features: 10
+  n_samples: 100
+  dof: 3.0
+  condition: 100.0
+  iter_max: 150
+actions:
+  - register:
+      name: register
+      executable: register_latex.py
+      executable_command: uv run python
+      description: Stage a chosen figure (.tex) to hdr_exports/ for the LaTeX dissertation
+  - add_to_docs:
+      name: add_to_docs
+      executable: 1-context/riemann_convergence/action_add_to_docs.py
+      executable_command: uv run python
+      description: Export the three convergence curves as Plotly JSON for the docs site
+group: "Context · Illustrations"
