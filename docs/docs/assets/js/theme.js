@@ -291,6 +291,16 @@
       table.insertBefore(thead, table.firstChild);
     });
 
+    /* ── Wrap wide tables so they scroll instead of overflowing ─── */
+    document.querySelectorAll(
+      ".page-content table:not(.highlighttable):not(.table-scroll table)"
+    ).forEach(function (table) {
+      var wrap = document.createElement("div");
+      wrap.className = "table-scroll";
+      table.parentNode.insertBefore(wrap, table);
+      wrap.appendChild(table);
+    });
+
     /* ── TOC drawer ─────────────────────────────────────────────── */
     var toc   = document.getElementById("toc");
     var scrim = document.getElementById("toc-scrim");
