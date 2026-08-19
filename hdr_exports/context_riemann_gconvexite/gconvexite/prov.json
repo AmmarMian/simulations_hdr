@@ -1,0 +1,30 @@
+{
+  "git_sha": "c917f02",
+  "script": "/Users/ammarmian/Research/HDR/simulations_hdr/1-context/riemann_gconvexite/main.py",
+  "args": {
+    "n_features": 3,
+    "n_samples": 10,
+    "dof": 3.0,
+    "condition": 10000.0,
+    "n_points": 201,
+    "storage_path": "/Users/ammarmian/Research/HDR/simulations_hdr/results/context_riemann_gconvexite/run_21",
+    "show_interactive": false,
+    "export": true,
+    "axis_width": "0.45\\textwidth",
+    "axis_height": "4.6cm",
+    "backend": "numpy",
+    "seed": 42
+  },
+  "hdr": {
+    "id": "gconvexite",
+    "exp": "context_riemann_gconvexite",
+    "run_id": 21,
+    "commit_sha": "c917f02c3ef5350ef5505bd6a60fc398ccb94480",
+    "sha_short": "c917f02",
+    "run_date": "2026-08-19",
+    "run_month": "2026-08",
+    "seed": "42",
+    "embed_npy": false,
+    "registered_at": "2026-08-19T08:36:12Z"
+  }
+}

@@ -1,0 +1,118 @@
+% This file was created with matplot2tikz v0.5.3.
+\begin{tikzpicture}
+
+\definecolor{darkgray176}{RGB}{176,176,176}
+\definecolor{darkorange25512714}{RGB}{255,127,14}
+\definecolor{forestgreen4416044}{RGB}{44,160,44}
+
+\begin{groupplot}[group style={group size=2 by 1}]
+\nextgroupplot[
+height=4.6cm,
+legend cell align={left},
+legend style={
+  fill opacity=0.8,
+  draw opacity=1,
+  text opacity=1,
+  at={(0.03,0.03)},
+  anchor=south west,
+  draw=none
+},
+log basis x={10},
+log basis y={10},
+tick align=outside,
+tick pos=left,
+title={norme de Frobenius},
+width=0.45\textwidth,
+x grid style={darkgray176},
+xlabel={\(\displaystyle N\)},
+xmin=7.70731546228787, xmax=233.544352609862,
+xmode=log,
+xtick style={color=black},
+y grid style={darkgray176},
+ylabel={erreur moyenne},
+ymin=1.13285473448213, ymax=38.2202491453504,
+ymode=log,
+ytick style={color=black}
+]
+\addplot [line width=0.56pt, darkorange25512714, mark=*, mark size=2, mark options={solid}]
+table {%
+9 32.5711840061281
+10 24.0570143712318
+12 18.0758293221949
+14 18.6410166829501
+18 12.9106875087091
+25 10.3494042616763
+40 8.08429349927578
+70 4.9072779689929
+120 4.14885856767787
+200 3.76635015836939
+};
+\addlegendentry{scm}
+\addplot [line width=0.56pt, forestgreen4416044, mark=square*, mark size=2, mark options={solid}]
+table {%
+9 31.7345598062442
+10 20.0127928350117
+12 13.6776697909288
+14 9.73765410481793
+18 6.85209627602056
+25 4.99964746834547
+40 3.36927499121841
+70 2.35238159697238
+120 1.71132265492428
+200 1.32933424186393
+};
+\addlegendentry{Tyler}
+\addlegendimage{/pgfplots/refstyle=scm_plot}
+\addlegendentry{scm}
+\addlegendimage{/pgfplots/refstyle=Tyler_plot}
+\addlegendentry{Tyler}
+
+\nextgroupplot[
+height=4.6cm,
+log basis x={10},
+log basis y={10},
+tick align=outside,
+tick pos=left,
+title={distance de Rao},
+width=0.45\textwidth,
+x grid style={darkgray176},
+xlabel={\(\displaystyle N\)},
+xmin=7.70731546228787, xmax=233.544352609862,
+xmode=log,
+xtick style={color=black},
+y grid style={darkgray176},
+ymin=0.529634515623091, ymax=5.5237029912125,
+ymode=log,
+ytick style={color=black}
+]
+\addplot [line width=0.56pt, darkorange25512714, mark=*, mark size=2, mark options={solid}]
+table {%
+9 4.37181258496374
+10 3.98699215875787
+12 3.47028326405159
+14 3.20140379132268
+18 2.7766422326077
+25 2.35427618905716
+40 1.97316492356994
+70 1.56832599746151
+120 1.33532608347231
+200 1.14891719580042
+};
+\label{scm_plot}
+\addplot [line width=0.56pt, forestgreen4416044, mark=square*, mark size=2, mark options={solid}]
+table {%
+9 4.96530629604901
+10 4.15324861908559
+12 3.34548862099606
+14 2.88695717176633
+18 2.3648343105374
+25 1.85062066874822
+40 1.39745411752571
+70 1.03315791561256
+120 0.767984491412849
+200 0.589197037154498
+};
+\label{Tyler_plot}
+\end{groupplot}
+
+\end{tikzpicture}

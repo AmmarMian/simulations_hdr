@@ -1,0 +1,32 @@
+{
+  "git_sha": "c917f02",
+  "script": "/Users/ammarmian/Research/HDR/simulations_hdr/1-context/riemann_convergence/main.py",
+  "args": {
+    "n_features": 10,
+    "n_samples": 100,
+    "dof": 3.0,
+    "condition": 100.0,
+    "iter_max": 150,
+    "tol": 1e-12,
+    "floor": 1e-14,
+    "storage_path": "/Users/ammarmian/Research/HDR/simulations_hdr/results/context_riemann_convergence/run_22",
+    "show_interactive": false,
+    "export": true,
+    "axis_width": "0.45\\textwidth",
+    "axis_height": "4.6cm",
+    "backend": "numpy",
+    "seed": 42
+  },
+  "hdr": {
+    "id": "convergence",
+    "exp": "context_riemann_convergence",
+    "run_id": 22,
+    "commit_sha": "c917f02c3ef5350ef5505bd6a60fc398ccb94480",
+    "sha_short": "c917f02",
+    "run_date": "2026-08-19",
+    "run_month": "2026-08",
+    "seed": "42",
+    "embed_npy": false,
+    "registered_at": "2026-08-19T08:36:12Z"
+  }
+}

@@ -43,6 +43,46 @@ run_date  = "2026-07-02"
 seed      = "42"
 embed_npy = false
 
+[figures.convergence]
+exp       = "context_riemann_convergence"
+run_id    = 22
+sha       = "c917f02"
+run_date  = "2026-08-19"
+seed      = "42"
+embed_npy = false
+
+[figures.erreurrao]
+exp       = "context_riemann_frobenius_rao"
+run_id    = 23
+sha       = "c917f02"
+run_date  = "2026-08-19"
+seed      = "42"
+embed_npy = false
+
+[figures.gconvexite]
+exp       = "context_riemann_gconvexite"
+run_id    = 21
+sha       = "c917f02"
+run_date  = "2026-08-19"
+seed      = "42"
+embed_npy = false
+
+[figures.interpolation]
+exp       = "context_riemann_interpolation"
+run_id    = 19
+sha       = "c917f02"
+run_date  = "2026-08-19"
+seed      = "42"
+embed_npy = false
+
+[figures.moyennes]
+exp       = "context_riemann_moyennes"
+run_id    = 20
+sha       = "c917f02"
+run_date  = "2026-08-19"
+seed      = "42"
+embed_npy = false
+
 [figures.scmvstyler]
 exp       = "context_robust_mestimation"
 run_id    = 15

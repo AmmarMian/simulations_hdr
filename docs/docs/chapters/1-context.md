@@ -55,6 +55,61 @@ Background figures illustrating core statistical concepts from the dissertation 
 
 <div class="exp-card">
 <div class="exp-card-head">
+<div class="exp-name">context_riemann_convergence</div>
+<span class="exp-results-badge">Results available</span>
+</div>
+<div class="exp-desc">Fixed point, Riemannian descent and projected Euclidean descent on Tyler's cost</div>
+<div class="exp-tags"><span class="exp-tag">context</span><span class="exp-tag">riemann</span><span class="exp-tag">optimisation</span><span class="exp-tag">robust</span></div>
+<div class="exp-run"><code>uv run python 1-context/riemann_convergence/main.py</code></div>
+<a class="exp-details-link" href="../../experiments/context_riemann_convergence/">Parameters &amp; details →</a>
+</div>
+
+<div class="exp-card">
+<div class="exp-card-head">
+<div class="exp-name">context_riemann_frobenius_rao</div>
+<span class="exp-results-badge">Results available</span>
+</div>
+<div class="exp-desc">Estimation error of the SCM and of Tyler's estimator, in Frobenius norm and in Rao distance</div>
+<div class="exp-tags"><span class="exp-tag">context</span><span class="exp-tag">riemann</span><span class="exp-tag">robust</span><span class="exp-tag">monte-carlo</span></div>
+<div class="exp-run"><code>uv run python 1-context/riemann_frobenius_rao/main.py</code></div>
+<a class="exp-details-link" href="../../experiments/context_riemann_frobenius_rao/">Parameters &amp; details →</a>
+</div>
+
+<div class="exp-card">
+<div class="exp-card-head">
+<div class="exp-name">context_riemann_gconvexite</div>
+<span class="exp-results-badge">Results available</span>
+</div>
+<div class="exp-desc">Tyler's cost read along a Euclidean segment and along an affine-invariant geodesic</div>
+<div class="exp-tags"><span class="exp-tag">context</span><span class="exp-tag">riemann</span><span class="exp-tag">robust</span><span class="exp-tag">illustration</span></div>
+<div class="exp-run"><code>uv run python 1-context/riemann_gconvexite/main.py</code></div>
+<a class="exp-details-link" href="../../experiments/context_riemann_gconvexite/">Parameters &amp; details →</a>
+</div>
+
+<div class="exp-card">
+<div class="exp-card-head">
+<div class="exp-name">context_riemann_interpolation</div>
+<span class="exp-results-badge">Results available</span>
+</div>
+<div class="exp-desc">Euclidean, affine-invariant and log-Euclidean paths between two covariance matrices</div>
+<div class="exp-tags"><span class="exp-tag">context</span><span class="exp-tag">riemann</span><span class="exp-tag">geometry</span><span class="exp-tag">illustration</span></div>
+<div class="exp-run"><code>uv run python 1-context/riemann_interpolation/main.py</code></div>
+<a class="exp-details-link" href="../../experiments/context_riemann_interpolation/">Parameters &amp; details →</a>
+</div>
+
+<div class="exp-card">
+<div class="exp-card-head">
+<div class="exp-name">context_riemann_moyennes</div>
+<span class="exp-results-badge">Results available</span>
+</div>
+<div class="exp-desc">Arithmetic, log-Euclidean and Fréchet means of a cloud of covariance matrices</div>
+<div class="exp-tags"><span class="exp-tag">context</span><span class="exp-tag">riemann</span><span class="exp-tag">geometry</span><span class="exp-tag">illustration</span></div>
+<div class="exp-run"><code>uv run python 1-context/riemann_moyennes/main.py</code></div>
+<a class="exp-details-link" href="../../experiments/context_riemann_moyennes/">Parameters &amp; details →</a>
+</div>
+
+<div class="exp-card">
+<div class="exp-card-head">
 <div class="exp-name">context_robust_mestimation</div>
 <span class="exp-results-badge">Results available</span>
 </div>
