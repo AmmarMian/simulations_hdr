@@ -55,7 +55,7 @@ uv run python 1-context/riemann_moyennes/main.py
   arithmétique     det =   1.323   distance to the centre = 0.288
   de Fréchet       det =   1.031   distance to the centre = 0.081
   log-euclidienne  det =   1.031   distance to the centre = 0.077
-Saved means in /Users/ammarmian/Research/HDR/simulations_hdr/results/context_riemann_moyennes/run_25/moyennes.tex
+Saved means in /Users/ammarmian/Research/HDR/simulations_hdr/results/context_riemann_moyennes/run_30/moyennes.tex
 </div>
 </details>
 </div>

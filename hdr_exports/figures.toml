@@ -45,40 +45,40 @@ embed_npy = false
 
 [figures.convergence]
 exp       = "context_riemann_convergence"
-run_id    = 27
-sha       = "f845fa1"
+run_id    = 32
+sha       = "590ac0f"
 run_date  = "2026-08-19"
 seed      = "42"
 embed_npy = false
 
 [figures.erreurrao]
 exp       = "context_riemann_frobenius_rao"
-run_id    = 28
-sha       = "f845fa1"
+run_id    = 33
+sha       = "590ac0f"
 run_date  = "2026-08-19"
 seed      = "42"
 embed_npy = false
 
 [figures.gconvexite]
 exp       = "context_riemann_gconvexite"
-run_id    = 26
-sha       = "f845fa1"
+run_id    = 31
+sha       = "590ac0f"
 run_date  = "2026-08-19"
 seed      = "42"
 embed_npy = false
 
 [figures.interpolation]
 exp       = "context_riemann_interpolation"
-run_id    = 24
-sha       = "f845fa1"
+run_id    = 29
+sha       = "590ac0f"
 run_date  = "2026-08-19"
 seed      = "42"
 embed_npy = false
 
 [figures.moyennes]
 exp       = "context_riemann_moyennes"
-run_id    = 25
-sha       = "f845fa1"
+run_id    = 30
+sha       = "590ac0f"
 run_date  = "2026-08-19"
 seed      = "42"
 embed_npy = false

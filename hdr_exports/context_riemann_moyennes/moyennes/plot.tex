@@ -7,19 +7,33 @@
 \definecolor{forestgreen4416044}{RGB}{44,160,44}
 \definecolor{steelblue31119180}{RGB}{31,119,180}
 
-\begin{groupplot}[group style={group size=2 by 1}]
+\begin{groupplot}[group style={group size=2 by 1, vertical sep=1.5cm, horizontal sep=1.4cm}]
 \nextgroupplot[
 height=4.6cm,
+label style={font=\footnotesize},
+legend cell align={left},
+legend columns=2,
+legend style={
+  fill opacity=0.8,
+  draw opacity=1,
+  text opacity=1,
+  at={(0,-0.45)},
+  anchor=north west,
+  draw=none
+},
+legend style={draw=none, fill=white, fill opacity=0.9, text opacity=1, font=\footnotesize},
 tick align=outside,
+tick label style={font=\scriptsize},
 tick pos=left,
+title style={font=\footnotesize, yshift=-2pt},
 title={ellipses de concentration},
 width=0.45\textwidth,
 x grid style={darkgray176},
-xlabel={\(\displaystyle x\_1\)},
+xlabel={\(\displaystyle x_1\)},
 xmin=-1.77650169622035, xmax=1.77650169622035,
 xtick style={color=black},
 y grid style={darkgray176},
-ylabel={\(\displaystyle x\_2\)},
+ylabel={\(\displaystyle x_2\)},
 ymin=-1.77650169622035, ymax=1.77650169622035,
 ytick style={color=black}
 ]
@@ -226,8 +240,8 @@ table {%
 -1.26788912765313 -0.730091389666259
 -1.29428725258679 -0.681523228387517
 };
-\label{échantillon_plot}
-\addplot [line width=0.36pt, steelblue31119180, opacity=0.7]
+\addlegendentry{échantillon}
+\addplot [line width=0.36pt, steelblue31119180, opacity=0.7, forget plot]
 table {%
 -0.106070073624268 -0.678450496630078
 -0.136616402509617 -0.673328420673853
@@ -430,7 +444,7 @@ table {%
 -0.0754180117827546 -0.682896278376556
 -0.106070073624268 -0.678450496630078
 };
-\addplot [line width=0.36pt, steelblue31119180, opacity=0.7]
+\addplot [line width=0.36pt, steelblue31119180, opacity=0.7, forget plot]
 table {%
 0.0574480571897439 -0.859006166756709
 0.0109631199473195 -0.861684903339426
@@ -633,7 +647,7 @@ table {%
 0.103875728959401 -0.855471154145602
 0.0574480571897443 -0.859006166756709
 };
-\addplot [line width=0.36pt, steelblue31119180, opacity=0.7]
+\addplot [line width=0.36pt, steelblue31119180, opacity=0.7, forget plot]
 table {%
 -0.00359705609146724 -0.722279457905249
 -0.048008802975559 -0.721698280122709
@@ -836,7 +850,7 @@ table {%
 0.0408182764163637 -0.722140651816265
 -0.0035970560914669 -0.722279457905249
 };
-\addplot [line width=0.36pt, steelblue31119180, opacity=0.7]
+\addplot [line width=0.36pt, steelblue31119180, opacity=0.7, forget plot]
 table {%
 0.0727609943744723 -0.613653329082534
 0.02925871616423 -0.618501251231454
@@ -1039,7 +1053,7 @@ table {%
 0.116190742843141 -0.608193703949665
 0.0727609943744727 -0.613653329082534
 };
-\addplot [line width=0.36pt, steelblue31119180, opacity=0.7]
+\addplot [line width=0.36pt, steelblue31119180, opacity=0.7, forget plot]
 table {%
 0.120572155997036 -0.801515271339218
 0.0771213662069393 -0.807643061279324
@@ -1242,7 +1256,7 @@ table {%
 0.163902756839874 -0.794588513545566
 0.120572155997037 -0.801515271339218
 };
-\addplot [line width=0.36pt, steelblue31119180, opacity=0.7]
+\addplot [line width=0.36pt, steelblue31119180, opacity=0.7, forget plot]
 table {%
 -0.0281157227512392 -0.564603349556718
 -0.0798387339317738 -0.561745580950493
@@ -1445,7 +1459,7 @@ table {%
 0.0236353147931844 -0.566898309265306
 -0.0281157227512388 -0.564603349556718
 };
-\addplot [line width=0.36pt, steelblue31119180, opacity=0.7]
+\addplot [line width=0.36pt, steelblue31119180, opacity=0.7, forget plot]
 table {%
 -0.0330981970129618 -0.541800007498646
 -0.0820616827139916 -0.53853781440782
@@ -1648,7 +1662,7 @@ table {%
 0.0158982816906581 -0.544522122559119
 -0.0330981970129614 -0.541800007498646
 };
-\addplot [line width=0.36pt, steelblue31119180, opacity=0.7]
+\addplot [line width=0.36pt, steelblue31119180, opacity=0.7, forget plot]
 table {%
 -0.00531888209642684 -0.73632783662905
 -0.0514352878701382 -0.735627700696611
@@ -1851,7 +1865,7 @@ table {%
 0.040802825654631 -0.736293984960535
 -0.00531888209642648 -0.73632783662905
 };
-\addplot [line width=0.36pt, steelblue31119180, opacity=0.7]
+\addplot [line width=0.36pt, steelblue31119180, opacity=0.7, forget plot]
 table {%
 0.0107093726494511 -0.725768114411018
 -0.0340393370493741 -0.726066613088103
@@ -2054,7 +2068,7 @@ table {%
 0.0554474070127152 -0.724746154293734
 0.0107093726494514 -0.725768114411018
 };
-\addplot [line width=0.36pt, steelblue31119180, opacity=0.7]
+\addplot [line width=0.36pt, steelblue31119180, opacity=0.7, forget plot]
 table {%
 -0.0584324126310926 -0.59556308700673
 -0.105000090593441 -0.590694505282316
@@ -2257,7 +2271,7 @@ table {%
 -0.0118064879690663 -0.599837998493916
 -0.0584324126310923 -0.59556308700673
 };
-\addplot [line width=0.36pt, steelblue31119180, opacity=0.7]
+\addplot [line width=0.36pt, steelblue31119180, opacity=0.7, forget plot]
 table {%
 0.0529110204014957 -0.468509643111607
 0.0107070430337663 -0.473039450281993
@@ -2460,7 +2474,7 @@ table {%
 0.095062254913398 -0.463512815339983
 0.052911020401496 -0.468509643111607
 };
-\addplot [line width=0.36pt, steelblue31119180, opacity=0.7]
+\addplot [line width=0.36pt, steelblue31119180, opacity=0.7, forget plot]
 table {%
 -0.0709702130985577 -0.911939103342883
 -0.107954731003533 -0.908603568785947
@@ -2663,7 +2677,7 @@ table {%
 -0.0339149505417303 -0.914365597169073
 -0.0709702130985575 -0.911939103342883
 };
-\addplot [line width=0.36pt, steelblue31119180, opacity=0.7]
+\addplot [line width=0.36pt, steelblue31119180, opacity=0.7, forget plot]
 table {%
 -0.02135636907131 -0.76501492876425
 -0.0668329553124619 -0.763363802854431
@@ -2866,7 +2880,7 @@ table {%
 0.0241415056629827 -0.765903471155798
 -0.0213563690713096 -0.76501492876425
 };
-\addplot [line width=0.36pt, steelblue31119180, opacity=0.7]
+\addplot [line width=0.36pt, steelblue31119180, opacity=0.7, forget plot]
 table {%
 -0.0374651638482276 -0.729004766890348
 -0.0811665450321947 -0.726394552912616
@@ -3272,6 +3286,7 @@ table {%
 0.0283096529128415 -0.815854802285461
 -0.0162129299680996 -0.815376068647767
 };
+\addlegendentry{arithmétique}
 \addplot [line width=0.64pt, forestgreen4416044]
 table {%
 -0.00486618432593241 -0.732246557935913
@@ -3475,6 +3490,7 @@ table {%
 0.0389123034917334 -0.732172514493061
 -0.00486618432593207 -0.732246557935913
 };
+\addlegendentry{de Fréchet}
 \addplot [line width=0.64pt, crimson2143940, dashed]
 table {%
 -0.0057400872837216 -0.730980162994304
@@ -3678,25 +3694,21 @@ table {%
 0.038113909085671 -0.730960179506158
 -0.00574008728372126 -0.730980162994304
 };
+\addlegendentry{log-euclidienne}
 
 \nextgroupplot[
 height=4.6cm,
-legend cell align={left},
-legend style={
-  fill opacity=0.8,
-  draw opacity=1,
-  text opacity=1,
-  at={(0.97,0.03)},
-  anchor=south east,
-  draw=none
-},
+label style={font=\footnotesize},
+legend style={draw=none, fill=white, fill opacity=0.9, text opacity=1, font=\footnotesize},
 log basis y={10},
 tick align=outside,
+tick label style={font=\scriptsize},
 tick pos=left,
+title style={font=\footnotesize, yshift=-2pt},
 title={déterminants},
 width=0.45\textwidth,
 x grid style={darkgray176},
-xlabel={matrices, triées par déterminant},
+xlabel={matrices triées},
 xmin=0.3, xmax=15.7,
 xtick style={color=black},
 y grid style={darkgray176},
@@ -3723,25 +3735,21 @@ table {%
 14 1.6123109079403
 15 6.55953737133251
 };
-\addlegendentry{échantillon}
 \addplot [line width=0.56pt, darkorange25512714]
 table {%
 0.300000000000001 1.32297930186553
 15.7 1.32297930186553
 };
-\addlegendentry{arithmétique}
 \addplot [line width=0.56pt, forestgreen4416044]
 table {%
 0.300000000000001 1.03113888574665
 15.7 1.03113888574665
 };
-\addlegendentry{de Fréchet}
 \addplot [line width=0.56pt, crimson2143940, dashed]
 table {%
 0.300000000000001 1.03113888574665
 15.7 1.03113888574665
 };
-\addlegendentry{log-euclidienne}
 \end{groupplot}
 
 \end{tikzpicture}

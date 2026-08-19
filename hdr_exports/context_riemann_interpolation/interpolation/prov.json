@@ -1,12 +1,12 @@
 {
-  "git_sha": "f845fa1",
+  "git_sha": "590ac0f",
   "script": "/Users/ammarmian/Research/HDR/simulations_hdr/1-context/riemann_interpolation/main.py",
   "args": {
     "condition": 16.0,
     "angle": 0.35,
     "n_steps": 7,
     "radius": 1.0,
-    "storage_path": "/Users/ammarmian/Research/HDR/simulations_hdr/results/context_riemann_interpolation/run_24",
+    "storage_path": "/Users/ammarmian/Research/HDR/simulations_hdr/results/context_riemann_interpolation/run_29",
     "show_interactive": false,
     "export": true,
     "axis_width": "0.45\\textwidth",
@@ -17,13 +17,13 @@
   "hdr": {
     "id": "interpolation",
     "exp": "context_riemann_interpolation",
-    "run_id": 24,
-    "commit_sha": "f845fa160f0330ed8fe613f27e8bdeae7d6a048a",
-    "sha_short": "f845fa1",
+    "run_id": 29,
+    "commit_sha": "590ac0f2063fb92771665a750e28d04d5ec45226",
+    "sha_short": "590ac0f",
     "run_date": "2026-08-19",
     "run_month": "2026-08",
     "seed": "42",
     "embed_npy": false,
-    "registered_at": "2026-08-19T08:44:00Z"
+    "registered_at": "2026-08-19T08:54:06Z"
   }
 }

@@ -62,7 +62,7 @@ d = 7, Student nu = 3, condition 50, 500 trials
   N =   70   Frobenius: scm    4.907 Tyler    2.352 -&gt; Tyler   |   Rao: scm  1.568 Tyler  1.033 -&gt; Tyler
   N =  120   Frobenius: scm    4.149 Tyler    1.711 -&gt; Tyler   |   Rao: scm  1.335 Tyler  0.768 -&gt; Tyler
   N =  200   Frobenius: scm    3.766 Tyler    1.329 -&gt; Tyler   |   Rao: scm  1.149 Tyler  0.589 -&gt; Tyler
-Saved error curves in /Users/ammarmian/Research/HDR/simulations_hdr/results/context_riemann_frobenius_rao/run_28/erreurrao.tex
+Saved error curves in /Users/ammarmian/Research/HDR/simulations_hdr/results/context_riemann_frobenius_rao/run_33/erreurrao.tex
 </div>
 </details>
 </div>

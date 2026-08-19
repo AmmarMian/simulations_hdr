@@ -5,22 +5,27 @@
 \definecolor{darkorange25512714}{RGB}{255,127,14}
 \definecolor{forestgreen4416044}{RGB}{44,160,44}
 
-\begin{groupplot}[group style={group size=2 by 1}]
+\begin{groupplot}[group style={group size=2 by 1, horizontal sep=1.4cm, vertical sep=1.5cm}]
 \nextgroupplot[
 height=4.6cm,
+label style={font=\footnotesize},
 legend cell align={left},
+legend columns=2,
 legend style={
   fill opacity=0.8,
   draw opacity=1,
   text opacity=1,
-  at={(0.03,0.03)},
-  anchor=south west,
+  at={(0,-0.45)},
+  anchor=north west,
   draw=none
 },
+legend style={draw=none, fill=white, fill opacity=0.9, text opacity=1, font=\footnotesize},
 log basis x={10},
 log basis y={10},
 tick align=outside,
+tick label style={font=\scriptsize},
 tick pos=left,
+title style={font=\footnotesize, yshift=-2pt},
 title={norme de Frobenius},
 width=0.45\textwidth,
 x grid style={darkgray176},
@@ -65,10 +70,14 @@ table {%
 
 \nextgroupplot[
 height=4.6cm,
+label style={font=\footnotesize},
+legend style={draw=none, fill=white, fill opacity=0.9, text opacity=1, font=\footnotesize},
 log basis x={10},
 log basis y={10},
 tick align=outside,
+tick label style={font=\scriptsize},
 tick pos=left,
+title style={font=\footnotesize, yshift=-2pt},
 title={distance de Rao},
 width=0.45\textwidth,
 x grid style={darkgray176},

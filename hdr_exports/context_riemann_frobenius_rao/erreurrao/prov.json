@@ -1,5 +1,5 @@
 {
-  "git_sha": "f845fa1",
+  "git_sha": "590ac0f",
   "script": "/Users/ammarmian/Research/HDR/simulations_hdr/1-context/riemann_frobenius_rao/main.py",
   "args": {
     "n_features": 7,
@@ -19,7 +19,7 @@
     "dof": 3.0,
     "condition": 50.0,
     "iter_max": 300,
-    "storage_path": "/Users/ammarmian/Research/HDR/simulations_hdr/results/context_riemann_frobenius_rao/run_28",
+    "storage_path": "/Users/ammarmian/Research/HDR/simulations_hdr/results/context_riemann_frobenius_rao/run_33",
     "show_interactive": false,
     "export": true,
     "axis_width": "0.45\\textwidth",
@@ -30,13 +30,13 @@
   "hdr": {
     "id": "erreurrao",
     "exp": "context_riemann_frobenius_rao",
-    "run_id": 28,
-    "commit_sha": "f845fa160f0330ed8fe613f27e8bdeae7d6a048a",
-    "sha_short": "f845fa1",
+    "run_id": 33,
+    "commit_sha": "590ac0f2063fb92771665a750e28d04d5ec45226",
+    "sha_short": "590ac0f",
     "run_date": "2026-08-19",
     "run_month": "2026-08",
     "seed": "42",
     "embed_npy": false,
-    "registered_at": "2026-08-19T08:44:01Z"
+    "registered_at": "2026-08-19T08:54:08Z"
   }
 }

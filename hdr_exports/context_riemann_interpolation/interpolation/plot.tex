@@ -7,18 +7,22 @@
 \definecolor{forestgreen4416044}{RGB}{44,160,44}
 \definecolor{gray127}{RGB}{127,127,127}
 
-\begin{groupplot}[group style={group size=2 by 2}]
+\begin{groupplot}[group style={group size=2 by 2, horizontal sep=1.4cm, vertical sep=1.5cm}]
 \nextgroupplot[
 height=4.6cm,
+label style={font=\footnotesize},
+legend style={draw=none, fill=white, fill opacity=0.9, text opacity=1, font=\footnotesize},
 tick align=outside,
+tick label style={font=\scriptsize},
 tick pos=left,
+title style={font=\footnotesize, yshift=-2pt},
 title={euclidienne},
 width=0.45\textwidth,
 x grid style={darkgray176},
 xmin=-2.29992834785656, xmax=2.29992834785656,
 xtick style={color=black},
 y grid style={darkgray176},
-ylabel={\(\displaystyle x\_2\)},
+ylabel={\(\displaystyle x_2\)},
 ymin=-2.29992834785656, ymax=2.29992834785656,
 ytick style={color=black}
 ]
@@ -1446,8 +1450,12 @@ table {%
 
 \nextgroupplot[
 height=4.6cm,
+label style={font=\footnotesize},
+legend style={draw=none, fill=white, fill opacity=0.9, text opacity=1, font=\footnotesize},
 tick align=outside,
+tick label style={font=\scriptsize},
 tick pos=left,
+title style={font=\footnotesize, yshift=-2pt},
 title={affine invariante},
 width=0.45\textwidth,
 x grid style={darkgray176},
@@ -2881,16 +2889,20 @@ table {%
 
 \nextgroupplot[
 height=4.6cm,
+label style={font=\footnotesize},
+legend style={draw=none, fill=white, fill opacity=0.9, text opacity=1, font=\footnotesize},
 tick align=outside,
+tick label style={font=\scriptsize},
 tick pos=left,
+title style={font=\footnotesize, yshift=-2pt},
 title={log-euclidienne},
 width=0.45\textwidth,
 x grid style={darkgray176},
-xlabel={\(\displaystyle x\_1\)},
+xlabel={\(\displaystyle x_1\)},
 xmin=-2.29992834785656, xmax=2.29992834785656,
 xtick style={color=black},
 y grid style={darkgray176},
-ylabel={\(\displaystyle x\_2\)},
+ylabel={\(\displaystyle x_2\)},
 ymin=-2.29992834785656, ymax=2.29992834785656,
 ytick style={color=black}
 ]
@@ -4318,17 +4330,22 @@ table {%
 
 \nextgroupplot[
 height=4.6cm,
+label style={font=\footnotesize},
 legend cell align={left},
+legend columns=3,
 legend style={
   fill opacity=0.8,
   draw opacity=1,
   text opacity=1,
-  at={(0.03,0.97)},
+  at={(-1.3,-0.45)},
   anchor=north west,
   draw=none
 },
+legend style={draw=none, fill=white, fill opacity=0.9, text opacity=1, font=\footnotesize},
 tick align=outside,
+tick label style={font=\scriptsize},
 tick pos=left,
+title style={font=\footnotesize, yshift=-2pt},
 title={déterminant le long du chemin},
 width=0.45\textwidth,
 x grid style={darkgray176},

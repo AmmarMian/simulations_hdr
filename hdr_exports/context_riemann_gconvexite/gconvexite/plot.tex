@@ -6,11 +6,15 @@
 \definecolor{forestgreen4416044}{RGB}{44,160,44}
 \definecolor{gray127}{RGB}{127,127,127}
 
-\begin{groupplot}[group style={group size=2 by 1}]
+\begin{groupplot}[group style={group size=2 by 1, vertical sep=1.5cm, horizontal sep=1.4cm}]
 \nextgroupplot[
 height=4.6cm,
+label style={font=\footnotesize},
+legend style={draw=none, fill=white, fill opacity=0.9, text opacity=1, font=\footnotesize},
 tick align=outside,
+tick label style={font=\scriptsize},
 tick pos=left,
+title style={font=\footnotesize, yshift=-2pt},
 title={segment euclidien},
 width=0.45\textwidth,
 x grid style={darkgray176},
@@ -234,9 +238,13 @@ table {%
 
 \nextgroupplot[
 height=4.6cm,
+label style={font=\footnotesize},
+legend style={draw=none, fill=white, fill opacity=0.9, text opacity=1, font=\footnotesize},
 scaled y ticks=manual:{}{\pgfmathparse{#1}},
 tick align=outside,
+tick label style={font=\scriptsize},
 tick pos=left,
+title style={font=\footnotesize, yshift=-2pt},
 title={géodésique},
 width=0.45\textwidth,
 x grid style={darkgray176},

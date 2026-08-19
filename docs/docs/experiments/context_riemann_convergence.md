@@ -55,8 +55,8 @@ uv run python 1-context/riemann_convergence/main.py
 <div class="exp-log-text">d = 10, N = 100, Student nu = 3, condition 100
   point fixe                    29 iterations   final gap 5.33e-15   gradient 4.29e-13   0.003 s   distance to the fixed point 5.42e-15
   gradient riemannien           28 iterations   final gap 0.00e+00   gradient 3.05e-09   0.006 s   distance to the fixed point 4.88e-09
-  gradient euclidien projeté   150 iterations   final gap 5.79e-02   gradient 3.06e-01   0.067 s   distance to the fixed point 3.87e-01
-Saved convergence curves in /Users/ammarmian/Research/HDR/simulations_hdr/results/context_riemann_convergence/run_27/convergence.tex
+  gradient euclidien projeté   150 iterations   final gap 5.79e-02   gradient 3.06e-01   0.068 s   distance to the fixed point 3.87e-01
+Saved convergence curves in /Users/ammarmian/Research/HDR/simulations_hdr/results/context_riemann_convergence/run_32/convergence.tex
 </div>
 </details>
 </div>

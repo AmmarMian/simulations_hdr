@@ -51,7 +51,7 @@ uv run python 1-context/riemann_gconvexite/main.py
 <div class="exp-log-text">d = 3, N = 10, Student nu = 3, condition 10000, geodesic distance between the endpoints 13.025
   segment euclidien  min curvature    -43.54   local minima at t = 0.01, 0.96
   géodésique         min curvature     +8.15   local minima at t = 0.45
-Saved cost profiles in /Users/ammarmian/Research/HDR/simulations_hdr/results/context_riemann_gconvexite/run_26/gconvexite.tex
+Saved cost profiles in /Users/ammarmian/Research/HDR/simulations_hdr/results/context_riemann_gconvexite/run_31/gconvexite.tex
 </div>
 </details>
 </div>
