@@ -14,6 +14,30 @@ uv run sar_experiments/compute_detection_real_data/prepare_data.py data/SAR/Scen
 ```
 
 
+## Non-regression bench (sonar)
+
+The sonar detectors are checked against Olivier Lerda's MATLAB reference rather
+than against themselves. The reference `.mat` files carry the simulated data,
+the exact covariance, the beam grid **and** the statistic of every detector for
+every range bin and beam pair, so the comparison is deterministic — no
+Monte-Carlo, no sampling noise. Any deviation is a formula or a convention
+difference.
+
+```sh
+uv run python 2-detection/sonar_experiments/validation/compare_matlab_reference.py \
+    --mat ~/Research/sonar/Ressources_OlivierLerda/pfa-seuil-R1000-rhoP04-rhoA09-G.mat \
+    --adaptive
+```
+
+It covers six known-covariance detectors (NMF 1, NMF 2, MIMO-MF, M-NMF-I, Rao,
+GLRT) and four adaptive ones (Rao/GLRT built on the SCM and on the two-texture
+Tyler estimator), on the four covariance settings of the reference (including
+the two matrix-CFAR overlays) in both Gaussian and K-distributed clutter.
+
+Run it after touching anything in `hdrlib/sonar/`: it is what caught the
+conjugation flip in `two_array_tyler`, which was invisible in every
+online-versus-offline comparison because the reference covariance is real.
+
 ## Experiments
 
 <!-- experiments-start -->
@@ -143,68 +167,46 @@ uv run sar_experiments/compute_detection_real_data/prepare_data.py data/SAR/Scen
 <div class="exp-grid">
 <div class="exp-card">
 <div class="exp-card-head">
-<div class="exp-name">sar_mc_dcg_h0</div>
+<div class="exp-name">sar_mc_kron_mse</div>
 
 </div>
-<div class="exp-desc">MC convergence test — OnlineDCGGLRT telescopes to DCGGLRT as T grows (H0)</div>
-<div class="exp-tags"><span class="exp-tag">detection</span><span class="exp-tag">dcg</span><span class="exp-tag">H0</span><span class="exp-tag">monte-carlo</span></div>
-<div class="exp-run"><code>uv run python 2-detection/sar_experiments/mc_simulations/mc_dcg_h0.py</code></div>
-<a class="exp-details-link" href="../../experiments/sar_mc_dcg_h0/">Parameters &amp; details →</a>
-</div>
-
-<div class="exp-card">
-<div class="exp-card-head">
-<div class="exp-name">sar_mc_dcg_h1</div>
-
-</div>
-<div class="exp-desc">MC power curve — OnlineDCGGLRT vs DCGGLRT under H1 (change detection)</div>
-<div class="exp-tags"><span class="exp-tag">detection</span><span class="exp-tag">dcg</span><span class="exp-tag">H1</span><span class="exp-tag">monte-carlo</span><span class="exp-tag">power-curve</span></div>
-<div class="exp-run"><code>uv run python 2-detection/sar_experiments/mc_simulations/mc_dcg_h1.py</code></div>
-<a class="exp-details-link" href="../../experiments/sar_mc_dcg_h1/">Parameters &amp; details →</a>
+<div class="exp-desc">MSE des estimateurs Kronecker (hors ligne vs recursif) face aux ICRB</div>
+<div class="exp-tags"><span class="exp-tag">detection</span><span class="exp-tag">kronecker</span><span class="exp-tag">estimation</span><span class="exp-tag">icrb</span><span class="exp-tag">monte-carlo</span></div>
+<div class="exp-run"><code>uv run python 2-detection/sar_experiments/mc_simulations/mc_kron_mse_icrb.py</code></div>
+<a class="exp-details-link" href="../../experiments/sar_mc_kron_mse/">Parameters &amp; details →</a>
 </div>
 
 <div class="exp-card">
 <div class="exp-card-head">
-<div class="exp-name">sar_mc_gauss_h0</div>
+<div class="exp-name">sar_mc_kron_struct</div>
 
 </div>
-<div class="exp-desc">MC convergence test — OnlineGaussianGLRT telescopes to GaussianGLRT as T grows (H0)</div>
-<div class="exp-tags"><span class="exp-tag">detection</span><span class="exp-tag">gaussian</span><span class="exp-tag">H0</span><span class="exp-tag">monte-carlo</span></div>
-<div class="exp-run"><code>uv run python 2-detection/sar_experiments/mc_simulations/mc_gaussian_h0.py</code></div>
-<a class="exp-details-link" href="../../experiments/sar_mc_gauss_h0/">Parameters &amp; details →</a>
-</div>
-
-<div class="exp-card">
-<div class="exp-card-head">
-<div class="exp-name">sar_mc_gauss_h1</div>
-
-</div>
-<div class="exp-desc">MC power curve — OnlineGaussianGLRT vs GaussianGLRT under H1 (change detection)</div>
-<div class="exp-tags"><span class="exp-tag">detection</span><span class="exp-tag">gaussian</span><span class="exp-tag">H1</span><span class="exp-tag">monte-carlo</span><span class="exp-tag">power-curve</span></div>
-<div class="exp-run"><code>uv run python 2-detection/sar_experiments/mc_simulations/mc_gaussian_h1.py</code></div>
-<a class="exp-details-link" href="../../experiments/sar_mc_gauss_h1/">Parameters &amp; details →</a>
+<div class="exp-desc">Ce que la structure Kronecker achete : erreur vs taille de fenetre N</div>
+<div class="exp-tags"><span class="exp-tag">detection</span><span class="exp-tag">kronecker</span><span class="exp-tag">estimation</span><span class="exp-tag">structure</span><span class="exp-tag">monte-carlo</span></div>
+<div class="exp-run"><code>uv run python 2-detection/sar_experiments/mc_simulations/mc_kron_structure_vs_n.py</code></div>
+<a class="exp-details-link" href="../../experiments/sar_mc_kron_struct/">Parameters &amp; details →</a>
 </div>
 
 <div class="exp-card">
 <div class="exp-card-head">
-<div class="exp-name">sar_mc_kron_h0</div>
+<div class="exp-name">sar_mc_power</div>
 
 </div>
-<div class="exp-desc">MC convergence test — OnlineKroneckerGLRT telescopes to KroneckerGLRT as T grows (H0)</div>
-<div class="exp-tags"><span class="exp-tag">detection</span><span class="exp-tag">kronecker</span><span class="exp-tag">H0</span><span class="exp-tag">monte-carlo</span></div>
-<div class="exp-run"><code>uv run python 2-detection/sar_experiments/mc_simulations/mc_kronecker_h0.py</code></div>
-<a class="exp-details-link" href="../../experiments/sar_mc_kron_h0/">Parameters &amp; details →</a>
+<div class="exp-desc">Puissance vs T des quatre detecteurs de changements, hors ligne et en ligne</div>
+<div class="exp-tags"><span class="exp-tag">detection</span><span class="exp-tag">kronecker</span><span class="exp-tag">puissance</span><span class="exp-tag">H1</span><span class="exp-tag">monte-carlo</span></div>
+<div class="exp-run"><code>uv run python 2-detection/sar_experiments/mc_simulations/mc_power_detectors.py</code></div>
+<a class="exp-details-link" href="../../experiments/sar_mc_power/">Parameters &amp; details →</a>
 </div>
 
 <div class="exp-card">
 <div class="exp-card-head">
-<div class="exp-name">sar_mc_kron_h1</div>
+<div class="exp-name">sar_mc_roc</div>
 
 </div>
-<div class="exp-desc">MC power curve — OnlineKroneckerGLRT vs KroneckerGLRT under H1 (change detection)</div>
-<div class="exp-tags"><span class="exp-tag">detection</span><span class="exp-tag">kronecker</span><span class="exp-tag">H1</span><span class="exp-tag">monte-carlo</span><span class="exp-tag">power-curve</span></div>
-<div class="exp-run"><code>uv run python 2-detection/sar_experiments/mc_simulations/mc_kronecker_h1.py</code></div>
-<a class="exp-details-link" href="../../experiments/sar_mc_kron_h1/">Parameters &amp; details →</a>
+<div class="exp-desc">Courbes ROC des quatre detecteurs de changements, hors ligne et en ligne</div>
+<div class="exp-tags"><span class="exp-tag">detection</span><span class="exp-tag">kronecker</span><span class="exp-tag">roc</span><span class="exp-tag">H1</span><span class="exp-tag">monte-carlo</span></div>
+<div class="exp-run"><code>uv run python 2-detection/sar_experiments/mc_simulations/mc_roc_detectors.py</code></div>
+<a class="exp-details-link" href="../../experiments/sar_mc_roc/">Parameters &amp; details →</a>
 </div>
 </div>
 </div>

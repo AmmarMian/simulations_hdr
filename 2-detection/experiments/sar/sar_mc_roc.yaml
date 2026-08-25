@@ -1,19 +1,23 @@
-name: sar_mc_gauss_h0
-description: MC convergence test — OnlineGaussianGLRT telescopes to GaussianGLRT as T grows (H0)
+name: sar_mc_roc
+description: Courbes ROC des quatre detecteurs de changements, hors ligne et en ligne
 path: 2-detection/sar_experiments/mc_simulations
-executable: 2-detection/sar_experiments/mc_simulations/mc_gaussian_h0.py
+executable: 2-detection/sar_experiments/mc_simulations/mc_roc_detectors.py
 executable_command: uv run python
 tags:
   - detection
-  - gaussian
-  - H0
+  - kronecker
+  - roc
+  - H1
   - monte-carlo
+params:
+  n_trials: 10000
+  T_list: "5,12,49"
 actions:
   - plot:
       name: plot
       executable: 2-detection/sar_experiments/action_plot.py
       executable_command: uv run python
-      description: Plot all convergence curves found in the run directory
+      description: Run all auto-generated *_plot.py scripts in the run directory
   - register:
       name: register
       executable: register_latex.py

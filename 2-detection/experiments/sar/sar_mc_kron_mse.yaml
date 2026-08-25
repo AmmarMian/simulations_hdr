@@ -1,0 +1,23 @@
+name: sar_mc_kron_mse
+description: MSE des estimateurs Kronecker (hors ligne vs recursif) face aux ICRB
+path: 2-detection/sar_experiments/mc_simulations
+executable: 2-detection/sar_experiments/mc_simulations/mc_kron_mse_icrb.py
+executable_command: uv run python
+tags:
+  - detection
+  - kronecker
+  - estimation
+  - icrb
+  - monte-carlo
+actions:
+  - plot:
+      name: plot
+      executable: 2-detection/sar_experiments/action_plot.py
+      executable_command: uv run python
+      description: Plot all curves found in the run directory
+  - register:
+      name: register
+      executable: register_latex.py
+      executable_command: uv run python
+      description: Copy a chosen figure + provenance into the HDR LaTeX repo
+group: "SAR · Monte Carlo"

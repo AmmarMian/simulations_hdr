@@ -1,19 +1,20 @@
-name: sar_mc_kron_h0
-description: MC convergence test — OnlineKroneckerGLRT telescopes to KroneckerGLRT as T grows (H0)
+name: sar_mc_power
+description: Puissance vs T des quatre detecteurs de changements, hors ligne et en ligne
 path: 2-detection/sar_experiments/mc_simulations
-executable: 2-detection/sar_experiments/mc_simulations/mc_kronecker_h0.py
+executable: 2-detection/sar_experiments/mc_simulations/mc_power_detectors.py
 executable_command: uv run python
 tags:
   - detection
   - kronecker
-  - H0
+  - puissance
+  - H1
   - monte-carlo
 actions:
   - plot:
       name: plot
       executable: 2-detection/sar_experiments/action_plot.py
       executable_command: uv run python
-      description: Plot all convergence curves found in the run directory
+      description: Plot all curves found in the run directory
   - register:
       name: register
       executable: register_latex.py

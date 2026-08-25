@@ -337,3 +337,487 @@ def finish_h1(args, exporter, h0_stats, h1_stats, T_vec, stem, title, elapsed):
     exporter.save(stats, stem, elapsed, title=title)
     if args.show_interactive:
         plot_mc_power(stats, title=title)
+
+
+# ---------------------------------------------------------------------------
+# MSE / ICRB aggregation and plotting (Kronecker scaled Gaussian estimation)
+# ---------------------------------------------------------------------------
+
+def aggregate_mse(
+    online_err: dict,
+    offline_err: dict,
+    icrb: dict,
+    T_vec: list[int],
+) -> dict:
+    """Average per-component squared Riemannian errors over trials.
+
+    Parameters
+    ----------
+    online_err, offline_err : {component: {T: (n_trials,) array}}
+        Components are "A", "B", "tau", "total".
+    icrb : {component: array over T_vec}
+    T_vec : list of T values.
+
+    Returns
+    -------
+    dict of flat arrays, keys "T", "<comp>_online", "<comp>_offline",
+    "<comp>_online_se", "<comp>_offline_se", "<comp>_icrb".
+    """
+    out = {"T": np.asarray(T_vec)}
+    for comp in ("A", "B", "tau", "total"):
+        for label, src in (("online", online_err), ("offline", offline_err)):
+            arr = np.stack([np.asarray(src[comp][T]).ravel() for T in T_vec], axis=-1)
+            out[f"{comp}_{label}"] = arr.mean(0)
+            out[f"{comp}_{label}_se"] = arr.std(0) / np.sqrt(arr.shape[0])
+        out[f"{comp}_icrb"] = np.asarray(icrb[comp])
+    return out
+
+
+_MC_PLOT_TEMPLATE_MSE = Template("""\
+#!/usr/bin/env python
+# Auto-generated — edit freely to restyle.
+# To regenerate: re-run the simulation script with --export
+import argparse
+from pathlib import Path
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+$style_dict
+
+parser = argparse.ArgumentParser("Plot MSE vs T against the ICRB.")
+parser.add_argument("--tikz", action="store_true",
+    help="Export PGFPlots .tex for the dissertation (light background).")
+parser.add_argument("--no-save", action="store_true", help="Show only, do not save.")
+parser.add_argument("--use-latex", action="store_true", help="LaTeX text rendering.")
+args = parser.parse_args()
+
+# The dark theme is for reading on screen. Exported to PGFPlots it would paint a
+# black background into a manuscript printed on white, so it is applied on the
+# viewing path only -- never on the one that writes the .tex.
+if not args.tikz:
+    import matplotlib as _mpl
+    _mpl.rcParams.update(_DARK_STYLE)
+    if args.use_latex:
+        _mpl.rcParams.update({"text.usetex": True})
+
+here = Path(__file__).parent
+stem = $stem_repr
+title = $title_repr
+
+# Legends sit outside the axes: inside, the curves run under the entries and
+# neither is readable at the size a figure takes in the manuscript.
+_LEGEND = dict(loc="upper left", bbox_to_anchor=(1.02, 1.0), frameon=False)
+
+data = np.load(here / (stem + ".npz"))
+T = data["T"]
+
+_BLUE  = "#5ca8d3"
+_CORAL = "#e06b6b"
+_GREY  = "#6b7280"
+_LABELS = {"A": r"$$\\delta^2(\\widehat{A}, A)$$",
+           "B": r"$$\\delta^2(\\widehat{B}, B)$$",
+           "tau": r"$$\\delta^2(\\widehat{\\tau}, \\tau)$$"}
+
+fig, axes = plt.subplots(3, 1, figsize=(7, 10), sharex=True)
+for i, (ax, comp) in enumerate(zip(axes, ("A", "B", "tau"))):
+    # Labelled on the first panel only. matplot2tikz emits an \\addlegendentry
+    # for every labelled curve and gathers them into one legend, so labelling
+    # the three panels would print the same three entries three times.
+    lbl = (lambda name: name) if i == 0 else (lambda name: None)
+    ax.loglog(T, data[comp + "_offline"], color=_BLUE, marker="o", markersize=3,
+              label=lbl("hors ligne"))
+    ax.loglog(T, data[comp + "_online"], color=_CORAL, marker="s", markersize=3,
+              linestyle="--", label=lbl("en ligne"))
+    ax.loglog(T, data[comp + "_icrb"], color=_GREY, linestyle=":", label=lbl("ICRB"))
+    ax.set_ylabel(_LABELS[comp])
+    if i == 0:
+        ax.legend(**_LEGEND)
+axes[-1].set_xlabel(r"$$T$$")
+if not args.tikz:
+    fig.suptitle(title)
+fig.tight_layout()
+
+
+def _export(fig, suffix):
+    if args.no_save:
+        return
+    out = here / (stem + suffix + ".pdf")
+    fig.savefig(out)
+    print(f"Saved {out}")
+    if args.tikz:
+        from hdrlib.core.exporter import save_tikz
+        # Panels are stacked, each as wide as the text block: side by side at
+        # 0.45\\textwidth they end up too small to read once printed.
+        save_tikz(str(here / (stem + suffix + ".tex")),
+                  axis_width=r"\\textwidth", axis_height="5cm")
+
+_export(fig, "_mse")
+plt.show()
+""")
+
+
+def finish_mse(args, exporter, online_err, offline_err, icrb, T_vec, stem, title, elapsed):
+    """Aggregate MSE/ICRB stats, log a summary, and export."""
+    stats = aggregate_mse(online_err, offline_err, icrb, T_vec)
+    logger.info(f"Done in {elapsed:.1f}s")
+    for comp in ("A", "B", "tau"):
+        logger.info(
+            f"  {comp:>3}  @T={T_vec[-1]}: offline {stats[comp + '_offline'][-1]:.3g} | "
+            f"online {stats[comp + '_online'][-1]:.3g} | ICRB {stats[comp + '_icrb'][-1]:.3g}"
+        )
+    exporter.save(stats, stem, elapsed, title=title)
+
+
+# ---------------------------------------------------------------------------
+# Structured vs unstructured estimation as a function of N
+# ---------------------------------------------------------------------------
+
+def aggregate_struct(kron_err: dict, full_err: dict, icrb_kron, icrb_full, N_vec) -> dict:
+    """Average total squared errors over trials for both parametrisations."""
+    N_arr = np.asarray(N_vec)
+    kron = np.stack([np.asarray(kron_err[N]).ravel() for N in N_vec], axis=-1)
+    full = np.stack([np.asarray(full_err[N]).ravel() for N in N_vec], axis=-1)
+    return {
+        "N": N_arr,
+        "kron_mean": kron.mean(0),
+        "kron_se": kron.std(0) / np.sqrt(kron.shape[0]),
+        "full_mean": full.mean(0),
+        "full_se": full.std(0) / np.sqrt(full.shape[0]),
+        "kron_icrb": np.asarray(icrb_kron),
+        "full_icrb": np.asarray(icrb_full),
+    }
+
+
+_MC_PLOT_TEMPLATE_STRUCT = Template("""\
+#!/usr/bin/env python
+# Auto-generated — edit freely to restyle.
+# To regenerate: re-run the simulation script with --export
+import argparse
+from pathlib import Path
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+$style_dict
+
+parser = argparse.ArgumentParser("Plot structured vs unstructured error against N.")
+parser.add_argument("--tikz", action="store_true",
+    help="Export PGFPlots .tex for the dissertation (light background).")
+parser.add_argument("--no-save", action="store_true", help="Show only, do not save.")
+parser.add_argument("--use-latex", action="store_true", help="LaTeX text rendering.")
+args = parser.parse_args()
+
+# The dark theme is for reading on screen. Exported to PGFPlots it would paint a
+# black background into a manuscript printed on white, so it is applied on the
+# viewing path only -- never on the one that writes the .tex.
+if not args.tikz:
+    import matplotlib as _mpl
+    _mpl.rcParams.update(_DARK_STYLE)
+    if args.use_latex:
+        _mpl.rcParams.update({"text.usetex": True})
+
+here = Path(__file__).parent
+stem = $stem_repr
+title = $title_repr
+
+# Legends sit outside the axes: inside, the curves run under the entries and
+# neither is readable at the size a figure takes in the manuscript.
+_LEGEND = dict(loc="upper left", bbox_to_anchor=(1.02, 1.0), frameon=False)
+
+data = np.load(here / (stem + ".npz"))
+N = data["N"]
+
+_BLUE  = "#5ca8d3"
+_CORAL = "#e06b6b"
+
+fig, ax = plt.subplots(figsize=(7, 4.4))
+ax.loglog(N, data["kron_mean"], color=_BLUE, marker="o", markersize=3, label="Kronecker")
+ax.loglog(N, data["kron_icrb"], color=_BLUE, linestyle=":", label="ICRB Kronecker")
+ax.loglog(N, data["full_mean"], color=_CORAL, marker="s", markersize=3, label="non structuré")
+ax.loglog(N, data["full_icrb"], color=_CORAL, linestyle=":", label="ICRB non structuré")
+ax.set_xlabel(r"$$N$$")
+ax.set_ylabel(r"$$\\delta^2_{\\mathcal{M}}$$")
+ax.legend(**_LEGEND)
+if not args.tikz:
+    ax.set_title(title)
+fig.tight_layout()
+
+
+def _export(fig, suffix):
+    if args.no_save:
+        return
+    out = here / (stem + suffix + ".pdf")
+    fig.savefig(out)
+    print(f"Saved {out}")
+    if args.tikz:
+        from hdrlib.core.exporter import save_tikz
+        save_tikz(str(here / (stem + suffix + ".tex")),
+                  axis_width=r"\\textwidth", axis_height="5cm")
+
+_export(fig, "_struct")
+plt.show()
+""")
+
+
+def finish_struct(args, exporter, kron_err, full_err, icrb_kron, icrb_full, N_vec, stem, title, elapsed):
+    """Aggregate structured/unstructured stats, log a summary, and export."""
+    stats = aggregate_struct(kron_err, full_err, icrb_kron, icrb_full, N_vec)
+    logger.info(f"Done in {elapsed:.1f}s")
+    for i, N in enumerate(N_vec):
+        logger.info(
+            f"  N={N:>3}: kron {stats['kron_mean'][i]:.3g} (ICRB {stats['kron_icrb'][i]:.3g}) | "
+            f"full {stats['full_mean'][i]:.3g} (ICRB {stats['full_icrb'][i]:.3g}) | "
+            f"gain x{stats['full_mean'][i] / stats['kron_mean'][i]:.2f}"
+        )
+    exporter.save(stats, stem, elapsed, title=title)
+
+
+# ---------------------------------------------------------------------------
+# Power curves for several detectors at once
+# ---------------------------------------------------------------------------
+
+def aggregate_power_multi(h0: dict, h1: dict, T_vec: list[int], pfa: float) -> dict:
+    """Empirical power of several detectors, thresholds set per detector and per T.
+
+    Parameters
+    ----------
+    h0, h1 : {detector name: {T: (n_trials,) array of statistics}}
+    T_vec : list of T values.
+    pfa : target false alarm probability.
+
+    Returns
+    -------
+    dict with "T", "pfa", "detectors" (list of names) and "<name>_power".
+    """
+    out = {"T": np.asarray(T_vec), "pfa": np.asarray(pfa),
+           "detectors": np.asarray(sorted(h0.keys()))}
+    for name in h0:
+        power = np.zeros(len(T_vec))
+        for i, T in enumerate(T_vec):
+            s0 = np.asarray(h0[name][T]).ravel()
+            s1 = np.asarray(h1[name][T]).ravel()
+            finite = s0[np.isfinite(s0)]
+            threshold = np.quantile(finite, 1 - pfa) if finite.size else np.inf
+            power[i] = float(np.mean(s1 > threshold))
+        out[f"{name}_power"] = power
+    return out
+
+
+_MC_PLOT_TEMPLATE_POWER_MULTI = Template("""\
+#!/usr/bin/env python
+# Auto-generated — edit freely to restyle.
+# To regenerate: re-run the simulation script with --export
+import argparse
+from pathlib import Path
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+$style_dict
+
+parser = argparse.ArgumentParser("Plot power vs T for several detectors.")
+parser.add_argument("--tikz", action="store_true",
+    help="Export PGFPlots .tex for the dissertation (light background).")
+parser.add_argument("--no-save", action="store_true", help="Show only, do not save.")
+parser.add_argument("--use-latex", action="store_true", help="LaTeX text rendering.")
+args = parser.parse_args()
+
+# The dark theme is for reading on screen. Exported to PGFPlots it would paint a
+# black background into a manuscript printed on white, so it is applied on the
+# viewing path only -- never on the one that writes the .tex.
+if not args.tikz:
+    import matplotlib as _mpl
+    _mpl.rcParams.update(_DARK_STYLE)
+    if args.use_latex:
+        _mpl.rcParams.update({"text.usetex": True})
+
+here = Path(__file__).parent
+stem = $stem_repr
+title = $title_repr
+
+# Legends sit outside the axes: inside, the curves run under the entries and
+# neither is readable at the size a figure takes in the manuscript.
+_LEGEND = dict(loc="upper left", bbox_to_anchor=(1.02, 1.0), frameon=False)
+
+data = np.load(here / (stem + ".npz"), allow_pickle=True)
+T = data["T"]
+pfa = float(data["pfa"])
+
+_STYLE = {
+    "K-SG":   ("#5ca8d3", "-",  "o"),
+    "K-SG-O": ("#5ca8d3", "--", "s"),
+    "SG":     ("#e06b6b", "-",  "o"),
+    "SG-O":   ("#e06b6b", "--", "s"),
+    "G":      ("#a57bc5", "-.", "^"),
+}
+
+fig, ax = plt.subplots(figsize=(7, 4.4))
+for name in [str(d) for d in data["detectors"]]:
+    color, ls, marker = _STYLE.get(name, ("#6b7280", "-", "x"))
+    ax.semilogx(T, data[name + "_power"], color=color, linestyle=ls, marker=marker,
+                markersize=3, label=name)
+ax.axhline(pfa, color="#6b7280", linestyle=":", linewidth=1.0)
+ax.set_xlabel(r"$$T$$")
+ax.set_ylabel("puissance")
+ax.set_ylim(-0.02, 1.05)
+ax.legend(**_LEGEND)
+if not args.tikz:
+    ax.set_title(title)
+fig.tight_layout()
+
+
+def _export(fig, suffix):
+    if args.no_save:
+        return
+    out = here / (stem + suffix + ".pdf")
+    fig.savefig(out)
+    print(f"Saved {out}")
+    if args.tikz:
+        from hdrlib.core.exporter import save_tikz
+        save_tikz(str(here / (stem + suffix + ".tex")),
+                  axis_width=r"\\textwidth", axis_height="5cm")
+
+_export(fig, "_power")
+plt.show()
+""")
+
+
+def finish_power_multi(args, exporter, h0, h1, T_vec, stem, title, elapsed):
+    """Aggregate multi-detector power stats, log a summary, and export."""
+    stats = aggregate_power_multi(h0, h1, T_vec, args.pfa)
+    logger.info(f"Done in {elapsed:.1f}s")
+    for name in sorted(h0.keys()):
+        logger.info(f"  {name:>6}: power @T={T_vec[-1]} = {stats[name + '_power'][-1]:.3f}")
+    exporter.save(stats, stem, elapsed, title=title)
+
+
+def aggregate_roc_multi(h0: dict, h1: dict, T_vec: list[int],
+                        n_points: int = 200) -> dict:
+    """Empirical ROC of several detectors, one curve per detector and per T.
+
+    The Pfa grid stops at 10 / n_trials: below that the threshold rests on
+    fewer than ten H0 exceedances and the curve is drawing sampling noise.
+
+    Parameters
+    ----------
+    h0, h1 : {detector name: {T: (n_trials,) array of statistics}}
+    T_vec : list of T values.
+    n_points : number of Pfa samples, log-spaced.
+
+    Returns
+    -------
+    dict with "T", "pfa_grid", "detectors" and "<name>_pd" of shape
+    (len(T_vec), n_points).
+    """
+    n_min = min(np.asarray(h0[n][T]).size for n in h0 for T in T_vec)
+    pfa_min = max(10.0 / n_min, 1e-6)
+    pfa_grid = np.logspace(np.log10(pfa_min), 0.0, n_points)
+    out = {"T": np.asarray(T_vec), "pfa_grid": pfa_grid,
+           "detectors": np.asarray(sorted(h0.keys()))}
+    for name in h0:
+        pd = np.zeros((len(T_vec), n_points))
+        for i, T in enumerate(T_vec):
+            s0 = np.asarray(h0[name][T]).ravel()
+            s1 = np.asarray(h1[name][T]).ravel()
+            s0, s1 = s0[np.isfinite(s0)], s1[np.isfinite(s1)]
+            if s0.size == 0 or s1.size == 0:
+                pd[i] = np.nan
+                continue
+            thr = np.quantile(s0, 1.0 - pfa_grid)
+            pd[i] = (s1[:, None] > thr[None, :]).mean(axis=0)
+        out[f"{name}_pd"] = pd
+    return out
+
+
+_MC_PLOT_TEMPLATE_ROC_MULTI = Template("""\
+#!/usr/bin/env python
+# Auto-generated — edit freely to restyle.
+# To regenerate: re-run the simulation script with --export
+import argparse
+from pathlib import Path
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+$style_dict
+
+parser = argparse.ArgumentParser("Plot ROC curves for several detectors and several T.")
+parser.add_argument("--tikz", action="store_true",
+    help="Export PGFPlots .tex for the dissertation (light background).")
+parser.add_argument("--no-save", action="store_true", help="Show only, do not save.")
+parser.add_argument("--use-latex", action="store_true", help="LaTeX text rendering.")
+args = parser.parse_args()
+
+if not args.tikz:
+    import matplotlib as _mpl
+    _mpl.rcParams.update(_DARK_STYLE)
+    if args.use_latex:
+        _mpl.rcParams.update({"text.usetex": True})
+
+here = Path(__file__).parent
+stem = $stem_repr
+title = $title_repr
+
+data = np.load(here / (stem + ".npz"), allow_pickle=True)
+T = data["T"]
+pfa = data["pfa_grid"]
+names = [str(d) for d in data["detectors"]]
+
+# Two panels rather than one per T: the comparison the chapter makes is offline
+# against recursive, within a model. Three T on twelve curves in one panel is
+# unreadable, and a three-column grid overflows the text block once exported.
+_PANELS = [("non structuré", ["SG", "SG-O"]), ("Kronecker", ["K-SG", "K-SG-O"])]
+_SHADE = ["#9ecae1", "#4292c6", "#08519c"]          # T croissant
+_SHADE_R = ["#fcae91", "#fb6a4a", "#a50f15"]
+
+fig, axes = plt.subplots(1, 2, figsize=(9, 4.0), sharey=True)
+for ax, (panel, wanted) in zip(axes, _PANELS):
+    for name in [n for n in wanted if n in names]:
+        recursive = name.endswith("-O")
+        shades = _SHADE_R if recursive else _SHADE
+        for i, t in enumerate(T):
+            ax.semilogx(pfa, data[name + "_pd"][i],
+                        color=shades[i % len(shades)],
+                        linestyle="--" if recursive else "-",
+                        linewidth=1.2,
+                        label=f"{name}, $$T={t}$$")
+    ax.set_xlabel(r"$$P_{fa}$$")
+    ax.set_ylim(-0.02, 1.05)
+    if not args.tikz:
+        ax.set_title(panel)
+axes[0].set_ylabel(r"$$P_d$$")
+axes[1].legend(loc="lower right", frameon=False, fontsize=7)
+axes[0].legend(loc="lower right", frameon=False, fontsize=7)
+if not args.tikz:
+    fig.suptitle(title)
+fig.tight_layout()
+
+
+def _export(fig, suffix):
+    if args.no_save:
+        return
+    out = here / (stem + suffix + ".pdf")
+    fig.savefig(out)
+    print(f"Saved {out}")
+    if args.tikz:
+        from hdrlib.core.exporter import save_tikz
+        save_tikz(str(here / (stem + suffix + ".tex")),
+                  axis_width=r"0.45\textwidth", axis_height="4.6cm")
+
+_export(fig, "_roc")
+plt.show()
+""")
+
+
+def finish_roc_multi(args, exporter, h0, h1, T_vec, stem, title, elapsed):
+    """Aggregate multi-detector ROC stats, log a summary, and export."""
+    stats = aggregate_roc_multi(h0, h1, T_vec)
+    logger.info(f"Done in {elapsed:.1f}s")
+    pfa = stats["pfa_grid"]
+    i_ref = int(np.argmin(np.abs(pfa - 1e-2)))
+    for name in sorted(h0.keys()):
+        row = ", ".join(f"T={t}: {stats[name + '_pd'][j, i_ref]:.3f}"
+                        for j, t in enumerate(T_vec))
+        logger.info(f"  {name:>6}: Pd @Pfa={pfa[i_ref]:.1e} — {row}")
+    exporter.save(stats, stem, elapsed, title=title)

@@ -30,6 +30,7 @@ uv run python 2-detection/sonar_experiments/mc_simulations/mc_pfa_threshold.py
 | `--snr-max` | float | `5.0` | Maximum SNR in dB (default 5). |
 | `--n-snr` | int | `150` | Number of SNR values (default 150). |
 | `--pfa` | float | `0.01` | Nominal PFA for PD curves (default 1e-2). |
+| `--debug` | — | — | Tiny configuration, to validate the pipeline in seconds. Results are NOT publication grade: see apply_debug for what is reduced. |
 | `--n-trials` | int | `10000` | Number of Monte-Carlo trials (default 10000). |
 | `--seed` | int | `42` | RNG seed for data generation (default 42). |
 | `--backend` | str | `numpy` | Compute backend. numpy → multiprocessing.Pool (one worker per trial); all others → trials stacked in leading batch dimension (default numpy). |

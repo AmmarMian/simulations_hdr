@@ -1,19 +1,20 @@
-name: sar_mc_dcg_h0
-description: MC convergence test — OnlineDCGGLRT telescopes to DCGGLRT as T grows (H0)
+name: sar_mc_kron_struct
+description: "Ce que la structure Kronecker achete : erreur vs taille de fenetre N"
 path: 2-detection/sar_experiments/mc_simulations
-executable: 2-detection/sar_experiments/mc_simulations/mc_dcg_h0.py
+executable: 2-detection/sar_experiments/mc_simulations/mc_kron_structure_vs_n.py
 executable_command: uv run python
 tags:
   - detection
-  - dcg
-  - H0
+  - kronecker
+  - estimation
+  - structure
   - monte-carlo
 actions:
   - plot:
       name: plot
       executable: 2-detection/sar_experiments/action_plot.py
       executable_command: uv run python
-      description: Plot all convergence curves found in the run directory
+      description: Plot all curves found in the run directory
   - register:
       name: register
       executable: register_latex.py
