@@ -1664,3 +1664,74 @@ def frechet_mean_affine_invariant(
         mean = manifold.exp(mean, step * direction)
 
     return mean, history
+
+
+def scaled_gaussian_riemannian_gd_h0(
+    X: Array,
+    iter_max: int = 200,
+    tol: float = 1e-8,
+    alpha_0: float = 1.0,
+    backend_name: Union[str, Backend] = "numpy",
+) -> Tuple[Array, Array]:
+    """Offline MLE of (Sigma, tau) under H0 across T dates, unstructured.
+
+    Same model and same estimation scheme as
+    sar.estimation_kronecker.kronecker_riemannian_gd_h0, but without the
+    Kronecker constraint on the shape matrix: the T dates share one Sigma in
+    sH++(p) and one texture vector tau in R++^n.  Written to make the
+    structured and unstructured estimators comparable term for term -- same
+    manifold geometry, same gradient, same line search, only the parameter
+    space differs.
+
+    Parameters
+    ----------
+    X : Array of shape (..., T, n_samples, n_features)
+    iter_max, tol, alpha_0 : optimisation controls
+    backend_name : str or Backend
+
+    Returns
+    -------
+    Sigma : Array of shape (..., n_features, n_features), |Sigma| = 1
+    tau : Array of shape (..., n_samples, 1)
+    """
+    be = get_backend_module(backend_name)
+    X = get_data_on_device(X, backend_name)
+    T, n, p = X.shape[-3], X.shape[-2], X.shape[-1]
+    batch_shape = X.shape[:-3]
+    manifold = ScaledGaussianFIM(p, n, backend_name=backend_name)
+
+    eye = get_data_on_device(be.eye(p, dtype=X.dtype), backend_name)
+    Sigma = get_data_on_device(be.broadcast_to(eye, batch_shape + (p, p)) * 1, backend_name)
+    tau = get_data_on_device(
+        be.ones(batch_shape + (n, 1), dtype=be.real(X[..., :1, :1, :1]).dtype), backend_name)
+
+    f_prev = None
+    for _ in range(iter_max):
+        r_Sigma = r_tau = None
+        for t in range(T):
+            g_S, g_t = _rgrad_scaled_gaussian(X[..., t, :, :], Sigma, tau, manifold, be)
+            r_Sigma, r_tau = (g_S, g_t) if r_Sigma is None else (r_Sigma + g_S, r_tau + g_t)
+        r_Sigma, r_tau = r_Sigma / T, r_tau / T
+
+        f0 = sum(_neg_log_likelihood_scaled_gaussian(X[..., t, :, :], Sigma, tau, be)
+                 for t in range(T)) / T
+        alpha, accepted = alpha_0, False
+        for _ in range(40):
+            Sigma_new, tau_new = manifold.retr(
+                [Sigma, tau[..., 0]], [-alpha * r_Sigma, -alpha * r_tau[..., 0]])
+            tau_new = tau_new[..., None]
+            f_new = sum(_neg_log_likelihood_scaled_gaussian(X[..., t, :, :], Sigma_new, tau_new, be)
+                        for t in range(T)) / T
+            if bool(be.all(be.isfinite(f_new) & (f_new < f0))):
+                Sigma, tau = Sigma_new, tau_new
+                accepted = True
+                break
+            alpha *= 0.5
+        if not accepted:
+            break
+        f_cur = float(be.real(be.max(f_new)))
+        if f_prev is not None and abs(f_prev - f_cur) <= tol * max(abs(f_prev), 1.0):
+            break
+        f_prev = f_cur
+
+    return Sigma, tau

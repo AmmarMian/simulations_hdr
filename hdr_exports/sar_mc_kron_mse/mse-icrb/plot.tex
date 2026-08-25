@@ -1,0 +1,229 @@
+% This file was created with matplot2tikz v0.5.3.
+\begin{tikzpicture}
+
+\definecolor{cornflowerblue92168211}{RGB}{92,168,211}
+\definecolor{darkgray176}{RGB}{176,176,176}
+\definecolor{indianred224107107}{RGB}{224,107,107}
+\definecolor{slategray107114128}{RGB}{107,114,128}
+
+\begin{groupplot}[group style={group size=1 by 3, horizontal sep=1.4cm, vertical sep=1.5cm}]
+\nextgroupplot[
+height=5cm,
+label style={font=\footnotesize},
+legend cell align={left},
+legend style={
+  fill opacity=0.8,
+  draw opacity=1,
+  text opacity=1,
+  at={(1.02,1)},
+  anchor=north west,
+  draw=none
+},
+legend style={draw=none, fill=white, fill opacity=0.9, text opacity=1, font=\footnotesize},
+log basis x={10},
+log basis y={10},
+scaled x ticks=manual:{}{\pgfmathparse{#1}},
+tick align=outside,
+tick label style={font=\scriptsize},
+tick pos=left,
+title style={font=\footnotesize, yshift=-2pt},
+width=\textwidth,
+x grid style={darkgray176},
+xmin=1.46582287710854, xmax=1364.42133032142,
+xmode=log,
+xtick style={color=black},
+xticklabels={},
+y grid style={darkgray176},
+ylabel={\(\displaystyle \delta^2(\widehat{A}, A)\)},
+ymin=0.000105367752356983, ymax=0.43555611672202,
+ymode=log,
+ytick style={color=black}
+]
+\addplot [semithick, cornflowerblue92168211, mark=*, mark size=1.5, mark options={solid}]
+table {%
+2 0.0895362072745407
+3 0.0585250003243519
+6 0.0283818747888864
+10 0.0170455421867386
+19 0.00901766335281634
+33 0.00505913064871527
+59 0.00286068707341474
+104 0.00159307677379477
+183 0.000909619674187899
+323 0.000513237021196533
+568 0.000289219537766023
+1000 0.000165293174984273
+};
+\addlegendentry{hors ligne}
+\addplot [semithick, indianred224107107, dashed, mark=square*, mark size=1.5, mark options={solid}]
+table {%
+2 0.298308198788178
+3 0.184877961657095
+6 0.075956608098067
+10 0.0379719601807544
+19 0.0156387605264035
+33 0.0074149722444299
+59 0.0035322310049275
+104 0.00177689296271305
+183 0.000942238911006688
+323 0.000506127381157759
+568 0.000276611778717077
+1000 0.000155866462051673
+};
+\addlegendentry{en ligne}
+\addplot [semithick, slategray107114128, dotted]
+table {%
+2 0.0769230769230769
+3 0.0512820512820513
+6 0.0256410256410256
+10 0.0153846153846154
+19 0.00809716599190283
+33 0.00466200466200466
+59 0.00260756192959583
+104 0.0014792899408284
+183 0.000840689365279529
+323 0.000476303881876637
+568 0.000270855904658722
+1000 0.000153846153846154
+};
+\addlegendentry{ICRB}
+
+\nextgroupplot[
+height=5cm,
+label style={font=\footnotesize},
+legend style={draw=none, fill=white, fill opacity=0.9, text opacity=1, font=\footnotesize},
+log basis x={10},
+log basis y={10},
+scaled x ticks=manual:{}{\pgfmathparse{#1}},
+tick align=outside,
+tick label style={font=\scriptsize},
+tick pos=left,
+title style={font=\footnotesize, yshift=-2pt},
+width=\textwidth,
+x grid style={darkgray176},
+xmin=1.46582287710854, xmax=1364.42133032142,
+xmode=log,
+xtick style={color=black},
+xticklabels={},
+y grid style={darkgray176},
+ylabel={\(\displaystyle \delta^2(\widehat{B}, B)\)},
+ymin=0.000265041072798692, ymax=0.957215117111117,
+ymode=log,
+ytick style={color=black}
+]
+\addplot [semithick, cornflowerblue92168211, mark=*, mark size=1.5, mark options={solid}]
+table {%
+2 0.223442198207922
+3 0.145881632952956
+6 0.0722976463209531
+10 0.0427686063373079
+19 0.0222007256115457
+33 0.0127560528414048
+59 0.00702757966477109
+104 0.00402917584783066
+183 0.00229644388946967
+323 0.00131546089002939
+568 0.000738738696475272
+1000 0.000417911639911611
+};
+\addplot [semithick, indianred224107107, dashed, mark=square*, mark size=1.5, mark options={solid}]
+table {%
+2 0.659623435999464
+3 0.423009213413227
+6 0.18068115775155
+10 0.092296437960212
+19 0.0388002111167975
+33 0.0185913474984134
+59 0.0088901378677693
+104 0.00454924646454687
+183 0.00241223010235015
+323 0.0013014865625888
+568 0.000708554832091816
+1000 0.000396190985679097
+};
+\addplot [semithick, slategray107114128, dotted]
+table {%
+2 0.192307692307692
+3 0.128205128205128
+6 0.0641025641025641
+10 0.0384615384615385
+19 0.0202429149797571
+33 0.0116550116550117
+59 0.00651890482398957
+104 0.00369822485207101
+183 0.00210172341319882
+323 0.00119075970469159
+568 0.000677139761646804
+1000 0.000384615384615385
+};
+
+\nextgroupplot[
+height=5cm,
+label style={font=\footnotesize},
+legend style={draw=none, fill=white, fill opacity=0.9, text opacity=1, font=\footnotesize},
+log basis x={10},
+log basis y={10},
+tick align=outside,
+tick label style={font=\scriptsize},
+tick pos=left,
+title style={font=\footnotesize, yshift=-2pt},
+width=\textwidth,
+x grid style={darkgray176},
+xlabel={\(\displaystyle T\)},
+xmin=1.46582287710854, xmax=1364.42133032142,
+xmode=log,
+xtick style={color=black},
+y grid style={darkgray176},
+ylabel={\(\displaystyle \delta^2(\widehat{\tau}, \tau)\)},
+ymin=0.000679756960637363, ymax=18.9518906932137,
+ymode=log,
+ytick style={color=black}
+]
+\addplot [semithick, cornflowerblue92168211, mark=*, mark size=1.5, mark options={solid}]
+table {%
+2 0.62939263893048
+3 0.399075723270863
+6 0.189948284844598
+10 0.110562649303202
+19 0.0572000061557415
+33 0.0329593198533713
+59 0.0185635734230305
+104 0.0105403685209879
+183 0.00601958547457693
+323 0.00336165607452135
+568 0.00191544104491014
+1000 0.00108246210984381
+};
+\addplot [semithick, indianred224107107, dashed, mark=square*, mark size=1.5, mark options={solid}]
+table {%
+2 11.9012753414614
+3 6.61131749236055
+6 2.40270177384308
+10 1.11187634892263
+19 0.407163190079277
+33 0.169399542992606
+59 0.0664542272658375
+104 0.0274448661447658
+183 0.0118502375814403
+323 0.00532110882038997
+568 0.00255664425714164
+1000 0.00129075124845587
+};
+\addplot [semithick, slategray107114128, dotted]
+table {%
+2 0.541666666666667
+3 0.361111111111111
+6 0.180555555555556
+10 0.108333333333333
+19 0.0570175438596491
+33 0.0328282828282828
+59 0.018361581920904
+104 0.0104166666666667
+183 0.00591985428051002
+323 0.00335397316821465
+568 0.00190727699530516
+1000 0.00108333333333333
+};
+\end{groupplot}
+
+\end{tikzpicture}

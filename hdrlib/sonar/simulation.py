@@ -32,6 +32,7 @@ def make_sonar_covariance(
     beta: float = 3e-4,
     rho1: float = 0.4,
     rho2: float = 0.9,
+    zero_cross_blocks: bool = False,
 ) -> np.ndarray:
     """Two-array Toeplitz cross-covariance M of shape (2m, 2m).
 
@@ -46,22 +47,21 @@ def make_sonar_covariance(
       - M_22 is strongly correlated (Toeplitz with rho2=0.9)
       - M_12 is non-zero only near the crossing centre
     """
-    # The crossing point is placed at a half-integer coordinate so that no
-    # sensor from either array occupies the exact same 2-D position.
-    # Array 1 (horizontal): element j at position (j,   c_half), y = c_half
-    # Array 2 (vertical):   element j at position (c_half, j), x = c_half
-    # Using c_half = m/2 - 0.5 (= (m-1)/2 as a float) ensures the crossing
-    # lies between sensors for any m — avoiding the perfectly correlated
-    # (singular) case that arises when m is even and c = m//2 is integer.
-    c_half = m / 2.0 - 0.5   # e.g. 3.5 for m=8, 31.5 for m=64
-
-    j_idx = np.arange(m, dtype=float)
-    # Array 1 positions: (j, c_half)  — x varies, y is fixed
-    x1 = j_idx
-    y1 = np.full(m, c_half)
-    # Array 2 positions: (c_half, j) — x is fixed, y varies
-    x2 = np.full(m, c_half)
-    y2 = j_idx
+    # Sensor positions follow CovModel2D.m, in units of the inter-sensor
+    # spacing.  Array 1 runs along x through the origin and keeps m of its
+    # m+1 nominal positions by dropping the last one; array 2 runs along y and
+    # drops its CENTRAL element, so that no sensor sits at the crossing twice:
+    #     array 1:  x = -m/2 ... m/2-1,          y = 0
+    #     array 2:  x = 0,   y = m/2 ... 1, -1 ... -m/2   (decreasing)
+    # The asymmetry between the two is deliberate in the reference code, and it
+    # is what sets the cross-correlation block M_12; a symmetric convention
+    # changes M_12 and no longer matches the published figures.
+    half = m // 2
+    x1 = np.arange(-half, m - half, dtype=float)
+    y1 = np.zeros(m)
+    x2 = np.zeros(m)
+    y2 = np.concatenate([np.arange(half, 0, -1, dtype=float),
+                         np.arange(-1, -half - 1, -1, dtype=float)])
 
     xs = np.concatenate([x1, x2])   # (2m,)
     ys = np.concatenate([y1, y2])   # (2m,)
@@ -69,6 +69,11 @@ def make_sonar_covariance(
     dx = np.abs(xs[:, None] - xs[None, :])   # (2m, 2m)
     dy = np.abs(ys[:, None] - ys[None, :])   # (2m, 2m)
     M = beta * (rho1 ** dx) * (rho2 ** dy)
+    if zero_cross_blocks:
+        # The uncorrelated-arrays variant used as one of the matrix-CFAR
+        # overlays of the reference (beta = 100, rho1 = rho2 = 0.1).
+        M[:m, m:] = 0.0
+        M[m:, :m] = 0.0
     return M.astype(np.complex128)
 
 
@@ -76,20 +81,40 @@ def make_sonar_covariance(
 # Steering matrix
 # ---------------------------------------------------------------------------
 
+def sensor_positions(m: int) -> tuple[np.ndarray, np.ndarray]:
+    """Sensor coordinates of the two arrays, in units of the spacing.
+
+    Same convention as make_sonar_covariance and as the reference MATLAB code:
+    array 1 centred on the crossing, array 2 with its central element removed
+    and ordered by DECREASING coordinate. The ordering of array 2 is not a
+    global phase: it reverses its steering vector, so the covariance model and
+    the steering matrix must agree on it.
+    """
+    half = m // 2
+    x1 = np.arange(-half, m - half, dtype=float)
+    x2 = np.concatenate([np.arange(half, 0, -1, dtype=float),
+                         np.arange(-1, -half - 1, -1, dtype=float)])
+    return x1, x2
+
+
 def make_steering_matrix(
     m: int,
     theta1_deg: float,
     theta2_deg: float,
-    d_over_lambda: float = 0.5,
+    d_over_lambda: float = 0.55,
 ) -> np.ndarray:
     """Steering matrix P = blkdiag(p1, p2) of shape (2m, 2).
 
     Array 1 steers to azimuth theta1, array 2 to elevation theta2.
-    Half-wavelength spacing (d/lambda = 0.5) is the default.
+
+    The default d/lambda = 0.55 is the SEAPIX geometry: 5.5 mm spacing for a
+    150 kHz carrier in water at 1500 m/s, hence lambda = 10 mm. It is NOT the
+    half-wavelength value one would assume by default, and the difference
+    shifts every angular pattern.
     """
-    idx = np.arange(m)
-    p1 = np.exp(1j * 2 * np.pi * d_over_lambda * np.sin(np.deg2rad(theta1_deg)) * idx)
-    p2 = np.exp(1j * 2 * np.pi * d_over_lambda * np.sin(np.deg2rad(theta2_deg)) * idx)
+    x1, x2 = sensor_positions(m)
+    p1 = np.exp(1j * 2 * np.pi * d_over_lambda * np.sin(np.deg2rad(theta1_deg)) * x1)
+    p2 = np.exp(1j * 2 * np.pi * d_over_lambda * np.sin(np.deg2rad(theta2_deg)) * x2)
 
     P = np.zeros((2 * m, 2), dtype=np.complex128)
     P[:m, 0] = p1

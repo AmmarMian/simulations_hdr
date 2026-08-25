@@ -346,8 +346,13 @@ def _tyler_matandtext_fixed_point(
 
         # Σ_new = (p/N) * sum_t X_scaled_t^H @ X_scaled_t
         # (batch..., T, p, N) @ (batch..., T, N, p) = (batch..., T, p, p), sum over T
+        # sum_n x_n x_n^H, not sum_n conj(x_n) x_n^T: with the samples held
+        # along the last-but-one axis, that is X^T @ conj(X). The conjugated
+        # form estimates the conjugate of the covariance, which agrees in
+        # expectation only when the true one is real -- and is wrong on every
+        # realisation otherwise.
         Sigma_new = (n_features / n_samples) * (
-            be.swapaxes(X_scaled, -1, -2).conj() @ X_scaled
+            be.swapaxes(X_scaled, -1, -2) @ X_scaled.conj()
         ).sum(-3)
 
         # Trace normalization: Tr(Σ_new) = p

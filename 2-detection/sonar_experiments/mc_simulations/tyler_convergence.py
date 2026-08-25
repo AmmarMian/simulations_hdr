@@ -58,6 +58,9 @@ def main():
     smc.add_tyler_conv_args(parser)
     args = parser.parse_args()
 
+    if args.debug:
+        smc.apply_debug(args, logger)
+
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
     m = args.m
     K = smc.resolve_K(args)

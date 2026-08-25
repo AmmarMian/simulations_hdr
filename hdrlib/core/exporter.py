@@ -228,4 +228,16 @@ def save_tikz(
         ],
         **kwargs,
     )
-    Path(filepath).write_text(_repair_math(code))
+    # matplot2tikz emits "minor xticklabels={}" / "minor yticklabels={}" and the
+    # matching "scaled minor ? ticks=manual:..." for log axes and for the shared
+    # axes of a grid. This pgfplots release does not know those keys, and a
+    # single unknown key aborts the externalised build of the WHOLE document --
+    # with an error pointing at \end{axis}, far from the cause. They carry no
+    # information, so they are dropped here rather than in each experiment.
+    _UNSUPPORTED = (
+        "minor xticklabels=", "minor yticklabels=",
+        "scaled minor x ticks=", "scaled minor y ticks=",
+    )
+    kept = [ln for ln in _repair_math(code).splitlines()
+            if not ln.strip().startswith(_UNSUPPORTED)]
+    Path(filepath).write_text("\n".join(kept) + "\n")

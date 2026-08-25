@@ -26,6 +26,7 @@ def two_array_tyler(
     tol: float = 1e-6,
     iter_max: int = 500,
     backend_name: Union[str, Backend] = "numpy",
+    return_history: bool = False,
 ) -> Array:
     """Two-array Tyler MLE fixed-point for MSG covariance estimation.
 
@@ -39,7 +40,9 @@ def two_array_tyler(
         t2 = x_{2k}^H M̂_{22}⁻¹ x_{2k} / m
         t12 = Re(x_{1k}^H M̂_{12}⁻¹ x_{2k}) / m
 
-    The estimate is trace-normalised to trace(M̂) = 2m at each step.
+    The estimate is determinant-normalised to det(M̂) = 1 at each step,
+    following TylerMIMO.m; see the comment in the loop for why trace
+    normalisation is not usable at this dimension.
 
     Parameters
     ----------
@@ -53,9 +56,17 @@ def two_array_tyler(
         Maximum number of iterations.
     backend_name : str or Backend
 
+    return_history : bool
+        Also return the per-iteration relative deviation
+        ||M^(k) - M^(k-1)||_F / ||M^(k-1)||_F, averaged over the batch. Studying
+        the convergence must go through this flag rather than through a second
+        copy of the iteration: a duplicate silently keeps the bugs the original
+        has been fixed for.
+
     Returns
     -------
-    Array of shape (..., 2m, 2m)
+    Array of shape (..., 2m, 2m), and the (iter_max,) deviation history when
+    return_history is set (NaN for iterations not run).
     """
     be = get_backend_module(backend_name)
     X = get_data_on_device(X, backend_name)
@@ -76,8 +87,9 @@ def two_array_tyler(
     M_hat = get_data_on_device(M_eye_batched, backend_name)
 
     eps = 1e-30  # numerical floor
+    history = np.full(iter_max, np.nan)
 
-    for _ in range(iter_max):
+    for _iter in range(iter_max):
         M_inv = be.linalg.inv(M_hat)   # (..., 2m, 2m) or (2m, 2m)
         iM11 = M_inv[..., :m, :m]
         iM12 = M_inv[..., :m, m:]
@@ -103,12 +115,21 @@ def two_array_tyler(
         x2s = x2 / be.sqrt(tau2[..., None])
         xs  = concatenate(backend_name, [x1s, x2s], axis=-1)  # (..., K, 2m)
 
-        # M̂_new = (1/K) xs^H xs  (outer product summed over K)
-        M_new = be.swapaxes(xs, -1, -2).conj() @ xs / K    # (..., 2m, 2m)
+        # M̂_new = (1/K) sum_k x̃_k x̃_k^H.  With xs holding x̃_k^T along its
+        # last-but-one axis, that is xs^T @ conj(xs); xs^H @ xs would build
+        # sum_k conj(x̃_k) x̃_k^T, the conjugate of the wanted matrix.  The two
+        # agree in expectation whenever the true covariance is real, which is
+        # why this went unnoticed, but they differ on every realisation.
+        M_new = be.swapaxes(xs, -1, -2) @ xs.conj() / K    # (..., 2m, 2m)
 
-        # Trace-normalise: tr(M̂) = 2m
-        tr = be.real(batched_trace(backend_name, M_new))    # (...,) or scalar
-        M_new = M_new * (p / tr[..., None, None])
+        # Determinant-normalise: det(M̂) = 1, as TylerMIMO.m does.
+        # Trace normalisation would be equally valid for the model -- every
+        # detector here is invariant to the scale of M -- but in dimension
+        # 2m = 128 it drives the determinant below the double precision floor,
+        # so det(M) and slogdet(M) underflow to 0 and -inf. Scaling through the
+        # log determinant keeps the whole computation representable.
+        logdet = be.real(be.linalg.slogdet(M_new)[1])       # (...,) or scalar
+        M_new = M_new * be.exp(-logdet / p)[..., None, None]
 
         # Relative Frobenius convergence check
         diff = M_new - M_hat
@@ -117,12 +138,13 @@ def two_array_tyler(
         frob_M = be.sqrt(be.sum(be.abs(M_hat.reshape(*batch, -1)) ** 2, axis=-1))
         rel = frob_d / (frob_M + eps)
 
+        history[_iter] = float(be.mean(rel))
         M_hat = M_new
 
-        if float(be.max(rel)) < tol:
+        if tol > 0 and float(be.max(rel)) < tol:
             break
 
-    return M_hat
+    return (M_hat, history) if return_history else M_hat
 
 
 class TwoArrayTylerEstimator(Estimator):

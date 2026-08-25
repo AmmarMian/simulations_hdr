@@ -126,6 +126,19 @@ _mpl.rcParams.update({
 })
 """
 
+# The same style as EMBEDDED_STYLE_CODE, but as a plain dict literal so a
+# generated plot script can decide WHEN to apply it. This matters: the theme is
+# dark, and a dark theme exported to PGFPlots puts a black background in a
+# manuscript printed on white. Standalone plot scripts must therefore apply it
+# for the on-screen and PDF rendering only, never on the path that writes .tex.
+# The colour cycle is a cycler object, whose repr calls cycler(...): the
+# generated script needs the import to go with it.
+EMBEDDED_STYLE_DICT: str = (
+    "from cycler import cycler\n"
+    "_DARK_STYLE = " + repr(DARK_STYLE_DICT)
+)
+
+
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------

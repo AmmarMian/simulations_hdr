@@ -1,0 +1,49 @@
+{
+  "git_sha": "2052344*",
+  "script": "/Users/ammarmian/Research/HDR/simulations_hdr/2-detection/sar_experiments/mc_simulations/mc_kron_structure_vs_n.py",
+  "args": {
+    "n_trials": 200,
+    "seed": 42,
+    "backend": "numpy",
+    "n_workers": null,
+    "export": true,
+    "export_path": "results/sar_mc_kron_struct/run_manual_20260825_103527",
+    "show_interactive": false,
+    "a": 3,
+    "b": 4,
+    "T": 25,
+    "N_list": [
+      4,
+      6,
+      9,
+      13,
+      20,
+      30,
+      45,
+      70
+    ],
+    "nu": 1.0,
+    "rho_a": "0.3+0.7j",
+    "rho_b": "0.3+0.6j",
+    "offline": "gd",
+    "mm_iter_max": 50,
+    "mm_tol": 1e-08,
+    "gd_iter_max": 200,
+    "gd_tol": 1e-08,
+    "debug": false
+  },
+  "elapsed_s": 18.798,
+  "title": "Ce que la structure ach\u00e8te  (a=3, b=4, T=25, nu=1.0)",
+  "hdr": {
+    "id": "structure-vs-n",
+    "exp": "sar_mc_kron_struct",
+    "run_id": "manual_20260825_103527",
+    "commit_sha": "2052344*",
+    "sha_short": "2052344",
+    "run_date": "2026-08-25",
+    "run_month": "2026-08",
+    "seed": "42",
+    "embed_npy": false,
+    "registered_at": "2026-08-25T10:50:08Z"
+  }
+}

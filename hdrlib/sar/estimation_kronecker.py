@@ -22,8 +22,17 @@ def _kronecker_quadratic_forms(
 ) -> Array:
     """Per-sample quadratic forms via the Kronecker trace identity.
 
-    For x = vec_F(M_i[n]) and Sigma = kron(A, B):
-        Q[n] = Re(x^H Sigma^{-1} x) = Re(trace(A^{-1} M_i[n]^H B^{-1} M_i[n]))
+    For x = vec_col(M_i[n]):
+        Q[n] = Re(trace(A^{-1} M_i[n]^H B^{-1} M_i[n])) = Re(x^H Sigma^{-1} x)
+    with Sigma = kron(A^T, B) = kron(conj(A), B), since
+    vec(M)^H (A^T (x) B)^{-1} vec(M) = trace(M^H B^{-1} M A^{-1}).
+
+    CONVENTION. The A factor estimated everywhere in this module is therefore
+    the TRANSPOSE of the A of the model Sigma = A (x) B: feeding data whose
+    covariance is A (x) B back through these routines returns conj(A), not A.
+    Detection statistics are unaffected (they only depend on the fitted Sigma),
+    but any comparison of an estimate against a ground-truth A must conjugate
+    one side -- see sar.icrb.kronecker_component_errors, which does it.
 
     Parameters
     ----------
@@ -325,16 +334,21 @@ def _rgrad_kronecker_scaled_gaussian(
     iB = be.linalg.inv(B)
     tau_flat = tau[..., 0]  # (..., N)
 
-    # Gradient for A: proj_SHPD(A, M_i.T @ iB.conj() @ M_i.conj())
-    # = proj_SHPD(A, conj(M_i^H @ iB @ M_i))
+    # Gradient for A: proj_SHPD(A, M_i^H @ iB @ M_i).
+    # No conjugation: with q_i = tr(A^-1 M_i^H B^-1 M_i), which is the
+    # quadratic form this module actually implements (Sigma = A^T (x) B),
+    # D q_i[xi_A] = -tr(A^-1 xi_A A^-1 N_A) = -<N_A, xi_A>_A with
+    # N_A = M_i^H B^-1 M_i.  The conjugated form belongs to the Sigma = A (x) B
+    # convention of the reference implementation, and mixing the two makes this
+    # gradient inconsistent with _neg_log_likelihood_kronecker_scaled_gaussian.
     iB_M = iB[..., None, :, :] @ M_i  # (..., N, b, a)
     M_num_A = M_i_H @ iB_M  # (..., N, a, a) = M_i^H @ iB @ M_i
-    M_grad_A = M_num_A.conj()  # (..., N, a, a)
-    weighted_A = (M_grad_A / (b * tau_flat[..., None, None])).sum(-3) / N
+    weighted_A = (M_num_A / (b * tau_flat[..., None, None])).sum(-3) / N
     r_A = -manifold.manifolds[0].proj(A, weighted_A)  # (..., a, a)
 
-    # Gradient for B: proj_SHPD(B, M_i @ iA.conj() @ M_i^H)
-    M_grad_B = M_i @ iA[..., None, :, :].conj() @ M_i_H  # (..., N, b, b)
+    # Gradient for B: proj_SHPD(B, M_i @ iA @ M_i^H), same argument with
+    # q_i = tr(B^-1 M_i A^-1 M_i^H).
+    M_grad_B = M_i @ iA[..., None, :, :] @ M_i_H  # (..., N, b, b)
     weighted_B = (M_grad_B / (a * tau_flat[..., None, None])).sum(-3) / N
     r_B = -manifold.manifolds[1].proj(B, weighted_B)  # (..., b, b)
 
@@ -473,3 +487,104 @@ def _armijo_backtracking_kronecker_scaled_gaussian(
         alpha = be.where(accepted, alpha, alpha * rho)
 
     return alpha, last_A, last_B, last_tau
+
+
+def kronecker_riemannian_gd_h0(
+    X: Array,
+    a: int,
+    b: int,
+    iter_max: int = 200,
+    tol: float = 1e-8,
+    alpha_0: float = 1.0,
+    backend_name: str = "numpy",
+    init: "tuple | None" = None,
+) -> Tuple[Array, Array, Array]:
+    """Offline MLE of (A, B, tau) under H0 by Riemannian gradient descent.
+
+    This is the batch counterpart of OnlineKroneckerEstimator: same manifold,
+    same Fisher metric, same gradient, but the gradient is averaged over all T
+    dates at every iteration and an Armijo line search sets the step.  It is
+    the "GD" reference of Mian et al. (2024), against which the recursive
+    estimator is compared; kronecker_mm_h0 targets the same MLE by a different
+    algorithm and can be used instead.
+
+    Parameters
+    ----------
+    X : Array of shape (..., T, N, p)
+    a, b : int
+    iter_max : int
+        Maximum number of gradient iterations.
+    tol : float
+        Stop when the relative decrease of the negative log-likelihood falls
+        below this value.
+    alpha_0 : float
+        Initial Armijo step.
+    backend_name : str
+    init : (A, B, tau) or None
+        Starting point; identity and ones when None.
+
+    Returns
+    -------
+    A : Array of shape (..., a, a)
+    B : Array of shape (..., b, b)
+    tau : Array of shape (..., N, 1)
+    """
+    be = get_backend_module(backend_name)
+    T, N, p = X.shape[-3], X.shape[-2], X.shape[-1]
+    batch_shape = X.shape[:-3]
+    manifold = KroneckerHermitianPositiveScaledGaussian(a, b, N, backend_name=backend_name)
+
+    if init is None:
+        A = get_data_on_device(
+            be.broadcast_to(be.eye(a, dtype=X.dtype), batch_shape + (a, a)) * 1, backend_name)
+        B = get_data_on_device(
+            be.broadcast_to(be.eye(b, dtype=X.dtype), batch_shape + (b, b)) * 1, backend_name)
+        tau = get_data_on_device(
+            be.ones(batch_shape + (N, 1), dtype=be.real(X[..., :1, :1, :1]).dtype), backend_name)
+    else:
+        A, B, tau = init
+
+    f_prev = None
+    for _ in range(iter_max):
+        # Gradient of the full-data cost: mean over dates of the per-date gradients.
+        r_A = r_B = r_tau = None
+        for t in range(T):
+            g_A, g_B, g_tau = _rgrad_kronecker_scaled_gaussian(
+                X[..., t, :, :], A, B, tau, manifold, be, a, b, backend_name)
+            if r_A is None:
+                r_A, r_B, r_tau = g_A, g_B, g_tau
+            else:
+                r_A, r_B, r_tau = r_A + g_A, r_B + g_B, r_tau + g_tau
+        r_A, r_B, r_tau = r_A / T, r_B / T, r_tau / T
+
+        # Armijo on the full-data cost, evaluated as the mean over dates.
+        tau_v = tau[..., 0]
+        alpha = alpha_0
+        f0 = sum(
+            _neg_log_likelihood_kronecker_scaled_gaussian(
+                X[..., t, :, :], A, B, tau, a, b, backend_name)
+            for t in range(T)
+        ) / T
+        accepted = False
+        for _ in range(40):
+            A_new, B_new, tau_v_new = manifold.retr(
+                [A, B, tau_v], [-alpha * r_A, -alpha * r_B, -alpha * r_tau])
+            tau_new = tau_v_new[..., None]
+            f_new = sum(
+                _neg_log_likelihood_kronecker_scaled_gaussian(
+                    X[..., t, :, :], A_new, B_new, tau_new, a, b, backend_name)
+                for t in range(T)
+            ) / T
+            if bool(be.all(be.isfinite(f_new) & (f_new < f0))):
+                A, B, tau = A_new, B_new, tau_new
+                accepted = True
+                break
+            alpha *= 0.5
+        if not accepted:
+            break
+        f_cur = float(be.real(be.max(f_new)))
+        if f_prev is not None and abs(f_prev - f_cur) <= tol * max(abs(f_prev), 1.0):
+            break
+        f_prev = f_cur
+
+    return A, B, tau

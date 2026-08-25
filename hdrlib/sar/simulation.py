@@ -107,6 +107,42 @@ def make_ab_true(
     )
 
 
+def make_ab_toeplitz(
+    a: int,
+    b: int,
+    rho_a: complex = 0.3 + 0.7j,
+    rho_b: complex = 0.3 + 0.6j,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Unit-determinant Toeplitz Kronecker factors, [A]_ij = rho^|i-j|.
+
+    This is the covariance model actually used to produce the figures of
+    Mian et al., Signal Processing 224 (2024) -- the body text of Section 5.1
+    describes random orthogonal factors with condition number 10, but the
+    published figure captions and the released code both use Toeplitz factors.
+    Kept as the default here so the chapter figures match the published ones.
+
+    Parameters
+    ----------
+    a, b : int
+        Sizes of the two Kronecker factors.
+    rho_a, rho_b : complex
+        Toeplitz correlation coefficients, |rho| < 1.
+
+    Returns
+    -------
+    A : np.ndarray of shape (a, a), complex128, det = 1
+    B : np.ndarray of shape (b, b), complex128, det = 1
+    """
+    def _toeplitz_det1(n: int, rho: complex) -> np.ndarray:
+        idx = np.arange(n)
+        d = idx[:, None] - idx[None, :]
+        M = np.where(d >= 0, np.power(rho, np.abs(d)), np.conj(np.power(rho, np.abs(d))))
+        M = M.astype(np.complex128)
+        return M / np.abs(np.linalg.det(M)) ** (1.0 / n)
+
+    return _toeplitz_det1(a, rho_a), _toeplitz_det1(b, rho_b)
+
+
 def generate_kronecker_data(
     n_trials: int,
     T_max: int,
@@ -116,14 +152,25 @@ def generate_kronecker_data(
     A_true: np.ndarray,
     B_true: np.ndarray,
     seed: int = 0,
-    tau_shape: float = 1.0,
+    tau_shape: "float | None" = 1.0,
     tau_scale: float = 1.0,
-) -> np.ndarray:
-    """Kronecker SIRV data under H0: x_{t,n} ~ CN(0, tau_{t,n} * kron(A, B)).
+    tau_per_date: bool = False,
+    return_tau: bool = False,
+) -> "np.ndarray | tuple[np.ndarray, np.ndarray]":
+    """Kronecker SIRV data under H0: x_{t,n} ~ CN(0, tau_n * kron(A, B)).
 
-    Uses the identity vec_F(M) ~ CN(0, kron(A,B)) when M = L_B @ G @ L_A^H,
-    G ~ CN(0, I_{b×a}). Texture tau_{t,n} ~ Gamma(tau_shape, tau_scale),
-    drawn independently per sample and per date.
+    Uses the identity vec_col(M) ~ CN(0, kron(A,B)) when M = L_B @ G @ L_A^T,
+    G ~ CN(0, I_{b×a}). Note the transpose, not the conjugate transpose:
+    M = L_B @ G @ L_A^H would give kron(conj(A), B) instead, which is
+    indistinguishable in online-vs-offline comparisons but wrong as soon as
+    an estimate is compared to the ground truth A. Texture tau_n ~ Gamma(tau_shape, tau_scale), drawn once
+    per sample and held FIXED across dates.
+
+    Holding tau fixed across dates is what H0 means for this model: the null
+    hypothesis is theta^(t) = theta^(0) for every t, and theta = {A, B, tau}
+    includes the textures. Re-drawing tau at each date leaves nothing for the
+    estimator to converge to, so the ICRB on tau cannot be approached and the
+    H0 statistic no longer telescopes. Same convention as generate_dcg_data().
 
     Parameters
     ----------
@@ -132,10 +179,17 @@ def generate_kronecker_data(
     A_true, B_true : np.ndarray  — SHPD ground truth
     seed : int
     tau_shape, tau_scale : float  — Gamma texture parameters
+    tau_per_date : bool
+        Re-draw the textures at every date. NOT the H0 model — kept only to
+        reproduce earlier runs. Default False.
+    return_tau : bool
+        Also return the ground-truth textures, needed for MSE/ICRB studies.
 
     Returns
     -------
-    np.ndarray of shape (n_trials, T_max, n_samples, p), complex128
+    X : np.ndarray of shape (n_trials, T_max, n_samples, p), complex128
+    tau : np.ndarray of shape (n_trials, n_samples), float64
+        Only when return_tau is True (and tau_per_date is False).
     """
     p = a * b
     rng = np.random.default_rng(seed)
@@ -145,11 +199,20 @@ def generate_kronecker_data(
         rng.standard_normal((n_trials, T_max, n_samples, b, a)) +
         1j * rng.standard_normal((n_trials, T_max, n_samples, b, a))
     ) / np.sqrt(2)
-    tau = rng.gamma(tau_shape, tau_scale, size=(n_trials, T_max, n_samples, 1, 1))
+    tau_size = (n_trials, T_max, n_samples, 1, 1) if tau_per_date else (n_trials, 1, n_samples, 1, 1)
+    # tau_shape None means deterministic unit texture, i.e. the Gaussian sub-case.
+    tau = (np.ones(tau_size) if tau_shape is None
+           else rng.gamma(tau_shape, tau_scale, size=tau_size))
     # M = sqrt(tau) * L_B @ G @ L_A^H, shape (..., b, a)
-    M = np.sqrt(tau) * (L_B @ G @ L_A.conj().T)
+    M = np.sqrt(tau) * (L_B @ G @ L_A.T)
     # Fortran-order flatten M (b×a) → x (p,): swapaxes then C-reshape = vec_F
-    return M.swapaxes(-1, -2).reshape(n_trials, T_max, n_samples, p).astype(np.complex128)
+    X = M.swapaxes(-1, -2).reshape(n_trials, T_max, n_samples, p).astype(np.complex128)
+    if not return_tau:
+        return X
+    if tau_per_date:
+        raise ValueError("return_tau is meaningless when tau_per_date is True: "
+                         "there is no single ground-truth texture vector to compare to.")
+    return X, tau[:, 0, :, 0, 0]
 
 
 def generate_kronecker_data_h1(
@@ -164,13 +227,19 @@ def generate_kronecker_data_h1(
     B2: np.ndarray,
     seed: int = 0,
     n_change_dates: int = 2,
-    tau_shape: float = 1.0,
+    tau_shape: "float | None" = 1.0,
     tau_scale: float = 1.0,
+    tau_per_date: bool = False,
 ) -> np.ndarray:
     """Kronecker SIRV data under H1: change point at date n_change_dates.
 
-    Dates 0..n_change_dates-1: kron(A1, B1) with Gamma textures.
-    Dates n_change_dates..T_max-1: kron(A2, B2) with fresh Gamma textures.
+    Dates 0..n_change_dates-1: kron(A1, B1) with textures tau^(0).
+    Dates n_change_dates..T_max-1: kron(A2, B2) with fresh textures tau^(1).
+
+    Each segment holds its texture vector fixed across its dates, so that each
+    segment is a valid H0 stretch and the change is exactly a change of
+    theta = {A, B, tau}. Set tau_per_date to re-draw at every date (not the
+    model; kept only to reproduce earlier runs).
 
     Returns
     -------
@@ -193,11 +262,16 @@ def generate_kronecker_data_h1(
         1j * rng.standard_normal((n_trials, n_h1, n_samples, b, a))
     ) / np.sqrt(2)
 
-    tau0 = rng.gamma(tau_shape, tau_scale, size=(n_trials, n_change_dates, n_samples, 1, 1))
-    tau1 = rng.gamma(tau_shape, tau_scale, size=(n_trials, n_h1, n_samples, 1, 1))
+    size0 = (n_trials, n_change_dates, n_samples, 1, 1) if tau_per_date else (n_trials, 1, n_samples, 1, 1)
+    size1 = (n_trials, n_h1, n_samples, 1, 1) if tau_per_date else (n_trials, 1, n_samples, 1, 1)
+    if tau_shape is None:
+        tau0, tau1 = np.ones(size0), np.ones(size1)
+    else:
+        tau0 = rng.gamma(tau_shape, tau_scale, size=size0)
+        tau1 = rng.gamma(tau_shape, tau_scale, size=size1)
 
-    M0 = np.sqrt(tau0) * (L_B1 @ G0 @ L_A1.conj().T)
-    M1 = np.sqrt(tau1) * (L_B2 @ G1 @ L_A2.conj().T)
+    M0 = np.sqrt(tau0) * (L_B1 @ G0 @ L_A1.T)
+    M1 = np.sqrt(tau1) * (L_B2 @ G1 @ L_A2.T)
 
     X0 = M0.swapaxes(-1, -2).reshape(n_trials, n_change_dates, n_samples, p)
     X1 = M1.swapaxes(-1, -2).reshape(n_trials, n_h1, n_samples, p)

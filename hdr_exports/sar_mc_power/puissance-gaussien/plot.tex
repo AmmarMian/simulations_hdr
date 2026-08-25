@@ -1,0 +1,93 @@
+% This file was created with matplot2tikz v0.5.3.
+\begin{tikzpicture}
+
+\definecolor{cornflowerblue92168211}{RGB}{92,168,211}
+\definecolor{darkgray176}{RGB}{176,176,176}
+\definecolor{indianred224107107}{RGB}{224,107,107}
+\definecolor{slategray107114128}{RGB}{107,114,128}
+
+\begin{axis}[
+height=5cm,
+label style={font=\footnotesize},
+legend cell align={left},
+legend style={
+  fill opacity=0.8,
+  draw opacity=1,
+  text opacity=1,
+  at={(1.02,1)},
+  anchor=north west,
+  draw=none
+},
+legend style={draw=none, fill=white, fill opacity=0.9, text opacity=1, font=\footnotesize},
+log basis x={10},
+tick align=outside,
+tick label style={font=\scriptsize},
+tick pos=left,
+title style={font=\footnotesize, yshift=-2pt},
+width=\textwidth,
+x grid style={darkgray176},
+xlabel={\(\displaystyle T\)},
+xmin=1.70440065114704, xmax=57.4982178832467,
+xmode=log,
+xtick style={color=black},
+y grid style={darkgray176},
+ylabel={puissance},
+ymin=-0.02, ymax=1.05,
+ytick style={color=black}
+]
+\addplot [semithick, cornflowerblue92168211, mark=*, mark size=1.5, mark options={solid}]
+table {%
+2 0.182
+3 0.2156
+5 0.3162
+7 0.486
+12 0.714
+19 0.8972
+31 0.9894
+49 0.9986
+};
+\addlegendentry{K-SG}
+\addplot [semithick, cornflowerblue92168211, dashed, mark=square*, mark size=1.5, mark options={solid}]
+table {%
+2 0.0674
+3 0.056
+5 0.0112
+7 0.0114
+12 0.0124
+19 0.0192
+31 0.0272
+49 0.0446
+};
+\addlegendentry{K-SG-O}
+\addplot [semithick, indianred224107107, mark=*, mark size=1.5, mark options={solid}]
+table {%
+2 0
+3 0
+5 0
+7 0
+12 0
+19 0
+31 0
+49 0
+};
+\addlegendentry{SG}
+\addplot [semithick, indianred224107107, dashed, mark=square*, mark size=1.5, mark options={solid}]
+table {%
+2 0.0116
+3 0.0128
+5 0.0084
+7 0.0102
+12 0.0106
+19 0.0096
+31 0.01
+49 0.01
+};
+\addlegendentry{SG-O}
+\addplot [slategray107114128, dotted, forget plot]
+table {%
+1.70440065114704 0.00999999999999998
+57.4982178832467 0.00999999999999998
+};
+\end{axis}
+
+\end{tikzpicture}

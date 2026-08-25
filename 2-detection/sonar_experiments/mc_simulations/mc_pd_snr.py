@@ -246,6 +246,9 @@ def main():
              f"Default {_CHUNK}.")
     args = parser.parse_args()
 
+    if args.debug:
+        smc.apply_debug(args, logger, n_trials_h0=200, n_trials_h1=200, n_snr=12)
+
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
     m = args.m
     K = smc.resolve_K(args)

@@ -61,6 +61,9 @@ def _build_detectors(m, M, P, backend_name="numpy"):
         "M-ANMF-G-TYL":  det.AdaptiveSonarDetector(det.MNMFGlrt(m, M, P, backend_name), tyl_est),
         "M-ANMF-R-TYL":  det.AdaptiveSonarDetector(det.MNMFRao(m, M, P, backend_name),  tyl_est),
         "M-ANMF-G-SCM":  det.AdaptiveSonarDetector(det.MNMFGlrt(m, M, P, backend_name), scm_est),
+        # The Rao/SCM pair completes the symmetry of the two panels: each panel
+        # shows the same three levels of knowledge on M (known, SCM, Tyler).
+        "M-ANMF-R-SCM":  det.AdaptiveSonarDetector(det.MNMFRao(m, M, P, backend_name),  scm_est),
     }
 
 
@@ -151,6 +154,9 @@ def main():
         help=f"Trials per worker chunk (numpy/Pool) or per GPU memory batch (non-numpy). "
              f"Default {_CHUNK}.")
     args = parser.parse_args()
+
+    if args.debug:
+        smc.apply_debug(args, logger, n_trials=200, n_thresh=60)
 
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
     m = args.m

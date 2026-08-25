@@ -114,3 +114,59 @@ sha       = "5dd225a"
 run_date  = "2026-07-02"
 seed      = "42"
 embed_npy = false
+
+[figures.mse-icrb]
+exp       = "sar_mc_kron_mse"
+run_id    = manual_20260825_103527
+sha       = "2052344"
+run_date  = "2026-08-25"
+seed      = "42"
+embed_npy = false
+
+[figures.structure-vs-n]
+exp       = "sar_mc_kron_struct"
+run_id    = manual_20260825_103527
+sha       = "2052344"
+run_date  = "2026-08-25"
+seed      = "42"
+embed_npy = false
+
+[figures.puissance-k]
+exp       = "sar_mc_power"
+run_id    = manual_20260825_103527
+sha       = "2052344"
+run_date  = "2026-08-25"
+seed      = "42"
+embed_npy = false
+
+[figures.puissance-gaussien]
+exp       = "sar_mc_power_gauss"
+run_id    = manual_20260825_103527
+sha       = "2052344"
+run_date  = "2026-08-25"
+seed      = "42"
+embed_npy = false
+
+[figures.pd-rsb]
+exp       = "sonar_pd_snr"
+run_id    = debug_20260825_120829
+sha       = "2052344"
+run_date  = "2026-08-25"
+seed      = "42"
+embed_npy = false
+
+[figures.seuil-pfa]
+exp       = "sonar_pfa_threshold"
+run_id    = debug_20260825_120829
+sha       = "2052344"
+run_date  = "2026-08-25"
+seed      = "42"
+embed_npy = false
+
+[figures.convergence-tyler]
+exp       = "sonar_tyler_conv"
+run_id    = debug_20260825_120829
+sha       = "2052344"
+run_date  = "2026-08-25"
+seed      = "42"
+embed_npy = false

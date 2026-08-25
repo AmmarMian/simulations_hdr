@@ -119,6 +119,17 @@ json_path = run_dir / f"{stem}.json"
 npy_path  = run_dir / f"{stem}.npy"
 
 sidecar: dict = {}
+if not json_path.exists():
+    # A run may export several figures from one result set, in which case the
+    # .tex carries a figure suffix ("<stem>_mse.tex") that the sidecar does not
+    # ("<stem>.json"). Fall back to the longest sidecar stem that prefixes the
+    # figure stem, so provenance is still picked up.
+    candidates = [q for q in run_dir.glob("*.json")
+                  if stem.startswith(q.stem) and q.name != "group_info.json"]
+    if candidates:
+        json_path = max(candidates, key=lambda q: len(q.stem))
+        npy_path = run_dir / f"{json_path.stem}.npy"
+
 if json_path.exists():
     sidecar = json.loads(json_path.read_text())
 else:

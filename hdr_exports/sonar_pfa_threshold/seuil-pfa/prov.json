@@ -1,0 +1,43 @@
+{
+  "git_sha": "2052344*",
+  "script": "/Users/ammarmian/Research/HDR/simulations_hdr/2-detection/sonar_experiments/mc_simulations/mc_pfa_threshold.py",
+  "args": {
+    "n_trials": 200,
+    "seed": 42,
+    "backend": "numpy",
+    "n_workers": null,
+    "export": true,
+    "export_path": "results/sonar_pfa_threshold/run_debug_20260825_120829",
+    "show_interactive": false,
+    "m": 64,
+    "beta": 0.0003,
+    "rho1": 0.4,
+    "rho2": 0.9,
+    "K_secondary": null,
+    "theta1": 45.0,
+    "theta2": 45.0,
+    "clutter": "gaussian",
+    "nu": 0.5,
+    "snr_min": -25.0,
+    "snr_max": 5.0,
+    "n_snr": 150,
+    "pfa": 0.01,
+    "debug": true,
+    "n_thresh": 60,
+    "chunk_size": 200
+  },
+  "elapsed_s": 4.332,
+  "title": "PFA vs threshold \u2014 sonar (m=64, K=256, gaussian clutter)",
+  "hdr": {
+    "id": "seuil-pfa",
+    "exp": "sonar_pfa_threshold",
+    "run_id": "debug_20260825_120829",
+    "commit_sha": "2052344*",
+    "sha_short": "2052344",
+    "run_date": "2026-08-25",
+    "run_month": "2026-08",
+    "seed": "42",
+    "embed_npy": false,
+    "registered_at": "2026-08-25T10:50:08Z"
+  }
+}

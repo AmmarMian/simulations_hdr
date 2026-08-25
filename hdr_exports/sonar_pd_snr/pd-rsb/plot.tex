@@ -1,0 +1,201 @@
+% This file was created with matplot2tikz v0.5.3.
+\begin{tikzpicture}
+
+\definecolor{cornflowerblue92168211}{RGB}{92,168,211}
+\definecolor{darkgray176}{RGB}{176,176,176}
+\definecolor{indianred224107107}{RGB}{224,107,107}
+\definecolor{mediumpurple165123197}{RGB}{165,123,197}
+\definecolor{mediumseagreen107191107}{RGB}{107,191,107}
+\definecolor{mediumturquoise80200192}{RGB}{80,200,192}
+\definecolor{sandybrown22416080}{RGB}{224,160,80}
+
+\begin{axis}[
+height=5cm,
+label style={font=\footnotesize},
+legend cell align={left},
+legend style={
+  fill opacity=0.8,
+  draw opacity=1,
+  text opacity=1,
+  at={(1.02,1)},
+  anchor=north west,
+  draw=none
+},
+legend style={draw=none, fill=white, fill opacity=0.9, text opacity=1, font=\footnotesize},
+tick align=outside,
+tick label style={font=\scriptsize},
+tick pos=left,
+title style={font=\footnotesize, yshift=-2pt},
+width=\textwidth,
+x grid style={darkgray176},
+xlabel={SNR (dB)},
+xmin=-26.5, xmax=6.5,
+xtick style={color=black},
+y grid style={darkgray176},
+ylabel={PD},
+ymin=-0.02, ymax=1.02,
+ytick style={color=black}
+]
+\addplot [semithick, cornflowerblue92168211]
+table {%
+-25 0.015
+-22.2727272727273 0.025
+-19.5454545454545 0.055
+-16.8181818181818 0.135
+-14.0909090909091 0.39
+-11.3636363636364 0.84
+-8.63636363636364 1
+-5.90909090909091 1
+-3.18181818181818 1
+-0.454545454545457 1
+2.27272727272727 1
+5 1
+};
+\addlegendentry{M-NMF-G}
+\addplot [semithick, indianred224107107, dashed]
+table {%
+-25 0.015
+-22.2727272727273 0.025
+-19.5454545454545 0.055
+-16.8181818181818 0.15
+-14.0909090909091 0.41
+-11.3636363636364 0.845
+-8.63636363636364 1
+-5.90909090909091 1
+-3.18181818181818 1
+-0.454545454545457 1
+2.27272727272727 1
+5 1
+};
+\addlegendentry{M-NMF-R}
+\addplot [semithick, mediumpurple165123197, dash pattern=on 1pt off 3pt on 3pt off 3pt]
+table {%
+-25 0.02
+-22.2727272727273 0.035
+-19.5454545454545 0.055
+-16.8181818181818 0.16
+-14.0909090909091 0.415
+-11.3636363636364 0.865
+-8.63636363636364 1
+-5.90909090909091 1
+-3.18181818181818 1
+-0.454545454545457 1
+2.27272727272727 1
+5 1
+};
+\addlegendentry{M-NMF-I}
+\addplot [semithick, mediumseagreen107191107, dotted]
+table {%
+-25 0.015
+-22.2727272727273 0.025
+-19.5454545454545 0.02
+-16.8181818181818 0.04
+-14.0909090909091 0.065
+-11.3636363636364 0.135
+-8.63636363636364 0.32
+-5.90909090909091 0.525
+-3.18181818181818 0.84
+-0.454545454545457 0.995
+2.27272727272727 1
+5 1
+};
+\addlegendentry{SA-1}
+\addplot [semithick, sandybrown22416080, dash pattern=on 3pt off 1pt on 1pt off 1pt]
+table {%
+-25 0.02
+-22.2727272727273 0.05
+-19.5454545454545 0.06
+-16.8181818181818 0.185
+-14.0909090909091 0.435
+-11.3636363636364 0.84
+-8.63636363636364 0.995
+-5.90909090909091 1
+-3.18181818181818 1
+-0.454545454545457 1
+2.27272727272727 1
+5 1
+};
+\addlegendentry{SA-2}
+\addplot [semithick, mediumturquoise80200192, dash pattern=on 5pt off 2pt]
+table {%
+-25 0.025
+-22.2727272727273 0.065
+-19.5454545454545 0.085
+-16.8181818181818 0.225
+-14.0909090909091 0.53
+-11.3636363636364 0.905
+-8.63636363636364 1
+-5.90909090909091 1
+-3.18181818181818 1
+-0.454545454545457 1
+2.27272727272727 1
+5 1
+};
+\addlegendentry{MIMO-MF}
+\addplot [semithick, cornflowerblue92168211]
+table {%
+-25 0
+-22.2727272727273 0.01
+-19.5454545454545 0.015
+-16.8181818181818 0.035
+-14.0909090909091 0.07
+-11.3636363636364 0.33
+-8.63636363636364 0.75
+-5.90909090909091 0.955
+-3.18181818181818 1
+-0.454545454545457 1
+2.27272727272727 1
+5 1
+};
+\addlegendentry{M-ANMF-G-TYL}
+\addplot [semithick, indianred224107107, dashed]
+table {%
+-25 0
+-22.2727272727273 0.01
+-19.5454545454545 0.015
+-16.8181818181818 0.035
+-14.0909090909091 0.07
+-11.3636363636364 0.31
+-8.63636363636364 0.73
+-5.90909090909091 0.95
+-3.18181818181818 1
+-0.454545454545457 1
+2.27272727272727 1
+5 1
+};
+\addlegendentry{M-ANMF-R-TYL}
+\addplot [semithick, mediumpurple165123197, dash pattern=on 1pt off 3pt on 3pt off 3pt]
+table {%
+-25 0.015
+-22.2727272727273 0.02
+-19.5454545454545 0.02
+-16.8181818181818 0.035
+-14.0909090909091 0.135
+-11.3636363636364 0.39
+-8.63636363636364 0.745
+-5.90909090909091 1
+-3.18181818181818 1
+-0.454545454545457 1
+2.27272727272727 1
+5 1
+};
+\addlegendentry{M-ANMF-G-SCM}
+\addplot [semithick, mediumseagreen107191107, dotted]
+table {%
+-25 0.015
+-22.2727272727273 0.02
+-19.5454545454545 0.02
+-16.8181818181818 0.035
+-14.0909090909091 0.135
+-11.3636363636364 0.355
+-8.63636363636364 0.75
+-5.90909090909091 1
+-3.18181818181818 1
+-0.454545454545457 1
+2.27272727272727 1
+5 1
+};
+\addlegendentry{M-ANMF-R-SCM}
+\end{axis}
+
+\end{tikzpicture}

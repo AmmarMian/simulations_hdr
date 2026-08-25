@@ -64,6 +64,29 @@ def add_mc_args(parser: argparse.ArgumentParser) -> None:
     g3.add_argument("--pfa", type=float, default=1e-2,
         help="Nominal PFA for PD curves (default 1e-2).")
 
+    parser.add_argument("--debug", action="store_true",
+        help="Tiny configuration, to validate the pipeline in seconds. Results "
+             "are NOT publication grade: see apply_debug for what is reduced.")
+
+
+def apply_debug(args, logger_=None, **overrides):
+    """Shrink *args* to a fast pipeline check and say so.
+
+    Only the Monte-Carlo effort is reduced -- trial counts, grid sizes. The
+    dimension m is deliberately LEFT ALONE: the two-array Tyler estimator needs
+    a large enough array to behave, and at m = 8 its H0 distribution grows a
+    tail two orders of magnitude heavier than at m = 64 (median 1.45 against
+    1.03), which collapses every adaptive detection probability. A debug run
+    that changed m would therefore not be testing the same estimator.
+    """
+    defaults = {"n_trials": 64}
+    for k, v in {**defaults, **overrides}.items():
+        setattr(args, k, v)
+    if logger_ is not None:
+        shown = ", ".join(f"{k}={getattr(args, k)}" for k in sorted({**defaults, **overrides}))
+        logger_.warning(f"--debug: {shown}. Vérification de chaîne, pas un résultat.")
+    return args
+
 
 def add_angle_args(parser: argparse.ArgumentParser) -> None:
     """Add angular-grid arguments for PD-vs-angle experiments."""
@@ -173,79 +196,31 @@ def tyler_relative_deviations(
     tol: float = 0.0,  # 0 → run all iter_max steps
     backend_name: Union[str, Backend] = "numpy",
 ) -> np.ndarray:
-    """Track 2TYL relative Frobenius deviation ||M^(k) - M^(k-1)||_F / ||M^(k-1)||_F.
+    """Track 2TYL relative deviation ||M^(k) - M^(k-1)||_F / ||M^(k-1)||_F.
 
-    Records the per-iteration convergence metric averaged across trials.
+    Thin wrapper over the estimator itself. It used to be a second copy of the
+    fixed-point iteration, which is how it kept, long after the estimator was
+    fixed, both a conjugated update and a trace normalisation whose determinant
+    underflows at 2m = 128 -- and reported a convergence that stalled around
+    1e-3 while the estimator reaches machine precision in some fifty iterations.
 
     Parameters
     ----------
     X_secondary : (K, 2m) or (n_trials, K, 2m)
-        When batched, the **mean** relative deviation across trials is returned.
-    m : int
-    iter_max : int
-    tol : float
-        Set to 0 to always run all iter_max steps.
-    backend_name : str or Backend
+        When batched, the mean relative deviation across trials is returned.
+    m, iter_max, tol, backend_name : see two_array_tyler.
 
     Returns
     -------
-    deviations : (iter_max,) numpy array
+    deviations : (iter_max,) numpy array, NaN past the last iteration run.
     """
-    be = get_backend_module(backend_name)
-    X = get_data_on_device(X_secondary, backend_name)
+    from .estimation import two_array_tyler
 
-    p = 2 * m
-    K = X.shape[-2]
-
-    if X.ndim == 2:
-        X = X[None, :, :]   # (1, K, 2m) — add dummy batch
-
-    n = X.shape[0]
-    x1 = X[:, :, :m]
-    x2 = X[:, :, m:]
-
-    M_eye = np.broadcast_to(np.eye(p, dtype=np.complex128), (n, p, p)).copy()
-    M_hat = get_data_on_device(M_eye, backend_name)
-    deviations = np.full(iter_max, np.nan)
-
-    eps = 1e-30
-    for it in range(iter_max):
-        M_inv = be.linalg.inv(M_hat)
-        iM11 = M_inv[:, :m, :m]
-        iM12 = M_inv[:, :m, m:]
-        iM22 = M_inv[:, m:, m:]
-
-        vx1  = be.swapaxes(iM11 @ be.swapaxes(x1, -1, -2), -1, -2)
-        vx2  = be.swapaxes(iM22 @ be.swapaxes(x2, -1, -2), -1, -2)
-        vx12 = be.swapaxes(iM12 @ be.swapaxes(x2, -1, -2), -1, -2)
-
-        t1  = be.real((x1.conj() * vx1).sum(-1)) / m    # (n, K)
-        t2  = be.real((x2.conj() * vx2).sum(-1)) / m
-        t12 = be.real((x1.conj() * vx12).sum(-1)) / m
-
-        tau1 = be.abs(t1 + be.sqrt(be.abs(t1) / (be.abs(t2) + eps)) * t12) + eps
-        tau2 = be.abs(t2 + be.sqrt(be.abs(t2) / (be.abs(t1) + eps)) * t12) + eps
-
-        x1s = x1 / be.sqrt(tau1[:, :, None])
-        x2s = x2 / be.sqrt(tau2[:, :, None])
-        xs  = concatenate(backend_name, [x1s, x2s], axis=-1)
-
-        M_new = be.swapaxes(xs, -1, -2).conj() @ xs / K
-        tr = be.real(batched_trace(backend_name, M_new))     # (n,)
-        M_new = M_new * (p / tr[:, None, None])
-
-        diff = M_new - M_hat
-        fd = be.sqrt(be.sum(be.abs(diff.reshape(n, -1)) ** 2, axis=-1))
-        fm = be.sqrt(be.sum(be.abs(M_hat.reshape(n, -1)) ** 2, axis=-1))
-        rel = fd / (fm + eps)
-        deviations[it] = float(be.mean(rel))
-
-        M_hat = M_new
-        if tol > 0 and float(be.max(rel)) < tol:
-            deviations[it + 1:] = 0.0
-            break
-
-    return deviations
+    _, history = two_array_tyler(
+        X_secondary, m, tol=tol, iter_max=iter_max,
+        backend_name=backend_name, return_history=True,
+    )
+    return history
 
 
 # ---------------------------------------------------------------------------
@@ -293,42 +268,84 @@ def run_detectors(
 _MC_PFA_THRESHOLD_TEMPLATE = Template("""\
 #!/usr/bin/env python
 # Auto-generated — edit freely to restyle.
-from pathlib import Path
 import argparse
+from pathlib import Path
+
 import numpy as np
 import matplotlib.pyplot as plt
 
-$style_code
-parser = argparse.ArgumentParser()
-parser.add_argument("--tikz", action="store_true")
-parser.add_argument("--no-save", action="store_true")
-parser.add_argument("--use-latex", action="store_true")
+$style_dict
+
+parser = argparse.ArgumentParser("Plot the PFA-threshold relation, Rao and GLRT.")
+parser.add_argument("--tikz", action="store_true",
+    help="Export PGFPlots .tex for the dissertation (light background).")
+parser.add_argument("--no-save", action="store_true", help="Show only, do not save.")
+parser.add_argument("--use-latex", action="store_true", help="LaTeX text rendering.")
 args = parser.parse_args()
-if args.use_latex:
-    import matplotlib as _mpl2
-    _mpl2.rcParams.update({"text.usetex": True})
+
+# The dark theme is for reading on screen. Exported to PGFPlots it would paint a
+# black background into a manuscript printed on white, so it is applied on the
+# viewing path only -- never on the one that writes the .tex.
+if not args.tikz:
+    import matplotlib as _mpl
+    _mpl.rcParams.update(_DARK_STYLE)
+    if args.use_latex:
+        _mpl.rcParams.update({"text.usetex": True})
 
 here = Path(__file__).parent
 stem = $stem_repr
 title = $title_repr
 data = np.load(here / (stem + ".npz"), allow_pickle=True)
 detector_names = data["detector_names"].tolist()
-colors = ["#5ca8d3", "#e06b6b", "#a57bc5", "#6bbf6b", "#e0a050", "#50c8c0"]
 
-fig, ax = plt.subplots(figsize=(7, 5))
-for i, name in enumerate(detector_names):
-    ax.semilogy(data[f"thresh_{name}"], data[f"pfa_{name}"],
-                color=colors[i % len(colors)], label=name)
-ax.set_xlabel("Threshold")
-ax.set_ylabel("PFA")
-ax.set_title(title)
-ax.legend()
+# Two panels, Rao then GLRT, stacked. Putting every detector on one threshold
+# axis is unreadable: the statistics do not share a scale (M-NMF-I is a log
+# statistic, so its thresholds run two orders of magnitude above the GLRT ones,
+# and it is left out of both panels -- it stays in the .npz).
+# The Gaussian reference goes on the Rao panel only: its thresholds are of the
+# same order there, whereas the GLRT statistic is a ratio of scale products
+# living just above 1, and adding it would flatten the three curves that panel
+# exists to separate.
+_REFERENCE = "MIMO-MF"
+rao_names  = [n for n in detector_names if "-R" in n]
+glrt_names = [n for n in detector_names if "-G" in n]
+if _REFERENCE in detector_names:
+    rao_names = rao_names + [_REFERENCE]
+
+# Colour by covariance knowledge, dash by estimator: what the figure compares is
+# the price of estimating M, not which detector is which.
+def _style(name):
+    if name == _REFERENCE:
+        return {"color": "#6b7280", "linestyle": (0, (1, 1)), "linewidth": 1.2}
+    if "TYL" in name:
+        return {"color": "#e0a050", "linestyle": "--"}
+    if "SCM" in name:
+        return {"color": "#e06b6b", "linestyle": "-."}
+    return {"color": "#5ca8d3", "linestyle": "-"}
+
+_LEGEND = dict(loc="upper left", bbox_to_anchor=(1.02, 1.0), frameon=False)
+
+fig, axes = plt.subplots(2, 1, figsize=(7, 8))
+for ax, names, panel in zip(axes, (rao_names, glrt_names), ("Rao", "GLRT")):
+    for name in names:
+        ax.semilogy(data[f"thresh_{name}"], data[f"pfa_{name}"], label=name, **_style(name))
+    ax.set_xlabel("seuil")
+    ax.set_ylabel(r"$$P_{fa}$$")
+    ax.set_title(panel)
+    ax.legend(**_LEGEND)
+if not args.tikz:
+    fig.suptitle(title)
 fig.tight_layout()
+
 if not args.no_save:
     out = here / (stem + "_pfa_threshold.pdf")
-    fig.savefig(out); print(f"Saved {out}")
+    fig.savefig(out)
+    print(f"Saved {out}")
     if args.tikz:
-        import matplot2tikz; matplot2tikz.save(str(here / (stem + "_pfa_threshold.tex")))
+        from hdrlib.core.exporter import save_tikz
+        tex = here / (stem + "_pfa_threshold.tex")
+        save_tikz(str(tex), axis_width=r"\\textwidth", axis_height="5cm")
+
 plt.show()
 """)
 
@@ -340,15 +357,24 @@ import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 
-$style_code
+$style_dict
 parser = argparse.ArgumentParser()
 parser.add_argument("--tikz", action="store_true")
 parser.add_argument("--no-save", action="store_true")
 parser.add_argument("--use-latex", action="store_true")
 args = parser.parse_args()
-if args.use_latex:
-    import matplotlib as _mpl2
-    _mpl2.rcParams.update({"text.usetex": True})
+
+# The dark theme is for reading on screen. Exported to PGFPlots it would paint a
+# black background into a manuscript printed on white, so it is applied on the
+# viewing path only -- never on the one that writes the .tex.
+if not args.tikz:
+    import matplotlib as _mpl
+    _mpl.rcParams.update(_DARK_STYLE)
+    if args.use_latex:
+        _mpl.rcParams.update({"text.usetex": True})
+
+# Legends sit outside the axes: inside, the curves run under the entries.
+_LEGEND = dict(loc="upper left", bbox_to_anchor=(1.02, 1.0), frameon=False)
 
 here = Path(__file__).parent
 stem = $stem_repr
@@ -368,14 +394,17 @@ for i, name in enumerate(detector_names):
 ax.set_xlabel("SNR (dB)")
 ax.set_ylabel("PD")
 ax.set_ylim(-0.02, 1.02)
-ax.set_title(title)
-ax.legend()
+if not args.tikz:
+    ax.set_title(title)
+ax.legend(**_LEGEND)
 fig.tight_layout()
 if not args.no_save:
     out = here / (stem + "_pd_snr.pdf")
     fig.savefig(out); print(f"Saved {out}")
     if args.tikz:
-        import matplot2tikz; matplot2tikz.save(str(here / (stem + "_pd_snr.tex")))
+        from hdrlib.core.exporter import save_tikz
+        save_tikz(str(here / (stem + "_pd_snr.tex")),
+                  axis_width=r"\\textwidth", axis_height="5cm")
 plt.show()
 """)
 
@@ -387,12 +416,22 @@ import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 
-$style_code
+$style_dict
 parser = argparse.ArgumentParser()
 parser.add_argument("--tikz", action="store_true")
 parser.add_argument("--no-save", action="store_true")
 parser.add_argument("--detector", default=None)
 args = parser.parse_args()
+
+# The dark theme is for reading on screen. Exported to PGFPlots it would paint a
+# black background into a manuscript printed on white, so it is applied on the
+# viewing path only -- never on the one that writes the .tex.
+if not args.tikz:
+    import matplotlib as _mpl
+    _mpl.rcParams.update(_DARK_STYLE)
+
+# Legends sit outside the axes: inside, the curves run under the entries.
+_LEGEND = dict(loc="upper left", bbox_to_anchor=(1.02, 1.0), frameon=False)
 
 here = Path(__file__).parent
 stem = $stem_repr
@@ -412,7 +451,8 @@ for name in to_plot:
     plt.colorbar(im, ax=ax, label="PD")
     ax.set_xlabel(r"$$\\theta_1$$ (deg)")
     ax.set_ylabel(r"$$\\theta_2$$ (deg)")
-    ax.set_title(title + f" — {name}")
+    if not args.tikz:
+        ax.set_title(title + f" — {name}")
     fig.tight_layout()
     if not args.no_save:
         out = here / (stem + f"_pd_angle_{name}.pdf")
@@ -428,11 +468,21 @@ import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 
-$style_code
+$style_dict
 parser = argparse.ArgumentParser()
 parser.add_argument("--tikz", action="store_true")
 parser.add_argument("--no-save", action="store_true")
 args = parser.parse_args()
+
+# The dark theme is for reading on screen. Exported to PGFPlots it would paint a
+# black background into a manuscript printed on white, so it is applied on the
+# viewing path only -- never on the one that writes the .tex.
+if not args.tikz:
+    import matplotlib as _mpl
+    _mpl.rcParams.update(_DARK_STYLE)
+
+# Legends sit outside the axes: inside, the curves run under the entries.
+_LEGEND = dict(loc="upper left", bbox_to_anchor=(1.02, 1.0), frameon=False)
 
 here = Path(__file__).parent
 stem = $stem_repr
@@ -446,13 +496,16 @@ ax.semilogy(iterations, deviations, color="#5ca8d3")
 ax.axhline(1e-6, color="#e06b6b", linestyle="--", linewidth=1.2, label=r"$$10^{-6}$$")
 ax.set_xlabel("Iteration")
 ax.set_ylabel(r"Relative deviation $$\\|\\hat{M}^{(k)}-\\hat{M}^{(k-1)}\\| / \\|\\hat{M}^{(k-1)}\\|$$")
-ax.set_title(title)
-ax.legend()
+if not args.tikz:
+    ax.set_title(title)
+ax.legend(**_LEGEND)
 fig.tight_layout()
 if not args.no_save:
     out = here / (stem + "_convergence.pdf")
     fig.savefig(out); print(f"Saved {out}")
     if args.tikz:
-        import matplot2tikz; matplot2tikz.save(str(here / (stem + "_convergence.tex")))
+        from hdrlib.core.exporter import save_tikz
+        save_tikz(str(here / (stem + "_convergence.tex")),
+                  axis_width=r"\\textwidth", axis_height="5cm")
 plt.show()
 """)

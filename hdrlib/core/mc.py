@@ -14,7 +14,7 @@ from string import Template
 import numpy as np
 
 from .exporter import _git_sha
-from .plot_style import EMBEDDED_STYLE_CODE
+from .plot_style import EMBEDDED_STYLE_CODE, EMBEDDED_STYLE_DICT
 
 logger = logging.getLogger(__name__)
 
@@ -199,6 +199,9 @@ class MCResultExporter:
                 stem_repr=repr(full_stem),
                 title_repr=repr(title),
                 style_code=EMBEDDED_STYLE_CODE,
+                # Templates that export to PGFPlots take the dict instead, so
+                # they can apply the dark theme to the on-screen rendering only.
+                style_dict=EMBEDDED_STYLE_DICT,
             )
         )
 

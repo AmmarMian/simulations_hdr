@@ -1,0 +1,89 @@
+% This file was created with matplot2tikz v0.5.3.
+\begin{tikzpicture}
+
+\definecolor{cornflowerblue92168211}{RGB}{92,168,211}
+\definecolor{darkgray176}{RGB}{176,176,176}
+\definecolor{indianred224107107}{RGB}{224,107,107}
+
+\begin{axis}[
+height=5cm,
+label style={font=\footnotesize},
+legend cell align={left},
+legend style={
+  fill opacity=0.8,
+  draw opacity=1,
+  text opacity=1,
+  at={(1.02,1)},
+  anchor=north west,
+  draw=none
+},
+legend style={draw=none, fill=white, fill opacity=0.9, text opacity=1, font=\footnotesize},
+log basis x={10},
+log basis y={10},
+tick align=outside,
+tick label style={font=\scriptsize},
+tick pos=left,
+title style={font=\footnotesize, yshift=-2pt},
+width=\textwidth,
+x grid style={darkgray176},
+xlabel={\(\displaystyle N\)},
+xmin=3.46663477207328, xmax=80.7699738823485,
+xmode=log,
+xtick style={color=black},
+y grid style={darkgray176},
+ylabel={\(\displaystyle \delta^2_{\mathcal{M}}\)},
+ymin=0.00369701384829338, ymax=0.161889573881461,
+ymode=log,
+ytick style={color=black}
+]
+\addplot [semithick, cornflowerblue92168211, mark=*, mark size=1.5, mark options={solid}]
+table {%
+4 0.0233147832541332
+6 0.0159525050224172
+9 0.0121408491355551
+13 0.00933346500175258
+20 0.00732975415768509
+30 0.0058054613688464
+45 0.00504288206267022
+70 0.00438994121535721
+};
+\addlegendentry{Kronecker}
+\addplot [semithick, cornflowerblue92168211, dotted]
+table {%
+4 0.0225
+6 0.0161111111111111
+9 0.0118518518518519
+13 0.00923076923076923
+20 0.00716666666666667
+30 0.00588888888888889
+45 0.00503703703703704
+70 0.00442857142857143
+};
+\addlegendentry{ICRB Kronecker}
+\addplot [semithick, indianred224107107, mark=square*, mark size=1.5, mark options={solid}]
+table {%
+4 0.136336221186819
+6 0.0890602056750955
+9 0.0589364835787556
+13 0.041775386637242
+20 0.0281039615846208
+30 0.0195927266801986
+45 0.0139482758019912
+70 0.0101782921379158
+};
+\addlegendentry{non structuré}
+\addplot [semithick, indianred224107107, dotted]
+table {%
+4 0.1225
+6 0.0827777777777778
+9 0.0562962962962963
+13 0.04
+20 0.0271666666666667
+30 0.0192222222222222
+45 0.0139259259259259
+70 0.0101428571428571
+};
+\addlegendentry{ICRB non structuré}
+\end{axis}
+
+\end{tikzpicture}
