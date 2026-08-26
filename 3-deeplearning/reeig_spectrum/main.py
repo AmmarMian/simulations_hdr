@@ -284,6 +284,34 @@ if __name__ == "__main__":
                 f"{median(record['loewner_max_reeig']):11.3e}"
             )
 
+    # Raw measurements next to the figure, so that a qanat action can redraw
+    # without re-running the sweep. Only the medians and the band are kept: the
+    # per-trial spectra are a few hundred megabytes at the default settings and
+    # nothing downstream reads them.
+    np.savez(
+        os.path.join(args.storage_path, "results.npz"),
+        decays=np.array([record["decay"] for record in records]),
+        ratios=np.array([record["ratio"] for record in records]),
+        n_pixels=np.array([record["n_pixels"] for record in records]),
+        lambda_min=np.array([median(record["lambda_min"]) for record in records]),
+        condition=np.array([median(record["condition"]) for record in records]),
+        fraction_clamped=np.array(
+            [median(record["fraction_clamped"]) for record in records]
+        ),
+        loewner_max=np.array([median(record["loewner_max"]) for record in records]),
+        loewner_max_reeig=np.array(
+            [median(record["loewner_max_reeig"]) for record in records]
+        ),
+        spectra_median=np.stack(
+            [
+                np.median(record["eigenvalues"].flip(-1).cpu().numpy(), axis=0)
+                for record in records
+            ]
+        ),
+        eps=args.eps,
+        n_filters=args.n_filters,
+    )
+
     if args.export:
         figure_path = os.path.join(args.storage_path, "reeig_spectrum.tex")
         save_tikz(

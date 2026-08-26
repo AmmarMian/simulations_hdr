@@ -38,3 +38,7 @@ wheels/
 # MkDocs build output
 site/
 docs/site/
+
+# Ad-hoc experiment outputs of 3-deeplearning (regenerable; the staged copies
+# live in hdr_exports/ as for every other chapter).
+3-deeplearning/**/outputs/

@@ -150,16 +150,21 @@ mesurer l'écart (`stiefel_projection_polar` et
 ```
 
 **Pente 3, pas 2.** La proposition est vraie et *conservatrice* : l'écart est en
-`O(ε³)`. À 1 % de dispersion entre clients, les deux schémas diffèrent de 1e-8
-en norme de Frobenius — c'est-à-dire qu'ils sont identiques. La recommandation
-du chapitre (« `projavg` est recommandée, constantes plus faibles, pas besoin de
-garder l'itérée précédente ») cesse d'être un arbitrage et devient un choix sans
-contrepartie.
+`O(ε³)`. La recommandation du chapitre (« `projavg` est recommandée, constantes
+plus faibles, pas besoin de garder l'itérée précédente ») cesse d'être un
+arbitrage et devient un choix sans contrepartie.
 
-30 lignes, 2 secondes, aucune donnée. À balayer sur `(d₀, d₁, K)` avant
-d'énoncer l'ordre 3 : une seule géométrie a été testée. Si l'ordre 3 tient, il
-faut soit corriger l'énoncé de la proposition, soit dire dans le texte que la
-borne `O(ε²)` est atteinte avec marge.
+**Balayage fait** (`stiefel_aggregation/`) : l'ordre vaut 2,98 à 3,00 sur les
+**neuf** configurations `St(40,20)`, `St(128,32)`, `St(64,60)` × `K ∈ {2,8,32}`.
+Chiffre à retenir pour le texte : à 1 % de dispersion entre clients, l'écart
+entre les deux agrégations vaut ~1e-6 fois le déplacement de l'agrégat
+lui-même — les deux schémas ne sont pas proches, ils sont indiscernables.
+
+Reste à trancher : corriger l'énoncé en `O(ε³)` (il faut alors refaire les deux
+lignes de calcul du bloc `% TODO texte`, le terme d'ordre deux devant
+s'annuler), ou garder `O(ε²)` — qui est correct — en disant que la borne est
+atteinte avec marge. La seconde est la plus sûre tant que l'annulation n'est pas
+établie au tableau : le script mesure, il ne démontre pas.
 
 ---
 

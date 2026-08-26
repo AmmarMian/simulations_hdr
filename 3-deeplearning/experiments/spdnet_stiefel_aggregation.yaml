@@ -1,0 +1,20 @@
+name: spdnet_stiefel_aggregation
+description: Order at which the projavg and rlavg aggregations of prop:spdnet-federe-equivalence coincide on the Stiefel manifold
+path: 3-deeplearning/stiefel_aggregation
+executable: 3-deeplearning/stiefel_aggregation/main.py
+executable_command: uv run python
+tags:
+  - deeplearning
+  - spdnet
+  - stiefel
+  - federated
+params:
+  n_repeats: 20
+  seed: 42
+actions:
+  - register:
+      name: register
+      executable: register_latex.py
+      executable_command: uv run python
+      description: Stage a chosen figure (.tex) to hdr_exports/ for the LaTeX dissertation
+group: "Deep learning · SPDnet"
