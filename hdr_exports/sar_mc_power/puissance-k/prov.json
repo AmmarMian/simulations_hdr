@@ -1,13 +1,13 @@
 {
-  "git_sha": "2052344*",
+  "git_sha": "9512517",
   "script": "/Users/ammarmian/Research/HDR/simulations_hdr/2-detection/sar_experiments/mc_simulations/mc_power_detectors.py",
   "args": {
-    "n_trials": 5000,
+    "n_trials": 1000,
     "seed": 42,
     "backend": "numpy",
     "n_workers": null,
     "export": true,
-    "export_path": "results/sar_mc_power/run_manual_20260825_103527",
+    "export_path": "/Users/ammarmian/Research/HDR/simulations_hdr/results/sar_mc_power/run_34",
     "show_interactive": false,
     "n_features": 8,
     "T_max": 50,
@@ -32,9 +32,10 @@
     "iter_max": 30,
     "tol": 0.0001,
     "with_gaussian": false,
+    "detectors": null,
     "debug": false
   },
-  "elapsed_s": 3533.591,
+  "elapsed_s": 653.103,
   "title": "Puissance \u00e0 $P_{fa}$=0.01  (K, nu=1.0, a=3, b=4, n=13)",
   "T_min": 2,
   "T_max": 49,
@@ -42,13 +43,13 @@
   "hdr": {
     "id": "puissance-k",
     "exp": "sar_mc_power",
-    "run_id": "manual_20260825_103527",
-    "commit_sha": "2052344*",
-    "sha_short": "2052344",
+    "run_id": 34,
+    "commit_sha": "9512517ccb491240113376278795ea74023baaae",
+    "sha_short": "9512517",
     "run_date": "2026-08-25",
     "run_month": "2026-08",
     "seed": "42",
     "embed_npy": false,
-    "registered_at": "2026-08-25T10:50:08Z"
+    "registered_at": "2026-08-26T07:22:51Z"
   }
 }

@@ -1,13 +1,13 @@
 {
-  "git_sha": "2052344*",
+  "git_sha": "9512517",
   "script": "/Users/ammarmian/Research/HDR/simulations_hdr/2-detection/sonar_experiments/mc_simulations/tyler_convergence.py",
   "args": {
-    "n_trials": 64,
+    "n_trials": 1000,
     "seed": 42,
     "backend": "numpy",
     "n_workers": null,
     "export": true,
-    "export_path": "results/sonar_tyler_conv/run_debug_20260825_120829",
+    "export_path": "/Users/ammarmian/Research/HDR/simulations_hdr/results/sonar_tyler_conv/run_38",
     "show_interactive": false,
     "m": 64,
     "beta": 0.0003,
@@ -22,22 +22,22 @@
     "snr_max": 5.0,
     "n_snr": 150,
     "pfa": 0.01,
-    "debug": true,
+    "debug": false,
     "iter_max": 500,
     "K_conv": null
   },
-  "elapsed_s": 37.891,
+  "elapsed_s": 484.205,
   "title": "2TYL convergence (m=64, K=256, gaussian clutter)",
   "hdr": {
     "id": "convergence-tyler",
     "exp": "sonar_tyler_conv",
-    "run_id": "debug_20260825_120829",
-    "commit_sha": "2052344*",
-    "sha_short": "2052344",
+    "run_id": 38,
+    "commit_sha": "9512517ccb491240113376278795ea74023baaae",
+    "sha_short": "9512517",
     "run_date": "2026-08-25",
     "run_month": "2026-08",
     "seed": "42",
     "embed_npy": false,
-    "registered_at": "2026-08-25T10:50:08Z"
+    "registered_at": "2026-08-26T07:23:09Z"
   }
 }

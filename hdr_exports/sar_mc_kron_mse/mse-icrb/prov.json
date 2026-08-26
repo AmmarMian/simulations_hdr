@@ -1,5 +1,5 @@
 {
-  "git_sha": "2052344*",
+  "git_sha": "9512517",
   "script": "/Users/ammarmian/Research/HDR/simulations_hdr/2-detection/sar_experiments/mc_simulations/mc_kron_mse_icrb.py",
   "args": {
     "n_trials": 1000,
@@ -7,7 +7,7 @@
     "backend": "numpy",
     "n_workers": null,
     "export": true,
-    "export_path": "results/sar_mc_kron_mse/run_manual_20260825_103527",
+    "export_path": "/Users/ammarmian/Research/HDR/simulations_hdr/results/sar_mc_kron_mse/run_36",
     "show_interactive": false,
     "n_features": 8,
     "T_max": 1000,
@@ -30,7 +30,7 @@
     "gd_tol": 1e-08,
     "debug": false
   },
-  "elapsed_s": 55.319,
+  "elapsed_s": 48.535,
   "title": "Estimation Kronecker gaussienne \u00e0 \u00e9chelle  (a=3, b=4, n=13, nu=1.0)",
   "T_min": 2,
   "T_max": 1000,
@@ -38,13 +38,13 @@
   "hdr": {
     "id": "mse-icrb",
     "exp": "sar_mc_kron_mse",
-    "run_id": "manual_20260825_103527",
-    "commit_sha": "2052344*",
-    "sha_short": "2052344",
+    "run_id": 36,
+    "commit_sha": "9512517ccb491240113376278795ea74023baaae",
+    "sha_short": "9512517",
     "run_date": "2026-08-25",
     "run_month": "2026-08",
     "seed": "42",
     "embed_npy": false,
-    "registered_at": "2026-08-25T10:53:43Z"
+    "registered_at": "2026-08-26T07:23:00Z"
   }
 }
