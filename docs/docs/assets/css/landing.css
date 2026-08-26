@@ -1,0 +1,359 @@
+/* ============================================================
+   HDR Simulations — landing page
+
+   One full-viewport hero over the flow field. Loaded only by
+   overrides/landing.html, so none of this weighs on the docs
+   proper. The page has a single fixed dark treatment: the field
+   is the page, and it has no light counterpart.
+   ============================================================ */
+
+:root {
+  --hero-bg:    #0b0306;
+  --hero-ink:   #f8f0ea;
+  --hero-body:  rgba(246, 239, 233, 0.82);
+  --hero-muted: rgba(246, 239, 233, 0.6);
+  --hero-line:  rgba(246, 239, 233, 0.3);
+  --hero-warm:  #ffa473;
+  --hero-warm-2: #ff8f6e;
+  --hero-grad:  linear-gradient(135deg, #ffb069, #ff6aa6);
+
+  --hero-serif: "Cormorant Garamond", Georgia, serif;
+  --hero-sans:  "Space Grotesk", system-ui, -apple-system, sans-serif;
+
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body.landing {
+  background: var(--hero-bg);
+  color: var(--hero-ink);
+  font-family: var(--hero-sans);
+  overflow: hidden;
+  -webkit-text-size-adjust: 100%;
+}
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 50;
+  padding: 10px 16px;
+  background: var(--hero-ink);
+  color: #1c0a08;
+  font-size: 14px;
+  text-decoration: none;
+}
+.skip-link:focus { left: 12px; top: 12px; }
+
+/* ── Stage ───────────────────────────────────────────────── */
+.hero {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 560px;
+  overflow: hidden;
+  background: var(--hero-bg);
+}
+
+.hero-still,
+.hero-live {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.hero-still {
+  object-fit: cover;
+  transition: opacity 0.8s ease;
+}
+
+.hero-live { opacity: 0; transition: opacity 0.8s ease; }
+
+/* Live view has taken over: reveal it, retire the poster. */
+.hero.is-live .hero-live { opacity: 1; }
+.hero.is-live .hero-still { opacity: 0; }
+
+/* Legibility scrim — the same three-layer wash as the source design. */
+.hero-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(to top, rgba(8, 3, 5, 0.95) 0%, rgba(8, 3, 5, 0.6) 21%, rgba(8, 3, 5, 0) 47%),
+    linear-gradient(to bottom, rgba(8, 3, 5, 0.72) 0%, rgba(8, 3, 5, 0) 17%),
+    radial-gradient(125% 95% at 50% 36%, rgba(8, 3, 5, 0) 52%, rgba(8, 3, 5, 0.55) 100%);
+}
+
+.hero-content {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 24px;
+  padding: clamp(22px, 3.4vw, 46px) clamp(24px, 4vw, 64px);
+  pointer-events: none;
+}
+
+/* The overlay must not steal drags from the field behind it, so hit-testing
+   stops at the leaves — every wrapper stays transparent to the pointer, and
+   the leaves are sized to hug their text rather than their column. */
+.hero-brand,
+.hero-nav-link,
+.hero-eyebrow,
+.hero-title,
+.hero-tagline,
+.hero-byline,
+.hero-cta,
+.hero-spark,
+.hero-hint {
+  pointer-events: auto;
+  width: fit-content;
+}
+
+/* ── Nav ─────────────────────────────────────────────────── */
+.hero-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.hero-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: rgba(246, 239, 233, 0.92);
+}
+
+.hero-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--hero-grad);
+}
+
+.hero-nav-link {
+  font-size: 12.5px;
+  letter-spacing: 0.12em;
+  color: rgba(246, 239, 233, 0.68);
+  text-decoration: none;
+  transition: color 0.25s;
+}
+.hero-nav-link:hover,
+.hero-nav-link:focus-visible { color: var(--hero-ink); }
+
+/* ── Bottom block ────────────────────────────────────────── */
+.hero-block {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 40px;
+}
+
+.hero-text { max-width: 42rem; }
+
+.hero-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0 0 22px;
+  font-size: 12px;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--hero-warm);
+}
+
+.hero-rule {
+  width: 30px;
+  height: 1px;
+  flex: none;
+  background: var(--hero-warm-2);
+}
+
+.hero-title {
+  margin: 0;
+  font-family: var(--hero-serif);
+  font-weight: 600;
+  font-size: clamp(2.1rem, 5vw, 4.35rem);
+  line-height: 1.03;
+  letter-spacing: -0.012em;
+  color: var(--hero-ink);
+  text-wrap: balance;
+}
+
+.hero-tagline {
+  margin: 18px 0 0;
+  max-width: 34ch;
+  font-family: var(--hero-serif);
+  font-style: italic;
+  font-weight: 500;
+  font-size: clamp(16px, 1.8vw, 23px);
+  line-height: 1.32;
+  color: var(--hero-body);
+  text-wrap: pretty;
+}
+
+.hero-byline {
+  margin: 22px 0 0;
+  font-size: 12.5px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--hero-muted);
+}
+
+.hero-cta-row { margin: 32px 0 0; }
+
+.hero-cta {
+  display: inline-flex;
+  align-items: center;
+  padding: 15px 28px;
+  border-radius: 2px;
+  background: var(--hero-grad);
+  color: #1c0a08;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  box-shadow: 0 8px 30px -10px rgba(255, 106, 166, 0.6);
+  transition: transform 0.25s, box-shadow 0.25s;
+}
+.hero-cta:hover,
+.hero-cta:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 40px -10px rgba(255, 106, 166, 0.75);
+}
+
+/* ── Live-field control ──────────────────────────────────── */
+.hero-live-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+  flex-shrink: 0;
+  padding-bottom: 6px;
+}
+
+.hero-spark {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  padding: 11px 20px 11px 16px;
+  border: 1px solid var(--hero-line);
+  border-radius: 999px;
+  background: rgba(8, 3, 5, 0.42);
+  color: rgba(246, 239, 233, 0.86);
+  font-family: inherit;
+  font-size: 12.5px;
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+  cursor: pointer;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  transition: border-color 0.25s, color 0.25s, background 0.25s, transform 0.25s;
+}
+.hero-spark:hover,
+.hero-spark:focus-visible {
+  border-color: rgba(246, 239, 233, 0.7);
+  background: rgba(246, 239, 233, 0.08);
+  color: var(--hero-ink);
+  transform: translateY(-1px);
+}
+.hero-spark[disabled] { cursor: progress; opacity: 0.7; }
+
+/* The icon carries the state: a pulsing seed to start, a still ring
+   once the field is running, a sweeping arc while three.js loads. */
+.hero-spark-icon {
+  width: 9px;
+  height: 9px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--hero-grad);
+  box-shadow: 0 0 0 0 rgba(255, 138, 150, 0.55);
+  animation: hero-seed 2.4s ease-in-out infinite;
+}
+
+.hero-spark.is-loading .hero-spark-icon {
+  background: none;
+  border: 1.5px solid rgba(246, 239, 233, 0.28);
+  border-top-color: var(--hero-warm);
+  box-shadow: none;
+  animation: hero-spin 0.7s linear infinite;
+}
+
+.hero-spark.is-live .hero-spark-icon {
+  background: none;
+  border: 1.5px solid var(--hero-warm);
+  box-shadow: none;
+  animation: none;
+}
+
+@keyframes hero-seed {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 138, 150, 0.5); }
+  50%      { box-shadow: 0 0 0 7px rgba(255, 138, 150, 0); }
+}
+@keyframes hero-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* display:flex would otherwise beat the UA rule for [hidden]. */
+.hero-hint[hidden] { display: none; }
+
+.hero-hint {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 16px;
+  margin: 0;
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(246, 239, 233, 0.45);
+}
+
+/* ── Narrow screens ──────────────────────────────────────── */
+@media (max-width: 860px) {
+  .hero-block {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 26px;
+  }
+  .hero-live-controls { align-items: flex-start; padding-bottom: 0; }
+  .hero-hint { justify-content: flex-start; }
+  .hero-tagline { max-width: none; }
+}
+
+@media (max-width: 560px) {
+  .hero-nav-link { display: none; }
+  .hero-byline { margin-top: 16px; }
+  .hero-cta-row { margin-top: 24px; }
+  .hero-hint span:nth-child(2) { display: none; }
+}
+
+/* Short-and-wide viewports: give the title room by trimming the airy bits. */
+@media (max-height: 620px) {
+  .hero-eyebrow { margin-bottom: 12px; }
+  .hero-tagline { display: none; }
+  .hero-cta-row { margin-top: 20px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-still, .hero-live, .hero-cta, .hero-spark { transition: none; }
+  .hero-spark-icon { animation: none; }
+}

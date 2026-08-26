@@ -4,6 +4,11 @@
 default:
     @just --list
 
+# Create the .qanat project database for this clone (.qanat/ is not committed)
+init-qanat:
+    uv run qanat init .
+    @echo "→ then: just register-experiments"
+
 # Register all experiment YAMLs with qanat (run after `qanat init .` or after wiping .qanat)
 register-experiments:
     for f in $(find . -path ./.venv -prune -o -path ./results -prune -o -name "*.yaml" -path "*experiments*" -print | sort); do \
@@ -14,6 +19,10 @@ register-experiments:
 # Regenerate experiment doc pages and chapter cards from YAML configs
 docs:
     uv run python docs/scripts/gen_experiment_index.py
+
+# Regenerate the static flow-field poster behind the docs landing page
+docs-hero:
+    uv run python docs/scripts/gen_hero_field.py
 
 dissertation := "../Dissertation"
 

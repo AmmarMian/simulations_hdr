@@ -43,6 +43,9 @@ plugins:
 
 nav:
   - Home: index.md
+  - Getting started: getting-started.md
+  - Infrastructure: infrastructure.md
+  - Backends: backends.md
   - Experiments:
       - Overview: experiments-overview.md
       - "1 · Context": chapters/1-context.md
