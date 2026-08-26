@@ -1,4 +1,4 @@
-# Chapter 4 · Deep Learning
+# Chapter 3 · Deep Learning
 
 *(forthcoming)*
 

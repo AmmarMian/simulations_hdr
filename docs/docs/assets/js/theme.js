@@ -1,74 +1,140 @@
+/* ============================================================
+   HDR Simulations — theme behaviour
+   Light/dark toggle, search, navigation drawer, code-block
+   chrome, table wrapping and TOC scroll-spy.
+   ============================================================ */
 (function () {
   "use strict";
 
-  /* ── Apply saved theme before paint (also called inline in <head>) ── */
-  var LIGHT = "warm";
-  var DARK  = "dark";
-  var KEY   = "hdr-paper";
+  var THEME_KEY = "hdr-theme";
+  var root = document.documentElement;
 
-  function getPaper() { return localStorage.getItem(KEY) || LIGHT; }
-  function setPaper(p) {
-    document.documentElement.setAttribute("data-paper", p);
-    localStorage.setItem(KEY, p);
-    syncThemeIcon(p);
-  }
-  function syncThemeIcon(p) {
-    var moon = document.getElementById("ico-moon");
-    var sun  = document.getElementById("ico-sun");
-    if (moon) moon.style.display = p === DARK ? "none"  : "block";
-    if (sun)  sun.style.display  = p === DARK ? "block" : "none";
+  function currentTheme() { return root.dataset.theme === "dark" ? "dark" : "light"; }
+  function setTheme(t) {
+    root.dataset.theme = t;
+    try { localStorage.setItem(THEME_KEY, t); } catch (e) { /* private mode */ }
   }
 
-  setPaper(getPaper());
+  function base() {
+    return (typeof HDR_BASE !== "undefined" ? HDR_BASE : "").replace(/\/$/, "");
+  }
+  function esc(s) {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
 
   document.addEventListener("DOMContentLoaded", function () {
 
-    /* ── Search ────────────────────────────────────────────────── */
+    /* ── Theme toggle ────────────────────────────────────── */
+    var btnTheme = document.getElementById("btn-theme");
+    if (btnTheme) {
+      btnTheme.addEventListener("click", function () {
+        setTheme(currentTheme() === "dark" ? "light" : "dark");
+      });
+    }
+    /* Follow the OS only while the visitor has not chosen. */
+    try {
+      if (!localStorage.getItem(THEME_KEY)) {
+        matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function (e) {
+          root.dataset.theme = e.matches ? "dark" : "light";
+        });
+      }
+    } catch (e) { /* ignore */ }
+
+    /* ── Navigation drawer ───────────────────────────────── */
     (function () {
-      var wrap    = document.getElementById("search-wrap");
-      var btnS    = document.getElementById("btn-search");
-      var inputW  = document.getElementById("search-input-wrap");
+      var sidebar = document.getElementById("sidebar");
+      var scrim   = document.getElementById("nav-scrim");
+      var btnNav  = document.getElementById("btn-nav");
+      if (!sidebar || !btnNav) return;
+
+      function open() {
+        sidebar.classList.add("open");
+        if (scrim) scrim.classList.add("open");
+        btnNav.setAttribute("aria-expanded", "true");
+        document.body.style.overflow = "hidden";
+      }
+      function close() {
+        sidebar.classList.remove("open");
+        if (scrim) scrim.classList.remove("open");
+        btnNav.setAttribute("aria-expanded", "false");
+        document.body.style.overflow = "";
+      }
+      btnNav.addEventListener("click", function () {
+        sidebar.classList.contains("open") ? close() : open();
+      });
+      if (scrim) scrim.addEventListener("click", close);
+      document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape") close();
+      });
+      /* Following a link inside the drawer should close it. */
+      sidebar.addEventListener("click", function (e) {
+        if (e.target.closest("a")) close();
+      });
+      /* Leaving the drawer breakpoint must not strand the scroll lock. */
+      matchMedia("(min-width: 1060px)").addEventListener("change", function (e) {
+        if (e.matches) close();
+      });
+
+      /* Keep the active entry in view in the docked sidebar. */
+      var active = sidebar.querySelector("a.active");
+      if (active) {
+        var r = active.getBoundingClientRect();
+        if (r.top < 0 || r.bottom > window.innerHeight) {
+          active.scrollIntoView({ block: "center" });
+        }
+      }
+    })();
+
+    /* ── Search ──────────────────────────────────────────── */
+    (function () {
+      var btn     = document.getElementById("btn-search");
+      var panel   = document.getElementById("search-panel");
       var input   = document.getElementById("search-input");
       var results = document.getElementById("search-results");
-      if (!btnS || !input) return;
+      var close   = document.getElementById("search-close");
+      if (!btn || !panel || !input) return;
 
       var index = null;
 
       function loadIndex(cb) {
         if (index) { cb(); return; }
-        var base = (typeof HDR_BASE !== "undefined" ? HDR_BASE : "").replace(/\/$/, "");
-        fetch(base + "/search/search_index.json")
+        fetch(base() + "/search/search_index.json")
           .then(function (r) { return r.json(); })
-          .then(function (data) { index = data.docs || []; cb(); })
-          .catch(function () { index = []; });
+          .then(function (d) { index = d.docs || []; cb(); })
+          .catch(function () { index = []; cb(); });
       }
 
       function openSearch() {
-        wrap.classList.add("open");
-        inputW.hidden = false;
-        results.hidden = true;
-        setTimeout(function () { input.focus(); }, 50);
+        panel.hidden = false;
+        results.innerHTML = "";
         loadIndex(function () {});
+        setTimeout(function () { input.focus(); }, 40);
       }
       function closeSearch() {
-        wrap.classList.remove("open");
-        inputW.hidden = true;
-        results.hidden = true;
+        panel.hidden = true;
         input.value = "";
+        results.innerHTML = "";
       }
 
-      btnS.addEventListener("click", function (e) {
+      btn.addEventListener("click", function (e) {
         e.stopPropagation();
-        wrap.classList.contains("open") ? closeSearch() : openSearch();
+        panel.hidden ? openSearch() : closeSearch();
       });
+      if (close) close.addEventListener("click", closeSearch);
       document.addEventListener("click", function (e) {
-        if (!wrap.contains(e.target)) closeSearch();
+        if (panel.hidden) return;
+        if (!panel.contains(e.target) && !btn.contains(e.target)) closeSearch();
       });
+
       document.addEventListener("keydown", function (e) {
-        if (e.key === "Escape") { closeSearch(); return; }
-        if (e.key === "k" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); openSearch(); return; }
-        if (!wrap.classList.contains("open")) return;
-        if (e.key !== "ArrowDown" && e.key !== "ArrowUp" && e.key !== "Enter") return;
+        if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
+          e.preventDefault();
+          panel.hidden ? openSearch() : input.focus();
+          return;
+        }
+        if (panel.hidden) return;
+        if (e.key === "Escape") { closeSearch(); btn.focus(); return; }
+        if (["ArrowDown", "ArrowUp", "Enter"].indexOf(e.key) === -1) return;
 
         var items = results.querySelectorAll(".search-result-item");
         if (!items.length) return;
@@ -76,224 +142,172 @@
 
         var active = results.querySelector(".search-result-item.active");
         var idx = active ? Array.prototype.indexOf.call(items, active) : -1;
-
-        if (e.key === "Enter" && active) { active.click(); return; }
-
+        if (e.key === "Enter") {
+          (active || items[0]).click();
+          return;
+        }
         if (active) active.classList.remove("active");
-        if (e.key === "ArrowDown") idx = (idx + 1) % items.length;
-        else if (e.key === "ArrowUp") idx = (idx - 1 + items.length) % items.length;
+        idx = e.key === "ArrowDown"
+          ? (idx + 1) % items.length
+          : (idx - 1 + items.length) % items.length;
         items[idx].classList.add("active");
         items[idx].scrollIntoView({ block: "nearest" });
       });
 
+      function mark(text, terms) {
+        var out = esc(text);
+        terms.forEach(function (t) {
+          var re = new RegExp("(" + t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + ")", "gi");
+          out = out.replace(re, "<strong>$1</strong>");
+        });
+        return out;
+      }
+
       function query(q) {
-        if (!q || !index) { results.hidden = true; return; }
+        results.innerHTML = "";
+        if (!q || !index) return;
         var terms = q.toLowerCase().split(/\s+/).filter(Boolean);
         var hits = index.filter(function (doc) {
-          var hay = (doc.title + " " + doc.text).toLowerCase();
-          return terms.every(function (t) { return hay.includes(t); });
-        }).slice(0, 8);
+          var hay = ((doc.title || "") + " " + (doc.text || "")).toLowerCase();
+          return terms.every(function (t) { return hay.indexOf(t) !== -1; });
+        }).slice(0, 10);
 
-        function esc(s) {
-          return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-        }
-        function highlight(text, terms) {
-          var out = esc(text);
-          terms.forEach(function (t) {
-            var re = new RegExp("(" + t.replace(/[.*+?^${}()|[\]\\]/g,"\\$&") + ")", "gi");
-            out = out.replace(re, "<strong>$1</strong>");
-          });
-          return out;
-        }
-
-        results.innerHTML = "";
         if (!hits.length) {
           var empty = document.createElement("div");
           empty.className = "search-empty";
-          empty.textContent = "No results";
+          empty.textContent = "No results for “" + q + "”";
           results.appendChild(empty);
-        } else {
-          hits.forEach(function (doc) {
-            var a = document.createElement("a");
-            a.className = "search-result-item";
-            var base = (typeof HDR_BASE !== "undefined" ? HDR_BASE : "").replace(/\/$/, "");
-            a.href = base + "/" + doc.location;
-
-            var title = document.createElement("div");
-            title.className = "search-result-title";
-            title.innerHTML = highlight(doc.title || doc.location, terms);
-            a.appendChild(title);
-
-            var loc = document.createElement("div");
-            loc.className = "search-result-loc";
-            loc.textContent = doc.location;
-            a.appendChild(loc);
-
-            if (doc.text) {
-              var idx = doc.text.toLowerCase().indexOf(terms[0]);
-              var snip = idx >= 0
-                ? doc.text.slice(Math.max(0, idx - 40), idx + 100)
-                : doc.text.slice(0, 120);
-              var ex = document.createElement("div");
-              ex.className = "search-result-excerpt";
-              ex.innerHTML = "…" + highlight(snip.trim(), terms) + "…";
-              a.appendChild(ex);
-            }
-            results.appendChild(a);
-          });
+          return;
         }
-        results.hidden = false;
+
+        hits.forEach(function (doc) {
+          var a = document.createElement("a");
+          a.className = "search-result-item";
+          a.href = base() + "/" + doc.location;
+
+          var title = document.createElement("div");
+          title.className = "search-result-title";
+          title.innerHTML = mark(doc.title || doc.location, terms);
+          a.appendChild(title);
+
+          var loc = document.createElement("div");
+          loc.className = "search-result-loc";
+          loc.textContent = doc.location;
+          a.appendChild(loc);
+
+          if (doc.text) {
+            var i = doc.text.toLowerCase().indexOf(terms[0]);
+            var snip = i >= 0
+              ? doc.text.slice(Math.max(0, i - 40), i + 110)
+              : doc.text.slice(0, 130);
+            var ex = document.createElement("div");
+            ex.className = "search-result-excerpt";
+            ex.innerHTML = "…" + mark(snip.trim(), terms) + "…";
+            a.appendChild(ex);
+          }
+          results.appendChild(a);
+        });
       }
 
-      input.addEventListener("input", function () { loadIndex(function () { query(input.value.trim()); }); });
+      var debounce;
+      input.addEventListener("input", function () {
+        clearTimeout(debounce);
+        debounce = setTimeout(function () {
+          loadIndex(function () { query(input.value.trim()); });
+        }, 90);
+      });
     })();
 
-    /* ── Theme toggle ──────────────────────────────────────────── */
-    var btn = document.getElementById("btn-theme");
-    if (btn) btn.addEventListener("click", function () {
-      setPaper(getPaper() === DARK ? LIGHT : DARK);
-    });
-    syncThemeIcon(getPaper());
-
-    /* ── Reading-scale A / A ───────────────────────────────────── */
-    var SCALES   = [.88, 1, 1.14];
-    var SCALE_KEY = "hdr-scale";
-    var scaleIdx  = 1;
-    var saved = parseFloat(localStorage.getItem(SCALE_KEY));
-    if (!isNaN(saved)) {
-      var idx = SCALES.indexOf(saved);
-      if (idx !== -1) { scaleIdx = idx; applyScale(SCALES[scaleIdx]); }
-    }
-    function applyScale(s) {
-      document.documentElement.style.setProperty("--reading-scale", s);
-    }
-    function cycleScale(dir) {
-      scaleIdx = Math.max(0, Math.min(SCALES.length - 1, scaleIdx + dir));
-      var s = SCALES[scaleIdx];
-      applyScale(s);
-      localStorage.setItem(SCALE_KEY, s);
-    }
-    var btnSm = document.getElementById("btn-az-sm");
-    var btnLg = document.getElementById("btn-az-lg");
-    if (btnSm) btnSm.addEventListener("click", function () { cycleScale(-1); });
-    if (btnLg) btnLg.addEventListener("click", function () { cycleScale(+1); });
-
-    /* ── Code block window injection ───────────────────────────── */
-    /*   Two output shapes depending on linenums:
-         - No linenums:  <div class="language-python highlight">…</div>
-         - With linenums: <table class="highlighttable">…</table>
-                           language class is on the inner .highlight div
-         We inject a .cbhead in both.                                  */
-
-    function readLangFile(container) {
-      var lang = "";
-      container.classList.forEach(function (c) {
-        if (c.startsWith("language-")) lang = c.slice(9);
-      });
-      /* For highlighttable, pymdownx puts language-* on the outer wrapper div (parent),
-         and the .filename span is also a child of that wrapper, not of the table. */
-      var fileRoot = container;
-      if (!lang && container.parentElement) {
-        container.parentElement.classList.forEach(function (c) {
-          if (c.startsWith("language-")) lang = c.slice(9);
+    /* ── Code-block chrome ───────────────────────────────── */
+    (function () {
+      function readLangFile(container) {
+        var lang = "";
+        container.classList.forEach(function (c) {
+          if (c.indexOf("language-") === 0) lang = c.slice(9);
         });
-        fileRoot = container.parentElement;
+        var fileRoot = container;
+        if (!lang && container.parentElement) {
+          container.parentElement.classList.forEach(function (c) {
+            if (c.indexOf("language-") === 0) lang = c.slice(9);
+          });
+          fileRoot = container.parentElement;
+        }
+        var file = "";
+        var fileEl = fileRoot.querySelector(".filename");
+        if (fileEl) { file = fileEl.textContent.trim(); fileEl.style.display = "none"; }
+        return { lang: lang, file: file };
       }
-      var file = "";
-      var fileEl = fileRoot.querySelector(".filename");
-      if (fileEl) { file = fileEl.textContent.trim(); fileEl.style.display = "none"; }
-      return { lang: lang, file: file };
-    }
 
-    function makeCopyBtn(getCode) {
-      var btn = document.createElement("button");
-      btn.className = "cb-copy";
-      btn.setAttribute("aria-label", "Copy code");
-      btn.innerHTML =
-        '<svg class="cb-copy-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
-          '<rect x="9" y="2" width="6" height="4" rx="1"></rect>' +
-          '<path d="M17 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>' +
-        '</svg>' +
-        '<svg class="cb-check-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">' +
-          '<polyline points="20 6 9 17 4 12"></polyline>' +
-        '</svg>';
-      btn.addEventListener("click", function () {
-        var text = getCode();
-        navigator.clipboard.writeText(text).then(function () {
-          btn.classList.add("copied");
-          setTimeout(function () { btn.classList.remove("copied"); }, 1800);
+      function copyBtn(getCode) {
+        var b = document.createElement("button");
+        b.className = "cb-copy";
+        b.setAttribute("aria-label", "Copy code");
+        b.innerHTML =
+          '<svg class="cb-copy-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+            '<rect x="9" y="2" width="6" height="4" rx="1"></rect>' +
+            '<path d="M17 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>' +
+          "</svg>" +
+          '<svg class="cb-check-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">' +
+            '<polyline points="20 6 9 17 4 12"></polyline>' +
+          "</svg>";
+        b.addEventListener("click", function () {
+          navigator.clipboard.writeText(getCode()).then(function () {
+            b.classList.add("copied");
+            setTimeout(function () { b.classList.remove("copied"); }, 1600);
+          });
         });
+        return b;
+      }
+
+      function labelInto(el, lang, file) {
+        if (lang) {
+          var ls = document.createElement("span");
+          ls.className = "cblang";
+          ls.textContent = lang.toUpperCase();
+          el.appendChild(ls);
+        }
+        if (file) {
+          var fs = document.createElement("span");
+          fs.className = "cbfile";
+          fs.textContent = file;
+          el.appendChild(fs);
+        }
+      }
+
+      document.querySelectorAll(".highlight:not(.highlighttable .highlight):not(.doc .highlight)").forEach(function (block) {
+        if (block.querySelector(".cbhead")) return;
+        if (block.querySelector("table.highlighttable")) return;  /* handled below */
+        var lf = readLangFile(block);
+        if (!lf.lang && !lf.file) return;
+        var head = document.createElement("div");
+        head.className = "cbhead";
+        labelInto(head, lf.lang, lf.file);
+        head.appendChild(copyBtn(function () {
+          return (block.querySelector("pre") || block).innerText;
+        }));
+        block.insertBefore(head, block.firstChild);
       });
-      return btn;
-    }
 
-    function makeCbhead(lang, file, getCode) {
-      var head = document.createElement("div");
-      head.className = "cbhead";
-      if (lang) {
-        var ls = document.createElement("span");
-        ls.className = "cblang";
-        ls.textContent = lang.toUpperCase();
-        head.appendChild(ls);
-      }
-      if (file) {
-        var fs = document.createElement("span");
-        fs.className = "cbfile";
-        fs.textContent = file;
-        head.appendChild(fs);
-      }
-      if (getCode) head.appendChild(makeCopyBtn(getCode));
-      return head;
-    }
+      /* Line-numbered blocks: the header goes on the wrapping .highlight
+         div, not inside the table, so it does not scroll with the code. */
+      document.querySelectorAll("table.highlighttable:not(.doc table.highlighttable)").forEach(function (table) {
+        var wrap = table.parentElement;
+        if (!wrap || wrap.querySelector(".cbhead")) return;
+        var lf = readLangFile(table);
+        if (!lf.lang && !lf.file) return;
+        var head = document.createElement("div");
+        head.className = "cbhead";
+        labelInto(head, lf.lang, lf.file);
+        head.appendChild(copyBtn(function () {
+          return (table.querySelector("td.code pre") || table).innerText;
+        }));
+        wrap.insertBefore(head, table);
+      });
+    })();
 
-    /* plain (no linenums) blocks — skip API doc elements and outer wrappers around highlighttable */
-    document.querySelectorAll(".highlight:not(.highlighttable .highlight):not(.doc .highlight)").forEach(function (block) {
-      if (block.querySelector(".cbhead")) return;
-      if (block.querySelector("table.highlighttable")) return;  /* handled by thead loop below */
-      var lf = readLangFile(block);
-      if (!lf.lang && !lf.file) return;
-      var getCode = function () { return (block.querySelector("pre") || block).innerText; };
-      block.insertBefore(makeCbhead(lf.lang, lf.file, getCode), block.firstChild);
-    });
-
-    /* line-numbered blocks — inject a <thead> with two cells matching column structure */
-    document.querySelectorAll("table.highlighttable:not(.doc table.highlighttable)").forEach(function (table) {
-      if (table.querySelector(".cbhead")) return;
-      var lf = readLangFile(table);
-      if (!lf.lang && !lf.file) return;
-      var thead  = document.createElement("thead");
-      var tr     = document.createElement("tr");
-      /* linenos header cell — same panel background as the column below */
-      var thLn   = document.createElement("th");
-      thLn.className = "cbhead-linenos";
-      /* code header cell — holds the language / filename label */
-      var thCode = document.createElement("th");
-      thCode.className = "cbhead";
-      if (lf.lang) {
-        var ls = document.createElement("span");
-        ls.className = "cblang";
-        ls.textContent = lf.lang.toUpperCase();
-        thCode.appendChild(ls);
-      }
-      if (lf.file) {
-        var fs = document.createElement("span");
-        fs.className = "cbfile";
-        fs.textContent = lf.file;
-        thCode.appendChild(fs);
-      }
-      var getCode = (function (t) {
-        return function () { return (t.querySelector("td.code pre") || t).innerText; };
-      }(table));
-      thCode.appendChild(makeCopyBtn(getCode));
-      tr.appendChild(thLn);
-      tr.appendChild(thCode);
-      thead.appendChild(tr);
-      table.insertBefore(thead, table.firstChild);
-    });
-
-    /* ── Wrap wide tables so they scroll instead of overflowing ─── */
+    /* ── Wide tables scroll inside their own box ─────────── */
     document.querySelectorAll(
-      ".page-content table:not(.highlighttable):not(.table-scroll table)"
+      ".page-content table:not(.highlighttable):not(.table-scroll table):not(.doc table)"
     ).forEach(function (table) {
       var wrap = document.createElement("div");
       wrap.className = "table-scroll";
@@ -301,185 +315,52 @@
       wrap.appendChild(table);
     });
 
-    /* ── TOC drawer ─────────────────────────────────────────────── */
-    var toc   = document.getElementById("toc");
-    var scrim = document.getElementById("toc-scrim");
-    var btnToc = document.getElementById("btn-toc");
-
-    function openToc()  {
-      if (!toc) return;
-      toc.classList.add("open");
-      if (scrim) scrim.classList.add("open");
-      document.body.style.overflow = "hidden";
-    }
-    function closeToc() {
-      if (!toc) return;
-      toc.classList.remove("open");
-      if (scrim) scrim.classList.remove("open");
-      document.body.style.overflow = "";
-    }
-    if (btnToc) btnToc.addEventListener("click", openToc);
-    if (scrim)  scrim.addEventListener("click", closeToc);
-    document.addEventListener("keydown", function (e) {
-      if (e.key === "Escape") closeToc();
-    });
-
-    /* ── Progress bar ───────────────────────────────────────────── */
+    /* ── Reading progress ────────────────────────────────── */
     var bar = document.getElementById("progress");
     if (bar) {
-      function updateProgress() {
-        var el  = document.documentElement;
-        var top = el.scrollTop || document.body.scrollTop;
-        var h   = el.scrollHeight - el.clientHeight;
-        bar.style.width = (h > 0 ? (top / h) * 100 : 0) + "%";
-      }
-      window.addEventListener("scroll", updateProgress, { passive: true });
-      updateProgress();
+      var tick = function () {
+        var el = document.documentElement;
+        var h = el.scrollHeight - el.clientHeight;
+        bar.style.width = (h > 0 ? (el.scrollTop / h) * 100 : 0) + "%";
+      };
+      window.addEventListener("scroll", tick, { passive: true });
+      tick();
     }
 
-    /* ── Rebuild aside TOC from DOM on API pages ────────────────── */
-    /* page.toc is extracted from markdown before mkdocstrings injects its headings,
-       so API pages only show the h1. If .doc elements exist, rebuild from the DOM. */
+    /* ── Rebuild the rail TOC on API pages ───────────────── */
+    /* page.toc is extracted before mkdocstrings injects its headings,
+       so API pages otherwise show only the h1. */
     (function () {
       var aside = document.querySelector(".aside-toc");
-      if (!aside) return;
-      if (!document.querySelector(".page-content .doc")) return;  /* not an API page */
+      if (!aside || !document.querySelector(".page-content .doc")) return;
 
-      var domHeadings = Array.from(
-        document.querySelectorAll(".page-content h2[id], .page-content h3[id], .page-content h4[id]")
-      ).filter(function (h) {
-        /* skip mkdocstrings parameter/raises headings (h5) and the markdown h1 */
-        return h.id && !h.id.includes("--");
-      });
-      if (domHeadings.length < 2) return;  /* nothing interesting to add */
+      var heads = Array.prototype.filter.call(
+        document.querySelectorAll(".page-content h2[id], .page-content h3[id], .page-content h4[id]"),
+        function (h) { return h.id && h.id.indexOf("--") === -1; }
+      );
+      if (heads.length < 2) return;
 
       var ul = document.createElement("ul");
-      domHeadings.forEach(function (h) {
+      heads.forEach(function (h) {
         var li = document.createElement("li");
-        var tag = h.tagName;
-        li.className = tag === "H4" ? "h3" : (tag === "H3" ? "h2" : "h1");
+        li.className = h.tagName === "H4" ? "h3" : (h.tagName === "H3" ? "h2" : "h1");
         var a = document.createElement("a");
         a.href = "#" + h.id;
-        /* strip badges/labels text — keep only the code element text */
         var codeEl = h.querySelector("code");
         a.textContent = codeEl ? codeEl.textContent.trim()
-                                : h.textContent.replace(/[¶#]/g, "").trim();
+                               : h.textContent.replace(/[¶#]/g, "").trim();
         li.appendChild(a);
         ul.appendChild(li);
       });
-
-      /* replace existing ul */
-      var existingUl = aside.querySelector("ul");
-      if (existingUl) existingUl.replaceWith(ul);
-      else aside.appendChild(ul);
+      var existing = aside.querySelector("ul");
+      existing ? existing.replaceWith(ul) : aside.appendChild(ul);
     })();
 
-    /* ── Active aside-TOC link on scroll ────────────────────────── */
-    var asideLinks = Array.from(document.querySelectorAll(".aside-toc a[href^='#']"));
-    if (asideLinks.length) {
-      var headings = asideLinks.map(function (a) {
-        return document.querySelector(a.getAttribute("href"));
-      }).filter(Boolean);
-
-      function markActive() {
-        var top = window.scrollY + 80;
-        var cur = headings[0];
-        headings.forEach(function (h) { if (h.offsetTop <= top) cur = h; });
-        asideLinks.forEach(function (a) {
-          a.classList.toggle("active", cur && cur.id === a.getAttribute("href").slice(1));
-        });
-      }
-      window.addEventListener("scroll", markActive, { passive: true });
-      markActive();
-    }
-
-    /* ── Mark active TOC-drawer link ────────────────────────────── */
-    var cur = location.pathname;
-    document.querySelectorAll(".toc nav a").forEach(function (a) {
-      if (a.pathname === cur) a.classList.add("active");
-    });
-
-    /* ── Floating page-TOC FAB ──────────────────────────────────── */
-    var headings = Array.from(
-      document.querySelectorAll(".page-content h2, .page-content h3")
-    ).filter(function (h) { return h.id; });
-
-    if (headings.length) {
-      /* build FAB button */
-      var fab = document.createElement("button");
-      fab.className = "toc-fab";
-      fab.setAttribute("aria-label", "Page contents");
-      var fabSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-      fabSvg.setAttribute("viewBox", "0 0 24 24");
-      fabSvg.setAttribute("fill", "none");
-      fabSvg.setAttribute("stroke", "currentColor");
-      fabSvg.setAttribute("stroke-width", "1.8");
-      fabSvg.setAttribute("stroke-linecap", "round");
-      ["M3 6h18", "M3 12h12", "M3 18h8"].forEach(function (d) {
-        var p = document.createElementNS("http://www.w3.org/2000/svg", "path");
-        p.setAttribute("d", d);
-        fabSvg.appendChild(p);
-      });
-      fab.appendChild(fabSvg);
-
-      /* build panel */
-      var panel = document.createElement("div");
-      panel.className = "toc-fab-panel";
-
-      var label = document.createElement("div");
-      label.className = "toc-fab-panel-label";
-      label.textContent = "On this page";
-      panel.appendChild(label);
-
-      var ul = document.createElement("ul");
-      headings.forEach(function (h) {
-        var li = document.createElement("li");
-        li.className = h.tagName === "H3" ? "h3" : "h2";
-        var a = document.createElement("a");
-        a.href = "#" + h.id;
-        a.textContent = h.textContent.replace(/[¶#]/g, "").trim();
-        a.addEventListener("click", function () { closePanel(); });
-        li.appendChild(a);
-        ul.appendChild(li);
-      });
-      panel.appendChild(ul);
-
-      document.body.appendChild(panel);
-      document.body.appendChild(fab);
-
-      var panelOpen = false;
-      function openPanel()  { panelOpen = true;  panel.classList.add("open"); }
-      function closePanel() { panelOpen = false; panel.classList.remove("open"); }
-
-      fab.addEventListener("click", function (e) {
-        e.stopPropagation();
-        panelOpen ? closePanel() : openPanel();
-      });
-      document.addEventListener("click", function (e) {
-        if (panelOpen && !panel.contains(e.target)) closePanel();
-      });
-      document.addEventListener("keydown", function (e) {
-        if (e.key === "Escape" && panelOpen) closePanel();
-      });
-
-      /* active link tracking */
-      var fabLinks = Array.from(ul.querySelectorAll("a"));
-      function markFabActive() {
-        var top = window.scrollY + 90;
-        var active = headings[0];
-        headings.forEach(function (h) { if (h.offsetTop <= top) active = h; });
-        fabLinks.forEach(function (a) {
-          a.classList.toggle("active", active && a.getAttribute("href") === "#" + active.id);
-        });
-      }
-      window.addEventListener("scroll", markFabActive, { passive: true });
-      markFabActive();
-    }
-
-    /* ── Anchor links on headings ───────────────────────────────── */
+    /* ── Heading anchors ─────────────────────────────────── */
     document.querySelectorAll(
       ".page-content h2[id], .page-content h3[id], .page-content h4[id]"
     ).forEach(function (h) {
+      if (h.querySelector(".heading-anchor")) return;
       var a = document.createElement("a");
       a.className = "heading-anchor";
       a.href = "#" + h.id;
@@ -488,29 +369,112 @@
         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">' +
         '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>' +
         '<path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>' +
-        '</svg>';
+        "</svg>";
       h.appendChild(a);
     });
 
-    /* ── Experiments TOC: hover/focus preview panel ───────────────── */
+    /* ── Floating page-TOC (tablet widths) ───────────────── */
+    var pageHeads = Array.prototype.filter.call(
+      document.querySelectorAll(".page-content h2, .page-content h3"),
+      function (h) { return h.id; }
+    );
+
+    if (pageHeads.length > 1) {
+      var fab = document.createElement("button");
+      fab.className = "toc-fab";
+      fab.setAttribute("aria-label", "Page contents");
+      fab.innerHTML =
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">' +
+        '<path d="M3 6h18"/><path d="M3 12h12"/><path d="M3 18h8"/></svg>';
+
+      var panel = document.createElement("div");
+      panel.className = "toc-fab-panel";
+      var label = document.createElement("p");
+      label.className = "toc-fab-panel-label";
+      label.textContent = "On this page";
+      panel.appendChild(label);
+
+      var list = document.createElement("ul");
+      pageHeads.forEach(function (h) {
+        var li = document.createElement("li");
+        li.className = h.tagName === "H3" ? "h3" : "h2";
+        var a = document.createElement("a");
+        a.href = "#" + h.id;
+        a.textContent = h.textContent.replace(/[¶#]/g, "").trim();
+        a.addEventListener("click", function () { panel.classList.remove("open"); });
+        li.appendChild(a);
+        list.appendChild(li);
+      });
+      panel.appendChild(list);
+      document.body.appendChild(panel);
+      document.body.appendChild(fab);
+
+      fab.addEventListener("click", function (e) {
+        e.stopPropagation();
+        panel.classList.toggle("open");
+      });
+      document.addEventListener("click", function (e) {
+        if (!panel.contains(e.target)) panel.classList.remove("open");
+      });
+      document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape") panel.classList.remove("open");
+      });
+    }
+
+    /* ── Scroll-spy for both TOCs ────────────────────────── */
+    (function () {
+      var links = Array.prototype.slice.call(
+        document.querySelectorAll(".aside-toc a[href^='#'], .toc-fab-panel a[href^='#']")
+      );
+      if (!links.length) return;
+
+      var targets = links.map(function (a) {
+        try { return document.querySelector(a.getAttribute("href")); }
+        catch (e) { return null; }
+      });
+
+      function spy() {
+        var top = window.scrollY + 100;
+        var currentId = null;
+        targets.forEach(function (t) {
+          if (t && t.offsetTop <= top) currentId = t.id;
+        });
+        links.forEach(function (a, i) {
+          var t = targets[i];
+          a.classList.toggle("active", !!t && t.id === currentId);
+        });
+      }
+      window.addEventListener("scroll", spy, { passive: true });
+      spy();
+    })();
+
+    /* ── Experiments overview: hover/tap preview panels ──── */
     (function () {
       var toc = document.getElementById("xp-toc");
       if (!toc) return;
-      var items  = Array.from(toc.querySelectorAll(".xp-toc-item"));
-      var panels = Array.from(toc.querySelectorAll(".xp-toc-panel"));
+      var items  = Array.prototype.slice.call(toc.querySelectorAll(".xp-toc-item"));
+      var panels = Array.prototype.slice.call(toc.querySelectorAll(".xp-toc-panel"));
+      if (!items.length) return;
 
       function show(id) {
-        items.forEach(function (a) {
-          a.classList.toggle("is-active", a.dataset.panel === id);
-        });
-        panels.forEach(function (p) {
-          p.hidden = p.id !== id;
-        });
+        items.forEach(function (a) { a.classList.toggle("is-active", a.dataset.panel === id); });
+        panels.forEach(function (p) { p.hidden = p.id !== id; });
       }
-
+      var touch = matchMedia("(hover: none)").matches;
       items.forEach(function (a) {
         a.addEventListener("mouseenter", function () { show(a.dataset.panel); });
-        a.addEventListener("focus",      function () { show(a.dataset.panel); });
+        a.addEventListener("focus", function () { show(a.dataset.panel); });
+        /* On touch, the first tap previews the chapter, the second opens it. */
+        if (touch) {
+          a.addEventListener("click", function (e) {
+            if (!a.classList.contains("is-active")) {
+              e.preventDefault();
+              show(a.dataset.panel);
+              var panel = document.getElementById(a.dataset.panel);
+              if (panel) panel.scrollIntoView({ block: "nearest", behavior: "smooth" });
+            }
+          });
+        }
       });
     })();
 

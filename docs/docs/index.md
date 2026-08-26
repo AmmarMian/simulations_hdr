@@ -1,10 +1,10 @@
 # HDR Simulations
 
 
-<div style="display: flex; gap: 2rem; align-items: flex-start; flex-wrap: wrap;">
+<div class="home-intro">
 
   <!-- LEFT: IMAGE -->
-  <div style="flex: 0 0 400px;">
+  <div class="home-intro-fig">
     <figure>
     <img id="theme-img" src="./assets/flow_light.png" style="width: 100%;">
     <figcaption>A flow particle simulation on the sphere</figcaption>
@@ -14,15 +14,15 @@
 <script>
 function updateImg() {
   const img = document.getElementById('theme-img');
-  const isDark = document.documentElement.getAttribute('data-paper') === 'dark';
+  const isDark = document.documentElement.dataset.theme === 'dark';
   img.src = isDark ? './assets/flow_dark.png' : './assets/flow_light.png';
 }
 updateImg();
-new MutationObserver(updateImg).observe(document.documentElement, { attributes: true, attributeFilter: ['data-paper'] });
+new MutationObserver(updateImg).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 </script>
 
   <!-- RIGHT: TEXT -->
-  <div style="flex: 1; min-width: 300px;">
+  <div class="home-intro-text">
 
     <p>
       This page groups documentation that accompany my dissertation for the diploma of Habilitation à Diriger des recherches (HDR) called:

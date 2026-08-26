@@ -29,11 +29,13 @@ except ImportError:
 
 REPO_ROOT = Path(__file__).parent.parent.parent
 
+# Base for the "view on GitHub" button on each experiment page.
+GITHUB_BLOB = "https://github.com/AmmarMian/simulations_hdr/blob/main"
+
 CHAPTERS = [
     ("1-context",        "1 · Context",          "chapters/1-context.md"),
     ("2-detection",      "2 · Detection",         "chapters/2-detection.md"),
-    ("3-machinelearning","3 · Machine Learning",  "chapters/3-machinelearning.md"),
-    ("4-deeplearning",   "4 · Deep Learning",     "chapters/4-deeplearning.md"),
+    ("3-deeplearning",   "3 · Deep Learning",     "chapters/3-deeplearning.md"),
 ]
 
 START_MARKER = "<!-- experiments-start -->"
@@ -350,22 +352,138 @@ def _figure_stems(name: str) -> list[tuple[str, str]]:
     return results
 
 
-def _param_table_md(params: list[dict]) -> str:
-    """Render argparse params as a markdown table."""
-    rows = ["| Flag | Type | Default | Description |",
-            "|------|------|---------|-------------|"]
+SRC_MAX_LINES = 1200
+
+
+def _highlight_python(code: str) -> str:
+    """Syntax-highlight source at build time.
+
+    The markdown pipeline does not process fenced blocks nested inside raw
+    HTML, so the <details> body is rendered here with the same Pygments
+    class names the rest of the site's code blocks use.
+    """
+    try:
+        from pygments import highlight
+        from pygments.formatters import HtmlFormatter
+        from pygments.lexers import PythonLexer
+    except ImportError:
+        return f'<div class="highlight"><pre>{html.escape(code)}</pre></div>'
+    return highlight(
+        code, PythonLexer(),
+        HtmlFormatter(cssclass="highlight", nowrap=False),
+    )
+
+
+def _source_block(exe: str) -> str:
+    """Render the collapsible source view plus the GitHub link for one script."""
+    if not exe:
+        return ""
+    rel = exe.lstrip("./")
+    src_path = REPO_ROOT / rel
+    gh_url = f"{GITHUB_BLOB}/{rel}"
+
+    gh_icon = (
+        '<svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">'
+        '<path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 '
+        '0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15'
+        '-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51'
+        '-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 '
+        '0 0 .67-.21 2.2.82a7.42 7.42 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 '
+        '2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95'
+        '.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 '
+        '8c0-4.42-3.58-8-8-8z"/></svg>'
+    )
+    code_icon = (
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" '
+        'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+        '<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>'
+    )
+    chev = (
+        '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+        'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+        '<polyline points="6 9 12 15 18 9"/></svg>'
+    )
+
+    gh_btn = (
+        f'<a class="src-btn" href="{gh_url}" target="_blank" rel="noopener">'
+        f'{gh_icon}<span>View on GitHub</span></a>'
+    )
+
+    if not src_path.exists():
+        return f'<div class="src-bar">{gh_btn}</div>'
+
+    code = src_path.read_text(errors="replace")
+    lines = code.splitlines()
+    if len(lines) > SRC_MAX_LINES:
+        code = "\n".join(lines[:SRC_MAX_LINES]) + f"\n\n# … truncated at {SRC_MAX_LINES} lines — see GitHub for the rest"
+    n_lines = len(lines)
+
+    return (
+        '<div class="src-bar">\n'
+        f'{gh_btn}\n'
+        '</div>\n'
+        '<details class="src-view">\n'
+        f'<summary><span class="src-btn">{code_icon}'
+        f'<span>Source code</span><span class="param-alias">{n_lines} lines</span>{chev}'
+        '</span></summary>\n'
+        '<div class="src-body">\n'
+        f'<p class="src-path">{html.escape(rel)}</p>\n'
+        f'{_highlight_python(code)}\n'
+        '</div>\n'
+        '</details>'
+    )
+
+
+def _param_cards(params: list[dict]) -> str:
+    """Render argparse params as a responsive card list.
+
+    A markdown table forces horizontal scrolling on a phone; each parameter
+    gets its own card instead, which reflows to one or two columns.
+    """
+    cards = []
     for arg in params:
-        flag = " / ".join(f"`{n}`" for n in arg["names"])
-        typ  = str(arg.get("type", "")).replace("<class '", "").replace("'>", "") or "—"
+        names   = arg["names"]
+        flag    = html.escape(names[0])
+        aliases = "".join(
+            f'<span class="param-alias">{html.escape(n)}</span>' for n in names[1:]
+        )
+        typ = str(arg.get("type", "")).replace("<class \'", "").replace("\'>", "")
+        if not typ and arg.get("action") in ("store_true", "store_false"):
+            typ = "flag"
+        type_html = f'<span class="param-type">{html.escape(typ)}</span>' if typ else ""
+
         dflt = arg.get("default")
-        dflt_str = f"`{dflt}`" if dflt is not None else "—"
-        hlp  = (arg.get("help") or "").replace("|", "\\|")
-        rows.append(f"| {flag} | {typ} | {dflt_str} | {hlp} |")
-    return "\n".join(rows)
+        dflt_html = (
+            f'<span class="param-default">default <b>{html.escape(str(dflt))}</b></span>'
+            if dflt is not None else ""
+        )
+        hlp = html.escape(arg.get("help") or "")
+        help_html = f'<p class="param-help">{hlp}</p>' if hlp else ""
+
+        choices = arg.get("choices")
+        choices_html = (
+            f'<p class="param-choices">choices: {html.escape(", ".join(map(str, choices)))}</p>'
+            if isinstance(choices, (list, tuple)) and choices else ""
+        )
+
+        cards.append(
+            '<div class="param">\n'
+            '<div class="param-head">\n'
+            f'<span class="param-flag">{flag}</span>{aliases}{type_html}{dflt_html}\n'
+            '</div>\n'
+            f'{help_html}{choices_html}\n'
+            '</div>'
+        )
+    return '<div class="params">\n' + "\n".join(cards) + "\n</div>"
 
 
-def _write_exp_page(exp: dict) -> None:
-    """Write a dedicated markdown page for one experiment."""
+def _write_exp_page(exp: dict, chapter: "tuple[str, str] | None" = None) -> None:
+    """Write a dedicated markdown page for one experiment.
+
+    ``chapter`` is the (label, slug) of the chapter that owns the experiment;
+    it is used for the breadcrumb and the back-link, since experiment pages
+    are excluded from the nav and would otherwise be a dead end.
+    """
     name  = exp.get("name", "unknown")
     desc  = exp.get("description", "")
     tags  = exp.get("tags", []) or []
@@ -375,7 +493,22 @@ def _write_exp_page(exp: dict) -> None:
 
     params = extract_args(exe) if exe else []
 
+    crumbs = ""
+    if chapter:
+        label, slug = chapter
+        crumbs = (
+            '<nav class="crumbs" aria-label="Breadcrumb">\n'
+            '<a href="../../experiments-overview/">Experiments</a>\n'
+            '<span class="sep">/</span>\n'
+            f'<a href="../../chapters/{slug}/">{html.escape(label)}</a>\n'
+            '<span class="sep">/</span>\n'
+            f'<span class="here">{html.escape(name)}</span>\n'
+            '</nav>'
+        )
+
     lines = [
+        crumbs,
+        "",
         f"# {name}",
         "",
         f"{desc}" if desc else "",
@@ -394,10 +527,12 @@ def _write_exp_page(exp: dict) -> None:
             f"{cmd_prefix} {exe}",
             "```",
             "",
+            _source_block(exe),
+            "",
         ]
 
     if params:
-        lines += ["## Parameters", "", _param_table_md(params), ""]
+        lines += ["## Parameters", "", _param_cards(params), ""]
 
     # Embed interactive figures for all published runs
     figures = _figure_stems(name)
@@ -459,6 +594,14 @@ def _write_exp_page(exp: dict) -> None:
             "## Config",
             "",
             f"`{yaml_}`",
+            "",
+        ]
+
+    if chapter:
+        label, slug = chapter
+        lines += [
+            f'<a class="back-link" href="../../chapters/{slug}/">'
+            f'← All experiments in {html.escape(label)}</a>',
             "",
         ]
 
@@ -580,8 +723,9 @@ def main() -> None:
         total += len(exps)
 
         # Write per-experiment pages
+        chapter_slug = Path(md_rel).stem
         for exp in exps:
-            _write_exp_page(exp)
+            _write_exp_page(exp, chapter=(label, chapter_slug))
 
         block = _chapter_block(exps, label)
         if _inject(chapter_md, block):
