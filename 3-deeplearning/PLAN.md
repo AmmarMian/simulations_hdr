@@ -69,12 +69,34 @@ renvois.)*
 - `[ ] 2.6` Une fois les chiffres réels connus : rédiger le bloc de
   `sec:spdnet-covpool` et poser `rem:spdnet-reeig-retrecissement`.
 
-## Phase 3 — Restitution  `[ ]`
+## Phase 2 bis — Ordre de l'équivalence projavg/rlavg  `[x]`
 
-- `[ ] 3.1` Mettre `NOTE-reproduction.md` à jour (verdict MPS, issue du bug).
-- `[ ] 3.2` `docs/docs/chapters/3-deeplearning.md`, aujourd'hui un placeholder.
+`stiefel_aggregation/`, voir son README. Aucune donnée, 2 s.
+
+- `[x]` Ordre mesuré à **2,98–3,00 sur neuf configurations** (trois géométries
+  de Stiefel × trois nombres de clients). La proposition du chapitre est vraie
+  et conservatrice.
+- `[ ]` Trancher : corriger l'énoncé en $O(\varepsilon^3)$, ou garder
+  $O(\varepsilon^2)$ en disant que la borne est atteinte avec marge.
+
+## Phase 3 — Restitution  `[x]`
+
+- `[x] 3.1` `NOTE-reproduction.md` à jour : §8 corrigé (il n'y avait pas de
+  bug), §8 bis ajouté (verdict MPS), §4 et §5 mis à jour par les mesures.
+- `[x] 3.2` `docs/docs/chapters/3-deeplearning.md` écrit.
+- `[x] 3.3` Descripteurs qanat des deux expériences.
+
+## Bloqué sur une décision d'Ammar
+
+- **Pousser les deux commits de `yetanotherspdnet`** (correctif d'empaquetage +
+  test de contrat) en amont : action sortante, pas faite sans accord. Tant
+  qu'elle ne l'est pas, `yetanotherspdnet` ne peut pas devenir une dépendance
+  du dépôt, donc `uv run` ne suffit pas et la chaîne qanat ne peut pas être
+  lancée telle quelle (`PYTHONPATH` en attendant).
+- **Lancer `real_data.py`** sur une machine qui a les jeux de données.
+- Les cinq points du §9 de la note.
 
 ## Hors périmètre (décidé dans la note)
 
-GPR, les 3 jeux réels de la batch-norm, l'EEG fédéré. La figure Wishart et la
-figure d'ordre projavg/rlavg attendent l'arbitrage d'Ammar (§9 de la note).
+GPR, les 3 jeux réels de la batch-norm, l'EEG fédéré. La figure Wishart se
+relance telle quelle depuis `eusipco_2026` et n'est donc pas réécrite ici.
