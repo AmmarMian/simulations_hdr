@@ -1,0 +1,24 @@
+name: learning_marchenko_pastur
+description: Marchenko-Pastur law — histogram of the SCM eigenvalues against the theoretical density, for three concentration ratios
+path: 3-learning/marchenko_pastur
+executable: 3-learning/marchenko_pastur/main.py
+executable_command: uv run python
+tags:
+  - learning
+  - random-matrix-theory
+  - monte-carlo
+params:
+  n_features: 200
+  n_trials: 400
+actions:
+  - register:
+      name: register
+      executable: register_latex.py
+      executable_command: uv run python
+      description: Stage a chosen figure (.tex) to hdr_exports/ for the LaTeX dissertation
+  - add_to_docs:
+      name: add_to_docs
+      executable: 3-learning/marchenko_pastur/action_add_to_docs.py
+      executable_command: uv run python
+      description: Export the three Marchenko-Pastur panels as Plotly JSON for docs
+group: "Learning · Random matrix theory"

@@ -42,3 +42,9 @@ docs/site/
 # Ad-hoc experiment outputs of 3-deeplearning (regenerable; the staged copies
 # live in hdr_exports/ as for every other chapter).
 3-deeplearning/**/outputs/
+
+# Scratch run directories: every main.py defaults --storage-path to outputs/<name>,
+# so a local run outside qanat leaves one behind. They are never the source of a
+# figure — qanat runs land in results/ and figures are staged in hdr_exports/ —
+# and an uncommitted one is enough to make `qanat experiment run` refuse to start.
+**/outputs/
