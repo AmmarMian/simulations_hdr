@@ -1,0 +1,35 @@
+{
+  "git_sha": "8154229",
+  "script": "/Users/ammarmian/Research/HDR/simulations_hdr/3-learning/marchenko_pastur/main.py",
+  "args": {
+    "n_trials": 400,
+    "seed": 42,
+    "backend": "numpy",
+    "n_workers": null,
+    "export": true,
+    "export_path": "/Users/ammarmian/Research/HDR/simulations_hdr/results/learning_marchenko_pastur/run_40",
+    "show_interactive": false,
+    "n_features": 200,
+    "ratios": [
+      0.1,
+      0.5,
+      1.0
+    ],
+    "n_bins": 80,
+    "axis_width": "0.31\\textwidth",
+    "axis_height": "4.4cm",
+    "storage_path": "/Users/ammarmian/Research/HDR/simulations_hdr/results/learning_marchenko_pastur/run_40"
+  },
+  "hdr": {
+    "id": "marchenko",
+    "exp": "learning_marchenko_pastur",
+    "run_id": 40,
+    "commit_sha": "81542293ffaa89a51dd78c773a2cdc2ee72d439b",
+    "sha_short": "8154229",
+    "run_date": "2026-08-27",
+    "run_month": "2026-08",
+    "seed": "42",
+    "embed_npy": false,
+    "registered_at": "2026-08-27T08:45:07Z"
+  }
+}
