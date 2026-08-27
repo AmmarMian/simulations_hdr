@@ -137,12 +137,12 @@ def main():
     concentration = args.n_features / args.window_size**2
     print(f"{args.scene}: {windows.shape[0]} fenêtres de "
           f"{windows.shape[1]} échantillons en dimension {windows.shape[2]}, "
-          f"c = {concentration:.2f}, {n_classes} classes")
+          f"c = {concentration:.2f}, {n_classes} classes", flush=True)
 
     maps, scores = {}, {}
     for method in args.methods:
         start = time.perf_counter()
-        labels, inertia = riemannian_kmeans(
+        labels, inertia, histories = riemannian_kmeans(
             windows, n_classes, method=method, n_init=args.n_init,
             max_iter=args.max_iter, mean_iterations=args.mean_iterations,
             seed=args.seed, backend=args.backend, verbose=True,
@@ -159,9 +159,12 @@ def main():
         scores[method] = {
             "accuracy": accuracy, "mIoU": miou,
             "inertia": inertia, "seconds": elapsed,
+            "restarts": histories,
+            "worst_moved": max(h["moved"] for h in histories),
         }
         print(f"{method:6s} acc={accuracy:.3f}  mIoU={miou:.3f}  "
-              f"({elapsed:.0f}s)")
+              f"({elapsed:.0f}s, worst restart left "
+              f"{scores[method]['worst_moved']:.2%} moving)", flush=True)
 
     # ── the figure: ground truth, then one map per method ────────────────
     panels = ["vérité terrain"] + list(args.methods)

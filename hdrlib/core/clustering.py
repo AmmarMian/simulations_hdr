@@ -210,6 +210,9 @@ def riemannian_kmeans(
     -------
     labels : ndarray of shape (n_points,)
     inertia : float
+    histories : list of dict
+        One entry per restart: its inertia, how many rounds it took, and what
+        fraction of the points was still changing cluster when it stopped.
     """
     if method not in METHODS:
         raise KeyError(f"unknown method {method!r}; known: {sorted(METHODS)}")
@@ -220,6 +223,7 @@ def riemannian_kmeans(
     rng = np.random.default_rng(seed)
 
     best_labels, best_inertia = None, np.inf
+    histories = []
     for restart in range(n_init):
         labels = _random_labels(rng, n_points, n_clusters)
         centres, covariances = centroid_fn(
@@ -255,13 +259,21 @@ def riemannian_kmeans(
         inertia = float(
             sum(distances[labels == c, c].sum() for c in range(n_clusters))
         )
+        # ``moved`` is the fraction of points that changed cluster on the last
+        # round. Reported because hitting the iteration cap is not by itself a
+        # problem: a run that stops with 0.1% of the points still moving has
+        # settled, one that stops with 5% moving has not, and only the second
+        # makes a comparison meaningless.
+        histories.append({"inertia": inertia, "iterations": iteration + 1,
+                          "moved": float(moved)})
         if verbose:
             print(f"    {method} init {restart + 1}/{n_init}: "
-                  f"inertia {inertia:.3f} in {iteration + 1} iterations")
+                  f"inertia {inertia:.3f} in {iteration + 1} iterations, "
+                  f"{moved:.3%} still moving", flush=True)
         if inertia < best_inertia:
             best_labels, best_inertia = labels, inertia
 
-    return best_labels, best_inertia
+    return best_labels, best_inertia, histories
 
 
 # ── scoring an unsupervised partition ─────────────────────────────────────────

@@ -1,0 +1,27 @@
+name: learning_hyperspectral
+description: Riemannian K-means segmentation of a hyperspectral scene — SCM, Ledoit-Wolf, non-linear shrinkage and the RMT correction, judged on the ground truth
+path: 3-learning/hyperspectral
+executable: 3-learning/hyperspectral/main.py
+executable_command: uv run python
+tags:
+  - learning
+  - random-matrix-theory
+  - clustering
+  - hyperspectral
+params:
+  scene: indianpines
+  n_features: 5
+  window_size: 5
+  n_init: 10
+actions:
+  - register:
+      name: register
+      executable: register_latex.py
+      executable_command: uv run python
+      description: Stage a chosen figure to hdr_exports/ for the LaTeX dissertation
+  - add_to_docs:
+      name: add_to_docs
+      executable: 3-learning/hyperspectral/action_add_to_docs.py
+      executable_command: uv run python
+      description: Export the segmentation maps as Plotly JSON for docs
+group: "Learning · Random matrix theory"
