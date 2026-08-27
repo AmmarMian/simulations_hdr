@@ -79,6 +79,53 @@ renvois.)*
 - `[ ]` Trancher : corriger l'énoncé en $O(\varepsilon^3)$, ou garder
   $O(\varepsilon^2)$ en disant que la borne est atteinte avec marge.
 
+## Phase 2 ter — Volet coût du §batch-norm  `[x]`
+
+`batchnorm_cost/`, voir son README. Aucune donnée. **Réécriture** : aucun dépôt
+ne contient de mesure de temps ou de mémoire.
+
+- `[x]` Mémoire mesurée par `saved_tensors_hooks` plutôt que par
+  `cuda.max_memory_allocated` : c'est exactement ce que
+  `prop:spdnet-grad-geo` prédit (les $\Niterm$ itérées retenues), c'est exact,
+  attribuable, et indépendant du matériel. Le pic d'allocateur est relevé en
+  plus sous CUDA.
+- `[x]` Les trois balayages de l'article (taille, batch, profondeur) : rapport
+  mémoire **croissant sur les trois axes**, 2,42× à taille 512 jusqu'à 3,12× à
+  profondeur 32, et toujours plus élevé pour la géométrique que pour GAH.
+- `[x]` Quatrième balayage, hors article, sur $\Niterm$ : 1,37× à une itération,
+  2,91× à vingt. C'est le mécanisme derrière les trois autres.
+- `[x]` Temps : **comparables à quelques pour cent près**, dans les deux sens.
+  L'argument est la mémoire et la robustesse, pas la vitesse — dit franchement
+  dans le README, comme le bloc `% TODO` le demande.
+- `[ ]` Relancer les temps sur la machine de mesure (les mémoires sont
+  déterministes, les temps non).
+
+## Phase 2 quater — Cinq moyennes dans la figure du ch. 3  `[x]`
+
+Ajout 5 du bloc `TODO decision`, fait pour le coût d'un seul run.
+
+- `[x]` `1-context/riemann_moyennes/main.py` étendu aux moyennes harmonique et
+  GAH (calculée comme milieu de géodésique, donc la définition elle-même).
+  Arithmétique et harmonique encadrent le nuage (det 1,32 et 0,86 contre 1,03),
+  GAH atterrit près de Fréchet (1,068, distance 0,120 contre 0,081) sans
+  itération.
+- `[x]` Rejoué sous qanat (run 39), réenregistré, resynchronisé.
+- `[x]` Légende et texte de `3-Riemann.tex` mis à jour (ils annonçaient trois
+  moyennes) et renvoi ajouté vers `prop:spdnet-moyennes-frechet`.
+
+## Phase 2 quinquies — `just build` réparé  `[x]`
+
+Échec **préexistant** rencontré en vérifiant la figure, reproduit sur l'arbre
+non modifié : l'externalisation tikz mourait sur `figure0`.
+
+- `[x]` Cause : la garde de `\joinedpaper` comparait `\jobname` à
+  `\tikzexternalrealjob`, or la bibliothèque `external` redéfinit `\jobname`
+  pour rendre le nom du document principal pendant une passe figure. Les deux
+  valaient donc toujours `dissertation`, le test passait *tout le temps*, et
+  `\includepdf` s'exécutait là où `\includegraphics` est neutralisé.
+- `[x]` Remplacée par `\tikzifexternalizing`, la macro publique de PGF prévue
+  pour cela. Vérifiée en isolation sur les deux passes.
+
 ## Phase 3 — Restitution  `[x]`
 
 - `[x] 3.1` `NOTE-reproduction.md` à jour : §8 corrigé (il n'y avait pas de
