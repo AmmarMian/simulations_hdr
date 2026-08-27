@@ -22,13 +22,14 @@ que le mémoire doit pouvoir montrer sous sa propre chaîne de provenance.
 | Expérience | Ce qu'elle montre | Données | État |
 |---|---|---|---|
 | `learning_marchenko_pastur` | ce que le régime dimensionnel fait à un spectre : le biais est déterministe, donc corrigible | simulées | faite |
-| eqm de la moyenne de Fréchet vs $N$ | l'écart entre la moyenne corrigée et les estimateurs à rétrécissement | simulées | à porter |
-| eqm de la moyenne de Fréchet vs $K$ | le gain *croît* avec le nombre de matrices moyennées — moyenner réduit la variance, pas le biais | simulées | à porter |
+| `learning_frechet_mse` | l'eqm de la moyenne de Fréchet contre $N$ et contre $K$ — et le fait que le gain *croît* avec $K$ | simulées | faite |
 | partitionnement hyperspectral | le gain se maintient en aval de l'estimation | Indian Pines | optionnelle |
 
-Les trois dernières lignes ont déjà leur code et leurs données côté
-`icml-rmt-2024` et côté présentation HCERES ; il reste le portage sous qanat
-pour la ligne de provenance et le réhabillage aux couleurs du mémoire.
+Le code de `learning_frechet_mse` est un portage de
+[`AmmarMian/icml-rmt-2024`](https://github.com/AmmarMian/icml-rmt-2024) sur la
+couche de backends ; ce qu'il a fallu changer, et la comparaison numérique
+couche par couche avec l'implémentation publiée, sont dans
+[`3-learning/frechet_mse/README.md`](https://github.com/AmmarMian/simulations_hdr/blob/main/3-learning/frechet_mse/README.md).
 
 ## Marchenko-Pastur
 
@@ -44,6 +45,21 @@ parfaitement décrit, donc inversible.
 Les trois panneaux ne diffèrent que par le nombre d'observations. À $c = 1$ la
 densité diverge à l'origine en $1/\sqrt{\lambda}$ ; le cadre suit l'histogramme
 et non la courbe, sans quoi le panneau s'écraserait sur sa ligne de base.
+
+## L'eqm de la moyenne
+
+Les deux panneaux répondent à deux questions différentes. Contre le nombre
+d'échantillons, l'écart se referme quand $N$ croît : c'est la signature d'un
+biais de régime et non d'une variance. Contre le nombre de matrices, il
+s'*élargit* — moyenner davantage de matrices réduit la variance mais pas le
+biais, qui est commun à toutes les scm ; passé un certain $K$, le biais est
+tout ce qui reste et lui seul distingue les méthodes.
+
+Noter aussi *où* chaque méthode corrige : les rétrécissements régularisent
+chaque covariance **avant** de moyenner, la méthode rmt corrige la **distance**
+que la moyenne minimise. Ce n'est pas le même geste.
+
+<div class="plotly-wrap" data-src="../../assets/data/learning_frechet_mse.json" data-title="learning_frechet_mse"></div>
 
 ## Expériences
 

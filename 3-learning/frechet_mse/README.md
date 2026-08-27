@@ -112,6 +112,19 @@ vérifier n'est pas l'égalité des matrices mais **l'égalité de ce que les
 figures tracent**, c'est-à-dire l'eqm. Elle est la dernière ligne du tableau, et
 elle concorde à 1e-6.
 
+## Une différence de convention, à ne pas prendre pour un désaccord
+
+L'article trace `20*log10(eqm)`. C'est la convention d'amplitude, appliquée à
+une quantité qui est déjà un carré : les décibels affichés y valent donc le
+double de ce qu'une convention de puissance donnerait. Les figures d'ici
+tracent `10*log10(eqm)`, qui est la bonne pour une erreur quadratique.
+
+Les valeurs brutes concordent. À $N = 65$, $d = 64$, $K = 10$, l'export de
+l'article donne une eqm de $69{,}95$ pour la scm et $9{,}85$ pour la méthode
+corrigée ; ce portage donne $18{,}53$ dB et $10{,}41$ dB, soit $71{,}3$ et
+$11{,}0$ en brut. L'écart résiduel est celui du tirage du centre et de la
+graine, pas de l'algorithme.
+
 ## Limites
 
 `torch-mps` ne peut pas exécuter ce code : Metal n'a pas de float64, et le
