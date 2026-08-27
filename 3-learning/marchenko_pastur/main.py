@@ -149,17 +149,28 @@ if __name__ == "__main__":
         grid = np.linspace(1e-4, upper_plot, 600)
         density, lower, upper = marchenko_pastur_density(grid, ratio)
 
-        ax.hist(
+        # Only the first panel carries labels: matplot2tikz emits one legend
+        # entry per labelled artist per axis, so labelling all three panels
+        # would print the same legend three times under the exported figure.
+        first = index == 0
+        counts, _, _ = ax.hist(
             eigenvalues, bins=args.n_bins, range=(0.0, upper_plot),
             density=True, color="C0", alpha=0.55, edgecolor="none",
-            label="valeurs propres de la scm",
+            label="valeurs propres de la scm" if first else None,
         )
-        ax.plot(grid, density, color="C3", linewidth=1.6, label="loi de MP")
+        ax.plot(grid, density, color="C3", linewidth=1.6,
+                label="loi de MP" if first else None)
         # The true spectrum is a single point; it is worth drawing, because the
         # whole reading of the figure is the gap between it and the histogram.
         ax.axvline(1.0, color="k", linestyle="--", linewidth=1.0,
-                   label=r"spectre vrai")
+                   label="spectre vrai" if first else None)
         ax.set_xlim(0.0, upper_plot)
+        # At c = 1 the density diverges at the origin like 1/sqrt(x): letting
+        # the axis follow the theoretical curve would flatten the histogram of
+        # that panel into the baseline. The frame is set on the histogram
+        # instead, so the three panels stay comparable and the divergence
+        # simply leaves the top of the frame.
+        ax.set_ylim(0.0, 1.25 * float(counts.max()))
         ax.set_xlabel(r"$\lambda$")
         if index == 0:
             ax.set_ylabel("densité")
