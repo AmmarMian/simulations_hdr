@@ -70,6 +70,17 @@ que la moyenne minimise. Ce n'est pas le même geste.
 <div class="exp-grid">
 <div class="exp-card">
 <div class="exp-card-head">
+<div class="exp-name">learning_frechet_mse</div>
+<span class="exp-results-badge">Results available</span>
+</div>
+<div class="exp-desc">MSE of the Fréchet mean of a set of covariances, against the number of samples and against the number of matrices — SCM, Ledoit-Wolf, OAS, non-linear shrinkage and the RMT correction</div>
+<div class="exp-tags"><span class="exp-tag">learning</span><span class="exp-tag">random-matrix-theory</span><span class="exp-tag">frechet-mean</span><span class="exp-tag">monte-carlo</span></div>
+<div class="exp-run"><code>uv run python 3-learning/frechet_mse/main.py</code></div>
+<a class="exp-details-link" href="../../experiments/learning_frechet_mse/">Parameters &amp; details →</a>
+</div>
+
+<div class="exp-card">
+<div class="exp-card-head">
 <div class="exp-name">learning_marchenko_pastur</div>
 <span class="exp-results-badge">Results available</span>
 </div>

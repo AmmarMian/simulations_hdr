@@ -24,7 +24,7 @@
 <a class="xp-toc-item" href="../chapters/3-learning/" data-panel="panel-3">
   <span class="xp-toc-num">03</span>
   <span class="xp-toc-title">Learning</span>
-  <span class="xp-toc-meta">1 experiment</span>
+  <span class="xp-toc-meta">2 experiments</span>
 </a>
 
 <a class="xp-toc-item" href="../chapters/4-deeplearning/" data-panel="panel-4">
@@ -78,7 +78,7 @@
     <span class="exp-tag">Fréchet mean</span>
     <span class="exp-tag">Riemannian optimisation</span>
   </div>
-  <a class="xp-toc-panel-link" href="../chapters/3-learning/">1 experiment · Open chapter →</a>
+  <a class="xp-toc-panel-link" href="../chapters/3-learning/">2 experiments · Open chapter →</a>
 </div>
 
 <div class="xp-toc-panel" id="panel-4" hidden>
