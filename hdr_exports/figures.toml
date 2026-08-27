@@ -115,6 +115,14 @@ run_date  = "2026-07-02"
 seed      = "42"
 embed_npy = false
 
+[figures.mse]
+exp       = "learning_frechet_mse"
+run_id    = 42
+sha       = "c54782d"
+run_date  = "2026-08-27"
+seed      = "42"
+embed_npy = false
+
 [figures.marchenko]
 exp       = "learning_marchenko_pastur"
 run_id    = 41

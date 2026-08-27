@@ -34,6 +34,7 @@ from multiprocessing import Pool
 
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.ticker import NullFormatter
 
 from hdrlib.core.backend import get_data_on_device, to_numpy
 from hdrlib.core.exporter import save_tikz, write_prov_sidecar
@@ -206,6 +207,12 @@ def draw(ax, axis_values, errors, xlabel, first):
             color=colors[name], alpha=0.15, linewidth=0,
         )
     ax.set_xscale("log")
+    # Minor tick labels off. Two reasons: on a range this narrow matplotlib
+    # labels a dozen minor decades, which is unreadable at export size; and
+    # matplot2tikz mis-exports them — it emits the label list without the
+    # `minor xticklabels={` key that opens it, which is a syntax error in the
+    # generated .tex and stops the dissertation build outright.
+    ax.xaxis.set_minor_formatter(NullFormatter())
     ax.set_xlabel(xlabel)
     if first:
         ax.set_ylabel("eqm (dB)")
