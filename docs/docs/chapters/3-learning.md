@@ -25,11 +25,11 @@ que le mémoire doit pouvoir montrer sous sa propre chaîne de provenance.
 | `learning_frechet_mse` | l'eqm de la moyenne de Fréchet contre $N$ et contre $K$ — et le fait que le gain *croît* avec $K$ | simulées | faite |
 | partitionnement hyperspectral | le gain se maintient en aval de l'estimation | Indian Pines | optionnelle |
 
-Le code de `learning_frechet_mse` est un portage de
-[`AmmarMian/icml-rmt-2024`](https://github.com/AmmarMian/icml-rmt-2024) sur la
-couche de backends ; ce qu'il a fallu changer, et la comparaison numérique
-couche par couche avec l'implémentation publiée, sont dans
-[`3-learning/frechet_mse/README.md`](https://github.com/AmmarMian/simulations_hdr/blob/main/3-learning/frechet_mse/README.md).
+La correction et la moyenne corrigée sont dans
+[`hdrlib.core.rmt`](../api/core/backend.md) ; elles reprennent
+[`AmmarMian/icml-rmt-2024`](https://github.com/AmmarMian/icml-rmt-2024). Elles
+demandent du float64 — `torch-mps` est donc hors jeu, Metal n'ayant pas de
+double précision.
 
 ## Marchenko-Pastur
 

@@ -1,32 +1,28 @@
 # Random matrix theory corrections for the affine-invariant geometry.
 #
-# Port of the reference implementation of
+# Implements the corrected Fisher distance and the corrected Fréchet mean of
 #
 #   Bouchard, Mian, Tiomoko, Ginolhac, Pascal, "Random matrix theory improved
 #   Fréchet mean of symmetric positive definite matrices", ICML 2024,
-#   https://github.com/AmmarMian/icml-rmt-2024
 #
-# onto hdrlib's backend layer, so the same code runs on numpy, torch, cupy and
-# jax. What the port had to change, and what it deliberately did not, is
-# documented in 3-learning/frechet_mse/README.md; the numerical agreement with
-# the reference is checked by validate_against_paper.py, which imports both.
+# on hdrlib's backend layer, so the same code runs on numpy, torch, cupy and
+# jax. Needs float64 — see require_double.
 #
-# Two points worth keeping in mind when reading this file.
+# Two points worth knowing before editing this file.
 #
-# The reference works in *transformed* coordinates throughout: with L the
-# Cholesky factor of the current iterate M, every SCM is carried as
-# L^{-1} S L^{-T}, and the cost depends only on the eigenvalues of those. The
-# retraction is applied in the same basis, which is what lets the line search
-# re-evaluate the cost by a diagonal scaling instead of a fresh Cholesky. That
-# structure is kept exactly — it is the reason the algorithm is cheap.
+# Everything works in *transformed* coordinates: with L the Cholesky factor of
+# the current iterate M, every SCM is carried as L^{-1} S L^{-T}, and the cost
+# depends only on the eigenvalues of those. The retraction is applied in the
+# same basis, which is what lets the line search re-evaluate the cost by a
+# diagonal scaling instead of a fresh Cholesky. That structure is the reason
+# the algorithm is cheap, and it should be kept.
 #
-# The cost and gradient formulas contain several expressions of the form
-# ``mat**3 + eye`` or ``mat**2 - 4*diagL**2``, where ``mat`` is the matrix of
-# eigenvalue differences and vanishes on the diagonal. These are not
-# regularisations: the ``+ eye`` terms exist so that the diagonal entries
-# evaluate the *limit* of the off-diagonal expression rather than 0/0. They are
-# reproduced verbatim, and are the part of this file most sensitive to a change
-# of backend, since they divide by differences of eigenvalues.
+# The cost and gradient contain several expressions of the form ``mat**3 + eye``
+# or ``mat**2 - 4*diagL**2``, where ``mat`` is the matrix of eigenvalue
+# differences and vanishes on the diagonal. These are not regularisations: the
+# ``+ eye`` terms exist so that the diagonal entries evaluate the *limit* of the
+# off-diagonal expression rather than 0/0. Rewriting them is the fastest way to
+# break the gradient silently.
 
 from typing import Optional, Tuple, Union
 
@@ -93,9 +89,6 @@ def require_double(x: Array, what: str) -> None:
     every significant digit, silently — the descent still returns a matrix, and
     that matrix is wrong.
 
-    The reference implementation has the same requirement without stating it:
-    it calls ``dtrtri``, which exists only in double precision.
-
     The practical consequence is that ``torch-mps`` cannot run this code, since
     Metal has no float64. Use ``torch-cpu`` on Apple silicon.
     """
@@ -109,22 +102,7 @@ def require_double(x: Array, what: str) -> None:
 
 
 def _cholesky_and_inverse(be, matrix: Array) -> Tuple[Array, Array]:
-    """Lower Cholesky factor of ``matrix`` and its inverse.
-
-    The reference calls LAPACK directly here — ``dpptrf`` for a Cholesky in
-    packed storage, then ``dtrtri`` for the inverse of the triangular factor.
-    Neither has a backend-agnostic equivalent, and neither needs one:
-
-    * packed storage is a memory layout, not a different factorisation, so
-      ``cholesky`` returns the same factor in full storage;
-    * ``dtrtri`` exploits triangularity to save half the flops, while a general
-      ``inv`` does not. The result differs only in rounding.
-
-    ``dtrtri`` is also double-precision only (the ``d`` prefix), so the
-    reference silently requires float64. This port does not force the dtype but
-    inherits it from the data, which is why the callers below document that the
-    RMT path wants float64.
-    """
+    """Lower Cholesky factor of ``matrix`` and its inverse."""
     factor = be.linalg.cholesky(matrix)
     return factor, be.linalg.inv(factor)
 
@@ -146,9 +124,8 @@ def scm(data: Array, backend: Union[str, Backend] = "numpy") -> Array:
 def ledoit_wolf_linear(data: Array, backend: Union[str, Backend] = "numpy") -> Array:
     """Linear shrinkage towards a scaled identity (Ledoit and Wolf, 2004).
 
-    Written out rather than taken from scikit-learn, which is numpy-only and
-    would pin the whole experiment to one backend for a two-line formula. This
-    is the ``assume_centered=True`` variant, matching the reference's call.
+    Centred variant: the data of these simulations is known to have zero mean
+    by construction.
     """
     be = get_backend_module(backend)
     n_samples, n_features = data.shape[-2], data.shape[-1]
@@ -176,10 +153,10 @@ def ledoit_wolf_linear(data: Array, backend: Union[str, Backend] = "numpy") -> A
 def oas(data: Array, backend: Union[str, Backend] = "numpy") -> Array:
     """Oracle approximating shrinkage (Chen et al., 2010), centred variant.
 
-    Follows scikit-learn's formulation rather than the one printed in the
-    original paper: the two differ by ``(1 - 2/p)`` factors that scikit-learn
-    drops, and it is scikit-learn that the reference implementation calls, so
-    it is scikit-learn that the figures of the paper actually plot.
+    Note that two formulations circulate: the one printed in the original
+    paper, and the one in common use, which drops its ``(1 - 2/p)`` factors.
+    The second is implemented here, since it is the one every published
+    comparison actually plots.
     """
     be = get_backend_module(backend)
     n_samples, n_features = data.shape[-2], data.shape[-1]
@@ -206,13 +183,11 @@ def analytical_shrinkage(
     """Analytical non-linear shrinkage (Ledoit and Wolf, 2020).
 
     Kernel estimate of the limiting spectral density and its Hilbert transform,
-    used to shrink each sample eigenvalue individually. Transposed from the
-    reference, with one deliberate change: the eigendecomposition uses ``eigh``
-    rather than ``eig``. The matrix is symmetric by construction, ``eig``
-    returns complex values for it on some backends, and the reference then
-    sorts them — ``eigh`` returns them real and already ascending.
+    used to shrink each sample eigenvalue individually. The matrix is symmetric
+    by construction, so the decomposition is ``eigh``: real eigenvalues, already
+    ascending.
 
-    Valid for ``n_features <= n_samples``, like the reference.
+    Valid for ``n_features <= n_samples``.
     """
     be = get_backend_module(backend)
     n_samples, n_features = data.shape[-2], data.shape[-1]
@@ -278,11 +253,10 @@ def _rmt_cost_grad(
     same basis; a congruence with ``L`` turns it into the Riemannian gradient at
     the iterate, which the caller does implicitly through the retraction.
 
-    This is a transposition of ``_aux_RMT_mean_cost_grad`` of the reference,
-    term for term. Nothing is simplified: the expressions look redundant in
-    places (``mat**3 + multi_eye``, ``mat**2 - 4*diagL**2``) but each of those
+    Nothing here is simplified: the expressions look redundant in places
+    (``mat**3 + multi_eye``, ``mat**2 - 4*diagL**2``) but each of those
     additions is what makes a diagonal entry evaluate a finite limit instead of
-    0/0, and rewriting them is the fastest way to break the gradient silently.
+    0/0.
     """
     eye = _eye_like(be, backend, n_features, transformed)
     multi_eye = be.broadcast_to(eye, transformed.shape)
@@ -551,9 +525,8 @@ def rmt_frechet_mean(
     the regime where the dimension and the sample size grow proportionally,
     which is exactly where the plain Fréchet mean of the SCMs is not.
 
-    Wants float64: the gradient divides by differences of eigenvalues, and the
-    reference implementation calls a double-precision-only LAPACK routine, so
-    single precision is outside what has ever been validated.
+    Wants float64: the gradient divides by differences of eigenvalues, which
+    single precision cannot carry — see :func:`require_double`.
 
     Parameters
     ----------
@@ -562,7 +535,7 @@ def rmt_frechet_mean(
         Degrees of freedom behind each SCM; ``n_samples`` by default.
     init : Array, optional
         Starting point; the identity by default.
-    max_iterations, tol, tol_cost : see the reference.
+    max_iterations, tol, tol_cost : int, float, float
     backend : str or Backend
 
     Returns
@@ -602,8 +575,7 @@ def frechet_mean_cholesky(
     ``hdrlib.core.estimation.frechet_mean_affine_invariant`` computes the same
     object by a different route (log-Euclidean start, fixed-step exponential
     updates). This one exists so that the corrected and uncorrected means of a
-    comparison differ *only* by the correction, and not also by the optimiser —
-    which is what the MSE figures of the ICML paper measure.
+    comparison differ *only* by the correction, and not also by the optimiser.
     """
     be = get_backend_module(backend)
     n_features = covariances.shape[-1]

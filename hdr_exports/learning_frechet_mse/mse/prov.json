@@ -1,5 +1,5 @@
 {
-  "git_sha": "f297019",
+  "git_sha": "6149f77*",
   "script": "/Users/ammarmian/Research/HDR/simulations_hdr/3-learning/frechet_mse/main.py",
   "args": {
     "n_trials": 100,
@@ -7,7 +7,7 @@
     "backend": "numpy",
     "n_workers": null,
     "export": true,
-    "export_path": "/Users/ammarmian/Research/HDR/simulations_hdr/results/learning_frechet_mse/run_42",
+    "export_path": "/Users/ammarmian/Research/HDR/simulations_hdr/results/learning_frechet_mse/run_43",
     "show_interactive": false,
     "n_features": 64,
     "n_samples": [
@@ -37,18 +37,18 @@
     "tol": 1e-06,
     "axis_width": "0.44\\textwidth",
     "axis_height": "5.2cm",
-    "storage_path": "/Users/ammarmian/Research/HDR/simulations_hdr/results/learning_frechet_mse/run_42"
+    "storage_path": "/Users/ammarmian/Research/HDR/simulations_hdr/results/learning_frechet_mse/run_43"
   },
   "hdr": {
     "id": "mse",
     "exp": "learning_frechet_mse",
-    "run_id": 42,
-    "commit_sha": "c54782dc1676cc3f204c60b90448bf9faa73f763",
-    "sha_short": "c54782d",
+    "run_id": 43,
+    "commit_sha": "6149f7714539ee724b1dd5022487282e45024f27",
+    "sha_short": "6149f77",
     "run_date": "2026-08-27",
     "run_month": "2026-08",
     "seed": "42",
     "embed_npy": false,
-    "registered_at": "2026-08-27T11:00:37Z"
+    "registered_at": "2026-08-27T11:12:21Z"
   }
 }

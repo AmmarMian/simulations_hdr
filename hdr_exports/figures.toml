@@ -117,8 +117,8 @@ embed_npy = false
 
 [figures.mse]
 exp       = "learning_frechet_mse"
-run_id    = 42
-sha       = "c54782d"
+run_id    = 43
+sha       = "6149f77"
 run_date  = "2026-08-27"
 seed      = "42"
 embed_npy = false

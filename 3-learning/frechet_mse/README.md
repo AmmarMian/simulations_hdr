@@ -1,133 +1,67 @@
-# Portage de l'implémentation ICML 2024, et ce qu'il a coûté
+# Erreur d'estimation de la moyenne de Fréchet
 
-Sert les deux figures d'eqm de `sec:learning-frechet` et la
-`prop:learning-distance-corrigee`. Aucune donnée réelle.
+Sert la figure d'eqm de `sec:learning-frechet`. Aucune donnée réelle.
 
-Le code de référence est celui de
-[`AmmarMian/icml-rmt-2024`](https://github.com/AmmarMian/icml-rmt-2024). Il est
-transposé dans [`hdrlib/core/rmt.py`](../../hdrlib/core/rmt.py) pour passer par
-la couche `hdrlib.core.backend`, comme le reste des chapitres 1 à 3.
+## Ce que ça mesure
 
-## Ce qui était censé poser problème, et ce qui en posait vraiment
+La moyenne de Fréchet d'un ensemble de covariances est ce que calcule tout
+classifieur au plus proche centroïde et tout $K$-moyennes riemannien. En
+pratique on n'a pas les covariances vraies mais leurs estimées, dans le régime
+où $d$ et $N$ sont comparables : la moyenne de Fréchet des scm est alors
+biaisée.
 
-Le soupçon de départ était que le dépôt de référence utilisait JAX et des
-primitives LAPACK impossibles à rendre backend-free. La lecture du code dit
-autre chose.
+Cinq estimateurs, deux balayages :
 
-**JAX : rien.** Le mot n'apparaît que dans quelques docstrings
-(`jnp.ndarray`), reliquats d'une version antérieure. Le code exécuté est du
-numpy pur.
+| | |
+|---|---|
+| `SCM` | moyenne de Fréchet des covariances empiriques |
+| `LW`, `OAS` | des covariances rétrécies linéairement |
+| `LW-NL` | des covariances rétrécies non linéairement |
+| `RMT` | moyenne corrigée par la théorie des matrices aléatoires |
 
-**LAPACK : deux appels, tous deux remplaçables.**
+Les quatre premières régularisent chaque covariance **avant** de moyenner ; la
+dernière corrige la **distance** que la moyenne minimise. Ce n'est pas le même
+geste, et c'est ce que la figure sépare.
 
-| Référence | Ici | Nature de l'écart |
-|---|---|---|
-| `dpptrf` — Cholesky en stockage compacté | `linalg.cholesky` | aucun : le stockage compacté est une disposition mémoire, pas une autre factorisation. Vérifié bit à bit |
-| `dtrtri` — inverse d'un facteur triangulaire | `linalg.inv` | `dtrtri` exploite la triangularité et fait deux fois moins d'opérations ; le résultat ne diffère que par l'arrondi. Vérifié bit à bit sur nos cas |
+## Les deux panneaux
 
-`dtrtri` n'existe qu'en double précision (préfixe `d`) : **la référence exige
-donc float64 sans le dire**. Le portage le dit, via `rmt.require_double`.
+**Contre le nombre d'échantillons $N$** ($K = 10$) : l'écart se referme quand
+$N$ croît — 8,1 dB de gain à $N = 65$, 2,2 dB à $N = 300$. Signature d'un biais
+de régime, pas d'une variance.
 
-**pymanopt : dépendance de façade.** Le paquet n'est importé que pour la classe
-de base de `SPD`, et aucun optimiseur de pymanopt n'est utilisé — la descente
-et la recherche linéaire sont écrites à la main dans `mean.py`. Rien à porter.
+**Contre le nombre de matrices $K$** ($N = 128$) : l'écart s'*ouvre*. La scm
+plafonne (12,7 dB à $K = 3$, 8,2 dB à $K = 100$, l'essentiel acquis dès
+$K = 20$) pendant que la moyenne corrigée continue de descendre jusqu'à
+−4,3 dB. Moyenner réduit la variance, pas le biais : celui-ci est commun à
+toutes les scm et survit intact à la moyenne.
 
-**scipy.linalg.sqrtm** n'apparaît que dans `SPD.transport`, qui ne sert à aucun
-des calculs de moyenne. Non porté.
+C'est le second panneau qui porte l'argument, et c'est celui que l'intuition
+rate.
 
-**scikit-learn** fournit les deux estimateurs à rétrécissement linéaire.
-Réécrits ici (dix lignes chacun) plutôt qu'importés, sans quoi toute
-l'expérience serait clouée à numpy pour deux formules closes. Attention : `OAS`
-de scikit-learn n'est pas la formule de l'article de Chen et al. — elle omet des
-facteurs `(1 - 2/p)` — et c'est scikit-learn que la référence appelle, donc
-scikit-learn que les figures publiées tracent. C'est cette variante qui est
-reproduite.
-
-**`analytical_shrinkage_estimator`** utilise `np.linalg.eig` sur une matrice
-symétrique. Remplacé par `eigh` : valeurs propres réelles et déjà triées, au
-lieu de valeurs complexes qu'il faut retrier.
-
-## Le vrai point délicat
-
-Ce n'est aucune des substitutions ci-dessus, c'est le gradient. Les formules de
-`_rmt_cost_grad` contiennent des expressions comme `mat**3 + eye` ou
-`mat**2 - 4*diagL**2`, où `mat` est la matrice des différences de valeurs
-propres et s'annule sur la diagonale. Ce ne sont pas des régularisations : les
-`+ eye` existent pour que l'entrée diagonale évalue la *limite* de l'expression
-hors-diagonale au lieu de 0/0. Elles sont reproduites telles quelles, sans
-simplification — les réécrire est le moyen le plus rapide de casser le gradient
-silencieusement.
-
-## Validation
+## Lancer
 
 ```sh
-git clone https://github.com/AmmarMian/icml-rmt-2024
-uv run --group reference python 3-learning/frechet_mse/validate_against_paper.py \
-    --reference icml-rmt-2024/code [--backend torch-cpu]
+uv run qanat experiment run learning_frechet_mse --n_features 64 --n-trials 100
 ```
 
-Le script importe les deux implémentations et compare couche par couche. Les
-résultats sur `numpy` et `torch-cpu` :
+Une cinquantaine de minutes sur dix cœurs ; le point $K = 100$ domine le coût.
+Les tirages sont indépendants et distribués sur un pool (`--n-workers`), et
+chacun est graine par `(indice de l'axe, tirage)` : un point peut être rejoué
+seul sans replayer le balayage.
 
-| Couche | Écart relatif | Tolérance |
-|---|---|---|
-| scm | 0 | 1e-12 |
-| distance corrigée | 1e-13 | 1e-10 |
-| distance simple | 0 | 1e-10 |
-| coût corrigé | 0 | 1e-10 |
-| **gradient corrigé** | 0 | 1e-8 |
-| rétrécissement analytique (`eigh` vs `eig`) | 4e-10 | 1e-8 |
-| Ledoit-Wolf linéaire vs scikit-learn | 0 | 1e-10 |
-| OAS vs scikit-learn | 0 | 1e-10 |
-| moyenne de Fréchet simple | 5e-15 | 1e-6 |
-| moyenne de Fréchet corrigée | 9e-6 | 1e-4 |
-| **eqm sur 20 tirages** | 1e-6 | 1e-3 |
+## Contraintes
 
-Le coût et le gradient — la partie qu'on pouvait craindre — sont **exacts au
-bit près**. La seule ligne au-dessus de 1e-8 est la moyenne corrigée elle-même,
-et elle mérite une explication.
+**float64 obligatoire.** Le gradient corrigé divise par des différences de
+valeurs propres, et plusieurs termes sont construits pour qu'une entrée
+diagonale évalue la limite finie d'une expression qui vaut 0/0 ailleurs. En
+simple précision ces termes perdent tous leurs chiffres significatifs sans rien
+signaler : la descente rend quand même une matrice, et elle est fausse.
+`hdrlib.core.rmt.require_double` refuse donc de démarrer.
 
-### Pourquoi la moyenne s'écarte de 1e-5 alors que son gradient est exact
+Conséquence pratique : **`torch-mps` ne peut pas exécuter ce code**, Metal
+n'ayant pas de float64. Sur Apple Silicon, utiliser `--backend torch-cpu`.
 
-Les deux boucles sont identiques et le restent : à la première itération, le
-coût, le gradient et le pas de la recherche linéaire coïncident bit à bit. Puis
-elles dérivent, d'environ un chiffre toutes les quelques itérations :
+## Convention d'affichage
 
-```
-it  0  |M diff| = 0.000e+00
-it  4  |M diff| = 1.146e-10
-it  8  |M diff| = 1.324e-09
-it 11  |M diff| = 3.983e-09
-```
-
-Le mécanisme est la recherche linéaire par rebroussement. Dès que deux coûts
-diffèrent sur leurs derniers bits, elle peut faire une division par deux de plus
-ou de moins, ce qui déplace l'itérée suivante de bien plus que l'arrondi qui en
-est la cause. Après une trentaine d'itérations au voisinage d'un minimum plat,
-l'écart se stabilise autour de 1e-5.
-
-C'est une propriété de l'algorithme, pas du portage : deux exécutions de la
-référence sur deux versions de BLAS feraient la même chose. Ce qu'il faut donc
-vérifier n'est pas l'égalité des matrices mais **l'égalité de ce que les
-figures tracent**, c'est-à-dire l'eqm. Elle est la dernière ligne du tableau, et
-elle concorde à 1e-6.
-
-## Une différence de convention, à ne pas prendre pour un désaccord
-
-L'article trace `20*log10(eqm)`. C'est la convention d'amplitude, appliquée à
-une quantité qui est déjà un carré : les décibels affichés y valent donc le
-double de ce qu'une convention de puissance donnerait. Les figures d'ici
-tracent `10*log10(eqm)`, qui est la bonne pour une erreur quadratique.
-
-Les valeurs brutes concordent. À $N = 65$, $d = 64$, $K = 10$, l'export de
-l'article donne une eqm de $69{,}95$ pour la scm et $9{,}85$ pour la méthode
-corrigée ; ce portage donne $18{,}53$ dB et $10{,}41$ dB, soit $71{,}3$ et
-$11{,}0$ en brut. L'écart résiduel est celui du tirage du centre et de la
-graine, pas de l'algorithme.
-
-## Limites
-
-`torch-mps` ne peut pas exécuter ce code : Metal n'a pas de float64, et le
-gradient perd tous ses chiffres significatifs en simple précision — sans rien
-signaler. `rmt.require_double` refuse donc de démarrer plutôt que de rendre une
-matrice fausse. Sur Apple Silicon, utiliser `torch-cpu`.
+Les décibels sont des `10*log10(eqm)`, la convention de puissance, qui est la
+bonne pour une erreur quadratique.
