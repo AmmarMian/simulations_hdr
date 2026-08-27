@@ -65,6 +65,33 @@ def log_euclidean_mean(covariances, backend):
     return vectors @ np.diag(np.exp(values)) @ vectors.T
 
 
+def harmonic_mean(covariances):
+    """Inverse of the arithmetic mean of the inverses — the closed form.
+
+    The Fréchet mean of the right Kullback-Leibler divergence, i.e. the maximum
+    likelihood estimate under an inverse-Wishart model
+    (prop:spdnet-moyennes-frechet).
+    """
+    return np.linalg.inv(np.linalg.inv(covariances).mean(axis=0))
+
+
+def gah_mean(covariances, manifold, backend):
+    """Midpoint of the geodesic between the arithmetic and harmonic means.
+
+    The Fréchet mean of the *symmetrised* Kullback-Leibler divergence. It is the
+    only closed-form mean of prop:spdnet-moyennes-frechet that keeps both the
+    congruence and the inversion invariance, which is why the batch-norm work of
+    ch:spdnet ends up preferring it to the geometric mean.
+
+    Computed as the midpoint of the affine-invariant geodesic rather than by the
+    usual closed formula, so that what is drawn is the definition itself.
+    """
+    arithmetic = get_data_on_device(covariances.mean(axis=0), backend)
+    harmonic = get_data_on_device(harmonic_mean(covariances), backend)
+    tangent = manifold.log(arithmetic, harmonic)
+    return to_numpy(manifold.exp(arithmetic, 0.5 * tangent))
+
+
 def concentration_ellipse(shape, radius, n_points=200):
     """Curve {x : x^T shape^{-1} x = radius^2}, as a (2, n_points) array."""
     angles = np.linspace(0, 2 * np.pi, n_points)
@@ -153,24 +180,39 @@ if __name__ == "__main__":
     )
     # Insertion order is drawing order, and the dashed log-Euclidean mean is
     # kept last so that it stays visible where it lands on the Fréchet one.
+    #
+    # The harmonic and GAH means are here for ch:spdnet
+    # (prop:spdnet-moyennes-frechet), which needs the five of them side by side:
+    # arithmetic and harmonic bracket the cloud from either side — left and
+    # right Kullback-Leibler, Wishart and inverse-Wishart — and GAH, their
+    # symmetrised compromise, lands next to the Fréchet mean without any
+    # iteration. That is the whole argument of sec:spdnet-batchnorm-moyennes,
+    # in one picture.
     means = {
         "arithmétique": cloud.mean(axis=0),
+        "harmonique": harmonic_mean(cloud),
         "de Fréchet": to_numpy(frechet),
+        "\\textsc{gah}": gah_mean(cloud, manifold, args.backend),
         "log-euclidienne": log_euclidean_mean(cloud, args.backend),
     }
 
     colors = {
         "arithmétique": "C1",
+        "harmonique": "C4",
         "log-euclidienne": "C3",
         "de Fréchet": "C2",
+        "\\textsc{gah}": "C5",
     }
-    # The log-Euclidean and Fréchet means are close enough to overlap on both
-    # panels, which is itself worth seeing: one of the two is dashed so that
-    # the superposition reads as a superposition and not as a missing curve.
+    # The log-Euclidean, GAH and Fréchet means are close enough to overlap on
+    # both panels, which is itself worth seeing: the ones drawn on top are
+    # dashed so that a superposition reads as a superposition and not as a
+    # missing curve.
     linestyles = {
         "arithmétique": "-",
+        "harmonique": "-",
         "log-euclidienne": "--",
         "de Fréchet": "-",
+        "\\textsc{gah}": "--",
     }
 
     fig, axes = plt.subplots(1, 2, figsize=(3.4 * 2, 3.4))
