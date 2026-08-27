@@ -101,6 +101,25 @@ def require_double(x: Array, what: str) -> None:
         )
 
 
+def _logm(be, backend, matrices: Array) -> Array:
+    """Matrix logarithm of a batch of SPD matrices."""
+    eigenvalues, eigenvectors = batched_eigh(backend, matrices)
+    return be.einsum(
+        "...ij,...j,...kj->...ik", eigenvectors, be.log(eigenvalues), eigenvectors
+    )
+
+
+def _expm(be, backend, matrix: Array) -> Array:
+    """Matrix exponential of one symmetric matrix."""
+    eigenvalues, eigenvectors = batched_eigh(backend, _sym(be, matrix))
+    return _sym(
+        be,
+        be.einsum(
+            "ij,j,kj->ik", eigenvectors, be.exp(eigenvalues), eigenvectors
+        ),
+    )
+
+
 def _cholesky_and_inverse(be, matrix: Array) -> Tuple[Array, Array]:
     """Lower Cholesky factor of ``matrix`` and its inverse."""
     factor = be.linalg.cholesky(matrix)
@@ -453,9 +472,18 @@ def _descent(
     n_features = matrices.shape[-1]
     one_vec = _ones_like(be, backend, (n_features,), matrices)
 
-    mean = (
-        _eye_like(be, backend, n_features, matrices) if init is None else init
-    )
+    if init is None:
+        # The log-Euclidean mean, not the identity. It is closed-form, it costs
+        # one eigendecomposition per matrix, and above all it carries the scale
+        # of the data: starting from the identity on matrices whose eigenvalues
+        # reach 1e8 — ordinary for radiance values — makes the first gradient
+        # enormous and the line search fail before it has begun.
+        logarithms = _logm(be, backend, matrices)
+        mean = _expm(
+            be, backend, be.sum(logarithms, axis=0) / matrices.shape[0]
+        )
+    else:
+        mean = init
     history = {"cost": [], "error": []}
     error = np.inf
     cost = np.inf
