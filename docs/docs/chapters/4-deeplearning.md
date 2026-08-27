@@ -9,7 +9,7 @@ de tracé (`hdrlib.core.plot_style`) sont communs.
 ## Périmètre
 
 Ce que le chapitre rejoue et ce qu'il cite est arrêté dans
-[`3-deeplearning/NOTE-reproduction.md`](https://github.com/) — en résumé : rien
+[`4-deeplearning/NOTE-reproduction.md`](https://github.com/) — en résumé : rien
 n'est rejoué du GPR, des trois jeux réels de la normalisation par lots, ni de
 l'EEG fédéré (données non distribuables ou dépôt inexistant), et deux figures
 qui ne sont dans aucun article sont produites ici parce qu'elles portent

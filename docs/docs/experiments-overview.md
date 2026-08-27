@@ -21,7 +21,7 @@
   <span class="xp-toc-meta">18 experiments</span>
 </a>
 
-<a class="xp-toc-item" href="../chapters/3-deeplearning/" data-panel="panel-3">
+<a class="xp-toc-item" href="../chapters/4-deeplearning/" data-panel="panel-3">
   <span class="xp-toc-num">03</span>
   <span class="xp-toc-title">Deep Learning</span>
   <span class="xp-toc-meta xp-toc-meta--pending">In preparation</span>

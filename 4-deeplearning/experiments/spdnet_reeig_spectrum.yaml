@@ -1,7 +1,7 @@
 name: spdnet_reeig_spectrum
 description: What the ReEig threshold does to the spectrum of a CovPool matrix, and the 1/eps bound it puts on the Loewner factor of the backward pass
-path: 3-deeplearning/reeig_spectrum
-executable: 3-deeplearning/reeig_spectrum/main.py
+path: 4-deeplearning/reeig_spectrum
+executable: 4-deeplearning/reeig_spectrum/main.py
 executable_command: uv run python
 tags:
   - deeplearning

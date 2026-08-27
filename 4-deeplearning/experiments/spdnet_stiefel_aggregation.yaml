@@ -1,7 +1,7 @@
 name: spdnet_stiefel_aggregation
 description: Order at which the projavg and rlavg aggregations of prop:spdnet-federe-equivalence coincide on the Stiefel manifold
-path: 3-deeplearning/stiefel_aggregation
-executable: 3-deeplearning/stiefel_aggregation/main.py
+path: 4-deeplearning/stiefel_aggregation
+executable: 4-deeplearning/stiefel_aggregation/main.py
 executable_command: uv run python
 tags:
   - deeplearning

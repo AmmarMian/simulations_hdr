@@ -35,7 +35,8 @@ GITHUB_BLOB = "https://github.com/AmmarMian/simulations_hdr/blob/main"
 CHAPTERS = [
     ("1-context",        "1 · Context",          "chapters/1-context.md"),
     ("2-detection",      "2 · Detection",         "chapters/2-detection.md"),
-    ("3-deeplearning",   "3 · Deep Learning",     "chapters/3-deeplearning.md"),
+    ("3-learning",       "3 · Learning",          "chapters/3-learning.md"),
+    ("4-deeplearning",   "4 · Deep Learning",     "chapters/4-deeplearning.md"),
 ]
 
 START_MARKER = "<!-- experiments-start -->"

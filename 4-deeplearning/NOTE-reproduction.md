@@ -250,7 +250,7 @@ Deux réserves pratiques :
   itérées de `eq:spdnet-geometrique-iteration`. C'est même plus parlant qu'un
   nombre de mégaoctets, parce que ça se prédit ;
 - **contrainte torche du chapitre** : ce chapitre est le seul du mémoire à ne
-  pas passer par `hdrlib.core.backend`. Les expériences de `3-deeplearning/`
+  pas passer par `hdrlib.core.backend`. Les expériences de `4-deeplearning/`
   sont en PyTorch pur, sur `yetanotherspdnet`. Le harnais commun
   (`make_mc_parser`, `MCResultExporter`, `--export-path`) reste applicable et
   doit l'être, seul le cœur de calcul change.
@@ -333,7 +333,7 @@ l'entrée qui le révèle peut se produire.
 
 Avec `PYTORCH_ENABLE_MPS_FALLBACK=1`, `eigh(256×64×64)×10` prend 0,388 s contre
 **0,364 s en CPU pur** : aucun gain, et un aller-retour mémoire par opération.
-Les scripts de `3-deeplearning/` prennent donc `--device cpu|cuda` et refusent
+Les scripts de `4-deeplearning/` prennent donc `--device cpu|cuda` et refusent
 `mps` explicitement plutôt que de le dégrader en silence.
 
 ## 9. Ce qu'il reste à trancher

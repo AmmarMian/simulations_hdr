@@ -1,7 +1,7 @@
 name: spdnet_batchnorm_cost
 description: Time and retained autograd memory of the SPD batch-norm layer, hand-written backward against automatic differentiation
-path: 3-deeplearning/batchnorm_cost
-executable: 3-deeplearning/batchnorm_cost/main.py
+path: 4-deeplearning/batchnorm_cost
+executable: 4-deeplearning/batchnorm_cost/main.py
 executable_command: uv run python
 tags:
   - deeplearning

@@ -130,7 +130,7 @@ non modifié : l'externalisation tikz mourait sur `figure0`.
 
 - `[x] 3.1` `NOTE-reproduction.md` à jour : §8 corrigé (il n'y avait pas de
   bug), §8 bis ajouté (verdict MPS), §4 et §5 mis à jour par les mesures.
-- `[x] 3.2` `docs/docs/chapters/3-deeplearning.md` écrit.
+- `[x] 3.2` `docs/docs/chapters/4-deeplearning.md` écrit.
 - `[x] 3.3` Descripteurs qanat des deux expériences.
 
 ## Bloqué sur une décision d'Ammar
