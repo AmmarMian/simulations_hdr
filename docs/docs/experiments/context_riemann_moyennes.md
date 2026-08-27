@@ -22,7 +22,7 @@ uv run python 1-context/riemann_moyennes/main.py
 <a class="src-btn" href="https://github.com/AmmarMian/simulations_hdr/blob/main/1-context/riemann_moyennes/main.py" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.42 7.42 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg><span>View on GitHub</span></a>
 </div>
 <details class="src-view">
-<summary><span class="src-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>Source code</span><span class="param-alias">272 lines</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg></span></summary>
+<summary><span class="src-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>Source code</span><span class="param-alias">314 lines</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg></span></summary>
 <div class="src-body">
 <p class="src-path">1-context/riemann_moyennes/main.py</p>
 <div class="highlight"><pre><span></span><span class="c1"># Three means of the same set of covariance matrices</span>
@@ -90,6 +90,33 @@ uv run python 1-context/riemann_moyennes/main.py
     <span class="p">)</span>
     <span class="n">values</span><span class="p">,</span> <span class="n">vectors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">eigh</span><span class="p">(</span><span class="n">logarithms</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">vectors</span> <span class="o">@</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">values</span><span class="p">))</span> <span class="o">@</span> <span class="n">vectors</span><span class="o">.</span><span class="n">T</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">harmonic_mean</span><span class="p">(</span><span class="n">covariances</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Inverse of the arithmetic mean of the inverses — the closed form.</span>
+
+<span class="sd">    The Fréchet mean of the right Kullback-Leibler divergence, i.e. the maximum</span>
+<span class="sd">    likelihood estimate under an inverse-Wishart model</span>
+<span class="sd">    (prop:spdnet-moyennes-frechet).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">covariances</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">gah_mean</span><span class="p">(</span><span class="n">covariances</span><span class="p">,</span> <span class="n">manifold</span><span class="p">,</span> <span class="n">backend</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Midpoint of the geodesic between the arithmetic and harmonic means.</span>
+
+<span class="sd">    The Fréchet mean of the *symmetrised* Kullback-Leibler divergence. It is the</span>
+<span class="sd">    only closed-form mean of prop:spdnet-moyennes-frechet that keeps both the</span>
+<span class="sd">    congruence and the inversion invariance, which is why the batch-norm work of</span>
+<span class="sd">    ch:spdnet ends up preferring it to the geometric mean.</span>
+
+<span class="sd">    Computed as the midpoint of the affine-invariant geodesic rather than by the</span>
+<span class="sd">    usual closed formula, so that what is drawn is the definition itself.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">arithmetic</span> <span class="o">=</span> <span class="n">get_data_on_device</span><span class="p">(</span><span class="n">covariances</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="n">backend</span><span class="p">)</span>
+    <span class="n">harmonic</span> <span class="o">=</span> <span class="n">get_data_on_device</span><span class="p">(</span><span class="n">harmonic_mean</span><span class="p">(</span><span class="n">covariances</span><span class="p">),</span> <span class="n">backend</span><span class="p">)</span>
+    <span class="n">tangent</span> <span class="o">=</span> <span class="n">manifold</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">arithmetic</span><span class="p">,</span> <span class="n">harmonic</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">to_numpy</span><span class="p">(</span><span class="n">manifold</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">arithmetic</span><span class="p">,</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">tangent</span><span class="p">))</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">concentration_ellipse</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">radius</span><span class="p">,</span> <span class="n">n_points</span><span class="o">=</span><span class="mi">200</span><span class="p">):</span>
@@ -180,24 +207,39 @@ uv run python 1-context/riemann_moyennes/main.py
     <span class="p">)</span>
     <span class="c1"># Insertion order is drawing order, and the dashed log-Euclidean mean is</span>
     <span class="c1"># kept last so that it stays visible where it lands on the Fréchet one.</span>
+    <span class="c1">#</span>
+    <span class="c1"># The harmonic and GAH means are here for ch:spdnet</span>
+    <span class="c1"># (prop:spdnet-moyennes-frechet), which needs the five of them side by side:</span>
+    <span class="c1"># arithmetic and harmonic bracket the cloud from either side — left and</span>
+    <span class="c1"># right Kullback-Leibler, Wishart and inverse-Wishart — and GAH, their</span>
+    <span class="c1"># symmetrised compromise, lands next to the Fréchet mean without any</span>
+    <span class="c1"># iteration. That is the whole argument of sec:spdnet-batchnorm-moyennes,</span>
+    <span class="c1"># in one picture.</span>
     <span class="n">means</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">&quot;arithmétique&quot;</span><span class="p">:</span> <span class="n">cloud</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
+        <span class="s2">&quot;harmonique&quot;</span><span class="p">:</span> <span class="n">harmonic_mean</span><span class="p">(</span><span class="n">cloud</span><span class="p">),</span>
         <span class="s2">&quot;de Fréchet&quot;</span><span class="p">:</span> <span class="n">to_numpy</span><span class="p">(</span><span class="n">frechet</span><span class="p">),</span>
+        <span class="s2">&quot;</span><span class="se">\\</span><span class="s2">textsc</span><span class="si">{gah}</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">gah_mean</span><span class="p">(</span><span class="n">cloud</span><span class="p">,</span> <span class="n">manifold</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">backend</span><span class="p">),</span>
         <span class="s2">&quot;log-euclidienne&quot;</span><span class="p">:</span> <span class="n">log_euclidean_mean</span><span class="p">(</span><span class="n">cloud</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">backend</span><span class="p">),</span>
     <span class="p">}</span>
 
     <span class="n">colors</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">&quot;arithmétique&quot;</span><span class="p">:</span> <span class="s2">&quot;C1&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;harmonique&quot;</span><span class="p">:</span> <span class="s2">&quot;C4&quot;</span><span class="p">,</span>
         <span class="s2">&quot;log-euclidienne&quot;</span><span class="p">:</span> <span class="s2">&quot;C3&quot;</span><span class="p">,</span>
         <span class="s2">&quot;de Fréchet&quot;</span><span class="p">:</span> <span class="s2">&quot;C2&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;</span><span class="se">\\</span><span class="s2">textsc</span><span class="si">{gah}</span><span class="s2">&quot;</span><span class="p">:</span> <span class="s2">&quot;C5&quot;</span><span class="p">,</span>
     <span class="p">}</span>
-    <span class="c1"># The log-Euclidean and Fréchet means are close enough to overlap on both</span>
-    <span class="c1"># panels, which is itself worth seeing: one of the two is dashed so that</span>
-    <span class="c1"># the superposition reads as a superposition and not as a missing curve.</span>
+    <span class="c1"># The log-Euclidean, GAH and Fréchet means are close enough to overlap on</span>
+    <span class="c1"># both panels, which is itself worth seeing: the ones drawn on top are</span>
+    <span class="c1"># dashed so that a superposition reads as a superposition and not as a</span>
+    <span class="c1"># missing curve.</span>
     <span class="n">linestyles</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">&quot;arithmétique&quot;</span><span class="p">:</span> <span class="s2">&quot;-&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;harmonique&quot;</span><span class="p">:</span> <span class="s2">&quot;-&quot;</span><span class="p">,</span>
         <span class="s2">&quot;log-euclidienne&quot;</span><span class="p">:</span> <span class="s2">&quot;--&quot;</span><span class="p">,</span>
         <span class="s2">&quot;de Fréchet&quot;</span><span class="p">:</span> <span class="s2">&quot;-&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;</span><span class="se">\\</span><span class="s2">textsc</span><span class="si">{gah}</span><span class="s2">&quot;</span><span class="p">:</span> <span class="s2">&quot;--&quot;</span><span class="p">,</span>
     <span class="p">}</span>
 
     <span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">3.4</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="mf">3.4</span><span class="p">))</span>

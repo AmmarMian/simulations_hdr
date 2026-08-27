@@ -5,7 +5,7 @@
 \definecolor{darkgray176}{RGB}{176,176,176}
 \definecolor{steelblue31119180}{RGB}{31,119,180}
 
-\begin{groupplot}[group style={group size=3 by 1, horizontal sep=1.4cm, vertical sep=1.5cm}]
+\begin{groupplot}[group style={group size=3 by 1, vertical sep=1.5cm, horizontal sep=1.4cm}]
 \nextgroupplot[
 height=4.4cm,
 label style={font=\footnotesize},
@@ -32,7 +32,7 @@ xmin=0, xmax=1.99232386183873,
 xtick style={color=black},
 y grid style={darkgray176},
 ylabel={densité},
-ymin=0, ymax=1.17434326017425,
+ymin=0, ymax=1.39535547068855,
 ytick style={color=black}
 ]
 \draw[draw=none,fill=steelblue31119180,fill opacity=0.55] (axis cs:0,0) rectangle (axis cs:0.0249040482729841,0);
@@ -725,20 +725,8 @@ table {%
 \addplot [black, dashed]
 table {%
 1 0
-1 1.17434326017425
+1 1.39535547068855
 };
-\addlegendentry{spectre vrai}
-\addlegendimage{/pgfplots/refstyle=valeurs propres de la scm_plot}
-\addlegendentry{valeurs propres de la scm}
-\addlegendimage{/pgfplots/refstyle=loi de MP_plot}
-\addlegendentry{loi de MP}
-\addlegendimage{/pgfplots/refstyle=spectre vrai_plot}
-\addlegendentry{spectre vrai}
-\addlegendimage{/pgfplots/refstyle=valeurs propres de la scm_plot}
-\addlegendentry{valeurs propres de la scm}
-\addlegendimage{/pgfplots/refstyle=loi de MP_plot}
-\addlegendentry{loi de MP}
-\addlegendimage{/pgfplots/refstyle=spectre vrai_plot}
 \addlegendentry{spectre vrai}
 
 \nextgroupplot[
@@ -756,7 +744,7 @@ xlabel={\(\displaystyle \lambda\)},
 xmin=0, xmax=3.35134559672906,
 xtick style={color=black},
 y grid style={darkgray176},
-ymin=0, ymax=0.945301466190022,
+ymin=0, ymax=1.11335876659266,
 ytick style={color=black}
 ]
 \draw[draw=none,fill=steelblue31119180,fill opacity=0.55] (axis cs:-3.46944695195361e-18,0) rectangle (axis cs:0.0418918199591132,0);
@@ -1442,13 +1430,11 @@ table {%
 3.3457508628447 0
 3.35134559672906 0
 };
-\label{loi de MP_plot}
 \addplot [black, dashed]
 table {%
-1 0
-1 0.945301466190022
+1 -1.11022302462516e-16
+1 1.11335876659266
 };
-\label{spectre vrai_plot}
 
 \nextgroupplot[
 height=4.4cm,
@@ -1465,7 +1451,7 @@ xlabel={\(\displaystyle \lambda\)},
 xmin=0, xmax=4.6,
 xtick style={color=black},
 y grid style={darkgray176},
-ymin=0, ymax=33.4221202649612,
+ymin=0, ymax=3.33423913043478,
 ytick style={color=black}
 ]
 \draw[draw=none,fill=steelblue31119180,fill opacity=0.55] (axis cs:0,0) rectangle (axis cs:0.0575,2.66739130434783);
@@ -2151,13 +2137,11 @@ table {%
 4.59232070116861 0
 4.6 0
 };
-\label{loi de MP_plot}
 \addplot [black, dashed]
 table {%
-1 0
-1 33.4221202649612
+1 -4.44089209850063e-16
+1 3.33423913043478
 };
-\label{spectre vrai_plot}
 \end{groupplot}
 
 \end{tikzpicture}

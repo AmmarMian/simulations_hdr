@@ -1,8 +1,8 @@
 <div class="page-header">
   <div class="eyebrow">HDR Dissertation</div>
   <h1>Experiments</h1>
-  <p class="standfirst">Three chapters spanning the theoretical foundations and practical algorithms
-  for covariance estimation and detection in high-dimensional radar data.</p>
+  <p class="standfirst">Four chapters spanning the theoretical foundations and practical algorithms
+  for covariance estimation, detection and learning in high-dimensional data.</p>
 </div>
 
 <div class="xp-toc" id="xp-toc">
@@ -21,8 +21,14 @@
   <span class="xp-toc-meta">18 experiments</span>
 </a>
 
-<a class="xp-toc-item" href="../chapters/4-deeplearning/" data-panel="panel-3">
+<a class="xp-toc-item" href="../chapters/3-learning/" data-panel="panel-3">
   <span class="xp-toc-num">03</span>
+  <span class="xp-toc-title">Learning</span>
+  <span class="xp-toc-meta">1 experiment</span>
+</a>
+
+<a class="xp-toc-item" href="../chapters/4-deeplearning/" data-panel="panel-4">
+  <span class="xp-toc-num">04</span>
   <span class="xp-toc-title">Deep Learning</span>
   <span class="xp-toc-meta xp-toc-meta--pending">In preparation</span>
 </a>
@@ -61,7 +67,22 @@
 </div>
 
 <div class="xp-toc-panel" id="panel-3" hidden>
-  <p class="xp-toc-panel-eyebrow">03 · Deep Learning</p>
+  <p class="xp-toc-panel-eyebrow">03 · Learning</p>
+  <p class="xp-toc-panel-desc">Where the criterion leaves the model. Learning a graph one wants to
+  read, or a partition one wants to be right, is not something a likelihood scores — so the model
+  comes back as a constraint or as a correction. Penalised elliptical likelihood under a low-rank
+  factor model; random matrix theory applied to the Fréchet mean.</p>
+  <div class="xp-toc-panel-tags">
+    <span class="exp-tag">Graph learning</span>
+    <span class="exp-tag">Random matrix theory</span>
+    <span class="exp-tag">Fréchet mean</span>
+    <span class="exp-tag">Riemannian optimisation</span>
+  </div>
+  <a class="xp-toc-panel-link" href="../chapters/3-learning/">1 experiment · Open chapter →</a>
+</div>
+
+<div class="xp-toc-panel" id="panel-4" hidden>
+  <p class="xp-toc-panel-eyebrow">04 · Deep Learning</p>
   <p class="xp-toc-panel-desc">Algorithm unrolling and geometry-aware neural architectures for
   covariance estimation. Learning iteration counts, step sizes, and regularisation schedules
   directly from data — while respecting the manifold structure of HPD matrices.</p>
