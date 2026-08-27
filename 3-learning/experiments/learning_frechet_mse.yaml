@@ -1,0 +1,25 @@
+name: learning_frechet_mse
+description: MSE of the Fréchet mean of a set of covariances, against the number of samples and against the number of matrices — SCM, Ledoit-Wolf, OAS, non-linear shrinkage and the RMT correction
+path: 3-learning/frechet_mse
+executable: 3-learning/frechet_mse/main.py
+executable_command: uv run python
+tags:
+  - learning
+  - random-matrix-theory
+  - frechet-mean
+  - monte-carlo
+params:
+  n_features: 64
+  n_trials: 100
+actions:
+  - register:
+      name: register
+      executable: register_latex.py
+      executable_command: uv run python
+      description: Stage a chosen figure (.tex) to hdr_exports/ for the LaTeX dissertation
+  - add_to_docs:
+      name: add_to_docs
+      executable: 3-learning/frechet_mse/action_add_to_docs.py
+      executable_command: uv run python
+      description: Export the two MSE panels as Plotly JSON for docs
+group: "Learning · Random matrix theory"

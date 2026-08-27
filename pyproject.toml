@@ -71,6 +71,13 @@ ignore = ["E501"]
 qanat = { git = "https://github.com/ammarmian/qanat" }
 
 [dependency-groups]
+# Only needed to run 3-learning/frechet_mse/validate_against_paper.py, which
+# imports the ICML 2024 reference implementation verbatim to compare against
+# the backend-free port. Nothing in hdrlib depends on these.
+reference = [
+    "pymanopt>=2.2.0",
+    "scikit-learn>=1.5",
+]
 dev = [
     "hatchling>=1.0",
     "mkdocs>=1.6.1",
