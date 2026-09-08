@@ -21,7 +21,19 @@ from typing import Callable, Optional, Tuple, Union
 
 import numpy as np
 
-from .backend import Array, Backend, get_backend_module, get_data_on_device, to_numpy
+from .backend import (
+    Array,
+    Backend,
+    batched_eigh,
+    cast_like,
+    get_backend_module,
+    get_data_on_device,
+    masked_set,
+    sample_uniform,
+    to_numpy,
+    to_scalar,
+)
+from .manifolds import logm_psd, sqrtm_invsqrtm_psd
 from .rmt import (
     analytical_shrinkage,
     frechet_mean_cholesky,
@@ -35,6 +47,8 @@ from .rmt import (
 __all__ = [
     "squared_fisher_distance",
     "riemannian_kmeans",
+    "SPD_METRICS",
+    "spd_kmeans",
     "match_labels",
     "clustering_accuracy",
     "mean_iou",
@@ -326,3 +340,364 @@ def mean_iou(prediction: np.ndarray, truth: np.ndarray) -> Tuple[np.ndarray, flo
         ious.append(intersection / union if union else 0.0)
     ious = np.asarray(ious)
     return ious, float(ious.mean())
+
+
+# ── K-means on the SPD cone, device-resident ──────────────────────────────────
+#
+# Same alternation as riemannian_kmeans, but every step is written to run where
+# the data already is. Three functions carry the geometry — a representation, a
+# batched distance, a re-estimation — and the loop calling them is written once.
+#
+# Two things stay on the host by necessity: the fraction of points that changed
+# cluster, which decides the stopping test, and the inertia, which picks the best
+# restart. Both are control flow, so both must become Python numbers.
+
+SPD_METRICS = ("euclid", "logeuclid", "riemann")
+
+
+def require_double(x: Array, what: str) -> None:
+    """Refuse to run in single precision.
+
+    Every metric here ends in the eigenvalues of a small SPD matrix and two of
+    the three take their logarithm. In float32 the smallest eigenvalue of a
+    covariance estimated from a handful of samples has an unreliable sign, and
+    its logarithm is then either a large negative number or a NaN — silently, in
+    both cases.
+    """
+    dtype = str(getattr(x, "dtype", "unknown"))
+    if "64" not in dtype and "double" not in dtype:
+        raise TypeError(
+            f"{what} needs float64, got {dtype}. The eigenvalues of a small "
+            "covariance are not resolved in single precision, and these metrics "
+            "take their logarithm. On Apple silicon use torch-cpu, not torch-mps."
+        )
+
+
+def _flatten(matrices: Array, backend) -> Array:
+    """``(n, p, p) -> (n, p*p)``, so a batch of matrices can be averaged or
+    gathered by a plain matrix product."""
+    be = get_backend_module(backend)
+    n_features = matrices.shape[-1]
+    return be.reshape(matrices, (matrices.shape[0], n_features * n_features))
+
+
+def _unflatten(flat: Array, n_features: int, backend) -> Array:
+    be = get_backend_module(backend)
+    return be.reshape(flat, (-1, n_features, n_features))
+
+
+def _expm_sym(matrices: Array, backend) -> Array:
+    """Matrix exponential of a batch of symmetric matrices."""
+    be = get_backend_module(backend)
+    eigenvalues, eigenvectors = batched_eigh(backend, matrices)
+    return be.einsum(
+        "...ij,...j,...kj->...ik", eigenvectors, be.exp(eigenvalues), eigenvectors
+    )
+
+
+# The labels are held on the device as floats carrying exact small integers,
+# not as an integer array. The one-hot membership is built by comparing them
+# against the class indices and that comparison has to be exact; every value
+# involved is below the number of clusters, so it is. Keeping them in the
+# covariances' own dtype means cast_like does every conversion, instead of each
+# backend's integer type having to be named at every step.
+
+
+def _membership(labels: Array, classes: Array, reference: Array, backend) -> Array:
+    """One-hot membership, ``(n_clusters, n_points)``."""
+    return cast_like(labels[None, :] == classes[:, None], reference, backend)
+
+
+def _initial_labels(
+    rng, n_points: int, n_clusters: int, classes: Array, reference: Array, backend
+) -> Array:
+    """A random assignment in which every cluster is non-empty.
+
+    Drawing until no cluster is empty would need a host-side test of a device
+    array on every redraw. Instead every cluster is seeded: ``n_clusters``
+    distinct points are handed one cluster each and the rest are drawn
+    uniformly, which makes non-emptiness structural rather than lucky.
+
+    The host ``rng`` drives both draws, so a given seed produces the same
+    starting partition whatever the metric.
+    """
+    be = get_backend_module(backend)
+    uniform = sample_uniform(
+        n_points, [], backend, seed=int(rng.integers(1, 2**31 - 1))
+    )
+    # torch.rand is float32 whatever the ambient dtype, and the labels have to
+    # share the reference dtype for the comparison and the index write below.
+    uniform = cast_like(uniform, reference, backend)
+    labels = be.floor(uniform * n_clusters)
+    labels = be.minimum(labels, classes[-1])  # guards a uniform draw of exactly 1
+    seeded = get_data_on_device(
+        rng.choice(n_points, size=n_clusters, replace=False), backend
+    )
+    return masked_set(labels, seeded, classes, backend)
+
+
+def _nearest_and_revive(
+    distances: Array, classes: Array, point_index: Array, n_clusters: int, backend
+) -> Array:
+    """Nearest centroid, then give every empty cluster a point.
+
+    Same policy as :func:`_revive_empty_clusters` — each empty cluster takes the
+    point its own centroid serves best among those whose cluster can spare one —
+    written without branches so that nothing is read back to decide anything.
+    The running count is a genuine sequential dependency, so the loop over
+    clusters stays; what changes is that its trip count is ``n_clusters``, known
+    in advance, rather than the number of empty clusters, which is not.
+    """
+    be = get_backend_module(backend)
+    labels = cast_like(be.argmin(distances, axis=1), distances, backend)
+    # Any value above every distance serves as the "not a candidate" sentinel.
+    infinity = be.max(distances) + 1.0
+
+    for cluster in range(n_clusters):
+        one_hot = _membership(labels, classes, distances, backend)
+        counts = be.sum(one_hot, axis=-1)
+        # Exactly one row of one_hot is 1 in each column, so this reads off the
+        # size of each point's own cluster.
+        own_count = be.sum(one_hot * counts[:, None], axis=0)
+        score = be.where(own_count > 1.5, distances[:, cluster], infinity)
+        best = be.argmin(score)
+        take = be.logical_and(point_index == best, counts[cluster] < 0.5)
+        labels = be.where(take, classes[cluster], labels)
+    return labels
+
+
+def _flat_metric(logarithm: bool):
+    """Euclidean geometry, on the covariances or on their logarithms.
+
+    Both are flat, so they share every kernel and differ only in what they are
+    flat on. The log-Euclidean centroids stay in the tangent representation and
+    are never exponentiated back: the distance compares logarithms, so the SPD
+    form is never needed. The re-estimation is therefore closed-form for both.
+    """
+
+    def precompute(covariances, backend):
+        return logm_psd(covariances, backend) if logarithm else covariances
+
+    def assign(representation, centroids, backend):
+        be = get_backend_module(backend)
+        points = _flatten(representation, backend)
+        centres = _flatten(centroids, backend)
+        # ||R - C||² = <R,R> - 2<R,C> + <C,C>: the cross term is the only real
+        # work, one product for all n_points x n_clusters pairs.
+        cross = points @ be.swapaxes(centres, -1, -2)
+        point_norm = be.sum(points * points, axis=-1)[:, None]
+        centre_norm = be.sum(centres * centres, axis=-1)[None, :]
+        return point_norm - 2.0 * cross + centre_norm
+
+    def update(representation, one_hot, centroids, backend, mean_iterations, mean_tol):
+        be = get_backend_module(backend)
+        weights = one_hot / be.sum(one_hot, axis=-1, keepdims=True)
+        flat = weights @ _flatten(representation, backend)
+        return _unflatten(flat, representation.shape[-1], backend), 0
+
+    return precompute, assign, update
+
+
+def _affine_invariant_metric():
+    """Affine-invariant geometry: centroids are Karcher means."""
+
+    def precompute(covariances, backend):
+        return covariances
+
+    def assign(representation, centroids, backend):
+        be = get_backend_module(backend)
+        # One whitening per centroid, then every point is measured against all
+        # of them at once, rather than looping squared_fisher_distance over
+        # centroids and synchronising after each.
+        _, inverse_root = sqrtm_invsqrtm_psd(centroids, backend)
+        whitened = (
+            inverse_root[:, None]
+            @ representation[None]
+            @ be.swapaxes(inverse_root, -1, -2)[:, None]
+        )
+        logarithms = be.log(be.abs(be.linalg.eigvalsh(whitened)))
+        squared = be.sum(logarithms * logarithms, axis=-1)
+        return be.swapaxes(squared, -1, -2)
+
+    def update(representation, one_hot, centroids, backend, mean_iterations, mean_tol):
+        be = get_backend_module(backend)
+        n_features = representation.shape[-1]
+        weights = one_hot / be.sum(one_hot, axis=-1, keepdims=True)
+
+        if centroids is None:
+            # The descent has no closed form, so it is warm-started: on the
+            # arithmetic mean at the first re-estimation of a restart, and on
+            # the previous centroids afterwards. Those barely move once the
+            # partition settles, which is what lets mean_iterations stay small
+            # without under-solving the mean.
+            centroids = _unflatten(
+                weights @ _flatten(representation, backend), n_features, backend
+            )
+
+        steps = 0
+        for step in range(mean_iterations):
+            root, inverse_root = sqrtm_invsqrtm_psd(centroids, backend)
+            # Whiten every point by its own cluster's centroid. one_hot has a
+            # single 1 per column, so its transpose gathers the right matrix for
+            # each point with a matrix product — there is no scatter or gather
+            # primitive common to numpy, torch, cupy and jax, and a product
+            # needs none.
+            per_point = _unflatten(
+                be.swapaxes(one_hot, -1, -2) @ _flatten(inverse_root, backend),
+                n_features,
+                backend,
+            )
+            whitened = per_point @ representation @ be.swapaxes(per_point, -1, -2)
+            tangent = logm_psd(whitened, backend)
+            mean_tangent = _unflatten(
+                weights @ _flatten(tangent, backend), n_features, backend
+            )
+            centroids = root @ _expm_sym(mean_tangent, backend) @ root
+            steps = step + 1
+            # The tangent mean is the gradient of the Karcher cost: it vanishes
+            # exactly when the mean has converged.
+            gradient = be.max(be.sum(mean_tangent * mean_tangent, axis=(-2, -1)))
+            if to_scalar(gradient) <= mean_tol**2:
+                break
+        return centroids, steps
+
+    return precompute, assign, update
+
+
+_SPD_METRIC_FACTORIES = {
+    "euclid": lambda: _flat_metric(logarithm=False),
+    "logeuclid": lambda: _flat_metric(logarithm=True),
+    "riemann": _affine_invariant_metric,
+}
+
+
+def spd_kmeans(
+    covariances: Array,
+    n_clusters: int,
+    metric: str = "riemann",
+    n_init: int = 10,
+    max_iter: int = 100,
+    tol: float = 1e-3,
+    mean_iterations: int = 10,
+    mean_tol: float = 1e-6,
+    seed: int = 42,
+    backend: Union[str, Backend] = "numpy",
+    verbose: bool = False,
+) -> Tuple[np.ndarray, float, list]:
+    """K-means on a set of SPD matrices, alternating assignment and re-estimation.
+
+    Parameters
+    ----------
+    covariances : Array of shape (n_points, n_features, n_features)
+        One SPD matrix per point. Unlike :func:`riemannian_kmeans`, none of
+        these metrics needs the samples the covariance came from, so they are
+        formed once by the caller and never rebuilt inside the loop.
+    n_clusters : int
+    metric : {"euclid", "logeuclid", "riemann"}
+        The geometry in which the centroids are means.
+    n_init : int
+        Restarts from a random assignment; the one of least inertia is kept.
+        Inertia compares restarts of one metric and nothing else — the three
+        metrics measure lengths in different geometries.
+    max_iter, tol : int, float
+        Stop when fewer than ``tol`` of the points change cluster.
+    mean_iterations, mean_tol : int, float
+        Budget and stopping gradient of one Karcher mean. Ignored by the flat
+        metrics, whose mean is closed-form.
+    seed : int
+        Drives the starting partition, identically for every metric.
+    backend : str or Backend
+        ``jax-*`` is refused: nothing here enables ``x64``, so JAX would compute
+        the whole thing in single precision without warning.
+    verbose : bool
+
+    Returns
+    -------
+    labels : ndarray of shape (n_points,)
+        On the host, as int64.
+    inertia : float
+    histories : list of dict
+        One entry per restart: its inertia, how many rounds it took, what
+        fraction of the points was still changing cluster when it stopped, and
+        how many Karcher steps the last re-estimation needed.
+    """
+    if metric not in _SPD_METRIC_FACTORIES:
+        raise KeyError(
+            f"unknown metric {metric!r}; known: {sorted(_SPD_METRIC_FACTORIES)}"
+        )
+    if str(backend).startswith("jax"):
+        raise ValueError(
+            "the jax backends are refused here: jax defaults to float32 and "
+            "nothing in this repository calls "
+            "jax.config.update('jax_enable_x64', True), so the eigenvalue "
+            "logarithms would be computed in single precision without any "
+            "warning. Use torch-cuda, cupy or numpy."
+        )
+
+    be = get_backend_module(backend)
+    device_covariances = get_data_on_device(covariances, backend)
+    require_double(device_covariances, f"the {metric} K-means")
+
+    precompute, assign, update = _SPD_METRIC_FACTORIES[metric]()
+    # Once for the whole run: the representation depends on the covariances,
+    # never on the labels.
+    representation = precompute(device_covariances, backend)
+
+    n_points = representation.shape[0]
+    rng = np.random.default_rng(seed)
+    classes = cast_like(
+        get_data_on_device(np.arange(n_clusters), backend), representation, backend
+    )
+    point_index = get_data_on_device(np.arange(n_points), backend)
+
+    best_labels, best_inertia, histories = None, np.inf, []
+    for restart in range(n_init):
+        labels = _initial_labels(
+            rng, n_points, n_clusters, classes, representation, backend
+        )
+        centroids, moved, mean_steps = None, 1.0, 0
+
+        for iteration in range(max_iter):
+            one_hot = _membership(labels, classes, representation, backend)
+            centroids, mean_steps = update(
+                representation, one_hot, centroids, backend, mean_iterations, mean_tol
+            )
+            distances = assign(representation, centroids, backend)
+            new_labels = _nearest_and_revive(
+                distances, classes, point_index, n_clusters, backend
+            )
+            moved = to_scalar(
+                be.sum(cast_like(new_labels != labels, representation, backend))
+            ) / n_points
+            labels = new_labels
+            if moved <= tol:
+                break
+
+        # Re-estimate once more, so that the inertia belongs to the labels the
+        # loop stopped on rather than to the centroids that produced them.
+        one_hot = _membership(labels, classes, representation, backend)
+        centroids, _ = update(
+            representation, one_hot, centroids, backend, mean_iterations, mean_tol
+        )
+        distances = assign(representation, centroids, backend)
+        inertia = to_scalar(be.sum(distances * be.swapaxes(one_hot, -1, -2)))
+
+        histories.append(
+            {
+                "inertia": inertia,
+                "iterations": iteration + 1,
+                "moved": float(moved),
+                "mean_steps": int(mean_steps),
+            }
+        )
+        if verbose:
+            print(
+                f"    {metric} init {restart + 1}/{n_init}: "
+                f"inertia {inertia:.3f} in {iteration + 1} iterations, "
+                f"{moved:.3%} still moving",
+                flush=True,
+            )
+        if inertia < best_inertia:
+            best_labels, best_inertia = labels, inertia
+
+    return to_numpy(best_labels).astype(np.int64), best_inertia, histories
