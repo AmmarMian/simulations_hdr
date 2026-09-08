@@ -26,7 +26,6 @@ from hdrlib.core.plotly_style import (
     BG, GRID, AXIS_LINE, MUTED, INK2,
     FONT_SANS, FONT_MONO, C_ON,
 )
-from hdrlib.core.exporter import write_docs_provenance
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("--storage_path", required=True,
@@ -104,5 +103,5 @@ fig.update_layout(
 out = repo_root / "docs" / "docs" / "assets" / "data" / f"{name}.json"
 out.parent.mkdir(parents=True, exist_ok=True)
 out.write_text(fig.to_json())
-write_docs_provenance(out.parent, name, npz_path)
+(out.parent / f"{name}.source.txt").write_text(f"{npz_path.resolve()}\n")
 print(f"Written {out.relative_to(repo_root)}")

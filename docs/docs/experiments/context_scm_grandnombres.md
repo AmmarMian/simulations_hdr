@@ -213,14 +213,12 @@ uv run python 1-context/scm_grandnombres/main.py
 ## Results
 
 <span class="marginnote">
-  <span class="mn-label">Parameters</span>
-  <span class="mn-note">signature defaults — this run recorded none</span><br>
-  <span class="mn-date">Generated: 2026-09-08</span><br>
-  <code>--d</code> <span class='mn-default'>7</span><br>
-  <code>--n_trials</code> <span class='mn-default'>10000</span><br>
-  <code>--show-interactive</code><br>
-  <code>--export</code> <span class='mn-default'>True</span><br>
-  <code>--seed</code> <span class='mn-default'>42</span><br>
+  <span class="mn-label">Run</span>
+  <code>--d 7</code><br>
+  <code>--n_trials 10000</code><br>
+  <code>--seed 42</code><br>
+  <code>--output-dir /Users/ammarmian/Research/HDR/simulations_hdr/results/context_scm_grandnombres/run_7</code><br>
+  <span class="mn-date">7e9acc6 · 2026-07-02</span>
 </span>
 <div class="exp-result-card">
 <div class="plotly-wrap" data-src="../../assets/data/context_scm_grandnombres.json" data-title="context_scm_grandnombres"></div>

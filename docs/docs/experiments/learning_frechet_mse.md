@@ -481,26 +481,22 @@ uv run python 3-learning/frechet_mse/main.py
 ## Results
 
 <span class="marginnote">
-  <span class="mn-label">Parameters</span>
-  <span class="mn-note">signature defaults — this run recorded none</span><br>
-  <span class="mn-date">Generated: 2026-09-08</span><br>
-  <code>--n_features</code> <span class='mn-default'>64</span><br>
-  <code>--n_samples</code> <span class='mn-default'>[65, 68, 80, 100, 150, 200, 300]</span><br>
-  <code>--n_matrices_fixed</code> <span class='mn-default'>10</span><br>
-  <code>--n_matrices</code> <span class='mn-default'>[3, 5, 20, 30, 40, 60, 80, 100]</span><br>
-  <code>--n_samples_fixed</code> <span class='mn-default'>128</span><br>
-  <code>--condition_number</code> <span class='mn-default'>100.0</span><br>
-  <code>--scale</code> <span class='mn-default'>0.1</span><br>
-  <code>--n_iterations_max</code> <span class='mn-default'>100</span><br>
-  <code>--tol</code> <span class='mn-default'>1e-06</span><br>
-  <code>--axis_width</code> <span class='mn-default'>0.44\textwidth</span><br>
-  <code>--axis_height</code> <span class='mn-default'>5.2cm</span><br>
-  <code>--n-trials</code> <span class='mn-default'>10000</span><br>
-  <code>--seed</code> <span class='mn-default'>42</span><br>
-  <code>--backend</code> <span class='mn-default'>numpy</span><br>
-  <code>--n-workers</code><br>
-  <code>--export</code> <span class='mn-default'>True</span><br>
-  <code>--show-interactive</code><br>
+  <span class="mn-label">Run</span>
+  <code>--n-trials 100</code><br>
+  <code>--seed 42</code><br>
+  <code>--backend numpy</code><br>
+  <code>--n_features 64</code><br>
+  <code>--n_samples [65, 68, 80, 100, 150, 200, 300]</code><br>
+  <code>--n_matrices_fixed 10</code><br>
+  <code>--n_matrices [3, 5, 20, 30, 40, 60, 80, 100]</code><br>
+  <code>--n_samples_fixed 128</code><br>
+  <code>--condition_number 100.0</code><br>
+  <code>--scale 0.1</code><br>
+  <code>--n_iterations_max 100</code><br>
+  <code>--tol 1e-06</code><br>
+  <code>--axis_width 0.44\textwidth</code><br>
+  <code>--axis_height 5.2cm</code><br>
+  <span class="mn-date">6149f77 · 2026-08-27</span>
 </span>
 <div class="exp-result-card">
 <div class="plotly-wrap" data-src="../../assets/data/learning_frechet_mse.json" data-title="learning_frechet_mse"></div>

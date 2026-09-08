@@ -135,12 +135,9 @@ uv run python 1-context/examples_covariances/main.py
 ## Results
 
 <span class="marginnote">
-  <span class="mn-label">Parameters</span>
-  <span class="mn-note">signature defaults — this run recorded none</span><br>
-  <span class="mn-date">Generated: 2026-09-08</span><br>
-  <code>--show-interactive</code><br>
-  <code>--export</code> <span class='mn-default'>True</span><br>
-  <code>--seed</code> <span class='mn-default'>42</span><br>
+  <span class="mn-label">Run</span>
+  <code>--seed 42</code><br>
+  <span class="mn-date">9bcab17 · 2026-07-02</span>
 </span>
 <div class="exp-result-card">
 <div class="plotly-wrap" data-src="../../assets/data/context_example_covariances.json" data-title="context_example_covariances"></div>

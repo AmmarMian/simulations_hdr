@@ -32,7 +32,6 @@ from hdrlib.core.plotly_style import (
     BG, GRID, AXIS_LINE, MUTED, INK2, ANNO,
     FONT_SANS, FONT_MONO, C_OFF, C_ON, hex_to_rgba,
 )
-from hdrlib.core.exporter import write_docs_provenance
 
 # ── CLI ───────────────────────────────────────────────────────────────────────
 parser = argparse.ArgumentParser(description=__doc__)
@@ -178,7 +177,7 @@ out.parent.mkdir(parents=True, exist_ok=True)
 out.write_text(fig.to_json())
 # Sidecar records which run produced this figure
 npz_abs = npz_path.resolve()
-write_docs_provenance(out.parent, stem, npz_abs)
+(out.parent / f"{stem}.source.txt").write_text(f"{npz_abs}\n")
 print(f"Written {out.relative_to(repo_root)}")
 try:
     print(f"Source:  {npz_abs.relative_to(repo_root)}")

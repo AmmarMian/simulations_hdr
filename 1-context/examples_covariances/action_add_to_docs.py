@@ -22,7 +22,6 @@ except ImportError:
     sys.exit("plotly not found — run: uv add plotly --dev")
 
 from hdrlib.core.plotly_style import BG, MUTED, INK2, FONT_SANS, FONT_MONO
-from hdrlib.core.exporter import write_docs_provenance
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("--storage_path", required=True,
@@ -119,5 +118,5 @@ for ann in fig.layout.annotations:
 out = repo_root / "docs" / "docs" / "assets" / "data" / f"{name}.json"
 out.parent.mkdir(parents=True, exist_ok=True)
 out.write_text(fig.to_json())
-write_docs_provenance(out.parent, name, "deterministic")
+(out.parent / f"{name}.source.txt").write_text(f"deterministic\n")
 print(f"Written {out.relative_to(repo_root)}")

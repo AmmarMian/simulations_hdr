@@ -26,6 +26,7 @@ dependencies = [
     "rich>=14.1.0",
     "ruff>=0.15.12",
     "scipy>=1.16.1",
+    "yetanotherspdnet",
     "torch>=2.9.0",
 ]
 
@@ -69,6 +70,10 @@ ignore = ["E501"]
 
 [tool.uv.sources]
 qanat = { git = "https://github.com/ammarmian/qanat" }
+# Pinned to the packaging fix until it lands on main: the released layout
+# installs the top-level package without its subpackages, so the import
+# fails outright. See Yet-Another-Research-Organisation/yetanotherspdnet#6.
+yetanotherspdnet = { git = "https://github.com/Yet-Another-Research-Organisation/yetanotherspdnet", branch = "fix/packaging-subpackages" }
 
 [dependency-groups]
 # Development-time only: lets the ICML 2024 reference implementation be

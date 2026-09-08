@@ -364,19 +364,16 @@ uv run python 1-context/riemann_interpolation/main.py
 ## Results
 
 <span class="marginnote">
-  <span class="mn-label">Parameters</span>
-  <span class="mn-note">signature defaults — this run recorded none</span><br>
-  <span class="mn-date">Generated: 2026-09-08</span><br>
-  <code>--condition</code> <span class='mn-default'>16.0</span><br>
-  <code>--angle</code> <span class='mn-default'>0.35</span><br>
-  <code>--n_steps</code> <span class='mn-default'>7</span><br>
-  <code>--radius</code> <span class='mn-default'>1.0</span><br>
-  <code>--show-interactive</code><br>
-  <code>--export</code> <span class='mn-default'>True</span><br>
-  <code>--axis_width</code> <span class='mn-default'>0.45\textwidth</span><br>
-  <code>--axis_height</code> <span class='mn-default'>4.6cm</span><br>
-  <code>--backend</code> <span class='mn-default'>numpy</span><br>
-  <code>--seed</code> <span class='mn-default'>42</span><br>
+  <span class="mn-label">Run</span>
+  <code>--condition 16.0</code><br>
+  <code>--angle 0.35</code><br>
+  <code>--n_steps 7</code><br>
+  <code>--radius 1.0</code><br>
+  <code>--axis_width 0.45\textwidth</code><br>
+  <code>--axis_height 4.6cm</code><br>
+  <code>--backend numpy</code><br>
+  <code>--seed 42</code><br>
+  <span class="mn-date">590ac0f · 2026-08-19</span>
 </span>
 <div class="exp-result-card">
 <div class="plotly-wrap" data-src="../../assets/data/context_riemann_interpolation.json" data-title="context_riemann_interpolation"></div>

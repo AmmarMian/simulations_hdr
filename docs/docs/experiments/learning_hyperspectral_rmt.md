@@ -366,32 +366,6 @@ uv run python 3-learning/hyperspectral-rmt/main.py
 </div>
 </div>
 
-## Results
-
-<span class="marginnote">
-  <span class="mn-label">Parameters</span>
-  <span class="mn-date">Generated: 2026-09-08</span><br>
-  <code>--scene</code> <span class='mn-actual'>salinas</span><br>
-  <code>--data_path</code> <span class='mn-actual'>data/hyperspectral</span><br>
-  <code>--n_features</code> <span class='mn-actual'>5</span><br>
-  <code>--window_size</code> <span class='mn-actual'>5</span><br>
-  <code>--stride</code> <span class='mn-actual'>1</span><br>
-  <code>--n_init</code> <span class='mn-actual'>5</span><br>
-  <code>--max_iter</code> <span class='mn-actual'>30</span><br>
-  <code>--mean_iterations</code> <span class='mn-actual'>50</span><br>
-  <code>--methods</code> <span class='mn-actual'>['SCM', 'LW', 'LW-NL', 'RMT']</span><br>
-  <code>--figure_width</code> <span class='mn-actual'>0.23\textwidth</span><br>
-  <code>--n-trials</code> <span class='mn-actual'>10000</span><br>
-  <code>--seed</code> <span class='mn-actual'>42</span><br>
-  <code>--backend</code> <span class='mn-actual'>torch-cuda</span><br>
-  <code>--n-workers</code><br>
-  <code>--export</code> <span class='mn-actual'>True</span><br>
-  <code>--show-interactive</code> <span class='mn-actual'>False</span><br>
-</span>
-<div class="exp-result-card">
-<div class="plotly-wrap" data-src="../../assets/data/learning_hyperspectral_rmt.json" data-title="learning_hyperspectral_rmt"></div>
-</div>
-
 ## Config
 
 `3-learning/experiments/learning_hyperspectral_rmt.yaml`

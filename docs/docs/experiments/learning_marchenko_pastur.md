@@ -323,20 +323,16 @@ uv run python 3-learning/marchenko_pastur/main.py
 ## Results
 
 <span class="marginnote">
-  <span class="mn-label">Parameters</span>
-  <span class="mn-note">signature defaults — this run recorded none</span><br>
-  <span class="mn-date">Generated: 2026-09-08</span><br>
-  <code>--n_features</code> <span class='mn-default'>200</span><br>
-  <code>--ratios</code> <span class='mn-default'>[0.1, 0.5, 1.0]</span><br>
-  <code>--n_bins</code> <span class='mn-default'>80</span><br>
-  <code>--axis_width</code> <span class='mn-default'>0.31\textwidth</span><br>
-  <code>--axis_height</code> <span class='mn-default'>4.4cm</span><br>
-  <code>--n-trials</code> <span class='mn-default'>10000</span><br>
-  <code>--seed</code> <span class='mn-default'>42</span><br>
-  <code>--backend</code> <span class='mn-default'>numpy</span><br>
-  <code>--n-workers</code><br>
-  <code>--export</code> <span class='mn-default'>True</span><br>
-  <code>--show-interactive</code><br>
+  <span class="mn-label">Run</span>
+  <code>--n-trials 400</code><br>
+  <code>--seed 42</code><br>
+  <code>--backend numpy</code><br>
+  <code>--n_features 200</code><br>
+  <code>--ratios [0.1, 0.5, 1.0]</code><br>
+  <code>--n_bins 80</code><br>
+  <code>--axis_width 0.31\textwidth</code><br>
+  <code>--axis_height 4.4cm</code><br>
+  <span class="mn-date">3acd057 · 2026-08-27</span>
 </span>
 <div class="exp-result-card">
 <div class="plotly-wrap" data-src="../../assets/data/learning_marchenko_pastur.json" data-title="learning_marchenko_pastur"></div>

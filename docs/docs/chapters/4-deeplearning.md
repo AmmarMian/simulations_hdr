@@ -1,50 +1,32 @@
 # Chapter 4 · Deep learning on the SPD manifold
 
-Code for the figures of `ch:spdnet`. Unlike chapters 1 to 3, this one **does not
-go through `hdrlib.core.backend`**: the layers are those of
+Neural network layers that operate directly on covariance matrices — SPDNet —
+and what their building blocks cost: the ReEig threshold, the batch-norm layer,
+and the aggregation used when training is split across sites.
+
+The layers come from
 [`yetanotherspdnet`](https://github.com/Yet-Another-Research-Organisation/yetanotherspdnet),
-so plain PyTorch. Only the export harness
-([`hdrlib.core.exporter`](../api/core/exporter.md)) and the plot style
-([`hdrlib.core.plot_style`](../api/core/plot_style.md)) are shared.
+so this chapter is plain PyTorch and does not use the backend layer the other
+chapters share.
 
-## Scope
+## Data
 
-What this chapter replays and what it cites is settled in
-[`4-deeplearning/NOTE-reproduction.md`](https://github.com/AmmarMian/simulations_hdr/blob/main/4-deeplearning/NOTE-reproduction.md).
-In short: nothing is replayed from the GPR, from the three real batch-norm
-datasets, or from the federated EEG — the data is not distributable or the
-repository does not exist — and two figures that appear in no paper are produced
-here because the dissertation argues from them and they cost seconds.
+All four experiments here are simulated — nothing to download.
 
-Each experiment has its own `README.md` giving the statement it serves, the
-measured result and the command line.
+The published versions of this work also used real datasets (HDM05, HyperLeaf,
+Rices90, and EEG recordings). Those are not redistributable, so the experiments
+that used them are not part of this repository.
 
-## Hardware
+## Caveats
 
-**MPS (Apple Silicon) is refused explicitly**, and the scripts say so rather
-than degrading silently. MPS has no `float64`, and `torch.linalg.eigh` is not
-implemented there — that is the operation behind ReEig, LogEig, `sqrtm` and the
-chapter's five means. With `PYTORCH_ENABLE_MPS_FALLBACK=1` everything falls back
-to the CPU one operation at a time: `eigh(256×64×64)×10` measured at 0.388 s
-against 0.364 s on pure CPU.
+**Apple Silicon is not supported.** The scripts refuse `--device mps` rather
+than failing obscurely later: Metal has no `float64`, and `torch.linalg.eigh` is
+not implemented there — that single operation is behind ReEig, LogEig, `sqrtm`
+and every mean used here. Forcing a CPU fallback with
+`PYTORCH_ENABLE_MPS_FALLBACK=1` is also pointless: it measured 0.388 s against
+0.364 s for running on the CPU directly.
 
 Use `--device cpu` or `--device cuda`.
-
-## Dependency
-
-`yetanotherspdnet` is not yet a dependency of this repository, because its
-upstream packaging is broken: `packages = ["yetanotherspdnet"]` ships no
-subpackage, and the import fails on a spurious circular import. The fix is ready
-on the `fix/whitening-congruence-matrix-grad` branch.
-
-Until that lands, these three experiments will not run from a plain `uv sync`.
-Point `PYTHONPATH` at a checkout of the library:
-
-```sh
-git clone -b fix/whitening-congruence-matrix-grad \
-    https://github.com/Yet-Another-Research-Organisation/yetanotherspdnet
-export PYTHONPATH=$PWD/yetanotherspdnet/src
-```
 
 ## Experiments
 
@@ -80,7 +62,7 @@ export PYTHONPATH=$PWD/yetanotherspdnet/src
 <div class="exp-name">spdnet_stiefel_aggregation</div>
 
 </div>
-<div class="exp-desc">Order at which the projavg and rlavg aggregations of prop:spdnet-federe-equivalence coincide on the Stiefel manifold</div>
+<div class="exp-desc">Order at which the projavg and rlavg aggregations coincide on the Stiefel manifold</div>
 <div class="exp-tags"><span class="exp-tag">deeplearning</span><span class="exp-tag">spdnet</span><span class="exp-tag">stiefel</span><span class="exp-tag">federated</span></div>
 <div class="exp-run"><code>uv run python 4-deeplearning/stiefel_aggregation/main.py</code></div>
 <a class="exp-details-link" href="../../experiments/spdnet_stiefel_aggregation/">Parameters &amp; details →</a>

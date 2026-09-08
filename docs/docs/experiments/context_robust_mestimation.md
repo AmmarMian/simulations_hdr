@@ -398,21 +398,18 @@ uv run python 1-context/robust_mestimation/main.py
 ## Results
 
 <span class="marginnote">
-  <span class="mn-label">Parameters</span>
-  <span class="mn-note">signature defaults — this run recorded none</span><br>
-  <span class="mn-date">Generated: 2026-09-08</span><br>
-  <code>--distributions</code> <span class='mn-default'>['gaussian', 'student', 'k', 'gengauss']</span><br>
-  <code>--n_samples</code> <span class='mn-default'>50</span><br>
-  <code>--rho</code> <span class='mn-default'>0.8</span><br>
-  <code>--dof_student</code> <span class='mn-default'>2.1</span><br>
-  <code>--dof_k</code> <span class='mn-default'>0.1</span><br>
-  <code>--shape_gengauss</code> <span class='mn-default'>0.15</span><br>
-  <code>--iter_max</code> <span class='mn-default'>100</span><br>
-  <code>--tol</code> <span class='mn-default'>1e-08</span><br>
-  <code>--show-interactive</code><br>
-  <code>--export</code> <span class='mn-default'>True</span><br>
-  <code>--backend</code> <span class='mn-default'>numpy</span><br>
-  <code>--seed</code> <span class='mn-default'>42</span><br>
+  <span class="mn-label">Run</span>
+  <code>--distributions [&#x27;gaussian&#x27;, &#x27;student&#x27;, &#x27;k&#x27;, &#x27;gengauss&#x27;]</code><br>
+  <code>--n_samples 50</code><br>
+  <code>--rho 0.8</code><br>
+  <code>--dof_student 2.1</code><br>
+  <code>--dof_k 0.1</code><br>
+  <code>--shape_gengauss 0.15</code><br>
+  <code>--iter_max 100</code><br>
+  <code>--tol 1e-08</code><br>
+  <code>--backend numpy</code><br>
+  <code>--seed 42</code><br>
+  <span class="mn-date">f81a05e · 2026-08-17</span>
 </span>
 <div class="exp-result-card">
 <div class="plotly-wrap" data-src="../../assets/data/context_robust_mestimation.json" data-title="context_robust_mestimation"></div>

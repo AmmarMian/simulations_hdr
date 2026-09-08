@@ -48,3 +48,7 @@ docs/site/
 # figure — qanat runs land in results/ and figures are staged in hdr_exports/ —
 # and an uncommitted one is enough to make `qanat experiment run` refuse to start.
 **/outputs/
+
+# Hyperspectral scenes: 38 MB of .mat files that download_scene() fetches on
+# first use, so they were 38 MB of git history for nothing.
+data/hyperspectral/

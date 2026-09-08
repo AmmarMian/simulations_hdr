@@ -239,14 +239,12 @@ uv run python 1-context/scm_underregime/main.py
 ## Results
 
 <span class="marginnote">
-  <span class="mn-label">Parameters</span>
-  <span class="mn-note">signature defaults — this run recorded none</span><br>
-  <span class="mn-date">Generated: 2026-09-08</span><br>
-  <code>--N</code> <span class='mn-default'>30</span><br>
-  <code>--n_trials</code> <span class='mn-default'>50</span><br>
-  <code>--show-interactive</code><br>
-  <code>--export</code> <span class='mn-default'>True</span><br>
-  <code>--seed</code> <span class='mn-default'>42</span><br>
+  <span class="mn-label">Run</span>
+  <code>--N 30</code><br>
+  <code>--n_trials 10000</code><br>
+  <code>--seed 42</code><br>
+  <code>--output-dir /Users/ammarmian/Research/HDR/simulations_hdr/results/context_scm_underregime/run_2</code><br>
+  <span class="mn-date">5dd225a · 2026-07-02</span>
 </span>
 <div class="exp-result-card">
 <div class="plotly-wrap" data-src="../../assets/data/context_scm_underregime.json" data-title="context_scm_underregime"></div>

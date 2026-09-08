@@ -72,7 +72,4 @@ any machine; CUDA-specific tests run only where a GPU is present.
 
 - Real sonar and GPR datasets are not redistributable, so those experiments are
   documented but not runnable from this repository.
-- The `4-deeplearning/` experiments need `yetanotherspdnet`, which is not yet a
-  declared dependency — see the
-  [chapter 4 page](https://ammarmian.fr/simulations_hdr/chapters/4-deeplearning/).
 - Hyperspectral scenes (Indian Pines, Salinas, ~30 MB) download on first use.

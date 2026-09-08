@@ -1,5 +1,5 @@
 name: spdnet_stiefel_aggregation
-description: Order at which the projavg and rlavg aggregations of prop:spdnet-federe-equivalence coincide on the Stiefel manifold
+description: Order at which the projavg and rlavg aggregations coincide on the Stiefel manifold
 path: 4-deeplearning/stiefel_aggregation
 executable: 4-deeplearning/stiefel_aggregation/main.py
 executable_command: uv run python

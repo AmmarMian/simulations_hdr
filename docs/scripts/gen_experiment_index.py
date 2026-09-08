@@ -17,6 +17,8 @@ from __future__ import annotations
 
 import ast
 import html
+import json
+from functools import lru_cache
 import re
 import sys
 from pathlib import Path
@@ -280,45 +282,68 @@ EXP_PAGES_DIR  = REPO_ROOT / "docs" / "docs" / "experiments"
 DATA_DIR       = REPO_ROOT / "docs" / "docs" / "assets" / "data"
 
 
-def _load_actual_args(stem: str) -> dict:
-    """Read actual run args from the provenance JSON recorded in the source sidecar.
+@lru_cache(maxsize=1)
+def _provenance_by_experiment() -> dict:
+    """Map experiment name -> the run metadata recorded when a figure was staged.
 
-    Prefers a sidecar matching the data file's own stem (e.g. gaussian_offline.npy
-    + gaussian_offline.json, written by ResultExporter). Falls back to any *.json
-    sidecar in the run directory with an "args" key — scripts using the simpler
-    write_prov_sidecar() helper name sidecars after each figure (mean.json,
-    cov.json, ...) rather than after the shared results.npz/npy.
+    register_latex.py already writes hdr_exports/<exp>/<fig>/prov.json for every
+    figure staged for the dissertation, holding the git sha, the run date and
+    the arguments the run was given. Unlike results/, hdr_exports/ is committed,
+    so this is the one record of a run that is present in a fresh checkout.
     """
-    import json
-
-    # Written next to the asset by write_docs_provenance, and committed, so the
-    # arguments survive the trip to another checkout. Preferred over the path
-    # below, which only resolves on the machine that produced the run.
-    portable = DATA_DIR / f"{stem}.args.json"
-    if portable.exists():
+    found = {}
+    for path in sorted(REPO_ROOT.glob("hdr_exports/*/*/prov.json")):
         try:
-            return json.loads(portable.read_text())
+            data = json.loads(path.read_text())
         except (OSError, ValueError):
-            pass
-
-    source_txt = DATA_DIR / f"{stem}.source.txt"
-    if not source_txt.exists():
-        return {}
-    data_path = Path(source_txt.read_text().strip())
-
-    candidates = [data_path.with_suffix(".json")]
-    if data_path.parent.is_dir():
-        candidates += sorted(data_path.parent.glob("*.json"))
-    for prov_path in candidates:
-        if not prov_path.exists():
             continue
-        try:
-            args = json.loads(prov_path.read_text()).get("args", {})
-        except Exception:
+        hdr = data.get("hdr", {})
+        name = hdr.get("exp") or path.parent.parent.name
+        # Several figures of one experiment share a run; the newest wins so the
+        # panel does not depend on directory order.
+        stamp = hdr.get("registered_at", "")
+        if name not in found or stamp > found[name][0]:
+            found[name] = (stamp, {
+                "args": data.get("args", {}),
+                "git_sha": hdr.get("sha_short") or data.get("git_sha", ""),
+                "run_date": hdr.get("run_date", ""),
+            })
+    return {name: payload for name, (_, payload) in found.items()}
+
+
+def _render_parameters(name: str, params: list[dict]) -> str:
+    """The run's own command line, plus the commit and date it ran at.
+
+    Rendered from the recorded arguments rather than from the signature: a
+    default is what the script would do, not what this figure was made with.
+    """
+    record = _provenance_by_experiment().get(name)
+    if not record:
+        return ""
+    recorded = record["args"]
+    flags = {}
+    for arg in params:
+        dest = arg.get("dest") or arg["names"][0].lstrip("-").replace("-", "_")
+        flags[dest] = arg["names"][0]
+
+    rows = ""
+    for dest, value in recorded.items():
+        if dest in _INFRA_ARGS or value is None or value is False:
             continue
-        if args:
-            return args
-    return {}
+        flag = flags.get(dest, "--" + dest.replace("_", "-"))
+        shown = "" if value is True else f" {value}"
+        rows += f'  <code>{html.escape(flag + shown)}</code><br>\n'
+    if not rows:
+        return ""
+
+    stamp = " · ".join(x for x in (record["git_sha"], record["run_date"]) if x)
+    return (
+        '<span class="marginnote">\n'
+        '  <span class="mn-label">Run</span>\n'
+        f'{rows}'
+        + (f'  <span class="mn-date">{html.escape(stamp)}</span>\n' if stamp else "")
+        + '</span>\n'
+    )
 
 
 LOG_MAX_CHARS = 20000
@@ -366,7 +391,10 @@ def _figure_stems(name: str) -> list[tuple[str, str]]:
     return results
 
 
-_COMPANION_LABELS = {"source", "args"}
+_COMPANION_LABELS = {"source"}
+
+# Paths and switches that say nothing about what was computed.
+_INFRA_ARGS = {"storage_path", "export_path", "show_interactive", "export"}
 
 
 SRC_MAX_LINES = 1200
@@ -557,45 +585,8 @@ def _write_exp_page(exp: dict, chapter: "tuple[str, str] | None" = None) -> None
         _INFRA = {"storage_path", "export_path"}
         lines += ["## Results", ""]
         for stem, label in figures:
-            actual_args = _load_actual_args(stem)
             fig_title = f"{name} — {label}" if label else name
-            json_path = DATA_DIR / f"{stem}.json"
-            run_date = ""
-            if json_path.exists():
-                from datetime import datetime
-                mtime = json_path.stat().st_mtime
-                run_date = datetime.fromtimestamp(mtime).strftime("%Y-%m-%d")
-            mn_rows = ""
-            if run_date:
-                mn_rows += f'  <span class="mn-date">Generated: {run_date}</span><br>\n'
-            if params:
-                for arg in params:
-                    flag = arg["names"][0]
-                    dest = arg.get("dest") or flag.lstrip("-").replace("-", "_")
-                    if dest in _INFRA:
-                        continue
-                    # A value the run actually used and a value merely
-                    # declared in the signature are different claims, and the
-                    # panel used to make them look identical. When the run's own
-                    # arguments are unavailable the row says so rather than
-                    # presenting a default as the parameter of the figure.
-                    if dest in actual_args:
-                        value, css = actual_args[dest], "mn-actual"
-                    else:
-                        value, css = arg.get("default"), "mn-default"
-                    val_str = f" <span class='{css}'>{value}</span>" if value is not None else ""
-                    mn_rows += f'  <code>{flag}</code>{val_str}<br>\n'
-            defaults_note = "" if actual_args else (
-                '  <span class="mn-note">signature defaults — '
-                'this run recorded none</span><br>\n'
-            )
-            marginnote = (
-                '<span class="marginnote">\n'
-                f'  <span class="mn-label">{"Run · " + label if label else "Parameters"}</span>\n'
-                f'{defaults_note}'
-                f'{mn_rows}'
-                '</span>\n'
-            ) if mn_rows else ""
+            marginnote = _render_parameters(name, params)
             logs = _load_run_logs(stem)
             log_blocks = ""
             for kind in ("stdout", "stderr"):

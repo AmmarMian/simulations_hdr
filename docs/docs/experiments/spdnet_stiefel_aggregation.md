@@ -8,7 +8,7 @@
 
 # spdnet_stiefel_aggregation
 
-Order at which the projavg and rlavg aggregations of prop:spdnet-federe-equivalence coincide on the Stiefel manifold
+Order at which the projavg and rlavg aggregations coincide on the Stiefel manifold
 
 **Tags:** `deeplearning`  `spdnet`  `stiefel`  `federated`
 
