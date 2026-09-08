@@ -1,95 +1,69 @@
-# Chapitre 3 · Apprendre sous un modèle corrigé
+# Chapter 3 · Learning under a corrected model
 
-Code des figures du chapitre `ch:learning`, celui qui tient entre la détection
-et l'apprentissage profond. Sa thèse, en une phrase : faire de l'apprentissage
-sur des covariances ne dispense pas du modèle, celui-ci revient sous forme de
-**contrainte** (vraisemblance elliptique pénalisée, modèle factoriel de rang
-faible) ou de **correction** (théorie des matrices aléatoires appliquée à la
-moyenne de Fréchet).
+Code for the figures of `ch:learning`. Like chapters 1 and 2, and unlike
+chapter 4, these experiments go through
+[`hdrlib.core.backend`](../api/core/backend.md): one script runs on numpy,
+torch, cupy or jax.
 
-Comme les chapitres 1 et 2, et contrairement au chapitre 4, les expériences
-passent par [`hdrlib.core.backend`](../api/core/backend.md) : le même script
-tourne sur numpy, torch, cupy ou jax.
+The correction and the corrected mean live in
+[`hdrlib.core.rmt`](../api/core/rmt.md), the two K-means in
+[`hdrlib.core.clustering`](../api/core/clustering.md). Both carry over from
+[`AmmarMian/icml-rmt-2024`](https://github.com/AmmarMian/icml-rmt-2024).
 
-## Périmètre
+## Scope
 
-Les deux travaux du chapitre sont des articles de conférence reproduits en fin
-de chapitre dans le mémoire, et l'essentiel de leurs campagnes numériques n'est
-**pas** rejoué ici — les graphes appris (`animals`, GNSS) sont dans l'article,
-avec leur contexte. Ce qui est rejoué est ce qui porte l'argument du mémoire et
-que le mémoire doit pouvoir montrer sous sa propre chaîne de provenance.
+Both pieces of work in this chapter are conference papers, reproduced in full at
+the end of the chapter in the dissertation. Most of their numerical campaigns
+are **not** replayed here — the learned graphs (`animals`, GNSS) stay in the
+paper, with their context. What is replayed is what the dissertation argues from
+and must therefore be able to show under its own provenance chain.
 
-| Expérience | Ce qu'elle montre | Données | État |
-|---|---|---|---|
-| `learning_marchenko_pastur` | ce que le régime dimensionnel fait à un spectre : le biais est déterministe, donc corrigible | simulées | faite |
-| `learning_frechet_mse` | l'eqm de la moyenne de Fréchet contre $N$ et contre $K$ — et le fait que le gain *croît* avec $K$ | simulées | faite |
-| `learning_hyperspectral_metrics` | ce que la géométrie seule apporte, avant toute correction | Salinas | implantée |
-| `learning_hyperspectral_rmt` | le gain se maintient en aval de l'estimation | Indian Pines | optionnelle |
+| Experiment | Data | Status |
+|---|---|---|
+| `learning_marchenko_pastur` | simulated | done |
+| `learning_frechet_mse` | simulated | done |
+| `learning_hyperspectral_metrics` | Salinas | done |
+| `learning_hyperspectral_rmt` | Indian Pines | optional |
 
-La correction et la moyenne corrigée sont dans
-[`hdrlib.core.rmt`](../api/core/rmt.md) ; elles reprennent
-[`AmmarMian/icml-rmt-2024`](https://github.com/AmmarMian/icml-rmt-2024). Elles
-demandent du float64 — `torch-mps` est donc hors jeu, Metal n'ayant pas de
-double précision.
+What each one shows, and what it is evidence for, belongs to the dissertation
+and is not restated here.
 
-## Marchenko-Pastur
+## Requirements
 
-La vraie covariance est l'identité : **toutes** ses valeurs propres valent 1.
-Celles de son estimateur s'étalent sur $[(1-\sqrt{c})^2, (1+\sqrt{c})^2]$, et
-cet étalement ne dépend que de $c = d/N$ — ajouter des données à $c$ constant
-n'est pas la même chose qu'en ajouter à $d$ fixé. C'est ce qui sépare la
-correction de la régularisation par rétrécissement : ici le biais est
-parfaitement décrit, donc inversible.
+Everything in this chapter needs float64. `torch-mps` is therefore out: Metal
+has no double precision. `riemannian_kmeans` and `spd_kmeans` refuse the jax
+backends outright, because nothing in this repository enables `x64` and jax
+would otherwise compute the eigenvalue logarithms in single precision without
+warning.
 
-<div class="plotly-wrap" data-src="../../assets/data/learning_marchenko_pastur.json" data-title="learning_marchenko_pastur"></div>
+The two hyperspectral scenes are downloaded on first use into
+`data/hyperspectral/` (about 30 MB); no manual step is needed.
 
-Les trois panneaux ne diffèrent que par le nombre d'observations. À $c = 1$ la
-densité diverge à l'origine en $1/\sqrt{\lambda}$ ; le cadre suit l'histogramme
-et non la courbe, sans quoi le panneau s'écraserait sur sa ligne de base.
+`learning_hyperspectral_rmt` is the expensive one. On an RTX 4000 Ada, the four
+methods over the full Salinas scene — 108 204 covariances, 16 classes, 5
+restarts, 30 rounds — take about an hour, of which the corrected method is
+two thirds. The other three experiments are seconds to minutes.
 
-## L'eqm de la moyenne
+## Shared protocol
 
-Les deux panneaux répondent à deux questions différentes. Contre le nombre
-d'échantillons, l'écart se referme quand $N$ croît : c'est la signature d'un
-biais de régime et non d'une variance. Contre le nombre de matrices, il
-s'*élargit* — moyenner davantage de matrices réduit la variance mais pas le
-biais, qui est commun à toutes les scm ; passé un certain $K$, le biais est
-tout ce qui reste et lui seul distingue les méthodes.
+The two hyperspectral experiments write their alternation loop, their restarts
+and their selection of the best restart by inertia **once**, in
+`hdrlib.core.clustering`, and every method starts from the same initial
+partition at equal seed.
 
-Noter aussi *où* chaque méthode corrige : les rétrécissements régularisent
-chaque covariance **avant** de moyenner, la méthode rmt corrige la **distance**
-que la moyenne minimise. Ce n'est pas le même geste.
+This differs from the published protocol, where the baselines went through a
+different optimiser than the corrected method, so the measured gap combined the
+effect of the estimator with the effect of the optimiser and separated neither.
+The baselines are noticeably stronger here and the margin in favour of the
+correction is narrower, but it is a margin over the one thing that ought to
+vary.
 
-<div class="plotly-wrap" data-src="../../assets/data/learning_frechet_mse.json" data-title="learning_frechet_mse"></div>
+One caveat when reading the outputs: inertia compares restarts of a **single**
+metric and nothing else, since the three measure lengths in different
+geometries. Only accuracy and mIoU, which are computed against the ground truth,
+rank the methods against each other.
 
-## Partitionnement hyperspectral
-
-L'eqm mesure un critère *interne* : la distance entre la moyenne estimée et la
-vraie. Or la thèse du chapitre est que le critère a quitté le modèle, donc
-l'estimateur doit être jugé sur la tâche. Deux expériences le font, et elles
-isolent deux choses différentes.
-
-`learning_hyperspectral_metrics` pose la question antérieure : **avant toute
-correction, quelle part du gain tient à la métrique ?** Trois géométries —
-euclidienne, log-euclidienne, affine-invariante — sur les mêmes covariances,
-dans la même alternance. `learning_hyperspectral_rmt` pose la question du
-chapitre : la correction survit-elle en aval, une fois la géométrie fixée ?
-
-Dans les deux cas, la boucle d'alternation, les redémarrages et le choix du
-meilleur par inertie sont écrits **une seule fois** et partagés, et toutes les
-méthodes partent de la même partition initiale à graine égale. C'est une
-différence avec le protocole publié, où les lignes de base passaient par un
-autre optimiseur que la méthode corrigée : l'écart mesuré y additionnait
-l'effet de l'estimateur et celui de l'optimiseur, sans que rien ne les sépare.
-Les lignes de base sont ici sensiblement meilleures, et l'écart en faveur de la
-correction plus étroit — mais il porte sur la seule chose qui doit varier.
-
-Une précaution de lecture : l'inertie compare les redémarrages d'**une**
-métrique et rien d'autre, les trois mesurant des longueurs dans des géométries
-différentes. Le classement des méthodes se lit sur l'exactitude et la mIoU, qui
-sont sur la vérité terrain.
-
-## Expériences
+## Experiments
 
 <!-- experiments-start -->
 <div class="exp-chapter">

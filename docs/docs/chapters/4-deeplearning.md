@@ -1,49 +1,102 @@
-# Chapitre 3 · Apprentissage profond sur la variété SPD
+# Chapter 4 · Deep learning on the SPD manifold
 
-Code des figures du chapitre `ch:spdnet`. Contrairement aux chapitres 1 et 2,
-celui-ci **ne passe pas par `hdrlib.core.backend`** : les couches sont celles de
+Code for the figures of `ch:spdnet`. Unlike chapters 1 to 3, this one **does not
+go through `hdrlib.core.backend`**: the layers are those of
 [`yetanotherspdnet`](https://github.com/Yet-Another-Research-Organisation/yetanotherspdnet),
-donc PyTorch pur. Seuls le harnais d'export (`hdrlib.core.exporter`) et le style
-de tracé (`hdrlib.core.plot_style`) sont communs.
+so plain PyTorch. Only the export harness
+([`hdrlib.core.exporter`](../api/core/exporter.md)) and the plot style
+([`hdrlib.core.plot_style`](../api/core/plot_style.md)) are shared.
 
-## Périmètre
+## Scope
 
-Ce que le chapitre rejoue et ce qu'il cite est arrêté dans
-[`4-deeplearning/NOTE-reproduction.md`](https://github.com/) — en résumé : rien
-n'est rejoué du GPR, des trois jeux réels de la normalisation par lots, ni de
-l'EEG fédéré (données non distribuables ou dépôt inexistant), et deux figures
-qui ne sont dans aucun article sont produites ici parce qu'elles portent
-l'argument du mémoire et coûtent quelques secondes.
+What this chapter replays and what it cites is settled in
+[`4-deeplearning/NOTE-reproduction.md`](https://github.com/AmmarMian/simulations_hdr/blob/main/4-deeplearning/NOTE-reproduction.md).
+In short: nothing is replayed from the GPR, from the three real batch-norm
+datasets, or from the federated EEG — the data is not distributable or the
+repository does not exist — and two figures that appear in no paper are produced
+here because the dissertation argues from them and they cost seconds.
 
-## Expériences
+Each experiment has its own `README.md` giving the statement it serves, the
+measured result and the command line.
 
-| Expérience | Ce qu'elle mesure | Données |
-|---|---|---|
-| `reeig_spectrum` | ce que le seuil ReEig fait au spectre d'une matrice CovPool, et la borne $1/\varepsilon$ qu'il pose sur la rétropropagation | simulées |
-| `reeig_spectrum` (`real_data.py`) | la même mesure sur HDM05 / HyperLeaf / Rices90 | réelles, non distribuables |
-| `stiefel_aggregation` | l'ordre auquel les agrégations `projavg` et `rlavg` coïncident | aucune |
+## Hardware
 
-Chacune a son `README.md`, qui donne l'énoncé qu'elle sert, le résultat mesuré
-et la ligne de commande.
+**MPS (Apple Silicon) is refused explicitly**, and the scripts say so rather
+than degrading silently. MPS has no `float64`, and `torch.linalg.eigh` is not
+implemented there — that is the operation behind ReEig, LogEig, `sqrtm` and the
+chapter's five means. With `PYTORCH_ENABLE_MPS_FALLBACK=1` everything falls back
+to the CPU one operation at a time: `eigh(256×64×64)×10` measured at 0.388 s
+against 0.364 s on pure CPU.
 
-## Matériel
+Use `--device cpu` or `--device cuda`.
 
-**MPS (Apple Silicon) est refusé explicitement**, et les scripts le disent
-plutôt que de se dégrader en silence : MPS n'a pas de `float64`, et
-`torch.linalg.eigh` n'y est pas implémenté — c'est l'opération de ReEig, LogEig,
-`sqrtm` et des cinq moyennes du chapitre. Avec
-`PYTORCH_ENABLE_MPS_FALLBACK=1`, tout retombe sur le CPU une opération à la
-fois : `eigh(256×64×64)×10` mesuré à 0,388 s contre 0,364 s en CPU pur.
+## Dependency
 
-`--device cpu` ou `--device cuda`.
+`yetanotherspdnet` is not yet a dependency of this repository, because its
+upstream packaging is broken: `packages = ["yetanotherspdnet"]` ships no
+subpackage, and the import fails on a spurious circular import. The fix is ready
+on the `fix/whitening-congruence-matrix-grad` branch.
 
-## Dépendance
-
-`yetanotherspdnet` n'est pas encore une dépendance du dépôt, parce que son
-empaquetage amont est cassé (`packages = ["yetanotherspdnet"]` n'embarque aucun
-sous-paquet, et l'import échoue sur un faux « circular import »). Le correctif
-est prêt sur la branche `fix/whitening-congruence-matrix-grad`. En attendant :
+Until that lands, these three experiments will not run from a plain `uv sync`.
+Point `PYTHONPATH` at a checkout of the library:
 
 ```sh
-export PYTHONPATH=$HOME/Research/HDR/yetanotherspdnet/src
+git clone -b fix/whitening-congruence-matrix-grad \
+    https://github.com/Yet-Another-Research-Organisation/yetanotherspdnet
+export PYTHONPATH=$PWD/yetanotherspdnet/src
 ```
+
+## Experiments
+
+<!-- experiments-start -->
+<div class="exp-chapter">
+<div class="exp-group">
+<h3 class="exp-group-heading">Deep learning · SPDnet</h3>
+<div class="exp-grid">
+<div class="exp-card">
+<div class="exp-card-head">
+<div class="exp-name">spdnet_batchnorm_cost</div>
+
+</div>
+<div class="exp-desc">Time and retained autograd memory of the SPD batch-norm layer, hand-written backward against automatic differentiation</div>
+<div class="exp-tags"><span class="exp-tag">deeplearning</span><span class="exp-tag">spdnet</span><span class="exp-tag">batchnorm</span><span class="exp-tag">cost</span></div>
+<div class="exp-run"><code>uv run python 4-deeplearning/batchnorm_cost/main.py</code></div>
+<a class="exp-details-link" href="../../experiments/spdnet_batchnorm_cost/">Parameters &amp; details →</a>
+</div>
+
+<div class="exp-card">
+<div class="exp-card-head">
+<div class="exp-name">spdnet_reeig_spectrum</div>
+
+</div>
+<div class="exp-desc">What the ReEig threshold does to the spectrum of a CovPool matrix, and the 1/eps bound it puts on the Loewner factor of the backward pass</div>
+<div class="exp-tags"><span class="exp-tag">deeplearning</span><span class="exp-tag">spdnet</span><span class="exp-tag">reeig</span><span class="exp-tag">covariance</span></div>
+<div class="exp-run"><code>uv run python 4-deeplearning/reeig_spectrum/main.py</code></div>
+<a class="exp-details-link" href="../../experiments/spdnet_reeig_spectrum/">Parameters &amp; details →</a>
+</div>
+
+<div class="exp-card">
+<div class="exp-card-head">
+<div class="exp-name">spdnet_stiefel_aggregation</div>
+
+</div>
+<div class="exp-desc">Order at which the projavg and rlavg aggregations of prop:spdnet-federe-equivalence coincide on the Stiefel manifold</div>
+<div class="exp-tags"><span class="exp-tag">deeplearning</span><span class="exp-tag">spdnet</span><span class="exp-tag">stiefel</span><span class="exp-tag">federated</span></div>
+<div class="exp-run"><code>uv run python 4-deeplearning/stiefel_aggregation/main.py</code></div>
+<a class="exp-details-link" href="../../experiments/spdnet_stiefel_aggregation/">Parameters &amp; details →</a>
+</div>
+
+<div class="exp-card">
+<div class="exp-card-head">
+<div class="exp-name">spdnet_wishart_model</div>
+
+</div>
+<div class="exp-desc">Does the batch-norm mean matched to the Wishart model win, and by how much, as the degrees of freedom grow</div>
+<div class="exp-tags"><span class="exp-tag">deeplearning</span><span class="exp-tag">spdnet</span><span class="exp-tag">batchnorm</span><span class="exp-tag">wishart</span></div>
+<div class="exp-run"><code>uv run python 4-deeplearning/wishart_model/df_sweep.py</code></div>
+<a class="exp-details-link" href="../../experiments/spdnet_wishart_model/">Parameters &amp; details →</a>
+</div>
+</div>
+</div>
+</div>
+<!-- experiments-end -->
