@@ -166,7 +166,10 @@ def main():
     # One step per estimator per seed, which is the coarsest unit that still
     # moves often enough to be worth watching: the corrected method alone takes
     # a quarter of an hour on Salinas.
-    progress = Progress(args.storage_path, len(seeds) * len(args.methods))
+    progress = Progress(
+        args.storage_path, len(seeds) * len(args.methods),
+        description="Estimators x seeds", unit="fits",
+    )
     maps, scores, per_seed = {}, {}, []
     for seed in seeds:
       for method in args.methods:

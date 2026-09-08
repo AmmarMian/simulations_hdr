@@ -235,7 +235,10 @@ def main():
           f"{covariances.shape[-1]}x{covariances.shape[-1]}, "
           f"c = {concentration:.2f}, {n_classes} classes", flush=True)
 
-    progress = Progress(args.storage_path, len(args.metrics))
+    progress = Progress(
+        args.storage_path, len(args.metrics),
+        description="Geometries", unit="metrics",
+    )
     maps, scores = {}, {}
     for metric in args.metrics:
         start = time.perf_counter()

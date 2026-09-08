@@ -9,6 +9,7 @@ import argparse
 import logging
 import time
 from pathlib import Path
+from typing import Optional
 from string import Template
 
 import numpy as np
@@ -217,58 +218,100 @@ class MCResultExporter:
 # ---------------------------------------------------------------------------
 
 class Progress:
-    """Report progress to qanat, which reads ``progress.txt`` in the run directory.
+    """Report progress to the terminal and to qanat at once.
 
-    qanat's ``experiment status`` shows a progress column for every run. It
-    fills it by parsing a file the experiment itself writes: a first line
-    declaring the total, then one line per unit of work done. This is the
-    ``count_total`` form, which suits a loop of coarse steps; qanat also accepts
-    tqdm output, which suits a long inner loop instead.
+    Two audiences want the same counter and neither is served by the other. A
+    person watching the run wants a bar; ``qanat experiment status`` wants a
+    file named ``progress.txt`` in the run directory, whose first line declares
+    a total and whose subsequent lines each mark work done. This writes both, so
+    a script carries one counter rather than a bar and a file write side by side.
 
-    Nothing is written when *storage_path* is None, so a script run outside
-    qanat behaves exactly as before.
+    The file is skipped when *storage_path* is None and the bar is skipped when
+    stderr is not a terminal, so the same call works in a qanat run, in a bare
+    shell, and in a log-capturing pipeline.
+
+    Use it as a context manager wherever possible: the bar takes over the
+    terminal while it is live and needs stopping even if the run raises.
 
     Parameters
     ----------
     storage_path : str or Path or None
-        The run directory qanat injects as ``--storage_path``.
+        Run directory qanat injects as ``--storage_path``. No file without it.
     total : int
-        Number of steps that will be reported. Counted in whatever unit the
-        caller finds natural — here, one estimator on one seed.
+        Units of work that will be reported, in whatever unit suits the caller.
+    description : str, optional
+        Label shown on the bar.
+    unit : str, optional
+        Noun shown beside the count, e.g. ``"trials"``.
+    bar : bool, optional
+        Draw the terminal bar. On by default when stderr is a terminal.
 
     Examples
     --------
-    >>> progress = Progress(args.storage_path, len(seeds) * len(methods))
-    >>> for seed in seeds:
-    ...     for method in methods:
-    ...         run(seed, method)
+    >>> with Progress(args.storage_path, len(jobs), unit="trials") as progress:
+    ...     for job in jobs:
+    ...         run(job)
     ...         progress.step()
-    >>> progress.done()
     """
 
-    def __init__(self, storage_path, total: int):
+    def __init__(self, storage_path, total: int, description: str = "Working",
+                 unit: str = "steps", bar: Optional[bool] = None):
         self._path = Path(storage_path) / "progress.txt" if storage_path else None
         self._total = max(int(total), 1)
-        if self._path is None:
-            return
-        self._path.parent.mkdir(parents=True, exist_ok=True)
-        self._path.write_text(f"count_total={self._total}\n")
+        self._done = False
+        if self._path is not None:
+            self._path.parent.mkdir(parents=True, exist_ok=True)
+            self._path.write_text(f"count_total={self._total}\n")
+
+        if bar is None:
+            bar = sys.stderr.isatty()
+        self._bar = self._task = None
+        if bar:
+            from rich.progress import (
+                BarColumn, Progress as RichProgress, TextColumn, TimeElapsedColumn,
+            )
+
+            self._bar = RichProgress(
+                TextColumn("[progress.description]{task.description}"),
+                BarColumn(),
+                TextColumn(f"{{task.completed}}/{{task.total}} {unit}"),
+                TimeElapsedColumn(),
+            )
+            self._bar.start()
+            self._task = self._bar.add_task(f"[cyan]{description}", total=self._total)
 
     def step(self, count: int = 1) -> None:
-        """Record *count* more units of work as done."""
-        if self._path is None:
-            return
-        # Appended rather than rewritten: qanat sums the lines, and appending is
-        # what lets several workers report into one file.
-        with self._path.open("a") as handle:
-            handle.write(f"{int(count)}\n")
+        """Record *count* more units as done."""
+        if self._path is not None:
+            # Appended, not rewritten: qanat sums the lines, which is also what
+            # lets several workers report into one file.
+            with self._path.open("a") as handle:
+                handle.write(f"{int(count)}\n")
+        if self._bar is not None:
+            self._bar.advance(self._task, count)
 
     def done(self) -> None:
-        """Mark the run complete, so qanat reports 100% without arithmetic."""
-        if self._path is None:
+        """Mark complete and release the terminal. Safe to call twice."""
+        if self._done:
             return
-        with self._path.open("a") as handle:
-            handle.write("finished\n")
+        self._done = True
+        if self._path is not None:
+            with self._path.open("a") as handle:
+                handle.write("finished\n")
+        if self._bar is not None:
+            self._bar.stop()
+
+    def __enter__(self) -> "Progress":
+        return self
+
+    def __exit__(self, exc_type, exc, traceback) -> None:
+        # The file is only marked finished on a clean exit; a run that raised
+        # part way should not read as 100% in qanat.
+        if exc_type is None:
+            self.done()
+        elif self._bar is not None:
+            self._done = True
+            self._bar.stop()
 
 
 def add_mc_base_args(parser: argparse.ArgumentParser) -> None:
