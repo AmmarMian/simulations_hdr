@@ -216,6 +216,61 @@ class MCResultExporter:
 # Common base CLI arguments
 # ---------------------------------------------------------------------------
 
+class Progress:
+    """Report progress to qanat, which reads ``progress.txt`` in the run directory.
+
+    qanat's ``experiment status`` shows a progress column for every run. It
+    fills it by parsing a file the experiment itself writes: a first line
+    declaring the total, then one line per unit of work done. This is the
+    ``count_total`` form, which suits a loop of coarse steps; qanat also accepts
+    tqdm output, which suits a long inner loop instead.
+
+    Nothing is written when *storage_path* is None, so a script run outside
+    qanat behaves exactly as before.
+
+    Parameters
+    ----------
+    storage_path : str or Path or None
+        The run directory qanat injects as ``--storage_path``.
+    total : int
+        Number of steps that will be reported. Counted in whatever unit the
+        caller finds natural — here, one estimator on one seed.
+
+    Examples
+    --------
+    >>> progress = Progress(args.storage_path, len(seeds) * len(methods))
+    >>> for seed in seeds:
+    ...     for method in methods:
+    ...         run(seed, method)
+    ...         progress.step()
+    >>> progress.done()
+    """
+
+    def __init__(self, storage_path, total: int):
+        self._path = Path(storage_path) / "progress.txt" if storage_path else None
+        self._total = max(int(total), 1)
+        if self._path is None:
+            return
+        self._path.parent.mkdir(parents=True, exist_ok=True)
+        self._path.write_text(f"count_total={self._total}\n")
+
+    def step(self, count: int = 1) -> None:
+        """Record *count* more units of work as done."""
+        if self._path is None:
+            return
+        # Appended rather than rewritten: qanat sums the lines, and appending is
+        # what lets several workers report into one file.
+        with self._path.open("a") as handle:
+            handle.write(f"{int(count)}\n")
+
+    def done(self) -> None:
+        """Mark the run complete, so qanat reports 100% without arithmetic."""
+        if self._path is None:
+            return
+        with self._path.open("a") as handle:
+            handle.write("finished\n")
+
+
 def add_mc_base_args(parser: argparse.ArgumentParser) -> None:
     """Add common base MC simulation CLI arguments to *parser*."""
     parser.add_argument("--n-trials", type=int, default=10000,

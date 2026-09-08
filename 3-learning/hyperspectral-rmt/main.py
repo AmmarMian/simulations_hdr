@@ -51,7 +51,7 @@ from hdrlib.core.hyperspectral import (
     sliding_window_vectorize,
     unvectorize_labels,
 )
-from hdrlib.core.mc import add_mc_base_args, make_mc_parser
+from hdrlib.core.mc import Progress, add_mc_base_args, make_mc_parser
 from hdrlib.core.plot_style import apply_style
 
 
@@ -163,6 +163,10 @@ def main():
         [int(value) for token in args.seeds for value in token.split(",") if value]
         if args.seeds else [args.seed]
     )
+    # One step per estimator per seed, which is the coarsest unit that still
+    # moves often enough to be worth watching: the corrected method alone takes
+    # a quarter of an hour on Salinas.
+    progress = Progress(args.storage_path, len(seeds) * len(args.methods))
     maps, scores, per_seed = {}, {}, []
     for seed in seeds:
       for method in args.methods:
@@ -200,6 +204,7 @@ def main():
         # readable table of what it did finish.
         with open(os.path.join(args.storage_path, "seeds.json"), "w") as handle:
             json.dump(per_seed, handle, indent=2)
+        progress.step()
         print(f"{method:6s} acc={accuracy:.3f}  mIoU={miou:.3f}  "
               f"({elapsed:.0f}s, worst restart left "
               f"{scores[method]['worst_moved']:.2%} moving)", flush=True)
@@ -279,6 +284,8 @@ def main():
         figure.savefig(save_path, bbox_inches="tight", dpi=300)
         write_prov_sidecar(save_path, args)
         print(f"Saved segmentation maps in {save_path}")
+
+    progress.done()
 
     if args.show_interactive:
         plt.show()
