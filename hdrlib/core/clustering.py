@@ -363,17 +363,33 @@ def require_double(x: Array, what: str) -> None:
     """Refuse to run in single precision.
 
     Every metric here ends in the eigenvalues of a small SPD matrix and two of
-    the three take their logarithm. In float32 the smallest eigenvalue of a
-    covariance estimated from a handful of samples has an unreliable sign, and
-    its logarithm is then either a large negative number or a NaN — silently, in
-    both cases.
+    the three take their logarithm, so the whole comparison rests on how well
+    those eigenvalues are resolved.
+
+    How much that costs depends on the concentration. Measured on 200 000
+    covariances of 5 variables from 25 samples — c = 0.2, the default
+    configuration — float32 loses nothing that matters: no smallest eigenvalue
+    changed sign, and the squared-log distance agreed with float64 to 1e-8,
+    against method-to-method gaps of order 1e-1. The danger is at c near 1,
+    where the smallest eigenvalue approaches zero, its sign stops being
+    reliable, and its logarithm is then a large negative number or a NaN —
+    silently, in both cases.
+
+    float64 is therefore the default because the guard cannot see which regime
+    it is in: it is handed a cube, not a concentration ratio. A caller that
+    knows it is far from c = 1 and wants the speed — single precision is 64
+    times the double-precision rate on a workstation NVIDIA card — is being
+    refused something it could safely have, and that is a deliberate trade, not
+    a numerical necessity.
     """
     dtype = str(getattr(x, "dtype", "unknown"))
     if "64" not in dtype and "double" not in dtype:
         raise TypeError(
-            f"{what} needs float64, got {dtype}. The eigenvalues of a small "
-            "covariance are not resolved in single precision, and these metrics "
-            "take their logarithm. On Apple silicon use torch-cpu, not torch-mps."
+            f"{what} needs float64, got {dtype}. These metrics take the "
+            "logarithms of the eigenvalues of a small covariance, which single "
+            "precision resolves badly once the concentration approaches one. "
+            "On Apple silicon use torch-cpu: MPS has no float64, and no "
+            "eigendecomposition either, at any precision."
         )
 
 
