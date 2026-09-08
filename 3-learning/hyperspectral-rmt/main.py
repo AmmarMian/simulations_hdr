@@ -122,6 +122,15 @@ def main():
         help="Iteration budget of one Fréchet mean.",
     )
     parser.add_argument(
+        "--seeds", type=str, nargs="+", default=None,
+        help="Repeat the whole comparison on several starting partitions and "
+             "report the mean and spread across them; defaults to the single "
+             "--seed. Accepts either form: '--seeds 42 123 456' or "
+             "'--seeds 42,123,456'. The comma form is the one to use through "
+             "qanat, which passes only the first token of a multi-value "
+             "argument and turns the rest into positionals.",
+    )
+    parser.add_argument(
         "--methods", type=str, nargs="+", default=list(METHODS),
         help="Subset of the four methods to run.",
     )
@@ -150,13 +159,18 @@ def main():
           f"{windows.shape[1]} échantillons en dimension {windows.shape[2]}, "
           f"c = {concentration:.2f}, {n_classes} classes", flush=True)
 
-    maps, scores = {}, {}
-    for method in args.methods:
+    seeds = (
+        [int(value) for token in args.seeds for value in token.split(",") if value]
+        if args.seeds else [args.seed]
+    )
+    maps, scores, per_seed = {}, {}, []
+    for seed in seeds:
+      for method in args.methods:
         start = time.perf_counter()
         labels, inertia, histories = riemannian_kmeans(
             windows, n_classes, method=method, n_init=args.n_init,
             max_iter=args.max_iter, mean_iterations=args.mean_iterations,
-            seed=args.seed, backend=args.backend, verbose=True,
+            seed=seed, backend=args.backend, verbose=True,
         )
         segmented = unvectorize_labels(
             labels, *image_shape, args.window_size, args.stride
@@ -166,16 +180,61 @@ def main():
         ious, miou = mean_iou(matched, truth)
         elapsed = time.perf_counter() - start
 
-        maps[method] = matched
-        scores[method] = {
+        per_seed.append({
+            "seed": seed, "method": method,
             "accuracy": accuracy, "mIoU": miou,
             "inertia": inertia, "seconds": elapsed,
-            "restarts": histories,
             "worst_moved": max(h["moved"] for h in histories),
-        }
+        })
+        # The maps and the figure show the first seed; the table below is what
+        # carries the comparison when there is more than one.
+        if seed == seeds[0]:
+            maps[method] = matched
+            scores[method] = {
+                "accuracy": accuracy, "mIoU": miou,
+                "inertia": inertia, "seconds": elapsed,
+                "restarts": histories,
+                "worst_moved": max(h["moved"] for h in histories),
+            }
+        # Written after every method so a run killed part way still leaves a
+        # readable table of what it did finish.
+        with open(os.path.join(args.storage_path, "seeds.json"), "w") as handle:
+            json.dump(per_seed, handle, indent=2)
         print(f"{method:6s} acc={accuracy:.3f}  mIoU={miou:.3f}  "
               f"({elapsed:.0f}s, worst restart left "
               f"{scores[method]['worst_moved']:.2%} moving)", flush=True)
+
+
+    if len(seeds) > 1:
+        # Mean and spread over the seeds, and how often each method actually
+        # came first: a mean can hide the difference between a method that wins
+        # narrowly every time and one that wins once by a lot.
+        summary = {}
+        print(f"\n{'method':7s} {'accuracy':>18s} {'mIoU':>18s}   wins", flush=True)
+        for method in args.methods:
+            rows = [r for r in per_seed if r["method"] == method]
+            acc = [r["accuracy"] for r in rows]
+            iou = [r["mIoU"] for r in rows]
+            wins = sum(
+                max((r for r in per_seed if r["seed"] == s),
+                    key=lambda r: r["accuracy"])["method"] == method
+                for s in seeds
+            )
+            summary[method] = {
+                "accuracy_mean": float(np.mean(acc)),
+                "accuracy_std": float(np.std(acc, ddof=1)) if len(acc) > 1 else 0.0,
+                "mIoU_mean": float(np.mean(iou)),
+                "mIoU_std": float(np.std(iou, ddof=1)) if len(iou) > 1 else 0.0,
+                "wins": wins, "n_seeds": len(rows),
+            }
+            entry = summary[method]
+            print(f"{method:7s} {entry['accuracy_mean']:8.4f} ± "
+                  f"{entry['accuracy_std']:.4f} {entry['mIoU_mean']:8.4f} ± "
+                  f"{entry['mIoU_std']:.4f}   {wins}/{len(seeds)}", flush=True)
+        with open(os.path.join(args.storage_path, "summary.json"), "w") as handle:
+            json.dump({"scene": args.scene, "seeds": seeds,
+                       "per_seed": per_seed, "summary": summary},
+                      handle, indent=2)
 
     # ── the figure: ground truth, then one map per method ────────────────
     panels = ["vérité terrain"] + list(args.methods)
