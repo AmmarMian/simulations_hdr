@@ -196,6 +196,13 @@ def main():
              "previous centroids. Ignored by the two flat metrics.",
     )
     parser.add_argument(
+        "--max_batch", type=int, default=65536,
+        help="Largest batch handed to the eigensolver at once. Only the "
+             "affine-invariant metric is bounded by it: cuSOLVER refuses a "
+             "batch of n_clusters x n_pixels matrices outright on a scene the "
+             "size of Salinas. Lowering it costs kernel launches, not results.",
+    )
+    parser.add_argument(
         "--metrics", type=str, nargs="+", default=list(SPD_METRICS),
         help="Subset of the three geometries to run.",
     )
@@ -234,7 +241,8 @@ def main():
         labels, inertia, histories = spd_kmeans(
             covariances, n_classes, metric=metric, n_init=args.n_init,
             max_iter=args.max_iter, mean_iterations=args.mean_iterations,
-            seed=args.seed, backend=args.backend, verbose=True,
+            max_batch=args.max_batch, seed=args.seed, backend=args.backend,
+            verbose=True,
         )
         segmented = unvectorize_labels(
             labels, *image_shape, args.window_size, args.stride
@@ -292,7 +300,7 @@ def main():
             scene=args.scene, seed=args.seed, n_features=args.n_features,
             window_size=args.window_size, stride=args.stride,
             n_init=args.n_init, max_iter=args.max_iter,
-            mean_iterations=args.mean_iterations,
+            mean_iterations=args.mean_iterations, max_batch=args.max_batch,
             n_classes=n_classes, concentration=concentration,
             metrics=np.array(args.metrics), truth=truth,
             **{f"map_{m}": maps[m] for m in args.metrics},

@@ -26,6 +26,7 @@ from .backend import (
     Backend,
     batched_eigh,
     cast_like,
+    concatenate,
     get_backend_module,
     get_data_on_device,
     masked_set,
@@ -498,7 +499,7 @@ def _flat_metric(logarithm: bool):
     return precompute, assign, update
 
 
-def _affine_invariant_metric():
+def _affine_invariant_metric(max_batch: int):
     """Affine-invariant geometry: centroids are Karcher means."""
 
     def precompute(covariances, backend):
@@ -507,17 +508,36 @@ def _affine_invariant_metric():
     def assign(representation, centroids, backend):
         be = get_backend_module(backend)
         # One whitening per centroid, then every point is measured against all
-        # of them at once, rather than looping squared_fisher_distance over
-        # centroids and synchronising after each.
+        # of them at once, rather than looping the distance over centroids and
+        # synchronising after each.
+        #
+        # In slices over the points, though: the eigenvalue problem this poses
+        # has n_clusters * n_points matrices in it, and cuSOLVER's batched
+        # symmetric solver rejects a batch that large outright — it fails while
+        # sizing its workspace, before it has looked at a single value. Slicing
+        # changes no result, since every matrix is independent of the others,
+        # and it keeps the whitened block small enough to be worth materialising.
         _, inverse_root = sqrtm_invsqrtm_psd(centroids, backend)
-        whitened = (
-            inverse_root[:, None]
-            @ representation[None]
-            @ be.swapaxes(inverse_root, -1, -2)[:, None]
-        )
-        logarithms = be.log(be.abs(be.linalg.eigvalsh(whitened)))
-        squared = be.sum(logarithms * logarithms, axis=-1)
-        return be.swapaxes(squared, -1, -2)
+        transposed = be.swapaxes(inverse_root, -1, -2)
+        n_clusters, n_features = centroids.shape[0], centroids.shape[-1]
+        step = max(1, max_batch // n_clusters)
+
+        pieces = []
+        for start in range(0, representation.shape[0], step):
+            block = representation[start : start + step]
+            whitened = inverse_root[:, None] @ block[None] @ transposed[:, None]
+            eigenvalues = be.linalg.eigvalsh(
+                be.reshape(whitened, (-1, n_features, n_features))
+            )
+            logarithms = be.log(be.abs(eigenvalues))
+            squared = be.reshape(
+                be.sum(logarithms * logarithms, axis=-1),
+                (n_clusters, block.shape[0]),
+            )
+            pieces.append(be.swapaxes(squared, -1, -2))
+        if len(pieces) == 1:
+            return pieces[0]
+        return concatenate(backend, pieces, axis=0)
 
     def update(representation, one_hot, centroids, backend, mean_iterations, mean_tol):
         be = get_backend_module(backend)
@@ -564,9 +584,12 @@ def _affine_invariant_metric():
     return precompute, assign, update
 
 
+# Every factory takes the batch bound, even the two that cannot exceed it:
+# the flat metrics reduce their pairs with a matrix product, which has no such
+# limit, so they ignore it.
 _SPD_METRIC_FACTORIES = {
-    "euclid": lambda: _flat_metric(logarithm=False),
-    "logeuclid": lambda: _flat_metric(logarithm=True),
+    "euclid": lambda max_batch: _flat_metric(logarithm=False),
+    "logeuclid": lambda max_batch: _flat_metric(logarithm=True),
     "riemann": _affine_invariant_metric,
 }
 
@@ -580,6 +603,7 @@ def spd_kmeans(
     tol: float = 1e-3,
     mean_iterations: int = 10,
     mean_tol: float = 1e-6,
+    max_batch: int = 65536,
     seed: int = 42,
     backend: Union[str, Backend] = "numpy",
     verbose: bool = False,
@@ -604,6 +628,11 @@ def spd_kmeans(
     mean_iterations, mean_tol : int, float
         Budget and stopping gradient of one Karcher mean. Ignored by the flat
         metrics, whose mean is closed-form.
+    max_batch : int
+        Largest number of matrices handed to the eigensolver at once. Only the
+        affine-invariant metric is bounded by it, and only because cuSOLVER
+        refuses a batch of a few million; lowering it costs kernel launches and
+        changes no result.
     seed : int
         Drives the starting partition, identically for every metric.
     backend : str or Backend
@@ -638,7 +667,7 @@ def spd_kmeans(
     device_covariances = get_data_on_device(covariances, backend)
     require_double(device_covariances, f"the {metric} K-means")
 
-    precompute, assign, update = _SPD_METRIC_FACTORIES[metric]()
+    precompute, assign, update = _SPD_METRIC_FACTORIES[metric](max_batch)
     # Once for the whole run: the representation depends on the covariances,
     # never on the labels.
     representation = precompute(device_covariances, backend)
