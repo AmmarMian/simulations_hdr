@@ -1,5 +1,5 @@
 name: sar_mc_roc
-description: Courbes ROC des quatre detecteurs de changements, hors ligne et en ligne
+description: ROC curves for the four change detectors, offline and online
 path: 2-detection/sar_experiments/mc_simulations
 executable: 2-detection/sar_experiments/mc_simulations/mc_roc_detectors.py
 executable_command: uv run python

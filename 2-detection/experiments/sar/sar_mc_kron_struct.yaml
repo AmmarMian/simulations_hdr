@@ -1,5 +1,5 @@
 name: sar_mc_kron_struct
-description: "Ce que la structure Kronecker achete : erreur vs taille de fenetre N"
+description: "What assuming a Kronecker structure buys: estimation error against the window size"
 path: 2-detection/sar_experiments/mc_simulations
 executable: 2-detection/sar_experiments/mc_simulations/mc_kron_structure_vs_n.py
 executable_command: uv run python

@@ -8,7 +8,7 @@
 
 # sar_mc_kron_struct
 
-Ce que la structure Kronecker achete : erreur vs taille de fenetre N
+What assuming a Kronecker structure buys: estimation error against the window size
 
 **Tags:** `detection`  `kronecker`  `estimation`  `structure`  `monte-carlo`
 

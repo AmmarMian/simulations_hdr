@@ -243,7 +243,6 @@ uv run python 1-context/scm_underregime/main.py
   <code>--N 30</code><br>
   <code>--n_trials 10000</code><br>
   <code>--seed 42</code><br>
-  <code>--output-dir /Users/ammarmian/Research/HDR/simulations_hdr/results/context_scm_underregime/run_2</code><br>
   <span class="mn-date">5dd225a · 2026-07-02</span>
 </span>
 <div class="exp-result-card">

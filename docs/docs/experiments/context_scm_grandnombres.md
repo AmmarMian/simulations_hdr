@@ -217,7 +217,6 @@ uv run python 1-context/scm_grandnombres/main.py
   <code>--d 7</code><br>
   <code>--n_trials 10000</code><br>
   <code>--seed 42</code><br>
-  <code>--output-dir /Users/ammarmian/Research/HDR/simulations_hdr/results/context_scm_grandnombres/run_7</code><br>
   <span class="mn-date">7e9acc6 · 2026-07-02</span>
 </span>
 <div class="exp-result-card">

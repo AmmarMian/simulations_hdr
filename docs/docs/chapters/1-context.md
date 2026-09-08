@@ -1,6 +1,22 @@
 # Chapter 1 · Context
 
-Background figures illustrating core statistical concepts from the dissertation introduction.
+Figures illustrating the statistical ideas the later chapters build on:
+elliptical distributions and how they differ from the Gaussian, what a
+covariance estimated from few samples looks like, and how the space of
+covariance matrices behaves when it is treated as a curved surface rather than
+a flat one.
+
+## Data
+
+All simulated — nothing to download, and every experiment runs in seconds on a
+laptop CPU.
+
+## Caveats
+
+These are illustrations, not measurements: most draw a few hundred points to
+make a picture, and their parameters are chosen for legibility rather than
+statistical power. The two Monte-Carlo ones (`context_scm_grandnombres` and
+`context_scm_underregime`) are the exception and take about a minute.
 
 ## Experiments
 

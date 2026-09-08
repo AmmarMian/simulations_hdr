@@ -330,6 +330,12 @@ def _render_parameters(name: str, params: list[dict]) -> str:
     for dest, value in recorded.items():
         if dest in _INFRA_ARGS or value is None or value is False:
             continue
+        # An absolute path only ever names a directory on the machine that ran
+        # the experiment, so it tells a reader nothing and leaks a home
+        # directory onto a public site. Named arguments are filtered above; this
+        # catches the ones a future script invents.
+        if isinstance(value, str) and value.startswith("/"):
+            continue
         flag = flags.get(dest, "--" + dest.replace("_", "-"))
         shown = "" if value is True else f" {value}"
         rows += f'  <code>{html.escape(flag + shown)}</code><br>\n'
@@ -394,7 +400,7 @@ def _figure_stems(name: str) -> list[tuple[str, str]]:
 _COMPANION_LABELS = {"source"}
 
 # Paths and switches that say nothing about what was computed.
-_INFRA_ARGS = {"storage_path", "export_path", "show_interactive", "export"}
+_INFRA_ARGS = {"storage_path", "export_path", "output_dir", "show_interactive", "export"}
 
 
 SRC_MAX_LINES = 1200

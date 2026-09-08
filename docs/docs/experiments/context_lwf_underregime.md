@@ -223,7 +223,6 @@ uv run python 1-context/lwf_underregime/main.py
   <code>--n_trials 10000</code><br>
   <code>--alpha 0.1</code><br>
   <code>--seed 42</code><br>
-  <code>--output-dir /Users/ammarmian/Research/HDR/simulations_hdr/results/context_lwf_underregime/run_3</code><br>
   <span class="mn-date">5dd225a · 2026-07-02</span>
 </span>
 <div class="exp-result-card">

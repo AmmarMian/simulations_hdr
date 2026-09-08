@@ -1,5 +1,5 @@
 name: sar_mc_kron_mse
-description: MSE des estimateurs Kronecker (hors ligne vs recursif) face aux ICRB
+description: Mean squared error of the Kronecker estimators, offline and recursive, against the intrinsic Cramer-Rao bounds
 path: 2-detection/sar_experiments/mc_simulations
 executable: 2-detection/sar_experiments/mc_simulations/mc_kron_mse_icrb.py
 executable_command: uv run python

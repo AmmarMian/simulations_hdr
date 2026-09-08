@@ -1,11 +1,20 @@
 # Chapter 2 · Detection
 
-Change-detection in SAR and sonar imagery using robust covariance estimators under Gaussian, DCG, and Kronecker-structured models.
+Deciding whether something changed between two radar or sonar acquisitions of
+the same scene, when the only description of the background is a covariance
+matrix estimated from a handful of neighbouring pixels.
 
+The experiments come in two kinds: Monte-Carlo studies that measure detection
+power and false-alarm behaviour on simulated clutter, and runs of the same
+detectors over real SAR images.
 
-## Real-data pipeline
+## Data
 
-SAR scenes (Scene 1, 2, 3, 4 and 4-cropped) must be downloaded and reformatted before running detection experiments:
+**Simulated** — the Monte-Carlo experiments need nothing; they generate their
+own clutter under Gaussian, compound-Gaussian and Kronecker-structured models.
+
+**Real SAR** — five UAVSAR scenes, published on Zenodo and fetched by a script
+in the repository. They need one reformatting pass before use:
 
 ```sh
 cd 2-detection
@@ -13,30 +22,24 @@ bash data/download_sar.sh
 uv run sar_experiments/compute_detection_real_data/prepare_data.py data/SAR/Scene1.npy
 ```
 
+**Real sonar** — not distributable, so the sonar experiments here are the
+simulated ones only.
 
-## Non-regression bench (sonar)
+## Caveats
 
-The sonar detectors are checked against Olivier Lerda's MATLAB reference rather
-than against themselves. The reference `.mat` files carry the simulated data,
-the exact covariance, the beam grid **and** the statistic of every detector for
-every range bin and beam pair, so the comparison is deterministic — no
-Monte-Carlo, no sampling noise. Any deviation is a formula or a convention
-difference.
+**The Monte-Carlo experiments are the long ones.** The sonar angle-grid sweep
+computes a detection probability at every pair of arrival angles on a 51×51 grid
+with a thousand trials in each cell, and takes hours; the SNR sweep and the ROC
+curves are comparable. They parallelise over CPU cores — use `--n-workers`, and
+`--n-trials` to shorten a trial run. `qanat experiment status` reports how far
+along they are.
 
-```sh
-uv run python 2-detection/sonar_experiments/validation/compare_matlab_reference.py \
-    --mat ~/Research/sonar/Ressources_OlivierLerda/pfa-seuil-R1000-rhoP04-rhoA09-G.mat \
-    --adaptive
-```
-
-It covers six known-covariance detectors (NMF 1, NMF 2, MIMO-MF, M-NMF-I, Rao,
-GLRT) and four adaptive ones (Rao/GLRT built on the SCM and on the two-texture
-Tyler estimator), on the four covariance settings of the reference (including
-the two matrix-CFAR overlays) in both Gaussian and K-distributed clutter.
-
-Run it after touching anything in `hdrlib/sonar/`: it is what caught the
-conjugation flip in `two_array_tyler`, which was invisible in every
-online-versus-offline comparison because the reference covariance is real.
+**A validation script exists but needs a reference file that is not in the
+repository.** `sonar_experiments/validation/compare_matlab_reference.py`
+compares the sonar detectors against a reference implementation, using `.mat`
+files that carry the data, the exact covariance and the expected statistic for
+every detector. Without those files the script cannot run; the detectors
+themselves are covered by the ordinary test suite.
 
 ## Experiments
 
@@ -170,7 +173,7 @@ online-versus-offline comparison because the reference covariance is real.
 <div class="exp-name">sar_mc_kron_mse</div>
 
 </div>
-<div class="exp-desc">MSE des estimateurs Kronecker (hors ligne vs recursif) face aux ICRB</div>
+<div class="exp-desc">Mean squared error of the Kronecker estimators, offline and recursive, against the intrinsic Cramer-Rao bounds</div>
 <div class="exp-tags"><span class="exp-tag">detection</span><span class="exp-tag">kronecker</span><span class="exp-tag">estimation</span><span class="exp-tag">icrb</span><span class="exp-tag">monte-carlo</span></div>
 <div class="exp-run"><code>uv run python 2-detection/sar_experiments/mc_simulations/mc_kron_mse_icrb.py</code></div>
 <a class="exp-details-link" href="../../experiments/sar_mc_kron_mse/">Parameters &amp; details →</a>
@@ -181,7 +184,7 @@ online-versus-offline comparison because the reference covariance is real.
 <div class="exp-name">sar_mc_kron_struct</div>
 
 </div>
-<div class="exp-desc">Ce que la structure Kronecker achete : erreur vs taille de fenetre N</div>
+<div class="exp-desc">What assuming a Kronecker structure buys: estimation error against the window size</div>
 <div class="exp-tags"><span class="exp-tag">detection</span><span class="exp-tag">kronecker</span><span class="exp-tag">estimation</span><span class="exp-tag">structure</span><span class="exp-tag">monte-carlo</span></div>
 <div class="exp-run"><code>uv run python 2-detection/sar_experiments/mc_simulations/mc_kron_structure_vs_n.py</code></div>
 <a class="exp-details-link" href="../../experiments/sar_mc_kron_struct/">Parameters &amp; details →</a>
@@ -192,7 +195,7 @@ online-versus-offline comparison because the reference covariance is real.
 <div class="exp-name">sar_mc_power</div>
 
 </div>
-<div class="exp-desc">Puissance vs T des quatre detecteurs de changements, hors ligne et en ligne</div>
+<div class="exp-desc">Detection power against the number of dates, for the four change detectors, offline and online</div>
 <div class="exp-tags"><span class="exp-tag">detection</span><span class="exp-tag">kronecker</span><span class="exp-tag">puissance</span><span class="exp-tag">H1</span><span class="exp-tag">monte-carlo</span></div>
 <div class="exp-run"><code>uv run python 2-detection/sar_experiments/mc_simulations/mc_power_detectors.py</code></div>
 <a class="exp-details-link" href="../../experiments/sar_mc_power/">Parameters &amp; details →</a>
@@ -203,7 +206,7 @@ online-versus-offline comparison because the reference covariance is real.
 <div class="exp-name">sar_mc_roc</div>
 
 </div>
-<div class="exp-desc">Courbes ROC des quatre detecteurs de changements, hors ligne et en ligne</div>
+<div class="exp-desc">ROC curves for the four change detectors, offline and online</div>
 <div class="exp-tags"><span class="exp-tag">detection</span><span class="exp-tag">kronecker</span><span class="exp-tag">roc</span><span class="exp-tag">H1</span><span class="exp-tag">monte-carlo</span></div>
 <div class="exp-run"><code>uv run python 2-detection/sar_experiments/mc_simulations/mc_roc_detectors.py</code></div>
 <a class="exp-details-link" href="../../experiments/sar_mc_roc/">Parameters &amp; details →</a>
@@ -266,4 +269,3 @@ online-versus-offline comparison because the reference covariance is real.
 </div>
 </div>
 <!-- experiments-end -->
-
