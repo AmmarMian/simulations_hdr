@@ -523,7 +523,7 @@ panel 2 — against the number of matrices (N = 128):
   n_matrices =    60: SCM    8.39 dB  LW   15.34 dB  OAS   15.38 dB  LW-NL    9.79 dB  RMT   -2.19 dB
   n_matrices =    80: SCM    8.38 dB  LW   15.34 dB  OAS   15.38 dB  LW-NL    9.76 dB  RMT   -3.41 dB
   n_matrices =   100: SCM    8.20 dB  LW   15.35 dB  OAS   15.38 dB  LW-NL    9.75 dB  RMT   -4.32 dB
-Saved MSE figure in /Users/ammarmian/Research/HDR/simulations_hdr/results/learning_frechet_mse/run_42/frechet_mse.tex
+Saved MSE figure in /Users/ammarmian/Research/HDR/simulations_hdr/results/learning_frechet_mse/run_43/frechet_mse.tex
 </div>
 </details>
 </div>

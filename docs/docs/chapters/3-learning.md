@@ -23,7 +23,8 @@ que le mémoire doit pouvoir montrer sous sa propre chaîne de provenance.
 |---|---|---|---|
 | `learning_marchenko_pastur` | ce que le régime dimensionnel fait à un spectre : le biais est déterministe, donc corrigible | simulées | faite |
 | `learning_frechet_mse` | l'eqm de la moyenne de Fréchet contre $N$ et contre $K$ — et le fait que le gain *croît* avec $K$ | simulées | faite |
-| partitionnement hyperspectral | le gain se maintient en aval de l'estimation | Indian Pines | optionnelle |
+| `learning_hyperspectral_metrics` | ce que la géométrie seule apporte, avant toute correction | Salinas | implantée |
+| `learning_hyperspectral_rmt` | le gain se maintient en aval de l'estimation | Indian Pines | optionnelle |
 
 La correction et la moyenne corrigée sont dans
 [`hdrlib.core.rmt`](../api/core/backend.md) ; elles reprennent
@@ -61,6 +62,33 @@ que la moyenne minimise. Ce n'est pas le même geste.
 
 <div class="plotly-wrap" data-src="../../assets/data/learning_frechet_mse.json" data-title="learning_frechet_mse"></div>
 
+## Partitionnement hyperspectral
+
+L'eqm mesure un critère *interne* : la distance entre la moyenne estimée et la
+vraie. Or la thèse du chapitre est que le critère a quitté le modèle, donc
+l'estimateur doit être jugé sur la tâche. Deux expériences le font, et elles
+isolent deux choses différentes.
+
+`learning_hyperspectral_metrics` pose la question antérieure : **avant toute
+correction, quelle part du gain tient à la métrique ?** Trois géométries —
+euclidienne, log-euclidienne, affine-invariante — sur les mêmes covariances,
+dans la même alternance. `learning_hyperspectral_rmt` pose la question du
+chapitre : la correction survit-elle en aval, une fois la géométrie fixée ?
+
+Dans les deux cas, la boucle d'alternation, les redémarrages et le choix du
+meilleur par inertie sont écrits **une seule fois** et partagés, et toutes les
+méthodes partent de la même partition initiale à graine égale. C'est une
+différence avec le protocole publié, où les lignes de base passaient par un
+autre optimiseur que la méthode corrigée : l'écart mesuré y additionnait
+l'effet de l'estimateur et celui de l'optimiseur, sans que rien ne les sépare.
+Les lignes de base sont ici sensiblement meilleures, et l'écart en faveur de la
+correction plus étroit — mais il porte sur la seule chose qui doit varier.
+
+Une précaution de lecture : l'inertie compare les redémarrages d'**une**
+métrique et rien d'autre, les trois mesurant des longueurs dans des géométries
+différentes. Le classement des méthodes se lit sur l'exactitude et la mIoU, qui
+sont sur la vérité terrain.
+
 ## Expériences
 
 <!-- experiments-start -->
@@ -77,6 +105,28 @@ que la moyenne minimise. Ce n'est pas le même geste.
 <div class="exp-tags"><span class="exp-tag">learning</span><span class="exp-tag">random-matrix-theory</span><span class="exp-tag">frechet-mean</span><span class="exp-tag">monte-carlo</span></div>
 <div class="exp-run"><code>uv run python 3-learning/frechet_mse/main.py</code></div>
 <a class="exp-details-link" href="../../experiments/learning_frechet_mse/">Parameters &amp; details →</a>
+</div>
+
+<div class="exp-card">
+<div class="exp-card-head">
+<div class="exp-name">learning_hyperspectral_metrics</div>
+
+</div>
+<div class="exp-desc">Euclidean, log-Euclidean and affine-invariant K-means on a hyperspectral scene — what the geometry alone buys, before any correction, entirely on the device</div>
+<div class="exp-tags"><span class="exp-tag">learning</span><span class="exp-tag">clustering</span><span class="exp-tag">hyperspectral</span><span class="exp-tag">gpu</span></div>
+<div class="exp-run"><code>uv run python 3-learning/hyperspectral-metrics/main.py</code></div>
+<a class="exp-details-link" href="../../experiments/learning_hyperspectral_metrics/">Parameters &amp; details →</a>
+</div>
+
+<div class="exp-card">
+<div class="exp-card-head">
+<div class="exp-name">learning_hyperspectral_rmt</div>
+
+</div>
+<div class="exp-desc">Riemannian K-means segmentation of a hyperspectral scene — SCM, Ledoit-Wolf, non-linear shrinkage and the RMT correction, judged on the ground truth</div>
+<div class="exp-tags"><span class="exp-tag">learning</span><span class="exp-tag">random-matrix-theory</span><span class="exp-tag">clustering</span><span class="exp-tag">hyperspectral</span></div>
+<div class="exp-run"><code>uv run python 3-learning/hyperspectral-rmt/main.py</code></div>
+<a class="exp-details-link" href="../../experiments/learning_hyperspectral_rmt/">Parameters &amp; details →</a>
 </div>
 
 <div class="exp-card">
