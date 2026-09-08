@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 """Qanat action: export the segmentation maps as Plotly JSON.
 
-Not a copy of the sibling experiment's action: this results.npz stores no list
-of the methods it ran (they are recovered from the map_* keys) and its
-scores.json is the mapping itself rather than one nested under "scores".
+Reads results.npz — the ground truth and one label map per method — and rebuilds
+the row of panels as heatmaps sharing one discrete colour scale.
+
+Output: docs/docs/assets/data/learning_hyperspectral_rmt.json
 """
 
 from __future__ import annotations
@@ -26,11 +27,6 @@ from hdrlib.core.plotly_style import (
     FONT_SANS, FONT_MONO,
 )
 
-# The order the chapter compares them in: the two shrinkage baselines between
-# the uncorrected mean and the corrected one, so the correction is read against
-# its neighbours rather than across the figure.
-METHOD_ORDER = ("SCM", "LW", "LW-NL", "RMT")
-
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("--storage_path", required=True,
     help="Run directory injected by qanat.")
@@ -50,19 +46,16 @@ r = np.load(npz_path, allow_pickle=False)
 n_classes = int(r["n_classes"])
 truth = r["truth"]
 
-# main.py saves one ``map_<method>`` array per method it ran and no list of the
-# methods themselves, so the run's own keys are the only record of what was in
-# it. Sorting by METHOD_ORDER keeps the panels in the chapter's order whatever
-# subset --methods selected; anything unrecognised is kept, after, rather than
-# dropped silently.
-present = [key[len("map_"):] for key in r.files if key.startswith("map_")]
-methods = [m for m in METHOD_ORDER if m in present]
-methods += sorted(m for m in present if m not in METHOD_ORDER)
+# The run does not record which methods it ran, so they are read back off the
+# map_* keys. Ordered by the canonical list rather than by whatever order numpy
+# hands the keys in — the panels have to read the same way from one run to the
+# next, and a subset must keep its relative order.
+ORDER = ["SCM", "LW", "LW-NL", "RMT"]
+present = {key[len("map_"):] for key in r.files if key.startswith("map_")}
+methods = [m for m in ORDER if m in present] + sorted(present - set(ORDER))
 if not methods:
-    sys.exit(f"No map_* arrays in {npz_path}")
+    sys.exit(f"No map_* array in {npz_path}")
 
-# Unlike the sibling experiment, this one writes scores.json as the mapping
-# itself, with no enclosing "scores" key.
 scores = {}
 scores_path = storage / "scores.json"
 if scores_path.exists():

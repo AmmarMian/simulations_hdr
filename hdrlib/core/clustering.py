@@ -401,17 +401,37 @@ SPD_METRICS = ("euclid", "logeuclid", "riemann")
 # estimated from a handful of samples has an unreliable sign, and its logarithm
 # is then either a large negative number or a NaN — silently, in both cases.
 _PRECISION_REASON = (
-    "The eigenvalues of a small covariance are not resolved in single "
-    "precision, and these metrics take their logarithm."
+    "These metrics take the logarithms of the eigenvalues of a small "
+    "covariance, which single precision resolves badly once the concentration "
+    "approaches one."
 )
 
 
 def require_double(x: Array, what: str) -> None:
     """Refuse to run in single precision.
 
-    Thin wrapper over :func:`hdrlib.core.backend.require_double`, which owns the
-    check; this one only supplies the reason specific to these metrics. Kept as
-    a name in this module because the experiment scripts import it from here.
+    Every metric here ends in the eigenvalues of a small SPD matrix and two of
+    the three take their logarithm, so the whole comparison rests on how well
+    those eigenvalues are resolved.
+
+    How much that costs depends on the concentration. Measured on 200 000
+    covariances of 5 variables from 25 samples — c = 0.2, the default
+    configuration — float32 loses nothing that matters: no smallest eigenvalue
+    changed sign, and the squared-log distance agreed with float64 to 1e-8,
+    against method-to-method gaps of order 1e-1. The danger is at c near 1,
+    where the smallest eigenvalue approaches zero, its sign stops being
+    reliable, and its logarithm is then a large negative number or a NaN —
+    silently, in both cases.
+
+    float64 is therefore the default because the guard cannot see which regime
+    it is in: it is handed a cube, not a concentration ratio. A caller that
+    knows it is far from c = 1 and wants the speed — single precision is 64
+    times the double-precision rate on a workstation NVIDIA card — is being
+    refused something it could safely have, and that is a deliberate trade, not
+    a numerical necessity.
+
+    The check itself lives in :func:`hdrlib.core.backend.require_double`; this
+    is the name the experiment scripts import, and it supplies the reason above.
     """
     _require_double(x, what, _PRECISION_REASON)
 

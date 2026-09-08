@@ -27,6 +27,7 @@
 # scikit-learn: the pipeline must be able to run on a GPU backend.
 
 import json
+import logging
 import os
 import time
 
@@ -50,7 +51,7 @@ from hdrlib.core.hyperspectral import (
     sliding_window_vectorize,
     unvectorize_labels,
 )
-from hdrlib.core.mc import add_mc_base_args, init_logging, make_mc_parser
+from hdrlib.core.mc import add_mc_base_args, make_mc_parser
 from hdrlib.core.plot_style import apply_style
 
 
@@ -131,7 +132,10 @@ def main():
     args = parser.parse_args()
     args.storage_path = args.export_path
 
-    init_logging(args.backend)
+    # Not init_logging: its GPU disclaimer is written for the Monte-Carlo
+    # experiments, whose batched path walks T checkpoints sequentially. Nothing
+    # here is a Monte-Carlo trial, so the warning would be misleading.
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
     if args.show_interactive:
         apply_style()
     os.makedirs(args.storage_path, exist_ok=True)
