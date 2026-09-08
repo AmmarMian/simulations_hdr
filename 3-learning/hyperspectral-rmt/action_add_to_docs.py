@@ -1,17 +1,9 @@
 #!/usr/bin/env python
 """Qanat action: export the segmentation maps as Plotly JSON.
 
-Reads results.npz — the ground truth and one label map per method — and rebuilds
-the row of panels as heatmaps sharing one discrete colour scale.
-
-The sibling experiment (3-learning/hyperspectral-metrics) has an action of the
-same name, and the two are deliberately not the same file: this one reads a
-results.npz that stores no list of what it ran, so the methods are recovered
-from the ``map_*`` keys and put back in the canonical order, and it reads a
-scores.json that is the scores mapping itself rather than one nested under a
-``scores`` key. Copying the sibling verbatim produces a KeyError on the first.
-
-Output: docs/docs/assets/data/learning_hyperspectral_rmt.json
+Not a copy of the sibling experiment's action: this results.npz stores no list
+of the methods it ran (they are recovered from the map_* keys) and its
+scores.json is the mapping itself rather than one nested under "scores".
 """
 
 from __future__ import annotations

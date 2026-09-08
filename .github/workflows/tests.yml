@@ -1,0 +1,31 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --group dev
+
+      # The runner has no GPU, so the cupy, jax-cuda, torch-cuda and metal
+      # parametrizations skip themselves. That is most of the matrix: this job
+      # proves the numerics on numpy and torch-cpu, and the accelerator paths
+      # still have to be run by hand on a machine that has one.
+      - name: Run the test suite
+        run: uv run pytest tests/ -q --durations=10

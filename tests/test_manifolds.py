@@ -2,6 +2,12 @@
 
 import numpy as np
 
+# One seeded generator for the whole module. These tests draw random Hermitian
+# matrices; unseeded, a rare near-singular draw fails in a way nobody can
+# reproduce from the failure report.
+_rng = np.random.default_rng(20251021)
+
+
 from hdrlib.core.manifolds import (
     HermitianPositiveDefinite,
     SpecialHermitianPositiveDefinite,
@@ -20,11 +26,11 @@ class TestHPD:
         """Exponential-logarithm map should roundtrip for scalar input."""
         manifold = HermitianPositiveDefinite(3, backend_name="numpy")
 
-        x = np.random.randn(3, 3) + 1j * np.random.randn(3, 3)
+        x = _rng.standard_normal((3, 3)) + 1j * _rng.standard_normal((3, 3))
         x = 0.5 * (x + x.conj().T)  # hermitianize
         x = x + 4 * np.eye(3)  # make PD
 
-        y = np.random.randn(3, 3) + 1j * np.random.randn(3, 3)
+        y = _rng.standard_normal((3, 3)) + 1j * _rng.standard_normal((3, 3))
         y = 0.5 * (y + y.conj().T)
         y = y + 4 * np.eye(3)
 
@@ -41,11 +47,11 @@ class TestHPD:
 
         # Batch of 4 HPD matrices
         batch_shape = (2, 2)
-        X = np.random.randn(*batch_shape, 3, 3) + 1j * np.random.randn(*batch_shape, 3, 3)
+        X = _rng.standard_normal((*batch_shape, 3, 3)) + 1j * _rng.standard_normal((*batch_shape, 3, 3))
         X = 0.5 * (X + np.swapaxes(X.conj(), -2, -1))  # hermitianize
         X = X + 4 * np.eye(3)[None, None, :, :]  # make PD
 
-        Y = np.random.randn(*batch_shape, 3, 3) + 1j * np.random.randn(*batch_shape, 3, 3)
+        Y = _rng.standard_normal((*batch_shape, 3, 3)) + 1j * _rng.standard_normal((*batch_shape, 3, 3))
         Y = 0.5 * (Y + np.swapaxes(Y.conj(), -2, -1))
         Y = Y + 4 * np.eye(3)[None, None, :, :]
 
@@ -61,10 +67,10 @@ class TestHPD:
         """Inner product with u, u should be positive for nonzero u."""
         manifold = HermitianPositiveDefinite(3, backend_name="numpy")
 
-        x = np.random.randn(3, 3) + 1j * np.random.randn(3, 3)
+        x = _rng.standard_normal((3, 3)) + 1j * _rng.standard_normal((3, 3))
         x = 0.5 * (x + x.conj().T) + 4 * np.eye(3)
 
-        u = np.random.randn(3, 3) + 1j * np.random.randn(3, 3)
+        u = _rng.standard_normal((3, 3)) + 1j * _rng.standard_normal((3, 3))
         u = 0.5 * (u + u.conj().T)  # tangent vector
 
         inner = float(manifold.inner(x, u, u))
@@ -75,10 +81,10 @@ class TestHPD:
         manifold = HermitianPositiveDefinite(3, backend_name="numpy")
 
         batch_shape = (2, 3)
-        X = np.random.randn(*batch_shape, 3, 3) + 1j * np.random.randn(*batch_shape, 3, 3)
+        X = _rng.standard_normal((*batch_shape, 3, 3)) + 1j * _rng.standard_normal((*batch_shape, 3, 3))
         X = 0.5 * (X + np.swapaxes(X.conj(), -2, -1)) + 4 * np.eye(3)[None, None, :, :]
 
-        U = np.random.randn(*batch_shape, 3, 3) + 1j * np.random.randn(*batch_shape, 3, 3)
+        U = _rng.standard_normal((*batch_shape, 3, 3)) + 1j * _rng.standard_normal((*batch_shape, 3, 3))
         U = 0.5 * (U + np.swapaxes(U.conj(), -2, -1))
 
         inner = manifold.inner(X, U, U)
@@ -95,11 +101,11 @@ class TestSHPD:
         """det(exp_x(u)) should equal 1 for SHPD."""
         manifold = SpecialHermitianPositiveDefinite(3, backend_name="numpy")
 
-        x = np.random.randn(3, 3) + 1j * np.random.randn(3, 3)
+        x = _rng.standard_normal((3, 3)) + 1j * _rng.standard_normal((3, 3))
         x = 0.5 * (x + x.conj().T) + 4 * np.eye(3)
         x = x / (np.linalg.det(x) ** (1 / 3))  # normalize det to 1
 
-        u = np.random.randn(3, 3) + 1j * np.random.randn(3, 3)
+        u = _rng.standard_normal((3, 3)) + 1j * _rng.standard_normal((3, 3))
         u = 0.5 * (u + u.conj().T)
         u = u - np.trace(u) / 3 * np.eye(3)  # make traceless
 
@@ -118,8 +124,8 @@ class TestStrictlyPositiveVectors:
         """exp_x(u) should remain strictly positive."""
         manifold = StrictlyPositiveVectors(5, backend_name="numpy")
 
-        x = np.abs(np.random.randn(5)) + 0.1
-        u = np.random.randn(5)
+        x = np.abs(_rng.standard_normal((5))) + 0.1
+        u = _rng.standard_normal((5))
 
         x_new = manifold.exp(x, u)
         assert np.all(x_new > 0), f"exp result should be positive, got {x_new}"
@@ -129,8 +135,8 @@ class TestStrictlyPositiveVectors:
         manifold = StrictlyPositiveVectors(5, backend_name="numpy")
 
         batch_shape = (3, 2)
-        x = np.abs(np.random.randn(*batch_shape, 5)) + 0.1
-        u = np.random.randn(*batch_shape, 5)
+        x = np.abs(_rng.standard_normal((*batch_shape, 5))) + 0.1
+        u = _rng.standard_normal((*batch_shape, 5))
 
         inner = manifold.inner(x, u, u)
         assert inner.shape == batch_shape, f"Expected shape {batch_shape}, got {inner.shape}"
@@ -140,8 +146,8 @@ class TestStrictlyPositiveVectors:
         """log and exp should roundtrip."""
         manifold = StrictlyPositiveVectors(5, backend_name="numpy")
 
-        x = np.abs(np.random.randn(5)) + 0.1
-        y = np.abs(np.random.randn(5)) + 0.1
+        x = np.abs(_rng.standard_normal((5))) + 0.1
+        y = np.abs(_rng.standard_normal((5))) + 0.1
 
         u = manifold.log(x, y)
         y_recovered = manifold.exp(x, u)
@@ -160,15 +166,15 @@ class TestScaledGaussianFIM:
         """Inner product for single input should return scalar."""
         manifold = ScaledGaussianFIM(3, 5, backend_name="numpy")
 
-        Sigma = np.random.randn(3, 3) + 1j * np.random.randn(3, 3)
+        Sigma = _rng.standard_normal((3, 3)) + 1j * _rng.standard_normal((3, 3))
         Sigma = 0.5 * (Sigma + Sigma.conj().T) + 4 * np.eye(3)
         Sigma = Sigma / (np.linalg.det(Sigma) ** (1 / 3))
 
-        tau = np.abs(np.random.randn(5)) + 0.1
-        r_Sigma = np.random.randn(3, 3) + 1j * np.random.randn(3, 3)
+        tau = np.abs(_rng.standard_normal((5))) + 0.1
+        r_Sigma = _rng.standard_normal((3, 3)) + 1j * _rng.standard_normal((3, 3))
         r_Sigma = 0.5 * (r_Sigma + r_Sigma.conj().T)
 
-        r_tau = np.random.randn(5)
+        r_tau = _rng.standard_normal((5))
 
         inner = manifold.inner([Sigma, tau], [r_Sigma, r_tau], [r_Sigma, r_tau])
         assert np.isscalar(inner) or inner.shape == (), f"Expected scalar, got shape {inner.shape}"
@@ -180,16 +186,16 @@ class TestScaledGaussianFIM:
         batch_shape = (2, 2)
 
         # Batched Sigma: (2, 2, 3, 3)
-        Sigma = np.random.randn(*batch_shape, 3, 3) + 1j * np.random.randn(*batch_shape, 3, 3)
+        Sigma = _rng.standard_normal((*batch_shape, 3, 3)) + 1j * _rng.standard_normal((*batch_shape, 3, 3))
         Sigma = 0.5 * (Sigma + np.swapaxes(Sigma.conj(), -2, -1)) + 4 * np.eye(3)[None, None, :, :]
 
         # Batched tau: (2, 2, 5)
-        tau = np.abs(np.random.randn(*batch_shape, 5)) + 0.1
+        tau = np.abs(_rng.standard_normal((*batch_shape, 5))) + 0.1
 
-        r_Sigma = np.random.randn(*batch_shape, 3, 3) + 1j * np.random.randn(*batch_shape, 3, 3)
+        r_Sigma = _rng.standard_normal((*batch_shape, 3, 3)) + 1j * _rng.standard_normal((*batch_shape, 3, 3))
         r_Sigma = 0.5 * (r_Sigma + np.swapaxes(r_Sigma.conj(), -2, -1))
 
-        r_tau = np.random.randn(*batch_shape, 5)
+        r_tau = _rng.standard_normal((*batch_shape, 5))
 
         inner = manifold.inner([Sigma, tau], [r_Sigma, r_tau], [r_Sigma, r_tau])
         assert inner.shape == batch_shape, f"Expected shape {batch_shape}, got {inner.shape}"
