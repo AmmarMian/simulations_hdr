@@ -30,6 +30,7 @@ from .backend import (
     get_backend_module,
     get_data_on_device,
     masked_set,
+    require_double as _require_double,
     sample_uniform,
     to_numpy,
     to_scalar,
@@ -250,9 +251,23 @@ def riemannian_kmeans(
     """
     if method not in METHODS:
         raise KeyError(f"unknown method {method!r}; known: {sorted(METHODS)}")
+    # The same two guards spd_kmeans has, for the same reason. They were missing
+    # here, and the omission was not uniform across the four methods: RMT would
+    # raise from inside rmt_frechet_mean, while SCM, LW and LW-NL would run to
+    # completion in single precision and return a partition. Refusing at the top
+    # makes the four behave alike.
+    if str(backend).startswith("jax"):
+        raise ValueError(
+            "the jax backends are refused here: jax defaults to float32 and "
+            "nothing in this repository calls "
+            "jax.config.update('jax_enable_x64', True), so the eigenvalue "
+            "logarithms would be computed in single precision without any "
+            "warning. Use torch-cuda, cupy or numpy."
+        )
     estimate_fn, centroid_fn, distance_fn = METHODS[method]()
 
     device_windows = get_data_on_device(windows, backend)
+    require_double(device_windows, f"the {method} K-means")
     n_points, n_samples, _ = windows.shape
     rng = np.random.default_rng(seed)
 
@@ -380,22 +395,25 @@ def mean_iou(prediction: np.ndarray, truth: np.ndarray) -> Tuple[np.ndarray, flo
 SPD_METRICS = ("euclid", "logeuclid", "riemann")
 
 
+# Why these metrics in particular cannot be run in single precision. Every one
+# of them ends in the eigenvalues of a small SPD matrix and two of the three
+# take their logarithm; in float32 the smallest eigenvalue of a covariance
+# estimated from a handful of samples has an unreliable sign, and its logarithm
+# is then either a large negative number or a NaN — silently, in both cases.
+_PRECISION_REASON = (
+    "The eigenvalues of a small covariance are not resolved in single "
+    "precision, and these metrics take their logarithm."
+)
+
+
 def require_double(x: Array, what: str) -> None:
     """Refuse to run in single precision.
 
-    Every metric here ends in the eigenvalues of a small SPD matrix and two of
-    the three take their logarithm. In float32 the smallest eigenvalue of a
-    covariance estimated from a handful of samples has an unreliable sign, and
-    its logarithm is then either a large negative number or a NaN — silently, in
-    both cases.
+    Thin wrapper over :func:`hdrlib.core.backend.require_double`, which owns the
+    check; this one only supplies the reason specific to these metrics. Kept as
+    a name in this module because the experiment scripts import it from here.
     """
-    dtype = str(getattr(x, "dtype", "unknown"))
-    if "64" not in dtype and "double" not in dtype:
-        raise TypeError(
-            f"{what} needs float64, got {dtype}. The eigenvalues of a small "
-            "covariance are not resolved in single precision, and these metrics "
-            "take their logarithm. On Apple silicon use torch-cpu, not torch-mps."
-        )
+    _require_double(x, what, _PRECISION_REASON)
 
 
 def _flatten(matrices: Array, backend) -> Array:

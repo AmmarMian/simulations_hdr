@@ -57,6 +57,12 @@ ALL_BACKEND_PARAMS = [
     "numpy",
     "torch-cpu",
     pytest.param(
+        "torch-cuda",
+        marks=pytest.mark.skipif(
+            not torch.cuda.is_available(), reason="CUDA not available"
+        ),
+    ),
+    pytest.param(
         "torch-mps",
         marks=pytest.mark.skipif(
             not torch.backends.mps.is_available(), reason="MPS not available"

@@ -102,13 +102,13 @@ Each YAML file in a chapter's `experiments/` directory defines one experiment, w
 qanat experiment list
 
 # run a specific experiment
-qanat experiment run sar_mc_kron_h1
+qanat experiment run sar_mc_kron_mse
 
 # see that experiment's runs, with their ids
-qanat experiment status sar_mc_kron_h1
+qanat experiment status sar_mc_kron_mse
 
 # run an action on one of them — the run id is required
-qanat experiment action sar_mc_kron_h1 plot 3
+qanat experiment action sar_mc_kron_mse plot 3
 ```
 
 Actions always name a specific run: `qanat experiment action <experiment> <action> <run_id>`.

@@ -789,6 +789,51 @@ def batched_det(backend: Union[str, "Backend"], X: Array) -> Array:
     return get_backend_module(backend).linalg.det(X)
 
 
+# ── Precision policy ──────────────────────────────────────────────────────────
+
+
+def require_double(x: Array, what: str, reason: Optional[str] = None) -> None:
+    """Refuse to run in single precision.
+
+    Lives here, rather than in the modules that call it, because it is a
+    statement about the backend layer and not about any one algorithm: float64
+    is available on numpy, torch-cpu, torch-cuda and cupy, absent on Metal, and
+    off by default on jax. It used to be defined twice, once in ``rmt`` and once
+    in ``clustering``, and the two copies had already drifted apart in *where*
+    they were applied — ``spd_kmeans`` guarded its input while
+    ``riemannian_kmeans`` next to it guarded nothing.
+
+    The check is the same everywhere; only the explanation differs, so callers
+    pass their own *reason* rather than each keeping a copy of the check.
+
+    Parameters
+    ----------
+    x : Array
+        The array whose dtype is inspected.
+    what : str
+        Name of the computation, used to open the message.
+    reason : str, optional
+        Why this particular computation needs the precision. Should read as a
+        complete sentence; a generic one is used when it is omitted.
+
+    Raises
+    ------
+    TypeError
+        If *x* is not a 64-bit floating type.
+    """
+    dtype = str(getattr(x, "dtype", "unknown"))
+    if "64" in dtype or "double" in dtype:
+        return
+    explanation = reason or (
+        "The eigenvalues of a small covariance are not resolved in single "
+        "precision, and this computation takes their logarithm."
+    )
+    raise TypeError(
+        f"{what} needs float64, got {dtype}. {explanation} On Apple silicon "
+        "use torch-cpu rather than torch-mps."
+    )
+
+
 # ── Type/scalar utilities ─────────────────────────────────────────────────────
 
 

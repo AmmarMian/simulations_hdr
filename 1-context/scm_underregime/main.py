@@ -134,7 +134,7 @@ if __name__ == "__main__":
     plt.ylabel(
         r"$\|\hat{\boldsymbol{\Sigma}}_\mathcal{X} - \boldsymbol{\Sigma}_\mathcal{X}\|_2$"
     )
-    plt.title(f"Error of mean estimation with {n_trials} Monte-carlo trials")
+    plt.title(f"Error of covariance estimation with {n_trials} Monte-carlo trials")
     if args.export:
         save_path = os.path.join(args.output_dir, "cov.tex")
         save(save_path)

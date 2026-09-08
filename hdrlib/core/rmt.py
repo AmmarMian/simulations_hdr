@@ -34,6 +34,7 @@ from .backend import (
     batched_eigh,
     get_backend_module,
     get_data_on_device,
+    require_double as _require_double,
     to_numpy,
 )
 
@@ -80,25 +81,25 @@ def _cast_like(be, x: Array, reference: Array) -> Array:
     return x
 
 
+# Why this module in particular cannot be run in single precision. The corrected
+# cost and its gradient divide by differences of eigenvalues, and several terms
+# are built so that a diagonal entry evaluates a finite limit of an expression
+# that is 0/0 elsewhere; in float32 those terms lose every significant digit
+# silently — the descent still returns a matrix, and that matrix is wrong.
+_PRECISION_REASON = (
+    "The RMT correction is not numerically meaningful in single precision: its "
+    "gradient divides by differences of eigenvalues."
+)
+
+
 def require_double(x: Array, what: str) -> None:
     """Refuse to run the corrected path in single precision.
 
-    The corrected cost and its gradient divide by differences of eigenvalues,
-    and several terms are built so that a diagonal entry evaluates a finite
-    limit of an expression that is 0/0 elsewhere. In float32 those terms lose
-    every significant digit, silently — the descent still returns a matrix, and
-    that matrix is wrong.
-
-    The practical consequence is that ``torch-mps`` cannot run this code, since
-    Metal has no float64. Use ``torch-cpu`` on Apple silicon.
+    Thin wrapper over :func:`hdrlib.core.backend.require_double`, which owns the
+    check; this one only supplies the reason specific to the correction. Kept as
+    a name in this module because callers outside it import it from here.
     """
-    dtype = str(getattr(x, "dtype", "unknown"))
-    if "64" not in dtype and "double" not in dtype:
-        raise TypeError(
-            f"{what} needs float64, got {dtype}. The RMT correction is not "
-            "numerically meaningful in single precision; on Apple silicon use "
-            "--backend torch-cpu rather than torch-mps."
-        )
+    _require_double(x, what, _PRECISION_REASON)
 
 
 def _logm(be, backend, matrices: Array) -> Array:
