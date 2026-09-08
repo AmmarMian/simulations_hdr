@@ -196,7 +196,7 @@ def main():
              "previous centroids. Ignored by the two flat metrics.",
     )
     parser.add_argument(
-        "--max_batch", type=int, default=65536,
+        "--max_batch", type=int, default=16000,
         help="Largest batch handed to the eigensolver at once. Only the "
              "affine-invariant metric is bounded by it: cuSOLVER refuses a "
              "batch of n_clusters x n_pixels matrices outright on a scene the "

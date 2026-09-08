@@ -68,7 +68,10 @@ def squared_fisher_distance(
     n_features = covariances.shape[-1]
     inverse_factor = be.linalg.inv(be.linalg.cholesky(reference))
     transformed = inverse_factor @ covariances @ be.swapaxes(inverse_factor, -1, -2)
-    logarithms = be.log(be.linalg.eigvalsh(transformed))
+    # batched_eigh rather than linalg.eigvalsh: on CUDA the latter reaches a
+    # cuSOLVER path that refuses batches this routine is routinely given.
+    eigenvalues, _ = batched_eigh(backend, transformed)
+    logarithms = be.log(eigenvalues)
     return be.einsum("...i,...i->...", logarithms, logarithms) / n_features
 
 
@@ -526,8 +529,13 @@ def _affine_invariant_metric(max_batch: int):
         for start in range(0, representation.shape[0], step):
             block = representation[start : start + step]
             whitened = inverse_root[:, None] @ block[None] @ transposed[:, None]
-            eigenvalues = be.linalg.eigvalsh(
-                be.reshape(whitened, (-1, n_features, n_features))
+            # Through batched_eigh, not linalg.eigvalsh: the wrapper is where
+            # this repository keeps its knowledge of what cuSOLVER accepts, and
+            # eigvalsh takes a different, less forgiving path through it. The
+            # eigenvectors are computed and dropped; that is the price of using
+            # the call that works.
+            eigenvalues, _ = batched_eigh(
+                backend, be.reshape(whitened, (-1, n_features, n_features))
             )
             logarithms = be.log(be.abs(eigenvalues))
             squared = be.reshape(
@@ -603,7 +611,7 @@ def spd_kmeans(
     tol: float = 1e-3,
     mean_iterations: int = 10,
     mean_tol: float = 1e-6,
-    max_batch: int = 65536,
+    max_batch: int = 16000,
     seed: int = 42,
     backend: Union[str, Backend] = "numpy",
     verbose: bool = False,
@@ -629,10 +637,11 @@ def spd_kmeans(
         Budget and stopping gradient of one Karcher mean. Ignored by the flat
         metrics, whose mean is closed-form.
     max_batch : int
-        Largest number of matrices handed to the eigensolver at once. Only the
-        affine-invariant metric is bounded by it, and only because cuSOLVER
-        refuses a batch of a few million; lowering it costs kernel launches and
-        changes no result.
+        Largest number of matrices in one whitened block. Only the
+        affine-invariant metric is bounded by it. The default matches the CUDA
+        chunk of :func:`~hdrlib.core.backend.batched_eigh`, which is where the
+        cuSOLVER batch limit is actually enforced; this bound is about the size
+        of the block being materialised. Changing it changes no result.
     seed : int
         Drives the starting partition, identically for every metric.
     backend : str or Backend
