@@ -6,6 +6,7 @@
 #   {stem}_plot.py    — self-contained plot script; supports --tikz for PGFPlots export
 
 import json
+import os
 import logging
 import re
 import subprocess
@@ -57,6 +58,58 @@ def write_prov_sidecar(stem_path, args) -> None:
     stem_path.with_suffix(".json").write_text(
         json.dumps(provenance, indent=2, default=str)
     )
+
+
+def write_docs_provenance(out_dir, stem: str, source_path) -> None:
+    """Record which run produced a docs asset, and the arguments it ran with.
+
+    Writes two files next to the asset:
+
+    ``{stem}.source.txt``
+        The absolute path of the run's data file. Useful on the machine that
+        produced it, and useless anywhere else.
+    ``{stem}.args.json``
+        The arguments that run actually used, copied in.
+
+    The second exists because the first cannot work off that one machine.
+    ``results/`` is gitignored, so on any other checkout — and in CI — the
+    recorded path does not resolve, and the docs generator was silently falling
+    back to the argparse defaults and rendering them as though they were the
+    values the figure was produced with. Copying the arguments in makes the
+    provenance travel with the repository.
+
+    Parameters
+    ----------
+    out_dir : str or Path
+        Directory holding the docs asset (``docs/docs/assets/data``).
+    stem : str
+        Asset name, without extension.
+    source_path : str or Path
+        The run's data file, or a bare string such as ``"deterministic"`` for a
+        figure that takes no data.
+    """
+    out_dir = Path(out_dir)
+    source = Path(source_path) if os.sep in str(source_path) else None
+    text = str(source.resolve()) if source is not None else str(source_path)
+    (out_dir / f"{stem}.source.txt").write_text(f"{text}\n")
+
+    if source is None or not source.parent.is_dir():
+        return
+    # write_prov_sidecar names its file after each figure, ResultExporter after
+    # the data file, so both shapes are searched rather than assumed.
+    candidates = [source.with_suffix(".json")] + sorted(source.parent.glob("*.json"))
+    for candidate in candidates:
+        if not candidate.exists():
+            continue
+        try:
+            recorded = json.loads(candidate.read_text()).get("args", {})
+        except (OSError, ValueError):
+            continue
+        if recorded:
+            (out_dir / f"{stem}.args.json").write_text(
+                json.dumps(recorded, indent=2, default=str)
+            )
+            return
 
 
 class ResultExporter(ABC):

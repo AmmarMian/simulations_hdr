@@ -1,0 +1,22 @@
+name: context_wishart_mse
+description: Monte-Carlo check of the closed-form MSE of the SCM under a Gaussian model, swept in the sample support and in the dimension
+path: 1-context/wishart_mse
+executable: 1-context/wishart_mse/main.py
+executable_command: uv run python
+tags:
+  - context
+  - scm
+  - wishart
+  - monte-carlo
+params:
+  n_trials: 10000
+  covariance: toeplitz
+  rho: 0.8
+  n_points: 12
+actions:
+  - register:
+      name: register
+      executable: register_latex.py
+      executable_command: uv run python
+      description: Stage a chosen figure (.tex) to hdr_exports/ for the LaTeX dissertation
+group: "Context · SCM"

@@ -1,0 +1,25 @@
+{
+  "n_trials": 10000,
+  "seed": 42,
+  "backend": "torch-cuda",
+  "n_workers": null,
+  "export": true,
+  "export_path": "/tmp/claude-1000/-home-ammarmian-Desktop-simulations-hdr/b4ff2b1e-c895-4a13-945c-9373d0c0bb4c/scratchpad/full_run",
+  "show_interactive": false,
+  "scene": "salinas",
+  "data_path": "data/hyperspectral",
+  "n_features": 5,
+  "window_size": 5,
+  "stride": 1,
+  "n_init": 5,
+  "max_iter": 30,
+  "mean_iterations": 50,
+  "methods": [
+    "SCM",
+    "LW",
+    "LW-NL",
+    "RMT"
+  ],
+  "figure_width": "0.23\\textwidth",
+  "storage_path": "/tmp/claude-1000/-home-ammarmian-Desktop-simulations-hdr/b4ff2b1e-c895-4a13-945c-9373d0c0bb4c/scratchpad/full_run"
+}

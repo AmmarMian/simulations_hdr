@@ -265,21 +265,17 @@ uv run python 1-context/probability_densities/main.py
 
 <span class="marginnote">
   <span class="mn-label">Parameters</span>
-  <span class="mn-date">Generated: 2026-08-17</span><br>
+  <span class="mn-note">signature defaults — this run recorded none</span><br>
+  <span class="mn-date">Generated: 2026-09-08</span><br>
   <code>--n_samples</code> <span class='mn-default'>50</span><br>
   <code>--rho</code> <span class='mn-default'>0.8</span><br>
   <code>--condition</code> <span class='mn-default'>50.0</span><br>
-  <code>--show-interactive</code> <span class='mn-default'>False</span><br>
+  <code>--show-interactive</code><br>
   <code>--export</code> <span class='mn-default'>True</span><br>
   <code>--seed</code> <span class='mn-default'>42</span><br>
 </span>
 <div class="exp-result-card">
 <div class="plotly-wrap" data-src="../../assets/data/context_gaussian_isocontours.json" data-title="context_gaussian_isocontours"></div>
-<details class="exp-log">
-<summary>stdout</summary>
-<div class="exp-log-text">Saved isocontours in /Users/ammarmian/Research/HDR/simulations_hdr/results/context_gaussian_isocontours/run_12/gaussian_isocontours.tex
-</div>
-</details>
 </div>
 
 ## Config

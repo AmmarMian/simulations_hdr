@@ -289,11 +289,22 @@ def _load_actual_args(stem: str) -> dict:
     write_prov_sidecar() helper name sidecars after each figure (mean.json,
     cov.json, ...) rather than after the shared results.npz/npy.
     """
+    import json
+
+    # Written next to the asset by write_docs_provenance, and committed, so the
+    # arguments survive the trip to another checkout. Preferred over the path
+    # below, which only resolves on the machine that produced the run.
+    portable = DATA_DIR / f"{stem}.args.json"
+    if portable.exists():
+        try:
+            return json.loads(portable.read_text())
+        except (OSError, ValueError):
+            pass
+
     source_txt = DATA_DIR / f"{stem}.source.txt"
     if not source_txt.exists():
         return {}
     data_path = Path(source_txt.read_text().strip())
-    import json
 
     candidates = [data_path.with_suffix(".json")]
     if data_path.parent.is_dir():
@@ -345,12 +356,17 @@ def _figure_stems(name: str) -> list[tuple[str, str]]:
     # unlabelled
     if (DATA_DIR / f"{name}.json").exists():
         results.append((name, ""))
-    # labelled: {name}.{label}.json — exclude .source.txt companions
+    # labelled: {name}.{label}.json, minus the companions that are not figures.
+    # "args" is the run's recorded arguments and "source" the path it came from;
+    # both sit beside the assets and neither is something to draw.
     for p in sorted(DATA_DIR.glob(f"{name}.*.json")):
         label = p.stem[len(name) + 1:]   # strip "{name}."
-        if label != "source":             # skip {name}.source.txt edge case
+        if label not in _COMPANION_LABELS:
             results.append((p.stem, label))
     return results
+
+
+_COMPANION_LABELS = {"source", "args"}
 
 
 SRC_MAX_LINES = 1200
@@ -558,12 +574,25 @@ def _write_exp_page(exp: dict, chapter: "tuple[str, str] | None" = None) -> None
                     dest = arg.get("dest") or flag.lstrip("-").replace("-", "_")
                     if dest in _INFRA:
                         continue
-                    value = actual_args.get(dest, arg.get("default"))
-                    val_str = f" <span class='mn-default'>{value}</span>" if value is not None else ""
+                    # A value the run actually used and a value merely
+                    # declared in the signature are different claims, and the
+                    # panel used to make them look identical. When the run's own
+                    # arguments are unavailable the row says so rather than
+                    # presenting a default as the parameter of the figure.
+                    if dest in actual_args:
+                        value, css = actual_args[dest], "mn-actual"
+                    else:
+                        value, css = arg.get("default"), "mn-default"
+                    val_str = f" <span class='{css}'>{value}</span>" if value is not None else ""
                     mn_rows += f'  <code>{flag}</code>{val_str}<br>\n'
+            defaults_note = "" if actual_args else (
+                '  <span class="mn-note">signature defaults — '
+                'this run recorded none</span><br>\n'
+            )
             marginnote = (
                 '<span class="marginnote">\n'
                 f'  <span class="mn-label">{"Run · " + label if label else "Parameters"}</span>\n'
+                f'{defaults_note}'
                 f'{mn_rows}'
                 '</span>\n'
             ) if mn_rows else ""

@@ -482,7 +482,8 @@ uv run python 3-learning/frechet_mse/main.py
 
 <span class="marginnote">
   <span class="mn-label">Parameters</span>
-  <span class="mn-date">Generated: 2026-08-27</span><br>
+  <span class="mn-note">signature defaults — this run recorded none</span><br>
+  <span class="mn-date">Generated: 2026-09-08</span><br>
   <code>--n_features</code> <span class='mn-default'>64</span><br>
   <code>--n_samples</code> <span class='mn-default'>[65, 68, 80, 100, 150, 200, 300]</span><br>
   <code>--n_matrices_fixed</code> <span class='mn-default'>10</span><br>
@@ -494,38 +495,15 @@ uv run python 3-learning/frechet_mse/main.py
   <code>--tol</code> <span class='mn-default'>1e-06</span><br>
   <code>--axis_width</code> <span class='mn-default'>0.44\textwidth</span><br>
   <code>--axis_height</code> <span class='mn-default'>5.2cm</span><br>
-  <code>--n-trials</code> <span class='mn-default'>100</span><br>
+  <code>--n-trials</code> <span class='mn-default'>10000</span><br>
   <code>--seed</code> <span class='mn-default'>42</span><br>
   <code>--backend</code> <span class='mn-default'>numpy</span><br>
   <code>--n-workers</code><br>
   <code>--export</code> <span class='mn-default'>True</span><br>
-  <code>--show-interactive</code> <span class='mn-default'>False</span><br>
+  <code>--show-interactive</code><br>
 </span>
 <div class="exp-result-card">
 <div class="plotly-wrap" data-src="../../assets/data/learning_frechet_mse.json" data-title="learning_frechet_mse"></div>
-<details class="exp-log">
-<summary>stdout</summary>
-<div class="exp-log-text">d = 64, 100 trials, backend = numpy
-panel 1 — against the number of samples (K = 10):
-  n_samples =    65: SCM   18.53 dB  LW   16.81 dB  OAS   16.88 dB  LW-NL   14.57 dB  RMT   10.41 dB
-  n_samples =    68: SCM   17.40 dB  LW   16.74 dB  OAS   16.80 dB  LW-NL   13.89 dB  RMT   10.07 dB
-  n_samples =    80: SCM   14.83 dB  LW   16.46 dB  OAS   16.51 dB  LW-NL   13.49 dB  RMT    8.63 dB
-  n_samples =   100: SCM   12.26 dB  LW   16.01 dB  OAS   16.05 dB  LW-NL   12.03 dB  RMT    7.05 dB
-  n_samples =   150: SCM    8.55 dB  LW   15.04 dB  OAS   15.09 dB  LW-NL    9.31 dB  RMT    4.67 dB
-  n_samples =   200: SCM    6.23 dB  LW   14.25 dB  OAS   14.27 dB  LW-NL    7.37 dB  RMT    3.19 dB
-  n_samples =   300: SCM    3.43 dB  LW   12.95 dB  OAS   12.97 dB  LW-NL    4.71 dB  RMT    1.19 dB
-panel 2 — against the number of matrices (N = 128):
-  n_matrices =     3: SCM   12.73 dB  LW   15.73 dB  OAS   15.75 dB  LW-NL   11.61 dB  RMT   11.30 dB
-  n_matrices =     5: SCM   11.30 dB  LW   15.56 dB  OAS   15.60 dB  LW-NL   10.93 dB  RMT    8.78 dB
-  n_matrices =    20: SCM    9.01 dB  LW   15.39 dB  OAS   15.43 dB  LW-NL   10.03 dB  RMT    2.48 dB
-  n_matrices =    30: SCM    8.75 dB  LW   15.37 dB  OAS   15.41 dB  LW-NL    9.91 dB  RMT    0.72 dB
-  n_matrices =    40: SCM    8.70 dB  LW   15.36 dB  OAS   15.39 dB  LW-NL    9.86 dB  RMT   -0.49 dB
-  n_matrices =    60: SCM    8.39 dB  LW   15.34 dB  OAS   15.38 dB  LW-NL    9.79 dB  RMT   -2.19 dB
-  n_matrices =    80: SCM    8.38 dB  LW   15.34 dB  OAS   15.38 dB  LW-NL    9.76 dB  RMT   -3.41 dB
-  n_matrices =   100: SCM    8.20 dB  LW   15.35 dB  OAS   15.38 dB  LW-NL    9.75 dB  RMT   -4.32 dB
-Saved MSE figure in /Users/ammarmian/Research/HDR/simulations_hdr/results/learning_frechet_mse/run_43/frechet_mse.tex
-</div>
-</details>
 </div>
 
 ## Config

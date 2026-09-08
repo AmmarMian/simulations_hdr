@@ -363,7 +363,8 @@ uv run python 1-context/riemann_convergence/main.py
 
 <span class="marginnote">
   <span class="mn-label">Parameters</span>
-  <span class="mn-date">Generated: 2026-08-19</span><br>
+  <span class="mn-note">signature defaults — this run recorded none</span><br>
+  <span class="mn-date">Generated: 2026-09-08</span><br>
   <code>--n_features</code> <span class='mn-default'>10</span><br>
   <code>--n_samples</code> <span class='mn-default'>100</span><br>
   <code>--dof</code> <span class='mn-default'>3.0</span><br>
@@ -371,7 +372,7 @@ uv run python 1-context/riemann_convergence/main.py
   <code>--iter_max</code> <span class='mn-default'>150</span><br>
   <code>--tol</code> <span class='mn-default'>1e-12</span><br>
   <code>--floor</code> <span class='mn-default'>1e-14</span><br>
-  <code>--show-interactive</code> <span class='mn-default'>False</span><br>
+  <code>--show-interactive</code><br>
   <code>--export</code> <span class='mn-default'>True</span><br>
   <code>--axis_width</code> <span class='mn-default'>0.45\textwidth</span><br>
   <code>--axis_height</code> <span class='mn-default'>4.6cm</span><br>
@@ -380,15 +381,6 @@ uv run python 1-context/riemann_convergence/main.py
 </span>
 <div class="exp-result-card">
 <div class="plotly-wrap" data-src="../../assets/data/context_riemann_convergence.json" data-title="context_riemann_convergence"></div>
-<details class="exp-log">
-<summary>stdout</summary>
-<div class="exp-log-text">d = 10, N = 100, Student nu = 3, condition 100
-  point fixe                    29 iterations   final gap 5.33e-15   gradient 4.29e-13   0.003 s   distance to the fixed point 5.42e-15
-  gradient riemannien           28 iterations   final gap 0.00e+00   gradient 3.05e-09   0.006 s   distance to the fixed point 4.88e-09
-  gradient euclidien projeté   150 iterations   final gap 5.79e-02   gradient 3.06e-01   0.068 s   distance to the fixed point 3.87e-01
-Saved convergence curves in /Users/ammarmian/Research/HDR/simulations_hdr/results/context_riemann_convergence/run_32/convergence.tex
-</div>
-</details>
 </div>
 
 ## Config

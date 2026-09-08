@@ -1634,3 +1634,8 @@ mjx-container[jax="CHTML"][display="true"] {
   font-family: var(--font-ui);
   font-size: 0.86rem;
 }
+/* A parameter the run actually used, against one merely declared in the
+   signature: the panel showed both the same way, so a default read as though
+   it were the value that produced the figure. */
+.mn-actual { color: var(--body); font-weight: 600; }
+.mn-note { font-family: var(--font-mono); font-size: 10.5px; color: var(--muted); font-style: italic; }

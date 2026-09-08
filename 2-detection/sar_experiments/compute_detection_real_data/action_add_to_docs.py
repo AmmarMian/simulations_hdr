@@ -35,6 +35,7 @@ except ImportError:
     sys.exit("Pillow not found — run: uv add Pillow --dev")
 
 from hdrlib.core.plotly_style import BG, MUTED, INK2, FONT_SANS
+from hdrlib.core.exporter import write_docs_provenance
 
 # ── CLI ───────────────────────────────────────────────────────────────────────
 parser = argparse.ArgumentParser(description=__doc__)
@@ -237,5 +238,5 @@ stem = f"{name}.{label}" if label else name
 out = repo_root / "docs" / "docs" / "assets" / "data" / f"{stem}.json"
 out.parent.mkdir(parents=True, exist_ok=True)
 out.write_text(fig.to_json())
-(out.parent / f"{stem}.source.txt").write_text(f"{npy_path.resolve()}\n")
+write_docs_provenance(out.parent, stem, npy_path)
 print(f"Written {out.relative_to(repo_root)}")

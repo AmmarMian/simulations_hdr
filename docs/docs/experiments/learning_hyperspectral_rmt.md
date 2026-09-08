@@ -22,7 +22,7 @@ uv run python 3-learning/hyperspectral-rmt/main.py
 <a class="src-btn" href="https://github.com/AmmarMian/simulations_hdr/blob/main/3-learning/hyperspectral-rmt/main.py" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.42 7.42 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg><span>View on GitHub</span></a>
 </div>
 <details class="src-view">
-<summary><span class="src-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>Source code</span><span class="param-alias">225 lines</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg></span></summary>
+<summary><span class="src-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>Source code</span><span class="param-alias">229 lines</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg></span></summary>
 <div class="src-body">
 <p class="src-path">3-learning/hyperspectral-rmt/main.py</p>
 <div class="highlight"><pre><span></span><span class="c1"># Does the correction survive downstream? Segmenting a hyperspectral scene.</span>
@@ -54,6 +54,7 @@ uv run python 3-learning/hyperspectral-rmt/main.py
 <span class="c1"># scikit-learn: the pipeline must be able to run on a GPU backend.</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
 
@@ -77,7 +78,7 @@ uv run python 3-learning/hyperspectral-rmt/main.py
     <span class="n">sliding_window_vectorize</span><span class="p">,</span>
     <span class="n">unvectorize_labels</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">hdrlib.core.mc</span><span class="w"> </span><span class="kn">import</span> <span class="n">add_mc_base_args</span><span class="p">,</span> <span class="n">init_logging</span><span class="p">,</span> <span class="n">make_mc_parser</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">hdrlib.core.mc</span><span class="w"> </span><span class="kn">import</span> <span class="n">add_mc_base_args</span><span class="p">,</span> <span class="n">make_mc_parser</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">hdrlib.core.plot_style</span><span class="w"> </span><span class="kn">import</span> <span class="n">apply_style</span>
 
 
@@ -158,7 +159,10 @@ uv run python 3-learning/hyperspectral-rmt/main.py
     <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
     <span class="n">args</span><span class="o">.</span><span class="n">storage_path</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">export_path</span>
 
-    <span class="n">init_logging</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">backend</span><span class="p">)</span>
+    <span class="c1"># Not init_logging: its GPU disclaimer is written for the Monte-Carlo</span>
+    <span class="c1"># experiments, whose batched path walks T checkpoints sequentially. Nothing</span>
+    <span class="c1"># here is a Monte-Carlo trial, so the warning would be misleading.</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%(levelname)s</span><span class="s2"> </span><span class="si">%(message)s</span><span class="s2">&quot;</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">show_interactive</span><span class="p">:</span>
         <span class="n">apply_style</span><span class="p">()</span>
     <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">storage_path</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -360,6 +364,32 @@ uv run python 3-learning/hyperspectral-rmt/main.py
 </div>
 <p class="param-help">Display figures interactively at the end of the simulation.</p>
 </div>
+</div>
+
+## Results
+
+<span class="marginnote">
+  <span class="mn-label">Parameters</span>
+  <span class="mn-date">Generated: 2026-09-08</span><br>
+  <code>--scene</code> <span class='mn-actual'>salinas</span><br>
+  <code>--data_path</code> <span class='mn-actual'>data/hyperspectral</span><br>
+  <code>--n_features</code> <span class='mn-actual'>5</span><br>
+  <code>--window_size</code> <span class='mn-actual'>5</span><br>
+  <code>--stride</code> <span class='mn-actual'>1</span><br>
+  <code>--n_init</code> <span class='mn-actual'>5</span><br>
+  <code>--max_iter</code> <span class='mn-actual'>30</span><br>
+  <code>--mean_iterations</code> <span class='mn-actual'>50</span><br>
+  <code>--methods</code> <span class='mn-actual'>['SCM', 'LW', 'LW-NL', 'RMT']</span><br>
+  <code>--figure_width</code> <span class='mn-actual'>0.23\textwidth</span><br>
+  <code>--n-trials</code> <span class='mn-actual'>10000</span><br>
+  <code>--seed</code> <span class='mn-actual'>42</span><br>
+  <code>--backend</code> <span class='mn-actual'>torch-cuda</span><br>
+  <code>--n-workers</code><br>
+  <code>--export</code> <span class='mn-actual'>True</span><br>
+  <code>--show-interactive</code> <span class='mn-actual'>False</span><br>
+</span>
+<div class="exp-result-card">
+<div class="plotly-wrap" data-src="../../assets/data/learning_hyperspectral_rmt.json" data-title="learning_hyperspectral_rmt"></div>
 </div>
 
 ## Config

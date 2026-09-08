@@ -155,7 +155,7 @@ uv run python 1-context/scm_grandnombres/main.py
     <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;$N$&quot;</span><span class="p">)</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">xscale</span><span class="p">(</span><span class="s2">&quot;log&quot;</span><span class="p">)</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;$\|\hat{\boldsymbol{\Sigma}}_\mathcal</span><span class="si">{X}</span><span class="s2"> - \boldsymbol{\Sigma}_\mathcal</span><span class="si">{X}</span><span class="s2">\|_2$&quot;</span><span class="p">)</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error of mean estimation with </span><span class="si">{</span><span class="n">n_trials</span><span class="si">}</span><span class="s2"> Monte-carlo trials&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error of covariance estimation with </span><span class="si">{</span><span class="n">n_trials</span><span class="si">}</span><span class="s2"> Monte-carlo trials&quot;</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">export</span><span class="p">:</span>
         <span class="n">save_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span> <span class="s2">&quot;cov.tex&quot;</span><span class="p">)</span>
         <span class="n">save</span><span class="p">(</span><span class="n">save_path</span><span class="p">)</span>
@@ -214,32 +214,16 @@ uv run python 1-context/scm_grandnombres/main.py
 
 <span class="marginnote">
   <span class="mn-label">Parameters</span>
-  <span class="mn-date">Generated: 2026-07-02</span><br>
+  <span class="mn-note">signature defaults — this run recorded none</span><br>
+  <span class="mn-date">Generated: 2026-09-08</span><br>
   <code>--d</code> <span class='mn-default'>7</span><br>
   <code>--n_trials</code> <span class='mn-default'>10000</span><br>
-  <code>--show-interactive</code> <span class='mn-default'>False</span><br>
+  <code>--show-interactive</code><br>
   <code>--export</code> <span class='mn-default'>True</span><br>
   <code>--seed</code> <span class='mn-default'>42</span><br>
 </span>
 <div class="exp-result-card">
 <div class="plotly-wrap" data-src="../../assets/data/context_scm_grandnombres.json" data-title="context_scm_grandnombres"></div>
-<details class="exp-log">
-<summary>stdout</summary>
-<div class="exp-log-text">Launching simulation
-Working... ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
-Done.
-Saved mean error in /Users/ammarmian/Research/HDR/simulations_hdr/results/context_scm_grandnombres/run_4/mean.tex
-Saved cov error in /Users/ammarmian/Research/HDR/simulations_hdr/results/context_scm_grandnombres/run_4/cov.tex
-</div>
-</details>
-<details class="exp-log">
-<summary>stderr</summary>
-<div class="exp-log-text">/Users/ammarmian/Research/HDR/simulations_hdr/.venv/lib/python3.12/site-packages/matplot2tikz/_cleanfigure.py:149: UserWarning: Cleaning Line Collections (scatter plot) is not supported yet.
-  _recursive_cleanfigure(child, target_resolution, scale_precision)
-/Users/ammarmian/Research/HDR/simulations_hdr/.venv/lib/python3.12/site-packages/matplot2tikz/_cleanfigure.py:149: UserWarning: Cleaning Line Collections (scatter plot) is not supported yet.
-  _recursive_cleanfigure(child, target_resolution, scale_precision)
-</div>
-</details>
 </div>
 
 ## Config

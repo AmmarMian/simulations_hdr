@@ -431,14 +431,15 @@ uv run python 1-context/riemann_moyennes/main.py
 
 <span class="marginnote">
   <span class="mn-label">Parameters</span>
-  <span class="mn-date">Generated: 2026-08-19</span><br>
+  <span class="mn-note">signature defaults — this run recorded none</span><br>
+  <span class="mn-date">Generated: 2026-09-08</span><br>
   <code>--n_matrices</code> <span class='mn-default'>15</span><br>
   <code>--dispersion</code> <span class='mn-default'>0.9</span><br>
   <code>--condition</code> <span class='mn-default'>4.0</span><br>
   <code>--radius</code> <span class='mn-default'>1.0</span><br>
   <code>--iter_max</code> <span class='mn-default'>100</span><br>
   <code>--tol</code> <span class='mn-default'>1e-10</span><br>
-  <code>--show-interactive</code> <span class='mn-default'>False</span><br>
+  <code>--show-interactive</code><br>
   <code>--export</code> <span class='mn-default'>True</span><br>
   <code>--axis_width</code> <span class='mn-default'>0.45\textwidth</span><br>
   <code>--axis_height</code> <span class='mn-default'>4.6cm</span><br>
@@ -447,16 +448,6 @@ uv run python 1-context/riemann_moyennes/main.py
 </span>
 <div class="exp-result-card">
 <div class="plotly-wrap" data-src="../../assets/data/context_riemann_moyennes.json" data-title="context_riemann_moyennes"></div>
-<details class="exp-log">
-<summary>stdout</summary>
-<div class="exp-log-text">N = 15 matrices, dispersion 0.9, Fréchet mean in 5 iterations (gradient norm 7.25e-11)
-  geometric mean of the determinants: 1.031
-  arithmétique     det =   1.323   distance to the centre = 0.288
-  de Fréchet       det =   1.031   distance to the centre = 0.081
-  log-euclidienne  det =   1.031   distance to the centre = 0.077
-Saved means in /Users/ammarmian/Research/HDR/simulations_hdr/results/context_riemann_moyennes/run_30/moyennes.tex
-</div>
-</details>
 </div>
 
 ## Config

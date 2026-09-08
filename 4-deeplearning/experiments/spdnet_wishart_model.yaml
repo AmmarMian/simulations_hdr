@@ -1,0 +1,22 @@
+name: spdnet_wishart_model
+description: Does the batch-norm mean matched to the Wishart model win, and by how much, as the degrees of freedom grow
+path: 4-deeplearning/wishart_model
+executable: 4-deeplearning/wishart_model/df_sweep.py
+executable_command: uv run python
+tags:
+  - deeplearning
+  - spdnet
+  - batchnorm
+  - wishart
+params:
+  matrix-size: 64
+  n-classes: 3
+  n-samples-per-class: 120
+  conditioning: 100.0
+actions:
+  - register:
+      name: register
+      executable: register_latex.py
+      executable_command: uv run python
+      description: Stage a chosen figure (.tex) to hdr_exports/ for the LaTeX dissertation
+group: "Deep learning · SPDnet"

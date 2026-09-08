@@ -327,13 +327,14 @@ uv run python 1-context/riemann_gconvexite/main.py
 
 <span class="marginnote">
   <span class="mn-label">Parameters</span>
-  <span class="mn-date">Generated: 2026-08-19</span><br>
+  <span class="mn-note">signature defaults — this run recorded none</span><br>
+  <span class="mn-date">Generated: 2026-09-08</span><br>
   <code>--n_features</code> <span class='mn-default'>3</span><br>
   <code>--n_samples</code> <span class='mn-default'>10</span><br>
   <code>--dof</code> <span class='mn-default'>3.0</span><br>
   <code>--condition</code> <span class='mn-default'>10000.0</span><br>
   <code>--n_points</code> <span class='mn-default'>201</span><br>
-  <code>--show-interactive</code> <span class='mn-default'>False</span><br>
+  <code>--show-interactive</code><br>
   <code>--export</code> <span class='mn-default'>True</span><br>
   <code>--axis_width</code> <span class='mn-default'>0.45\textwidth</span><br>
   <code>--axis_height</code> <span class='mn-default'>4.6cm</span><br>
@@ -342,14 +343,6 @@ uv run python 1-context/riemann_gconvexite/main.py
 </span>
 <div class="exp-result-card">
 <div class="plotly-wrap" data-src="../../assets/data/context_riemann_gconvexite.json" data-title="context_riemann_gconvexite"></div>
-<details class="exp-log">
-<summary>stdout</summary>
-<div class="exp-log-text">d = 3, N = 10, Student nu = 3, condition 10000, geodesic distance between the endpoints 13.025
-  segment euclidien  min curvature    -43.54   local minima at t = 0.01, 0.96
-  géodésique         min curvature     +8.15   local minima at t = 0.45
-Saved cost profiles in /Users/ammarmian/Research/HDR/simulations_hdr/results/context_riemann_gconvexite/run_31/gconvexite.tex
-</div>
-</details>
 </div>
 
 ## Config

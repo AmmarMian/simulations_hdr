@@ -315,25 +315,21 @@ uv run python 1-context/elliptical_examples/main.py
 
 <span class="marginnote">
   <span class="mn-label">Parameters</span>
-  <span class="mn-date">Generated: 2026-08-17</span><br>
+  <span class="mn-note">signature defaults — this run recorded none</span><br>
+  <span class="mn-date">Generated: 2026-09-08</span><br>
   <code>--distributions</code> <span class='mn-default'>['gaussian', 'student', 'k', 'gengauss']</span><br>
   <code>--n_samples</code> <span class='mn-default'>50</span><br>
   <code>--rho</code> <span class='mn-default'>0.8</span><br>
   <code>--dof_student</code> <span class='mn-default'>3.0</span><br>
   <code>--dof_k</code> <span class='mn-default'>2.0</span><br>
   <code>--shape_gengauss</code> <span class='mn-default'>0.5</span><br>
-  <code>--show-interactive</code> <span class='mn-default'>False</span><br>
+  <code>--show-interactive</code><br>
   <code>--export</code> <span class='mn-default'>True</span><br>
   <code>--backend</code> <span class='mn-default'>numpy</span><br>
   <code>--seed</code> <span class='mn-default'>42</span><br>
 </span>
 <div class="exp-result-card">
 <div class="plotly-wrap" data-src="../../assets/data/context_elliptical_examples.json" data-title="context_elliptical_examples"></div>
-<details class="exp-log">
-<summary>stdout</summary>
-<div class="exp-log-text">Saved elliptical examples in /Users/ammarmian/Research/HDR/simulations_hdr/results/context_elliptical_examples/run_13/elliptical_tails.tex
-</div>
-</details>
 </div>
 
 ## Config

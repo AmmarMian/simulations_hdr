@@ -324,29 +324,22 @@ uv run python 3-learning/marchenko_pastur/main.py
 
 <span class="marginnote">
   <span class="mn-label">Parameters</span>
-  <span class="mn-date">Generated: 2026-08-27</span><br>
+  <span class="mn-note">signature defaults — this run recorded none</span><br>
+  <span class="mn-date">Generated: 2026-09-08</span><br>
   <code>--n_features</code> <span class='mn-default'>200</span><br>
   <code>--ratios</code> <span class='mn-default'>[0.1, 0.5, 1.0]</span><br>
   <code>--n_bins</code> <span class='mn-default'>80</span><br>
   <code>--axis_width</code> <span class='mn-default'>0.31\textwidth</span><br>
   <code>--axis_height</code> <span class='mn-default'>4.4cm</span><br>
-  <code>--n-trials</code> <span class='mn-default'>400</span><br>
+  <code>--n-trials</code> <span class='mn-default'>10000</span><br>
   <code>--seed</code> <span class='mn-default'>42</span><br>
   <code>--backend</code> <span class='mn-default'>numpy</span><br>
   <code>--n-workers</code><br>
   <code>--export</code> <span class='mn-default'>True</span><br>
-  <code>--show-interactive</code> <span class='mn-default'>False</span><br>
+  <code>--show-interactive</code><br>
 </span>
 <div class="exp-result-card">
 <div class="plotly-wrap" data-src="../../assets/data/learning_marchenko_pastur.json" data-title="learning_marchenko_pastur"></div>
-<details class="exp-log">
-<summary>stdout</summary>
-<div class="exp-log-text">c = 0.1: d = 200, N = 2000, support [0.468, 1.732], observed [0.455, 1.758]
-c = 0.5: d = 200, N = 400, support [0.086, 2.914], observed [0.075, 3.014]
-c = 1: d = 200, N = 200, support [0.000, 4.000], observed [0.000, 4.242]
-Saved Marchenko-Pastur figure in /Users/ammarmian/Research/HDR/simulations_hdr/results/learning_marchenko_pastur/run_41/marchenko.tex
-</div>
-</details>
 </div>
 
 ## Config

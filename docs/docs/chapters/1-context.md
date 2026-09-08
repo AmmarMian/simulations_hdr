@@ -161,6 +161,17 @@ Background figures illustrating core statistical concepts from the dissertation 
 <div class="exp-run"><code>uv run python 1-context/scm_underregime/main.py</code></div>
 <a class="exp-details-link" href="../../experiments/context_scm_underregime/">Parameters &amp; details →</a>
 </div>
+
+<div class="exp-card">
+<div class="exp-card-head">
+<div class="exp-name">context_wishart_mse</div>
+
+</div>
+<div class="exp-desc">Monte-Carlo check of the closed-form MSE of the SCM under a Gaussian model, swept in the sample support and in the dimension</div>
+<div class="exp-tags"><span class="exp-tag">context</span><span class="exp-tag">scm</span><span class="exp-tag">wishart</span><span class="exp-tag">monte-carlo</span></div>
+<div class="exp-run"><code>uv run python 1-context/wishart_mse/main.py</code></div>
+<a class="exp-details-link" href="../../experiments/context_wishart_mse/">Parameters &amp; details →</a>
+</div>
 </div>
 </div>
 </div>

@@ -27,7 +27,7 @@ que le mémoire doit pouvoir montrer sous sa propre chaîne de provenance.
 | `learning_hyperspectral_rmt` | le gain se maintient en aval de l'estimation | Indian Pines | optionnelle |
 
 La correction et la moyenne corrigée sont dans
-[`hdrlib.core.rmt`](../api/core/backend.md) ; elles reprennent
+[`hdrlib.core.rmt`](../api/core/rmt.md) ; elles reprennent
 [`AmmarMian/icml-rmt-2024`](https://github.com/AmmarMian/icml-rmt-2024). Elles
 demandent du float64 — `torch-mps` est donc hors jeu, Metal n'ayant pas de
 double précision.
@@ -121,7 +121,7 @@ sont sur la vérité terrain.
 <div class="exp-card">
 <div class="exp-card-head">
 <div class="exp-name">learning_hyperspectral_rmt</div>
-
+<span class="exp-results-badge">Results available</span>
 </div>
 <div class="exp-desc">Riemannian K-means segmentation of a hyperspectral scene — SCM, Ledoit-Wolf, non-linear shrinkage and the RMT correction, judged on the ground truth</div>
 <div class="exp-tags"><span class="exp-tag">learning</span><span class="exp-tag">random-matrix-theory</span><span class="exp-tag">clustering</span><span class="exp-tag">hyperspectral</span></div>

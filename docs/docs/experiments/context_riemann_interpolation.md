@@ -365,12 +365,13 @@ uv run python 1-context/riemann_interpolation/main.py
 
 <span class="marginnote">
   <span class="mn-label">Parameters</span>
-  <span class="mn-date">Generated: 2026-08-19</span><br>
+  <span class="mn-note">signature defaults — this run recorded none</span><br>
+  <span class="mn-date">Generated: 2026-09-08</span><br>
   <code>--condition</code> <span class='mn-default'>16.0</span><br>
   <code>--angle</code> <span class='mn-default'>0.35</span><br>
   <code>--n_steps</code> <span class='mn-default'>7</span><br>
   <code>--radius</code> <span class='mn-default'>1.0</span><br>
-  <code>--show-interactive</code> <span class='mn-default'>False</span><br>
+  <code>--show-interactive</code><br>
   <code>--export</code> <span class='mn-default'>True</span><br>
   <code>--axis_width</code> <span class='mn-default'>0.45\textwidth</span><br>
   <code>--axis_height</code> <span class='mn-default'>4.6cm</span><br>
@@ -379,15 +380,6 @@ uv run python 1-context/riemann_interpolation/main.py
 </span>
 <div class="exp-result-card">
 <div class="plotly-wrap" data-src="../../assets/data/context_riemann_interpolation.json" data-title="context_riemann_interpolation"></div>
-<details class="exp-log">
-<summary>stdout</summary>
-<div class="exp-log-text">Endpoints of determinant 1.000 and 1.000, condition number 16
-  euclidienne        det at t=1/2: 3.791   max: 3.791
-  affine invariante  det at t=1/2: 1.000   max: 1.000
-  log-euclidienne    det at t=1/2: 1.000   max: 1.000
-Saved interpolation paths in /Users/ammarmian/Research/HDR/simulations_hdr/results/context_riemann_interpolation/run_29/interpolation.tex
-</div>
-</details>
 </div>
 
 ## Config

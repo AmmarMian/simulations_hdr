@@ -59,6 +59,10 @@ nav:
           - "detection": api/core/detection.md
           - "estimation": api/core/estimation.md
           - "manifolds": api/core/manifolds.md
+          - "clustering": api/core/clustering.md
+          - "rmt": api/core/rmt.md
+          - "elliptical": api/core/elliptical.md
+          - "hyperspectral": api/core/hyperspectral.md
           - "simulation": api/core/simulation.md
           - "exporter": api/core/exporter.md
           - "mc": api/core/mc.md
@@ -74,6 +78,8 @@ nav:
           - "simulation": api/sar/simulation.md
           - "mc": api/sar/mc.md
           - "plotting": api/sar/plotting.md
+          - "icrb": api/sar/icrb.md
+          - "wavelets": api/sar/wavelets.md
       - "hdrlib.sonar":
           - "detectors": api/sonar/detectors.md
           - "estimation": api/sonar/estimation.md
