@@ -23,11 +23,12 @@ from multiprocessing import Pool
 from pathlib import Path
 
 import numpy as np
-from rich.progress import BarColumn, Progress, TextColumn, TimeElapsedColumn
+from rich.progress import BarColumn, Progress as RichProgress, TextColumn, TimeElapsedColumn
 
 from hdrlib.core.backend import get_data_on_device
 from hdrlib.core.estimation import SCMEstimator
 from hdrlib.core.mc import (
+    Progress,
     MCResultExporter,
     chunk_trial_ranges,
     make_mc_parser,
@@ -97,7 +98,7 @@ def _run_pool_h0(n_trials, chunk_size, m, K, M, P, tau_shape, tau_scale, seed, n
     all_stats: list[dict] = []
 
     logger.info(f"H0: {n_trials} trials via Pool ({n_chunks} workers, ≤{chunk} trials each)...")
-    with Progress(
+    with RichProgress(
         TextColumn("[progress.description]{task.description}"),
         BarColumn(),
         TextColumn("{task.completed}/{task.total} workers"),
@@ -135,7 +136,8 @@ def _worker_h1_snr(args):
 
 
 def _run_pool_h1(snr_db, alphas, n_trials_h1, chunk_size, m, K, M, P,
-                 tau_shape, tau_scale, seed, thresholds, n_workers):
+                 tau_shape, tau_scale, seed, thresholds, n_workers,
+                 storage_path=None):
     n_snr = len(snr_db)
     worker_args = [
         (i, float(alphas[i]), n_trials_h1, chunk_size, m, K, M, P,
@@ -146,18 +148,13 @@ def _run_pool_h1(snr_db, alphas, n_trials_h1, chunk_size, m, K, M, P,
     pd_by_snr: dict[str, np.ndarray] = {name: np.zeros(n_snr) for name in det_names}
 
     logger.info(f"H1: {n_snr} SNR points via Pool...")
-    with Progress(
-        TextColumn("[progress.description]{task.description}"),
-        BarColumn(),
-        TextColumn("{task.completed}/{task.total} SNR pts"),
-        TimeElapsedColumn(),
-    ) as progress:
-        task = progress.add_task("[green]H1 SNR sweep (Pool)...", total=n_snr)
+    with Progress(storage_path, n_snr,
+                  description="H1 SNR sweep (Pool)", unit="SNR pts") as progress:
         with Pool(processes=n_workers) as pool:
             for i, pd_dict in enumerate(pool.imap(_worker_h1_snr, worker_args)):
                 for name, pd_val in pd_dict.items():
                     pd_by_snr[name][i] = pd_val
-                progress.advance(task)
+                progress.step()
 
     return pd_by_snr
 
@@ -172,7 +169,7 @@ def _run_batched_h0(n_trials, chunk_size, backend, m, K, M, P, tau_shape, tau_sc
     all_stats: dict[str, list] = {name: [] for name in dets}
 
     logger.info(f"H0: {n_trials} trials on {backend} ({n_chunks} chunks of ≤{chunk})...")
-    with Progress(
+    with RichProgress(
         TextColumn("[progress.description]{task.description}"),
         BarColumn(),
         TextColumn("{task.completed}/{task.total} chunks"),
@@ -202,7 +199,7 @@ def _run_batched_h1(snr_db, alphas, n_trials_h1, chunk_size, backend,
     c_starts, chunk, _ = chunk_trial_ranges(n_trials_h1, chunk_size)
 
     logger.info(f"H1: {n_snr} SNR points on {backend}...")
-    with Progress(
+    with RichProgress(
         TextColumn("[progress.description]{task.description}"),
         BarColumn(),
         TextColumn("{task.completed}/{task.total} SNR pts"),
@@ -279,7 +276,8 @@ def main():
     pd_by_snr, t_h1 = timed_run(
         args,
         lambda: _run_pool_h1(snr_db, alphas, args.n_trials_h1, args.chunk_size, m, K, M, P,
-                             tau_shape, tau_scale, args.seed + 1, thresholds, args.n_workers),
+                             tau_shape, tau_scale, args.seed + 1, thresholds,
+                             args.n_workers, args.export_path),
         lambda: _run_batched_h1(snr_db, alphas, args.n_trials_h1, args.chunk_size, args.backend,
                                 m, K, M, P, tau_shape, tau_scale, args.seed + 1, thresholds),
     )

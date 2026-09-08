@@ -19,11 +19,12 @@ from multiprocessing import Pool
 from pathlib import Path
 
 import numpy as np
-from rich.progress import BarColumn, Progress, TextColumn, TimeElapsedColumn
+from rich.progress import BarColumn, Progress as RichProgress, TextColumn, TimeElapsedColumn
 
 from hdrlib.core.backend import get_data_on_device
 from hdrlib.core.estimation import SCMEstimator
 from hdrlib.core.mc import (
+    Progress,
     MCResultExporter,
     chunk_trial_ranges,
     make_mc_parser,
@@ -79,7 +80,8 @@ def _worker(args):
     return smc.run_detectors(x, dets, X_secondary=xsec)  # {name: (n,) array}
 
 
-def _run_pool(n_trials, chunk_size, m, K, M, P, tau_shape, tau_scale, seed, n_workers):
+def _run_pool(n_trials, chunk_size, m, K, M, P, tau_shape, tau_scale, seed, n_workers,
+              storage_path=None):
     # One task per worker — chunk_size is for GPU batching only.
     n_w = n_workers or os.cpu_count() or 1
     worker_chunk = math.ceil(n_trials / n_w)
@@ -91,17 +93,12 @@ def _run_pool(n_trials, chunk_size, m, K, M, P, tau_shape, tau_scale, seed, n_wo
     all_stats: list[dict] = []
 
     logger.info(f"H0: {n_trials} trials via Pool ({n_chunks} workers, ≤{chunk} trials each)...")
-    with Progress(
-        TextColumn("[progress.description]{task.description}"),
-        BarColumn(),
-        TextColumn("{task.completed}/{task.total} workers"),
-        TimeElapsedColumn(),
-    ) as progress:
-        task = progress.add_task("[cyan]MC trials (Pool)...", total=n_chunks)
+    with Progress(storage_path, n_chunks,
+                  description="MC trials (Pool)", unit="workers") as progress:
         with Pool(processes=n_workers) as pool:
             for result in pool.imap_unordered(_worker, worker_args):
                 all_stats.append(result)
-                progress.advance(task)
+                progress.step()
 
     return {
         name: np.concatenate([d[name] for d in all_stats])
@@ -119,7 +116,7 @@ def _run_batched(n_trials, chunk_size, backend, m, K, M, P, tau_shape, tau_scale
     all_stats: dict[str, list] = {name: [] for name in dets}
 
     logger.info(f"H0: {n_trials} trials on {backend} ({n_chunks} chunks of ≤{chunk})...")
-    with Progress(
+    with RichProgress(
         TextColumn("[progress.description]{task.description}"),
         BarColumn(),
         TextColumn("{task.completed}/{task.total} chunks"),
@@ -172,7 +169,8 @@ def main():
     all_stats, elapsed = timed_run(
         args,
         lambda: _run_pool(args.n_trials, args.chunk_size, m, K, M, P,
-                          tau_shape, tau_scale, args.seed, args.n_workers),
+                          tau_shape, tau_scale, args.seed, args.n_workers,
+                          args.export_path),
         lambda: _run_batched(args.n_trials, args.chunk_size, args.backend, m, K, M, P,
                              tau_shape, tau_scale, args.seed),
     )

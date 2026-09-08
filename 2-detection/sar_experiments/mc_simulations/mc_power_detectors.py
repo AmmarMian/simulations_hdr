@@ -35,11 +35,11 @@ from multiprocessing import Pool
 from pathlib import Path
 
 import numpy as np
-from rich.progress import BarColumn, Progress, TextColumn, TimeElapsedColumn
 
 from hdrlib.core.backend import get_data_on_device, to_numpy
 from hdrlib.core.simulation import T_vec_logspace
 from hdrlib.core.mc import (
+    Progress,
     MCResultExporter,
     init_logging,
     make_mc_parser,
@@ -131,7 +131,7 @@ def _worker(worker_args):
     return h0, h1
 
 
-def _run_pool(data_h0, h1_data, T_vec, n_workers, a, b, cfg):
+def _run_pool(data_h0, h1_data, T_vec, n_workers, a, b, cfg, storage_path=None):
     n_trials = data_h0.shape[0]
     worker_args = [
         (data_h0[i], {T: h1_data[T][i] for T in T_vec}, T_vec, a, b, cfg)
@@ -139,18 +139,13 @@ def _run_pool(data_h0, h1_data, T_vec, n_workers, a, b, cfg):
     ]
     all_h0, all_h1 = [], []
     logger.info(f"Starting power computation: {n_trials} trials via Pool, {len(T_vec)} T-points...")
-    with Progress(
-        TextColumn("[progress.description]{task.description}"),
-        BarColumn(),
-        TextColumn("{task.completed}/{task.total} trials"),
-        TimeElapsedColumn(),
-    ) as progress:
-        task = progress.add_task("[cyan]MC trials (Pool)...", total=n_trials)
+    with Progress(storage_path, n_trials,
+                  description="MC trials (Pool)", unit="trials") as progress:
         with Pool(processes=n_workers) as pool:
             for h0, h1 in pool.imap_unordered(_worker, worker_args):
                 all_h0.append(h0)
                 all_h1.append(h1)
-                progress.advance(task)
+                progress.step()
 
     def _stack(dicts):
         names = dicts[0].keys()
@@ -164,23 +159,18 @@ def _run_pool(data_h0, h1_data, T_vec, n_workers, a, b, cfg):
 # Batched path
 # ---------------------------------------------------------------------------
 
-def _run_batched(data_h0, h1_data, T_vec, backend, a, b, cfg):
+def _run_batched(data_h0, h1_data, T_vec, backend, a, b, cfg, storage_path=None):
     logger.info(f"Starting batched power computation on {backend}...")
-    with Progress(
-        TextColumn("[progress.description]{task.description}"),
-        BarColumn(),
-        TextColumn("{task.completed}/{task.total}"),
-        TimeElapsedColumn(),
-    ) as progress:
-        task = progress.add_task("[cyan]H0 + H1 per T...", total=1 + len(T_vec))
+    with Progress(storage_path, 1 + len(T_vec),
+                  description="H0 + H1 per T", unit="blocks") as progress:
         h0 = _statistics(get_data_on_device(data_h0, backend), T_vec, a, b, cfg, backend)
-        progress.advance(task)
+        progress.step()
         h1 = {}
         for T in T_vec:
             stats_T = _statistics(get_data_on_device(h1_data[T], backend), [T], a, b, cfg, backend)
             for name, d in stats_T.items():
                 h1.setdefault(name, {})[T] = d[T]
-            progress.advance(task)
+            progress.step()
     return h0, h1
 
 
@@ -284,8 +274,10 @@ def main():
 
     (h0, h1), elapsed = timed_run(
         args,
-        lambda: _run_pool(data_h0, h1_data, T_vec, args.n_workers, a, b, cfg),
-        lambda: _run_batched(data_h0, h1_data, T_vec, args.backend, a, b, cfg),
+        lambda: _run_pool(data_h0, h1_data, T_vec, args.n_workers, a, b, cfg,
+                          args.export_path),
+        lambda: _run_batched(data_h0, h1_data, T_vec, args.backend, a, b, cfg,
+                             args.export_path),
     )
 
     regime = "gaussien" if args.texture == "gaussian" else f"K, nu={args.nu}"

@@ -21,11 +21,12 @@ from multiprocessing import Pool
 from pathlib import Path
 
 import numpy as np
-from rich.progress import BarColumn, Progress, TextColumn, TimeElapsedColumn
+from rich.progress import BarColumn, Progress as RichProgress, TextColumn, TimeElapsedColumn
 
 from hdrlib.core.backend import get_data_on_device
 from hdrlib.core.estimation import SCMEstimator
 from hdrlib.core.mc import (
+    Progress,
     MCResultExporter,
     chunk_trial_ranges,
     make_mc_parser,
@@ -87,7 +88,7 @@ def _run_pool_h0(n_trials, chunk_size, m, K, M, P_nominal, tau_shape, tau_scale,
     all_stats: list[dict] = []
 
     logger.info(f"H0: {n_trials} trials via Pool ({n_chunks} workers, ≤{chunk} trials each)...")
-    with Progress(
+    with RichProgress(
         TextColumn("[progress.description]{task.description}"),
         BarColumn(),
         TextColumn("{task.completed}/{task.total} workers"),
@@ -127,7 +128,8 @@ def _worker_angle(args):
 
 
 def _run_pool_angles(theta_grid, alpha_fixed, n_trials, chunk_size, m, K, M, P_nominal,
-                     tau_shape, tau_scale, seed, thresholds, n_workers):
+                     tau_shape, tau_scale, seed, thresholds, n_workers,
+                     storage_path=None):
     n_ang = len(theta_grid)
     n_tasks = n_ang * n_ang
     worker_args = [
@@ -139,18 +141,13 @@ def _run_pool_angles(theta_grid, alpha_fixed, n_trials, chunk_size, m, K, M, P_n
     pd_maps = {name: np.zeros((n_ang, n_ang)) for name in det_names}
 
     logger.info(f"H1 angle grid: {n_ang}×{n_ang}={n_tasks} cells via Pool...")
-    with Progress(
-        TextColumn("[progress.description]{task.description}"),
-        BarColumn(),
-        TextColumn("{task.completed}/{task.total} cells"),
-        TimeElapsedColumn(),
-    ) as progress:
-        task = progress.add_task("[green]Angle grid (Pool)...", total=n_tasks)
+    with Progress(storage_path, n_tasks,
+                  description="Angle grid (Pool)", unit="cells") as progress:
         with Pool(processes=n_workers) as pool:
             for i, j, pd_dict in pool.imap_unordered(_worker_angle, worker_args):
                 for name, pd_val in pd_dict.items():
                     pd_maps[name][i, j] = pd_val
-                progress.advance(task)
+                progress.step()
 
     return pd_maps
 
@@ -165,7 +162,7 @@ def _run_batched_h0(n_trials, chunk_size, backend, m, K, M, P_nominal, tau_shape
     all_stats: dict[str, list] = {name: [] for name in dets}
 
     logger.info(f"H0: {n_trials} trials on {backend} ({n_chunks} chunks of ≤{chunk})...")
-    with Progress(
+    with RichProgress(
         TextColumn("[progress.description]{task.description}"),
         BarColumn(),
         TextColumn("{task.completed}/{task.total} chunks"),
@@ -194,7 +191,7 @@ def _run_batched_angles(theta_grid, alpha_fixed, n_trials, chunk_size, backend,
     c_starts, chunk, _ = chunk_trial_ranges(n_trials, chunk_size)
 
     logger.info(f"H1 angle grid: {n_ang}×{n_ang} cells on {backend}...")
-    with Progress(
+    with RichProgress(
         TextColumn("[progress.description]{task.description}"),
         BarColumn(),
         TextColumn("{task.completed}/{task.total} cells"),
@@ -280,7 +277,8 @@ def main():
         args,
         lambda: _run_pool_angles(theta_grid, alpha_fixed, args.n_trials, args.chunk_size,
                                  m, K, M, P_nominal, tau_shape, tau_scale,
-                                 args.seed + 1, thresholds, args.n_workers),
+                                 args.seed + 1, thresholds, args.n_workers,
+                                 args.export_path),
         lambda: _run_batched_angles(theta_grid, alpha_fixed, args.n_trials, args.chunk_size,
                                     args.backend, m, K, M, P_nominal, tau_shape, tau_scale,
                                     args.seed + 1, thresholds),

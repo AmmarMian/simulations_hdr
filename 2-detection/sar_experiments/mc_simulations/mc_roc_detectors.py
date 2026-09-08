@@ -139,8 +139,10 @@ def main():
 
     (h0, h1), elapsed = timed_run(
         args,
-        lambda: _run_pool(data_h0, h1_data, T_vec, args.n_workers, a, b, cfg),
-        lambda: _run_batched(data_h0, h1_data, T_vec, args.backend, a, b, cfg),
+        lambda: _run_pool(data_h0, h1_data, T_vec, args.n_workers, a, b, cfg,
+                          args.export_path),
+        lambda: _run_batched(data_h0, h1_data, T_vec, args.backend, a, b, cfg,
+                             args.export_path),
     )
 
     regime = "gaussien" if args.texture == "gaussian" else f"K, nu={args.nu}"

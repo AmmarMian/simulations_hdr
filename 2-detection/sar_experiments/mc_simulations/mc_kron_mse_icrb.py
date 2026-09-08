@@ -28,11 +28,12 @@ from multiprocessing import Pool
 from pathlib import Path
 
 import numpy as np
-from rich.progress import BarColumn, Progress, TextColumn, TimeElapsedColumn
+from rich.progress import BarColumn, Progress as RichProgress, TextColumn, TimeElapsedColumn
 
 from hdrlib.core.backend import get_data_on_device, to_numpy
 from hdrlib.core.simulation import T_vec_logspace
 from hdrlib.core.mc import (
+    Progress,
     MCResultExporter,
     init_logging,
     make_mc_parser,
@@ -112,7 +113,8 @@ def _worker(worker_args):
     return online, offline
 
 
-def _run_pool(data, tau_true, T_vec, n_workers, a, b, n_samples, A_true, B_true, cfg):
+def _run_pool(data, tau_true, T_vec, n_workers, a, b, n_samples, A_true, B_true, cfg,
+              storage_path=None):
     n_trials = data.shape[0]
     worker_args = [
         (data[i], tau_true[i], T_vec, a, b, n_samples, A_true, B_true, cfg)
@@ -120,18 +122,13 @@ def _run_pool(data, tau_true, T_vec, n_workers, a, b, n_samples, A_true, B_true,
     ]
     all_online, all_offline = [], []
     logger.info(f"Starting MSE computation: {n_trials} trials via Pool, {len(T_vec)} T-checkpoints...")
-    with Progress(
-        TextColumn("[progress.description]{task.description}"),
-        BarColumn(),
-        TextColumn("{task.completed}/{task.total} trials"),
-        TimeElapsedColumn(),
-    ) as progress:
-        task = progress.add_task("[cyan]MC trials (Pool)...", total=n_trials)
+    with Progress(storage_path, n_trials,
+                  description="MC trials (Pool)", unit="trials") as progress:
         with Pool(processes=n_workers) as pool:
             for on, off in pool.imap_unordered(_worker, worker_args):
                 all_online.append(on)
                 all_offline.append(off)
-                progress.advance(task)
+                progress.step()
 
     def _stack(dicts):
         return {c: {T: np.array([np.squeeze(d[c][T]) for d in dicts]) for T in T_vec}
@@ -152,7 +149,7 @@ def _run_batched(data, tau_true, T_vec, backend, a, b, n_samples, A_true, B_true
     truth = (A_t, B_t, tau_t)
 
     logger.info(f"Starting batched MSE computation on {backend} ({len(T_vec)} T-points)...")
-    with Progress(
+    with RichProgress(
         TextColumn("[progress.description]{task.description}"),
         BarColumn(),
         TextColumn("{task.completed}/{task.total}"),
@@ -267,7 +264,8 @@ def main():
 
     (online_err, offline_err), elapsed = timed_run(
         args,
-        lambda: _run_pool(data, tau_true, T_vec, args.n_workers, a, b, n_samples, A_true, B_true, cfg),
+        lambda: _run_pool(data, tau_true, T_vec, args.n_workers, a, b, n_samples, A_true, B_true, cfg,
+                          args.export_path),
         lambda: _run_batched(data, tau_true, T_vec, args.backend, a, b, n_samples, A_true, B_true, cfg),
     )
 
