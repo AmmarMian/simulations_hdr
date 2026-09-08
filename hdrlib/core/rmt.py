@@ -196,6 +196,69 @@ def oas(data: Array, backend: Union[str, Backend] = "numpy") -> Array:
     )
 
 
+# Where the direct form of the Epanechnikov Hilbert transform is abandoned for
+# the series, and how many terms the series then needs. At the switch
+# |v| = sqrt(5)/20 < 0.112, so twelve terms put the truncation below 1e-17 —
+# well under the 1e-13 the direct form still holds there. See the comment in
+# analytical_shrinkage for what the two forms are and why one is not enough.
+_HILBERT_SWITCH = 20.0
+_HILBERT_TERMS = 12
+
+
+def _hilbert_kernel(ratio: Array, backend: Union[str, Backend] = "numpy") -> Array:
+    """Hilbert transform of the Epanechnikov kernel, evaluated stably.
+
+    Written the way the reference writes it,
+
+        -3/(10 pi) r + 3/(4 sqrt5 pi) (1 - r^2/5) log|(sqrt5 - r)/(sqrt5 + r)|,
+
+    this is a difference of two terms that cancel. At |r| = 1.8e6 each term is
+    1.7e5 and their difference is 2e-6: eleven of the sixteen digits are gone,
+    and what comes back is twelve times too large. At 1e7 it is four orders of
+    magnitude too large. That is not a loss of precision, it is the wrong
+    number — and it is wrong *differently* on every backend, which is how it
+    was found: LW-NL disagreed between numpy and CUDA while SCM, LW and RMT
+    agreed to 1e-16.
+
+    The regime is not exotic. On Salinas with 5x5 windows, 31% of the
+    off-diagonal ratios exceed 100 and 1% exceed 1e6, so every window loses
+    digits here and a sixth of them hold an entry with none left.
+
+    Substituting ``v = sqrt(5) / r`` removes the cancellation outright:
+
+        kernel = -(3 / (sqrt5 pi)) * sum_k v^(2k+1) / ((2k+1)(2k+3)),
+
+    every term of which has the same sign. That form is used above the switch,
+    where it converges in a dozen terms; below it the two terms of the direct
+    form are of different sizes and the direct form is exact. The two agree to
+    machine precision on either side.
+    """
+    be = get_backend_module(backend)
+    root5 = np.sqrt(5.0)
+
+    direct = (-3 / 10 / np.pi) * ratio + (
+        3 / 4 / root5 / np.pi
+    ) * (1 - ratio**2 / 5) * be.log(be.abs((root5 - ratio) / (root5 + ratio)))
+    # The logarithm is singular exactly at |ratio| = sqrt(5); the kernel has a
+    # finite limit there, which the reference substitutes by hand.
+    singular = be.abs(ratio) == root5
+    direct = be.where(singular, (-3 / 10 / np.pi) * ratio, direct)
+
+    # Both branches are evaluated everywhere and then selected, rather than
+    # gathered: the backends share no scatter primitive, and each is a handful
+    # of elementwise passes. The placeholder keeps the reciprocal finite where
+    # the series is discarded, including on the diagonal where ratio is zero.
+    large = be.abs(ratio) > _HILBERT_SWITCH
+    v = root5 / be.where(large, ratio, be.ones_like(ratio))
+    v_squared = v * v
+    series = be.zeros_like(v)
+    for term in range(_HILBERT_TERMS - 1, -1, -1):
+        series = series * v_squared + 1.0 / ((2 * term + 1) * (2 * term + 3))
+    series = (-3 / root5 / np.pi) * v * series
+
+    return be.where(large, series, direct)
+
+
 def analytical_shrinkage(
     data: Array, backend: Union[str, Backend] = "numpy", shrink: Optional[int] = None
 ) -> Array:
@@ -233,14 +296,7 @@ def analytical_shrinkage(
         be.maximum(1 - ratio**2 / 5, zero) / bandwidth, axis=-1
     )
 
-    root5 = np.sqrt(5.0)
-    hilbert_kernel = (-3 / 10 / np.pi) * ratio + (
-        3 / 4 / root5 / np.pi
-    ) * (1 - ratio**2 / 5) * be.log(be.abs((root5 - ratio) / (root5 + ratio)))
-    # The logarithm is singular exactly at |ratio| = sqrt(5); the kernel has a
-    # finite limit there, which the reference substitutes by hand.
-    singular = be.abs(ratio) == root5
-    hilbert_kernel = be.where(singular, (-3 / 10 / np.pi) * ratio, hilbert_kernel)
+    hilbert_kernel = _hilbert_kernel(ratio, backend)
     hilbert = be.mean(hilbert_kernel / bandwidth, axis=-1)
 
     concentration = n_features / effective

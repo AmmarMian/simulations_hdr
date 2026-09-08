@@ -78,19 +78,31 @@ def squared_fisher_distance(
 # ── the two estimator families ────────────────────────────────────────────────
 
 
-def _plain_centroid_factory(shrinkage: Optional[str]):
-    """Centroid and distance of a two-step method: regularise, then average."""
+# Each family is three functions, and the split is the point: what the
+# covariances are depends on the windows alone, what the centroids are depends
+# on the labels. Estimating is therefore hoisted out of the alternation and
+# done once per run, as it already is in spd_kmeans. It used to sit inside
+# ``centroids``, which re-estimated all of them on every re-estimation — up to
+# n_init * (max_iter + 1) times, and for LW-NL that is an eigendecomposition
+# per window per round. Nothing about the result changes; the estimator is a
+# function of the windows, and it was being asked the same question repeatedly.
 
-    def centroids(windows, labels, n_clusters, n_samples, backend, max_iterations):
-        be = get_backend_module(backend)
+
+def _plain_centroid_factory(shrinkage: Optional[str]):
+    """Estimator, centroid and distance of a two-step method: regularise, then average."""
+
+    def estimate(windows, backend):
         if shrinkage is None:
-            covariances = scm(windows, backend)
-        elif shrinkage == "lw":
-            covariances = ledoit_wolf_linear(windows, backend)
-        elif shrinkage == "lwnl":
-            covariances = analytical_shrinkage(windows, backend, shrink=0)
-        else:
-            raise ValueError(f"unknown shrinkage {shrinkage!r}")
+            return scm(windows, backend)
+        if shrinkage == "lw":
+            return ledoit_wolf_linear(windows, backend)
+        if shrinkage == "lwnl":
+            return analytical_shrinkage(windows, backend, shrink=0)
+        raise ValueError(f"unknown shrinkage {shrinkage!r}")
+
+    def centroids(
+        windows, covariances, labels, n_clusters, n_samples, backend, max_iterations
+    ):
         out = []
         for cluster in range(n_clusters):
             member = labels == cluster
@@ -100,19 +112,23 @@ def _plain_centroid_factory(shrinkage: Optional[str]):
                     backend=backend,
                 )[0]
             )
-        return out, covariances
+        return out
 
     def distances(centre, covariances, n_samples, backend):
         return squared_fisher_distance(centre, covariances, backend)
 
-    return centroids, distances
+    return estimate, centroids, distances
 
 
 def _rmt_centroid_factory():
-    """Centroid and distance of the corrected method."""
+    """Estimator, centroid and distance of the corrected method."""
 
-    def centroids(windows, labels, n_clusters, n_samples, backend, max_iterations):
-        covariances = scm(windows, backend)
+    def estimate(windows, backend):
+        return scm(windows, backend)
+
+    def centroids(
+        windows, covariances, labels, n_clusters, n_samples, backend, max_iterations
+    ):
         out = []
         for cluster in range(n_clusters):
             member = labels == cluster
@@ -128,14 +144,14 @@ def _rmt_centroid_factory():
                     backend=backend,
                 )[0]
             )
-        return out, covariances
+        return out
 
     def distances(centre, covariances, n_samples, backend):
         return rmt_corrected_squared_distance(
             centre, covariances, n_samples, backend
         )
 
-    return centroids, distances
+    return estimate, centroids, distances
 
 
 METHODS = {
@@ -234,18 +250,23 @@ def riemannian_kmeans(
     """
     if method not in METHODS:
         raise KeyError(f"unknown method {method!r}; known: {sorted(METHODS)}")
-    centroid_fn, distance_fn = METHODS[method]()
+    estimate_fn, centroid_fn, distance_fn = METHODS[method]()
 
     device_windows = get_data_on_device(windows, backend)
     n_points, n_samples, _ = windows.shape
     rng = np.random.default_rng(seed)
 
+    # Once for the whole run, restarts included: the estimator is a function of
+    # the windows and nothing below changes them.
+    covariances = estimate_fn(device_windows, backend)
+
     best_labels, best_inertia = None, np.inf
     histories = []
     for restart in range(n_init):
         labels = _random_labels(rng, n_points, n_clusters)
-        centres, covariances = centroid_fn(
-            device_windows, labels, n_clusters, n_samples, backend, mean_iterations
+        centres = centroid_fn(
+            device_windows, covariances, labels, n_clusters, n_samples, backend,
+            mean_iterations,
         )
 
         for iteration in range(max_iter):
@@ -260,9 +281,9 @@ def riemannian_kmeans(
             new_labels = _revive_empty_clusters(new_labels, distances, n_clusters)
             moved = np.mean(new_labels != labels)
             labels = new_labels
-            centres, covariances = centroid_fn(
-                device_windows, labels, n_clusters, n_samples, backend,
-                mean_iterations,
+            centres = centroid_fn(
+                device_windows, covariances, labels, n_clusters, n_samples,
+                backend, mean_iterations,
             )
             if moved <= tol:
                 break

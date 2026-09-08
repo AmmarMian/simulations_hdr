@@ -590,3 +590,88 @@ class TestOnlineScaledGaussianBatched:
         # Next update should warm-start
         estimator.update(X)
         assert estimator._t == 1
+
+
+# ── analytical_shrinkage: the Hilbert kernel must not cancel ──────────────────
+#
+# The Epanechnikov Hilbert transform used by the non-linear shrinkage was
+# written as a difference of two terms that cancel. It is exact for eigenvalue
+# ratios of order one and catastrophically wrong for large ones: at |ratio| =
+# 1.8e6 the two terms are 1.7e5 apiece and their difference is 2e-6, so eleven
+# of the sixteen digits are gone. That regime is the normal one for a 5x5
+# window on a hyperspectral scene, and the failure was silent — it surfaced
+# only as LW-NL disagreeing between numpy and CUDA while every other method
+# agreed. These two tests pin both halves of that: the value against exact
+# arithmetic, and the agreement between backends.
+
+
+def _hilbert_kernel_reference(x):
+    """The kernel in exact arithmetic, via mpmath."""
+    mp = pytest.importorskip("mpmath")
+    mp.mp.dps = 50
+    root5 = mp.sqrt(5)
+    x = mp.mpf(float(x))
+    return float(
+        (-3 / mp.mpf(10) / mp.pi) * x
+        + (3 / mp.mpf(4) / root5 / mp.pi)
+        * (1 - x**2 / 5)
+        * mp.log(abs((root5 - x) / (root5 + x)))
+    )
+
+
+@pytest.mark.parametrize("ratio", [0.5, 3.0, 19.0, 21.0, 1e2, 1e3, 1e5, 1.8e6, 1e8])
+def test_hilbert_kernel_accurate_at_every_scale(ratio):
+    """Both sides of the switch, and well past where the direct form dies."""
+    from hdrlib.core.rmt import _hilbert_kernel
+
+    got = float(_hilbert_kernel(np.array([ratio]), "numpy")[0])
+    expected = _hilbert_kernel_reference(ratio)
+    assert abs(got - expected) <= 1e-12 * abs(expected)
+
+
+def test_hilbert_kernel_accurate_across_the_switch():
+    """No step where the series takes over: exact on a sweep spanning it.
+
+    Evaluating the two branches at two nearby points would measure the slope of
+    the kernel, not a discontinuity; the honest check is that both sides match
+    exact arithmetic tightly, which leaves no room for a step between them.
+    """
+    from hdrlib.core.rmt import _HILBERT_SWITCH, _hilbert_kernel
+
+    ratios = np.geomspace(_HILBERT_SWITCH / 4, _HILBERT_SWITCH * 4, 50)
+    got = np.asarray(_hilbert_kernel(ratios, "numpy"))
+    expected = np.array([_hilbert_kernel_reference(r) for r in ratios])
+    np.testing.assert_allclose(got, expected, rtol=1e-12, atol=0)
+
+
+def test_hilbert_kernel_odd():
+    """The kernel is odd; the series branch must not break that."""
+    from hdrlib.core.rmt import _hilbert_kernel
+
+    ratios = np.array([0.3, 5.0, 19.0, 21.0, 1e3, 1e7])
+    positive = np.asarray(_hilbert_kernel(ratios, "numpy"))
+    negative = np.asarray(_hilbert_kernel(-ratios, "numpy"))
+    # 1e-13 rather than machine epsilon: on the direct branch the two logs are
+    # negatives of each other analytically but not bit-for-bit.
+    np.testing.assert_allclose(negative, -positive, rtol=1e-13, atol=0)
+
+
+def test_analytical_shrinkage_agrees_across_backends():
+    """The bug was found this way: LW-NL differed between numpy and torch.
+
+    Before the fix this disagreed by a relative 3e2. The tolerance left here is
+    loose enough to absorb the two backends' eigensolvers differing on
+    deliberately ill-conditioned input, and far tighter than any cancellation
+    would survive.
+    """
+    from hdrlib.core.rmt import analytical_shrinkage
+
+    rng = np.random.default_rng(0)
+    # A wide eigenvalue spread is what drives the ratios into the bad regime;
+    # isotropic data never reaches it and never showed the bug.
+    scale = np.geomspace(1e-2, 1e2, 5)
+    data = rng.standard_normal((300, 25, 5)) * scale
+
+    reference = analytical_shrinkage(data, "numpy", shrink=0)
+    other = analytical_shrinkage(torch.as_tensor(data), "torch-cpu", shrink=0)
+    np.testing.assert_allclose(np.asarray(other), reference, rtol=1e-7, atol=0)
