@@ -66,7 +66,7 @@ from hdrlib.core.hyperspectral import (
     sliding_window_vectorize,
     unvectorize_labels,
 )
-from hdrlib.core.mc import add_mc_base_args, make_mc_parser
+from hdrlib.core.mc import Progress, add_mc_base_args, make_mc_parser
 from hdrlib.core.plot_style import apply_style
 from hdrlib.core.rmt import scm
 
@@ -235,6 +235,7 @@ def main():
           f"{covariances.shape[-1]}x{covariances.shape[-1]}, "
           f"c = {concentration:.2f}, {n_classes} classes", flush=True)
 
+    progress = Progress(args.storage_path, len(args.metrics))
     maps, scores = {}, {}
     for metric in args.metrics:
         start = time.perf_counter()
@@ -265,6 +266,7 @@ def main():
         print(f"{LABELS[metric]:15s} acc={accuracy:.3f}  mIoU={miou:.3f}  "
               f"({elapsed:.0f}s, worst restart left "
               f"{scores[metric]['worst_moved']:.2%} moving)", flush=True)
+        progress.step()
 
     peak = peak_memory_bytes(args.backend)
     if peak is not None:
@@ -314,6 +316,8 @@ def main():
         figure.savefig(save_path, bbox_inches="tight", dpi=300)
         write_prov_sidecar(save_path, args)
         print(f"Saved segmentation maps in {save_path}")
+
+    progress.done()
 
     if args.show_interactive:
         plt.show()
