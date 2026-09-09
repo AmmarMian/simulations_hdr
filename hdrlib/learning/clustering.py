@@ -21,7 +21,7 @@ from typing import Callable, Optional, Tuple, Union
 
 import numpy as np
 
-from .backend import (
+from ..core.backend import (
     Array,
     Backend,
     batched_eigh,
@@ -35,7 +35,7 @@ from .backend import (
     to_numpy,
     to_scalar,
 )
-from .manifolds import logm_psd, sqrtm_invsqrtm_psd
+from ..core.manifolds import logm_psd, sqrtm_invsqrtm_psd
 from .rmt import (
     analytical_shrinkage,
     frechet_mean_cholesky,

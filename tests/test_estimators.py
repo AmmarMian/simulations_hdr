@@ -622,7 +622,7 @@ def _hilbert_kernel_reference(x):
 @pytest.mark.parametrize("ratio", [0.5, 3.0, 19.0, 21.0, 1e2, 1e3, 1e5, 1.8e6, 1e8])
 def test_hilbert_kernel_accurate_at_every_scale(ratio):
     """Both sides of the switch, and well past where the direct form dies."""
-    from hdrlib.core.rmt import _hilbert_kernel
+    from hdrlib.learning.rmt import _hilbert_kernel
 
     got = float(_hilbert_kernel(np.array([ratio]), "numpy")[0])
     expected = _hilbert_kernel_reference(ratio)
@@ -636,7 +636,7 @@ def test_hilbert_kernel_accurate_across_the_switch():
     the kernel, not a discontinuity; the honest check is that both sides match
     exact arithmetic tightly, which leaves no room for a step between them.
     """
-    from hdrlib.core.rmt import _HILBERT_SWITCH, _hilbert_kernel
+    from hdrlib.learning.rmt import _HILBERT_SWITCH, _hilbert_kernel
 
     ratios = np.geomspace(_HILBERT_SWITCH / 4, _HILBERT_SWITCH * 4, 50)
     got = np.asarray(_hilbert_kernel(ratios, "numpy"))
@@ -646,7 +646,7 @@ def test_hilbert_kernel_accurate_across_the_switch():
 
 def test_hilbert_kernel_odd():
     """The kernel is odd; the series branch must not break that."""
-    from hdrlib.core.rmt import _hilbert_kernel
+    from hdrlib.learning.rmt import _hilbert_kernel
 
     ratios = np.array([0.3, 5.0, 19.0, 21.0, 1e3, 1e7])
     positive = np.asarray(_hilbert_kernel(ratios, "numpy"))
@@ -664,7 +664,7 @@ def test_analytical_shrinkage_agrees_across_backends():
     deliberately ill-conditioned input, and far tighter than any cancellation
     would survive.
     """
-    from hdrlib.core.rmt import analytical_shrinkage
+    from hdrlib.learning.rmt import analytical_shrinkage
 
     rng = np.random.default_rng(0)
     # A wide eigenvalue spread is what drives the ratios into the bad regime;

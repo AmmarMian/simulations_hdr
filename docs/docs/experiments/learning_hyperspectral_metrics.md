@@ -22,7 +22,7 @@ uv run python 3-learning/hyperspectral-metrics/main.py
 <a class="src-btn" href="https://github.com/AmmarMian/simulations_hdr/blob/main/3-learning/hyperspectral-metrics/main.py" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.42 7.42 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg><span>View on GitHub</span></a>
 </div>
 <details class="src-view">
-<summary><span class="src-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>Source code</span><span class="param-alias">330 lines</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg></span></summary>
+<summary><span class="src-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>Source code</span><span class="param-alias">333 lines</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg></span></summary>
 <div class="src-body">
 <p class="src-path">3-learning/hyperspectral-metrics/main.py</p>
 <div class="highlight"><pre><span></span><span class="c1"># What does the geometry alone buy? Euclidean against Riemannian K-means.</span>
@@ -49,7 +49,7 @@ uv run python 3-learning/hyperspectral-metrics/main.py
 <span class="c1">#              calls ``riemann`` and what the RMT correction of the sibling</span>
 <span class="c1">#              experiment corrects.</span>
 <span class="c1">#</span>
-<span class="c1"># Everything runs on the device — hdrlib.core.clustering.spd_kmeans keeps the</span>
+<span class="c1"># Everything runs on the device — hdrlib.learning.clustering.spd_kmeans keeps the</span>
 <span class="c1"># covariances, the centroids and the labels there, and reads back only the two</span>
 <span class="c1"># scalars that decide control flow. The windows are dropped before the loop</span>
 <span class="c1"># starts, since none of these three metrics needs the samples a covariance came</span>
@@ -75,16 +75,17 @@ uv run python 3-learning/hyperspectral-metrics/main.py
     <span class="n">peak_memory_bytes</span><span class="p">,</span>
     <span class="n">reset_peak_memory</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">hdrlib.core.clustering</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">hdrlib.learning.clustering</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">SPD_METRICS</span><span class="p">,</span>
     <span class="n">clustering_accuracy</span><span class="p">,</span>
     <span class="n">match_labels</span><span class="p">,</span>
+    <span class="n">reference_mean_iou</span><span class="p">,</span>
     <span class="n">mean_iou</span><span class="p">,</span>
     <span class="n">require_double</span><span class="p">,</span>
     <span class="n">spd_kmeans</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">hdrlib.core.exporter</span><span class="w"> </span><span class="kn">import</span> <span class="n">write_prov_sidecar</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">hdrlib.core.hyperspectral</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">hdrlib.learning.hyperspectral</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">crop_labels</span><span class="p">,</span>
     <span class="n">download_scene</span><span class="p">,</span>
     <span class="n">pca_image</span><span class="p">,</span>
@@ -95,7 +96,7 @@ uv run python 3-learning/hyperspectral-metrics/main.py
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">hdrlib.core.mc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Progress</span><span class="p">,</span> <span class="n">add_mc_base_args</span><span class="p">,</span> <span class="n">make_mc_parser</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">hdrlib.core.plot_style</span><span class="w"> </span><span class="kn">import</span> <span class="n">apply_style</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">hdrlib.core.rmt</span><span class="w"> </span><span class="kn">import</span> <span class="n">scm</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">hdrlib.learning.rmt</span><span class="w"> </span><span class="kn">import</span> <span class="n">scm</span>
 
 <span class="c1"># Same colour per metric everywhere: the figure, the docs export, the tables.</span>
 <span class="n">COLOURS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;euclid&quot;</span><span class="p">:</span> <span class="s2">&quot;#c0504d&quot;</span><span class="p">,</span> <span class="s2">&quot;logeuclid&quot;</span><span class="p">:</span> <span class="s2">&quot;#dea11f&quot;</span><span class="p">,</span> <span class="s2">&quot;riemann&quot;</span><span class="p">:</span> <span class="s2">&quot;#59bfa3&quot;</span><span class="p">}</span>
@@ -281,11 +282,13 @@ uv run python 3-learning/hyperspectral-metrics/main.py
         <span class="n">matched</span> <span class="o">=</span> <span class="n">match_labels</span><span class="p">(</span><span class="n">segmented</span><span class="p">,</span> <span class="n">truth</span><span class="p">)</span>
         <span class="n">accuracy</span> <span class="o">=</span> <span class="n">clustering_accuracy</span><span class="p">(</span><span class="n">matched</span><span class="p">,</span> <span class="n">truth</span><span class="p">)</span>
         <span class="n">ious</span><span class="p">,</span> <span class="n">miou</span> <span class="o">=</span> <span class="n">mean_iou</span><span class="p">(</span><span class="n">matched</span><span class="p">,</span> <span class="n">truth</span><span class="p">)</span>
+        <span class="n">miou_reference</span> <span class="o">=</span> <span class="n">reference_mean_iou</span><span class="p">(</span><span class="n">matched</span><span class="p">,</span> <span class="n">truth</span><span class="p">)</span>
         <span class="n">elapsed</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span>
 
         <span class="n">maps</span><span class="p">[</span><span class="n">metric</span><span class="p">]</span> <span class="o">=</span> <span class="n">matched</span>
         <span class="n">scores</span><span class="p">[</span><span class="n">metric</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">&quot;accuracy&quot;</span><span class="p">:</span> <span class="n">accuracy</span><span class="p">,</span> <span class="s2">&quot;mIoU&quot;</span><span class="p">:</span> <span class="n">miou</span><span class="p">,</span>
+            <span class="s2">&quot;mIoU_reference&quot;</span><span class="p">:</span> <span class="n">miou_reference</span><span class="p">,</span>
             <span class="c1"># Comparable between restarts of one metric, never between metrics:</span>
             <span class="c1"># the three measure lengths in different geometries. The ranking of</span>
             <span class="c1"># the metrics is the accuracy and the mIoU, which are on the truth.</span>

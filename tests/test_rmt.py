@@ -5,7 +5,7 @@ import pytest
 import torch
 
 from hdrlib.core.estimation import frechet_mean_affine_invariant
-from hdrlib.core.rmt import (
+from hdrlib.learning.rmt import (
     analytical_shrinkage,
     frechet_mean_cholesky,
     ledoit_wolf_linear,

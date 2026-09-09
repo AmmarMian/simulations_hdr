@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """Check the backend-free port against the ICML 2024 reference implementation.
 
-Imports both — ``hdrlib.core.rmt`` and the reference ``src`` of
+Imports both — ``hdrlib.learning.rmt`` and the reference ``src`` of
 https://github.com/AmmarMian/icml-rmt-2024 — feeds them the same matrices, and
 reports the discrepancy layer by layer, from the pieces that should agree to
 machine precision up to the estimate the figures actually plot.
@@ -31,7 +31,7 @@ from pathlib import Path
 
 import numpy as np
 
-from hdrlib.core import rmt
+from hdrlib.learning import rmt
 
 
 def relative_error(a, b) -> float:

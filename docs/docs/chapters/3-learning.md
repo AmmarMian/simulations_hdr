@@ -5,8 +5,8 @@ estimating the centre of a cluster: the sample covariance, two shrinkage
 estimators, and a random-matrix correction.
 
 The estimators and the corrected mean are in
-[`hdrlib.core.rmt`](../api/core/rmt.md); the two K-means in
-[`hdrlib.core.clustering`](../api/core/clustering.md).
+[`hdrlib.learning.rmt`](../api/learning/rmt.md); the two K-means in
+[`hdrlib.learning.clustering`](../api/learning/clustering.md).
 
 ## Data
 

@@ -59,10 +59,7 @@ nav:
           - "detection": api/core/detection.md
           - "estimation": api/core/estimation.md
           - "manifolds": api/core/manifolds.md
-          - "clustering": api/core/clustering.md
-          - "rmt": api/core/rmt.md
           - "elliptical": api/core/elliptical.md
-          - "hyperspectral": api/core/hyperspectral.md
           - "simulation": api/core/simulation.md
           - "exporter": api/core/exporter.md
           - "mc": api/core/mc.md
@@ -70,6 +67,10 @@ nav:
           - "plotly_style": api/core/plotly_style.md
           - "hardware_ressources": api/core/hardware_ressources.md
           - "logging_config": api/core/logging_config.md
+      - "hdrlib.learning":
+          - "rmt": api/learning/rmt.md
+          - "clustering": api/learning/clustering.md
+          - "hyperspectral": api/learning/hyperspectral.md
       - "hdrlib.sar":
           - "detectors": api/sar/detectors.md
           - "estimation_kronecker": api/sar/estimation_kronecker.md

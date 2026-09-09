@@ -22,7 +22,7 @@ from urllib.request import urlretrieve
 
 import numpy as np
 
-from .backend import (
+from ..core.backend import (
     Array,
     Backend,
     Unfold2D,

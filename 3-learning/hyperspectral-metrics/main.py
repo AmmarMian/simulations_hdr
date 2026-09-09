@@ -22,7 +22,7 @@
 #              calls ``riemann`` and what the RMT correction of the sibling
 #              experiment corrects.
 #
-# Everything runs on the device — hdrlib.core.clustering.spd_kmeans keeps the
+# Everything runs on the device — hdrlib.learning.clustering.spd_kmeans keeps the
 # covariances, the centroids and the labels there, and reads back only the two
 # scalars that decide control flow. The windows are dropped before the loop
 # starts, since none of these three metrics needs the samples a covariance came
@@ -48,7 +48,7 @@ from hdrlib.core.backend import (
     peak_memory_bytes,
     reset_peak_memory,
 )
-from hdrlib.core.clustering import (
+from hdrlib.learning.clustering import (
     SPD_METRICS,
     clustering_accuracy,
     match_labels,
@@ -58,7 +58,7 @@ from hdrlib.core.clustering import (
     spd_kmeans,
 )
 from hdrlib.core.exporter import write_prov_sidecar
-from hdrlib.core.hyperspectral import (
+from hdrlib.learning.hyperspectral import (
     crop_labels,
     download_scene,
     pca_image,
@@ -69,7 +69,7 @@ from hdrlib.core.hyperspectral import (
 )
 from hdrlib.core.mc import Progress, add_mc_base_args, make_mc_parser
 from hdrlib.core.plot_style import apply_style
-from hdrlib.core.rmt import scm
+from hdrlib.learning.rmt import scm
 
 # Same colour per metric everywhere: the figure, the docs export, the tables.
 COLOURS = {"euclid": "#c0504d", "logeuclid": "#dea11f", "riemann": "#59bfa3"}

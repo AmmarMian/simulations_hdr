@@ -24,7 +24,7 @@
 # method corrects the *distance* the average minimises. It is not the same
 # gesture, and the figures are what separates them.
 #
-# Backend-free through hdrlib.core.rmt, whose port of the reference
+# Backend-free through hdrlib.learning.rmt, whose port of the reference
 # implementation is checked term by term against the published code by
 # validate_against_paper.py. Needs float64 — see rmt.require_double.
 
@@ -40,7 +40,7 @@ from hdrlib.core.backend import get_data_on_device, to_numpy
 from hdrlib.core.exporter import save_tikz, write_prov_sidecar
 from hdrlib.core.mc import add_mc_base_args, init_logging, make_mc_parser
 from hdrlib.core.plot_style import apply_style
-from hdrlib.core import rmt
+from hdrlib.learning import rmt
 
 
 METHODS = ("SCM", "LW", "OAS", "LW-NL", "RMT")

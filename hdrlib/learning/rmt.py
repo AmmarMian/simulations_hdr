@@ -28,7 +28,7 @@ from typing import Optional, Tuple, Union
 
 import numpy as np
 
-from .backend import (
+from ..core.backend import (
     Array,
     Backend,
     batched_eigh,

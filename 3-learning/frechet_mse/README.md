@@ -56,7 +56,7 @@ valeurs propres, et plusieurs termes sont construits pour qu'une entrée
 diagonale évalue la limite finie d'une expression qui vaut 0/0 ailleurs. En
 simple précision ces termes perdent tous leurs chiffres significatifs sans rien
 signaler : la descente rend quand même une matrice, et elle est fausse.
-`hdrlib.core.rmt.require_double` refuse donc de démarrer.
+`hdrlib.learning.rmt.require_double` refuse donc de démarrer.
 
 Conséquence pratique : **`torch-mps` ne peut pas exécuter ce code**, Metal
 n'ayant pas de float64. Sur Apple Silicon, utiliser `--backend torch-cpu`.

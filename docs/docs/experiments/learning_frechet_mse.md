@@ -51,7 +51,7 @@ uv run python 3-learning/frechet_mse/main.py
 <span class="c1"># method corrects the *distance* the average minimises. It is not the same</span>
 <span class="c1"># gesture, and the figures are what separates them.</span>
 <span class="c1">#</span>
-<span class="c1"># Backend-free through hdrlib.core.rmt, whose port of the reference</span>
+<span class="c1"># Backend-free through hdrlib.learning.rmt, whose port of the reference</span>
 <span class="c1"># implementation is checked term by term against the published code by</span>
 <span class="c1"># validate_against_paper.py. Needs float64 — see rmt.require_double.</span>
 
@@ -67,7 +67,7 @@ uv run python 3-learning/frechet_mse/main.py
 <span class="kn">from</span><span class="w"> </span><span class="nn">hdrlib.core.exporter</span><span class="w"> </span><span class="kn">import</span> <span class="n">save_tikz</span><span class="p">,</span> <span class="n">write_prov_sidecar</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">hdrlib.core.mc</span><span class="w"> </span><span class="kn">import</span> <span class="n">add_mc_base_args</span><span class="p">,</span> <span class="n">init_logging</span><span class="p">,</span> <span class="n">make_mc_parser</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">hdrlib.core.plot_style</span><span class="w"> </span><span class="kn">import</span> <span class="n">apply_style</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">hdrlib.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">rmt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">hdrlib.learning</span><span class="w"> </span><span class="kn">import</span> <span class="n">rmt</span>
 
 
 <span class="n">METHODS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;SCM&quot;</span><span class="p">,</span> <span class="s2">&quot;LW&quot;</span><span class="p">,</span> <span class="s2">&quot;OAS&quot;</span><span class="p">,</span> <span class="s2">&quot;LW-NL&quot;</span><span class="p">,</span> <span class="s2">&quot;RMT&quot;</span><span class="p">)</span>

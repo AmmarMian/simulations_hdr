@@ -7,7 +7,7 @@ import numpy as np
 import pytest
 import torch
 
-from hdrlib.core.clustering import (
+from hdrlib.learning.clustering import (
     SPD_METRICS,
     clustering_accuracy,
     match_labels,
@@ -16,7 +16,7 @@ from hdrlib.core.clustering import (
     spd_kmeans,
     squared_fisher_distance,
 )
-from hdrlib.core.rmt import scm
+from hdrlib.learning.rmt import scm
 
 cuda = pytest.mark.skipif(
     not torch.cuda.is_available(), reason="CUDA not available"
@@ -228,7 +228,7 @@ def test_riemannian_kmeans_estimation_is_hoisted_out_of_the_loop():
     Guards the refactor that moved the estimator out of the re-estimation: if it
     ever drifts back inside, this count grows with max_iter.
     """
-    import hdrlib.core.clustering as clustering
+    import hdrlib.learning.clustering as clustering
 
     windows, _ = two_populations(n_per=20)
     calls = []

@@ -1,10 +1,11 @@
 <div class="page-header">
   <div class="eyebrow">Reference</div>
   <h1>API</h1>
-  <p class="standfirst">Three subpackages — <code>hdrlib.core</code> (generic infrastructure),
-  <code>hdrlib.sar</code> (SAR change detection), and <code>hdrlib.sonar</code> (sonar
-  target detection). All public classes and functions are documented with type
-  signatures and NumPy-style docstrings.</p>
+  <p class="standfirst">Four subpackages — <code>hdrlib.core</code> (generic infrastructure),
+  <code>hdrlib.learning</code> (covariance-based segmentation), <code>hdrlib.sar</code>
+  (SAR change detection), and <code>hdrlib.sonar</code> (sonar target detection).
+  All public classes and functions are documented with type signatures and
+  NumPy-style docstrings.</p>
 </div>
 
 <div class="api-section">
@@ -111,6 +112,50 @@
     <div class="api-card-body">
       <p class="api-desc">Plotly design tokens for the docs design system.
       Colour constants, font stacks, and <code>hex_to_rgba()</code>.</p>
+    </div>
+  </a>
+
+  </div>
+</div>
+
+<div class="api-section">
+  <div class="api-section-head">
+    <span class="api-section-num">hdrlib.learning</span>
+    <span class="api-section-title">Covariance-based segmentation on the SPD cone</span>
+  </div>
+  <div class="api-index">
+
+  <a class="api-card" href="learning/rmt/">
+    <div class="api-card-head">
+      <span class="api-mod">learning.rmt</span>
+      <span class="api-badge">core</span>
+    </div>
+    <div class="api-card-body">
+      <p class="api-desc">Random-matrix corrections to the affine-invariant geometry:
+      the corrected Fisher distance and Fréchet mean, plus the shrinkage estimators
+      they are compared against.</p>
+    </div>
+  </a>
+
+  <a class="api-card" href="learning/clustering/">
+    <div class="api-card-head">
+      <span class="api-mod">learning.clustering</span>
+      <span class="api-badge">core</span>
+    </div>
+    <div class="api-card-body">
+      <p class="api-desc">K-means on the cone, with and without the correction, sharing
+      one alternation loop. Label matching and segmentation scores.</p>
+    </div>
+  </a>
+
+  <a class="api-card" href="learning/hyperspectral/">
+    <div class="api-card-head">
+      <span class="api-mod">learning.hyperspectral</span>
+      <span class="api-badge">data</span>
+    </div>
+    <div class="api-card-body">
+      <p class="api-desc">Download and read the AVIRIS/ROSIS scenes, then the
+      mean-removal &rarr; PCA &rarr; sliding-window &rarr; covariance pipeline.</p>
     </div>
   </a>
 

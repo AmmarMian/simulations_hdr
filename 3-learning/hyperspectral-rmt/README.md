@@ -55,6 +55,6 @@ téléchargement échoue, poser les fichiers à la main dans `data/hyperspectral
 
 ## Contraintes
 
-float64, donc pas de `torch-mps` — voir `hdrlib.core.rmt.require_double`.
+float64, donc pas de `torch-mps` — voir `hdrlib.learning.rmt.require_double`.
 Aucun scikit-learn : il est numpy-only, et le pipeline doit pouvoir tourner sur
 un backend GPU.

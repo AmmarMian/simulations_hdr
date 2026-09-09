@@ -22,7 +22,7 @@ uv run python 3-learning/hyperspectral-rmt/main.py
 <a class="src-btn" href="https://github.com/AmmarMian/simulations_hdr/blob/main/3-learning/hyperspectral-rmt/main.py" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.42 7.42 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg><span>View on GitHub</span></a>
 </div>
 <details class="src-view">
-<summary><span class="src-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>Source code</span><span class="param-alias">298 lines</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg></span></summary>
+<summary><span class="src-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>Source code</span><span class="param-alias">309 lines</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg></span></summary>
 <div class="src-body">
 <p class="src-path">3-learning/hyperspectral-rmt/main.py</p>
 <div class="highlight"><pre><span></span><span class="c1"># Does the correction survive downstream? Segmenting a hyperspectral scene.</span>
@@ -50,7 +50,7 @@ uv run python 3-learning/hyperspectral-rmt/main.py
 <span class="c1"># disagree informatively: accuracy is dominated by the large classes, mIoU is</span>
 <span class="c1"># not.</span>
 <span class="c1">#</span>
-<span class="c1"># Backend-free, float64 (see hdrlib.core.rmt.require_double), and no</span>
+<span class="c1"># Backend-free, float64 (see hdrlib.learning.rmt.require_double), and no</span>
 <span class="c1"># scikit-learn: the pipeline must be able to run on a GPU backend.</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
@@ -61,15 +61,16 @@ uv run python 3-learning/hyperspectral-rmt/main.py
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">hdrlib.core.clustering</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">hdrlib.learning.clustering</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">clustering_accuracy</span><span class="p">,</span>
     <span class="n">match_labels</span><span class="p">,</span>
+    <span class="n">reference_mean_iou</span><span class="p">,</span>
     <span class="n">mean_iou</span><span class="p">,</span>
     <span class="n">riemannian_kmeans</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">hdrlib.core.backend</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_data_on_device</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">hdrlib.core.exporter</span><span class="w"> </span><span class="kn">import</span> <span class="n">write_prov_sidecar</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">hdrlib.core.hyperspectral</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">hdrlib.learning.hyperspectral</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">crop_labels</span><span class="p">,</span>
     <span class="n">download_scene</span><span class="p">,</span>
     <span class="n">pca_image</span><span class="p">,</span>
@@ -149,6 +150,12 @@ uv run python 3-learning/hyperspectral-rmt/main.py
         <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Iteration budget of one Fréchet mean.&quot;</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;--no-revive-empty&quot;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_false&quot;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;revive_empty&quot;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Do not give a point back to a cluster that empties mid-run. This &quot;</span>
+             <span class="s2">&quot;is what the reference implementation does; an emptied cluster &quot;</span>
+             <span class="s2">&quot;then stops the run rather than being repaired.&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s2">&quot;--seeds&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s2">&quot;+&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Repeat the whole comparison on several starting partitions and &quot;</span>
              <span class="s2">&quot;report the mean and spread across them; defaults to the single &quot;</span>
@@ -204,6 +211,7 @@ uv run python 3-learning/hyperspectral-rmt/main.py
         <span class="n">labels</span><span class="p">,</span> <span class="n">inertia</span><span class="p">,</span> <span class="n">histories</span> <span class="o">=</span> <span class="n">riemannian_kmeans</span><span class="p">(</span>
             <span class="n">windows</span><span class="p">,</span> <span class="n">n_classes</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="n">n_init</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">n_init</span><span class="p">,</span>
             <span class="n">max_iter</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">max_iter</span><span class="p">,</span> <span class="n">mean_iterations</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">mean_iterations</span><span class="p">,</span>
+            <span class="n">revive_empty</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">revive_empty</span><span class="p">,</span>
             <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">backend</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">segmented</span> <span class="o">=</span> <span class="n">unvectorize_labels</span><span class="p">(</span>
@@ -212,11 +220,13 @@ uv run python 3-learning/hyperspectral-rmt/main.py
         <span class="n">matched</span> <span class="o">=</span> <span class="n">match_labels</span><span class="p">(</span><span class="n">segmented</span><span class="p">,</span> <span class="n">truth</span><span class="p">)</span>
         <span class="n">accuracy</span> <span class="o">=</span> <span class="n">clustering_accuracy</span><span class="p">(</span><span class="n">matched</span><span class="p">,</span> <span class="n">truth</span><span class="p">)</span>
         <span class="n">ious</span><span class="p">,</span> <span class="n">miou</span> <span class="o">=</span> <span class="n">mean_iou</span><span class="p">(</span><span class="n">matched</span><span class="p">,</span> <span class="n">truth</span><span class="p">)</span>
+        <span class="n">miou_reference</span> <span class="o">=</span> <span class="n">reference_mean_iou</span><span class="p">(</span><span class="n">matched</span><span class="p">,</span> <span class="n">truth</span><span class="p">)</span>
         <span class="n">elapsed</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span>
 
         <span class="n">per_seed</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
             <span class="s2">&quot;seed&quot;</span><span class="p">:</span> <span class="n">seed</span><span class="p">,</span> <span class="s2">&quot;method&quot;</span><span class="p">:</span> <span class="n">method</span><span class="p">,</span>
             <span class="s2">&quot;accuracy&quot;</span><span class="p">:</span> <span class="n">accuracy</span><span class="p">,</span> <span class="s2">&quot;mIoU&quot;</span><span class="p">:</span> <span class="n">miou</span><span class="p">,</span>
+            <span class="s2">&quot;mIoU_reference&quot;</span><span class="p">:</span> <span class="n">miou_reference</span><span class="p">,</span>
             <span class="s2">&quot;inertia&quot;</span><span class="p">:</span> <span class="n">inertia</span><span class="p">,</span> <span class="s2">&quot;seconds&quot;</span><span class="p">:</span> <span class="n">elapsed</span><span class="p">,</span>
             <span class="s2">&quot;worst_moved&quot;</span><span class="p">:</span> <span class="nb">max</span><span class="p">(</span><span class="n">h</span><span class="p">[</span><span class="s2">&quot;moved&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">histories</span><span class="p">),</span>
         <span class="p">})</span>
@@ -226,6 +236,7 @@ uv run python 3-learning/hyperspectral-rmt/main.py
             <span class="n">maps</span><span class="p">[</span><span class="n">method</span><span class="p">]</span> <span class="o">=</span> <span class="n">matched</span>
             <span class="n">scores</span><span class="p">[</span><span class="n">method</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
                 <span class="s2">&quot;accuracy&quot;</span><span class="p">:</span> <span class="n">accuracy</span><span class="p">,</span> <span class="s2">&quot;mIoU&quot;</span><span class="p">:</span> <span class="n">miou</span><span class="p">,</span>
+                <span class="s2">&quot;mIoU_reference&quot;</span><span class="p">:</span> <span class="n">miou_reference</span><span class="p">,</span>
                 <span class="s2">&quot;inertia&quot;</span><span class="p">:</span> <span class="n">inertia</span><span class="p">,</span> <span class="s2">&quot;seconds&quot;</span><span class="p">:</span> <span class="n">elapsed</span><span class="p">,</span>
                 <span class="s2">&quot;restarts&quot;</span><span class="p">:</span> <span class="n">histories</span><span class="p">,</span>
                 <span class="s2">&quot;worst_moved&quot;</span><span class="p">:</span> <span class="nb">max</span><span class="p">(</span><span class="n">h</span><span class="p">[</span><span class="s2">&quot;moved&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">histories</span><span class="p">),</span>
@@ -378,6 +389,12 @@ uv run python 3-learning/hyperspectral-rmt/main.py
 <span class="param-flag">--mean_iterations</span><span class="param-type">int</span><span class="param-default">default <b>50</b></span>
 </div>
 <p class="param-help">Iteration budget of one Fréchet mean.</p>
+</div>
+<div class="param">
+<div class="param-head">
+<span class="param-flag">--no-revive-empty</span><span class="param-type">flag</span>
+</div>
+<p class="param-help">Do not give a point back to a cluster that empties mid-run. This is what the reference implementation does; an emptied cluster then stops the run rather than being repaired.</p>
 </div>
 <div class="param">
 <div class="param-head">

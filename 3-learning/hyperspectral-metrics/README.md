@@ -37,7 +37,7 @@ la correction de l'expérience voisine vise ; ici il sert de décor, pas de suje
 ## Tout sur le device
 
 Le cube traverse le bus une fois, les étiquettes reviennent une fois. Entre les
-deux, `hdrlib.core.clustering.spd_kmeans` ne relit que deux scalaires par
+deux, `hdrlib.learning.clustering.spd_kmeans` ne relit que deux scalaires par
 itération — la fraction de points qui ont changé de groupe, qui décide de
 l'arrêt, et l'inertie, qui choisit le meilleur redémarrage. Ce sont des branches
 du programme : elles doivent devenir des nombres Python.

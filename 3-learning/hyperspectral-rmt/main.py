@@ -23,7 +23,7 @@
 # disagree informatively: accuracy is dominated by the large classes, mIoU is
 # not.
 #
-# Backend-free, float64 (see hdrlib.core.rmt.require_double), and no
+# Backend-free, float64 (see hdrlib.learning.rmt.require_double), and no
 # scikit-learn: the pipeline must be able to run on a GPU backend.
 
 import json
@@ -34,7 +34,7 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 
-from hdrlib.core.clustering import (
+from hdrlib.learning.clustering import (
     clustering_accuracy,
     match_labels,
     reference_mean_iou,
@@ -43,7 +43,7 @@ from hdrlib.core.clustering import (
 )
 from hdrlib.core.backend import get_data_on_device
 from hdrlib.core.exporter import write_prov_sidecar
-from hdrlib.core.hyperspectral import (
+from hdrlib.learning.hyperspectral import (
     crop_labels,
     download_scene,
     pca_image,
