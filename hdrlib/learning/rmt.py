@@ -2,8 +2,10 @@
 #
 # Implements the corrected Fisher distance and the corrected Fréchet mean of
 #
-#   Bouchard, Mian, Tiomoko, Ginolhac, Pascal, "Random matrix theory improved
-#   Fréchet mean of symmetric positive definite matrices", ICML 2024,
+#   F. Bouchard, A. Mian, M. Tiomoko, G. Ginolhac and F. Pascal, "Random
+#   matrix theory improved Fréchet mean of symmetric positive definite
+#   matrices", Proceedings of the 41st International Conference on Machine
+#   Learning, PMLR 235:4403-4415, 2024. arXiv:2405.06558
 #
 # on hdrlib's backend layer, so the same code runs on numpy, torch, cupy and
 # jax. Needs float64 — see require_double.
@@ -131,21 +133,58 @@ def _cholesky_and_inverse(be, matrix: Array) -> Tuple[Array, Array]:
 
 
 def scm(data: Array, backend: Union[str, Backend] = "numpy") -> Array:
-    """Sample covariance matrices of ``(..., n_samples, n_features)`` data.
+    r"""Sample covariance matrices of ``(..., n_samples, n_features)`` data.
 
-    Data is assumed centred, as in the reference: the mean is known to be zero
-    by construction in the simulations, and subtracting an estimated one would
-    change the effective sample size and hence the concentration ratio.
+    For $n$ samples $x_1,\dots,x_n \in \mathbb{R}^p$ stacked as the rows of
+    $X$,
+
+    $$
+    \widehat{\Sigma} = \frac{1}{n} X^{\top} X
+                       = \frac{1}{n} \sum_{k=1}^{n} x_k x_k^{\top}.
+    $$
+
+    Data is assumed centred, as in the reference implementation: the mean is
+    known to be zero by construction in the simulations, and subtracting an
+    estimated one would change the effective sample size and hence the
+    concentration ratio $c = p/n$.
     """
     be = get_backend_module(backend)
     return be.swapaxes(data, -1, -2) @ data / data.shape[-2]
 
 
 def ledoit_wolf_linear(data: Array, backend: Union[str, Backend] = "numpy") -> Array:
-    """Linear shrinkage towards a scaled identity (Ledoit and Wolf, 2004).
+    r"""Linear shrinkage of the sample covariance towards a scaled identity.
+
+    The estimator pulls $\widehat{\Sigma}$ towards the sphere of the same
+    trace,
+
+    $$
+    \widehat{\Sigma}_{\mathrm{LW}} = \rho\, \mu I_p + (1 - \rho)\,
+    \widehat{\Sigma}, \qquad \mu = \frac{1}{p}\operatorname{tr}
+    \widehat{\Sigma},
+    $$
+
+    by the intensity that minimises the expected squared Frobenius error,
+    estimated from the data as
+
+    $$
+    \rho = \min\!\left(\frac{\beta^2}{\delta^2},\, 1\right),
+    \qquad
+    \delta^2 = \frac{1}{p}\left\| \widehat{\Sigma} - \mu I_p
+                \right\|_F^2,
+    \qquad
+    \beta^2 = \frac{1}{p\,n^2} \sum_{k=1}^{n}
+              \left\| x_k x_k^{\top} - \widehat{\Sigma} \right\|_F^2 .
+    $$
 
     Centred variant: the data of these simulations is known to have zero mean
     by construction.
+
+    **Reference**
+
+    O. Ledoit and M. Wolf, "A well-conditioned estimator for large-dimensional
+    covariance matrices", *Journal of Multivariate Analysis*, 88(2):365-411,
+    2004. [doi:10.1016/S0047-259X(03)00096-4](https://doi.org/10.1016/S0047-259X(03)00096-4)
     """
     be = get_backend_module(backend)
     n_samples, n_features = data.shape[-2], data.shape[-1]
@@ -171,12 +210,36 @@ def ledoit_wolf_linear(data: Array, backend: Union[str, Backend] = "numpy") -> A
 
 
 def oas(data: Array, backend: Union[str, Backend] = "numpy") -> Array:
-    """Oracle approximating shrinkage (Chen et al., 2010), centred variant.
+    r"""Oracle approximating shrinkage, centred variant.
+
+    Same shrinkage towards a scaled identity as
+    :func:`ledoit_wolf_linear`, with an intensity derived instead by
+    iterating the oracle solution under a Gaussian assumption:
+
+    $$
+    \widehat{\Sigma}_{\mathrm{OAS}} = \rho\, \mu I_p + (1 - \rho)\,
+    \widehat{\Sigma},
+    \qquad
+    \rho = \min\!\left(
+        \frac{\alpha + \mu^2}{(n + 1)\left(\alpha - \mu^2 / p\right)},
+        \, 1 \right),
+    $$
+
+    where $\mu = \frac{1}{p}\operatorname{tr}\widehat{\Sigma}$ and
+    $\alpha = \frac{1}{p^2}\operatorname{tr}\!\left(
+    \widehat{\Sigma}^2\right)$.
 
     Note that two formulations circulate: the one printed in the original
-    paper, and the one in common use, which drops its ``(1 - 2/p)`` factors.
+    paper, and the one in common use, which drops its $(1 - 2/p)$ factors.
     The second is implemented here, since it is the one every published
     comparison actually plots.
+
+    **Reference**
+
+    Y. Chen, A. Wiesel, Y. C. Eldar and A. O. Hero, "Shrinkage algorithms for
+    MMSE covariance estimation", *IEEE Transactions on Signal Processing*,
+    58(10):5016-5029, 2010.
+    [doi:10.1109/TSP.2010.2053029](https://doi.org/10.1109/TSP.2010.2053029)
     """
     be = get_backend_module(backend)
     n_samples, n_features = data.shape[-2], data.shape[-1]
@@ -263,14 +326,35 @@ def _hilbert_kernel(ratio: Array, backend: Union[str, Backend] = "numpy") -> Arr
 def analytical_shrinkage(
     data: Array, backend: Union[str, Backend] = "numpy", shrink: Optional[int] = None
 ) -> Array:
-    """Analytical non-linear shrinkage (Ledoit and Wolf, 2020).
+    r"""Analytical non-linear shrinkage of the sample eigenvalues.
 
-    Kernel estimate of the limiting spectral density and its Hilbert transform,
-    used to shrink each sample eigenvalue individually. The matrix is symmetric
-    by construction, so the decomposition is ``eigh``: real eigenvalues, already
-    ascending.
+    The eigenvectors of $\widehat{\Sigma}$ are kept and each eigenvalue
+    $\lambda_i$ is shrunk on its own, by the amount random matrix theory says
+    it is inflated by:
+
+    $$
+    \widetilde{\lambda}_i = \frac{\lambda_i}
+    {\left[\pi c\, \lambda_i\, \widehat{f}(\lambda_i)\right]^2
+     + \left[1 - c - \pi c\, \lambda_i\,
+       \mathcal{H}\widehat{f}(\lambda_i)\right]^2},
+    \qquad c = \frac{p}{n},
+    $$
+
+    where $\widehat{f}$ is an Epanechnikov kernel estimate of the limiting
+    spectral density, with the variable bandwidth $h_i = n^{-1/3}\lambda_i$,
+    and $\mathcal{H}\widehat{f}$ its Hilbert transform. The returned matrix is
+    $U \operatorname{diag}(\widetilde{\lambda}) U^{\top}$.
+
+    The matrix is symmetric by construction, so the decomposition is ``eigh``:
+    real eigenvalues, already ascending.
 
     Valid for ``n_features <= n_samples``.
+
+    **Reference**
+
+    O. Ledoit and M. Wolf, "Analytical nonlinear shrinkage of large-dimensional
+    covariance matrices", *The Annals of Statistics*, 48(5):3043-3065, 2020.
+    [doi:10.1214/19-AOS1921](https://doi.org/10.1214/19-AOS1921)
     """
     be = get_backend_module(backend)
     n_samples, n_features = data.shape[-2], data.shape[-1]
@@ -606,12 +690,33 @@ def rmt_frechet_mean(
     tol_cost: float = 10.0,
     backend: Union[str, Backend] = "numpy",
 ) -> Tuple[Array, dict]:
-    """Fréchet mean of the *true* covariances behind a set of data matrices.
+    r"""Fréchet mean of the *true* covariances behind a set of data matrices.
 
-    Minimises the random-matrix-theory corrected Fréchet cost over the cone,
-    starting from the identity. The correction makes the estimate consistent in
-    the regime where the dimension and the sample size grow proportionally,
-    which is exactly where the plain Fréchet mean of the SCMs is not.
+    Given $K$ data matrices drawn from unknown covariances
+    $\Sigma_1, \dots, \Sigma_K$, the quantity of interest is the
+    affine-invariant barycentre of those covariances,
+
+    $$
+    M^{\star} = \arg\min_{M \succ 0} \frac{1}{K} \sum_{k=1}^{K}
+    \delta^2\!\left(M, \Sigma_k\right),
+    $$
+
+    which cannot be evaluated, since only the sample covariances
+    $\widehat{\Sigma}_k$ are observed. Substituting them —
+    $\frac{1}{K}\sum_k \delta^2(M, \widehat{\Sigma}_k)$, which is what
+    :func:`frechet_mean_cholesky` minimises — is biased as soon as the
+    concentration ratio $c = p/n$ is not small. This function minimises
+    instead
+
+    $$
+    \widehat{M} = \arg\min_{M \succ 0} \frac{1}{K} \sum_{k=1}^{K}
+    \widehat{\delta^2}\!\left(M, \Sigma_k\right),
+    $$
+
+    with $\widehat{\delta^2}$ the consistent estimator of
+    :func:`rmt_corrected_squared_distance`. The minimisation is a Riemannian
+    steepest descent with backtracking, started from the identity and carried
+    out in the coordinates of the Cholesky factor of the current iterate.
 
     Wants float64: the gradient divides by differences of eigenvalues, which
     single precision cannot carry — see :func:`require_double`.
@@ -630,6 +735,14 @@ def rmt_frechet_mean(
     -------
     mean : Array of shape (n_features, n_features)
     history : dict with lists ``cost`` and ``error``
+
+    **Reference**
+
+    F. Bouchard, A. Mian, M. Tiomoko, G. Ginolhac and F. Pascal, "Random matrix
+    theory improved Fréchet mean of symmetric positive definite matrices",
+    *Proceedings of the 41st International Conference on Machine Learning*,
+    PMLR 235:4403-4415, 2024.
+    [arXiv:2405.06558](https://arxiv.org/abs/2405.06558)
     """
     be = get_backend_module(backend)
     require_double(data, "rmt_frechet_mean")
@@ -658,7 +771,17 @@ def frechet_mean_cholesky(
     tol: float = 1e-3,
     backend: Union[str, Backend] = "numpy",
 ) -> Tuple[Array, dict]:
-    """Plain Fréchet mean, by the same descent as :func:`rmt_frechet_mean`.
+    r"""Plain Fréchet mean, by the same descent as :func:`rmt_frechet_mean`.
+
+    The uncorrected barycentre of the matrices it is given,
+
+    $$
+    \widehat{M} = \arg\min_{M \succ 0} \frac{1}{K} \sum_{k=1}^{K}
+    \delta^2\!\left(M, \Sigma_k\right),
+    \qquad
+    \delta^2(A, B) = \left\| \log\!\left(A^{-1/2} B A^{-1/2}\right)
+                      \right\|_F^2 .
+    $$
 
     ``hdrlib.core.estimation.frechet_mean_affine_invariant`` computes the same
     object by a different route (log-Euclidean start, fixed-step exponential
@@ -684,11 +807,58 @@ def rmt_corrected_squared_distance(
     n_samples: int,
     backend: Union[str, Backend] = "numpy",
 ) -> Array:
-    """Corrected squared Fisher distance between a fixed SPD matrix and SCMs.
+    r"""Corrected squared Fisher distance between a fixed SPD matrix and SCMs.
 
-    Estimates ``delta^2(reference, Sigma_k)`` from ``reference`` and the sample
-    covariances of the ``Sigma_k``, divided by the dimension. Consistent in the
-    regime of :func:`rmt_frechet_mean`, where the plain distance is not.
+    The affine-invariant distance between two SPD matrices, normalised here by
+    the dimension so that it stays $O(1)$ as $p$ grows, is
+
+    $$
+    \frac{1}{p}\,\delta^2(M, \Sigma)
+    = \frac{1}{p} \left\| \log\!\left(M^{-1/2} \Sigma M^{-1/2}\right)
+      \right\|_F^2 .
+    $$
+
+    Replacing $\Sigma$ by its sample covariance leaves an $O(1)$ bias when the
+    concentration ratio $c = p/n$ is not small. This function returns instead a
+    consistent estimate of $\frac{1}{p}\delta^2(M, \Sigma_k)$ built from the
+    observed $\widehat{\Sigma}_k$. Writing $L$ for the Cholesky factor of
+    ``reference``, $\lambda_1, \dots, \lambda_p$ for the eigenvalues of
+    $L^{-1} \widehat{\Sigma}_k L^{-\top}$, and $z_1, \dots, z_p$ for those of
+    $\operatorname{diag}(\lambda) -
+    \frac{1}{n}\sqrt{\lambda}\sqrt{\lambda}^{\top}$, the estimator is
+
+    $$
+    \begin{aligned}
+    \widehat{\delta^2}
+    &= \frac{1}{p} \sum_{i} \log^2 \lambda_i
+     + \frac{2}{p} \sum_{i} \log \lambda_i
+     - \frac{2}{p} \sum_{i,j} (\lambda_i - z_i)\, Q_{ij} \\
+    &\quad - \left(\tfrac{1}{c} - 1\right) \log^2 (1 - c)
+     - 2 \left(\tfrac{1}{c} - 1\right) \sum_{i} (\lambda_i - z_i)
+       \frac{\log \lambda_i}{\lambda_i},
+    \end{aligned}
+    $$
+
+    with
+
+    $$
+    Q_{ij} = \frac{\lambda_i \log(\lambda_i / \lambda_j)
+                    - (\lambda_i - \lambda_j)
+                    + \tfrac{1}{2}\delta_{ij}}
+                   {(\lambda_i - \lambda_j)^2 + \lambda_i \delta_{ij}} .
+    $$
+
+    The $\delta_{ij}$ terms are not regularisations: on the diagonal they make
+    $Q_{ii}$ evaluate the limit of the off-diagonal expression as
+    $\lambda_j \to \lambda_i$ rather than $0/0$.
+
+    **Reference**
+
+    F. Bouchard, A. Mian, M. Tiomoko, G. Ginolhac and F. Pascal, "Random matrix
+    theory improved Fréchet mean of symmetric positive definite matrices",
+    *Proceedings of the 41st International Conference on Machine Learning*,
+    PMLR 235:4403-4415, 2024.
+    [arXiv:2405.06558](https://arxiv.org/abs/2405.06558)
     """
     be = get_backend_module(backend)
     require_double(covariances, "rmt_corrected_squared_distance")

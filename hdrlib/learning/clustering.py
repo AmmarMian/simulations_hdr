@@ -6,9 +6,9 @@
 # inertia — is common, and is written once here so that a comparison between
 # them measures the correction and not the optimiser.
 #
-# That single difference is the whole point of sec:learning-frechet: the
-# shrinkage baselines regularise every covariance *before* averaging, while
-# the corrected version leaves the covariances alone and corrects the distance
+# That single difference is the whole point of the comparison: the shrinkage
+# baselines regularise every covariance *before* averaging, while the
+# corrected version leaves the covariances alone and corrects the distance
 # the average minimises.
 #
 # No scikit-learn anywhere, here or in rmt.py: it is numpy-only, and one import
@@ -61,10 +61,21 @@ __all__ = [
 def squared_fisher_distance(
     reference: Array, covariances: Array, backend: Union[str, Backend] = "numpy"
 ) -> Array:
-    """Squared affine-invariant distance from one SPD matrix to a set of them.
+    r"""Squared affine-invariant distance from one SPD matrix to a set of them.
 
-    Normalised by the dimension, like the corrected version it is compared
-    against, so that the two are on the same scale.
+    $$
+    \frac{1}{p}\,\delta^2(M, \Sigma)
+    = \frac{1}{p} \left\| \log\!\left(M^{-1/2} \Sigma M^{-1/2}\right)
+      \right\|_F^2
+    = \frac{1}{p} \sum_{i=1}^{p} \log^2 \lambda_i,
+    $$
+
+    the $\lambda_i$ being the eigenvalues of $M^{-1}\Sigma$, computed here as
+    those of $L^{-1} \Sigma L^{-\top}$ with $L$ the Cholesky factor of $M$.
+
+    Normalised by the dimension, like
+    :func:`~hdrlib.learning.rmt.rmt_corrected_squared_distance`, which it is
+    compared against, so that the two are on the same scale.
     """
     be = get_backend_module(backend)
     n_features = covariances.shape[-1]
@@ -221,7 +232,27 @@ def riemannian_kmeans(
     backend: Union[str, Backend] = "numpy",
     verbose: bool = False,
 ) -> Tuple[np.ndarray, float]:
-    """K-means on the cone, alternating assignment and Fréchet re-estimation.
+    r"""K-means on the cone, alternating assignment and Fréchet re-estimation.
+
+    Lloyd's algorithm with the Euclidean distance and arithmetic mean replaced
+    by a distance on the SPD cone and the Fréchet mean it induces. From a
+    random partition, the two steps alternate until the labels settle:
+
+    $$
+    \ell_k \leftarrow \arg\min_{j} \; d^2\!\left(\Sigma_k, M_j\right),
+    \qquad
+    M_j \leftarrow \arg\min_{M \succ 0} \sum_{k \,:\, \ell_k = j}
+    d^2\!\left(\Sigma_k, M\right),
+    $$
+
+    and the restart kept is the one of least inertia
+    $\sum_k d^2(\Sigma_k, M_{\ell_k})$.
+
+    Only $d^2$ changes between the four methods. ``SCM``, ``LW`` and ``LW-NL``
+    regularise each covariance first and then use the plain distance
+    :func:`squared_fisher_distance`; ``RMT`` leaves the covariances alone and
+    uses the corrected
+    :func:`~hdrlib.learning.rmt.rmt_corrected_squared_distance` instead.
 
     Parameters
     ----------
@@ -363,12 +394,20 @@ def riemannian_kmeans(
 def match_labels(
     prediction: np.ndarray, truth: np.ndarray, match_unlabelled: bool = True
 ) -> np.ndarray:
-    """Relabel a partition to agree as well as possible with a ground truth.
+    r"""Relabel a partition to agree as well as possible with a ground truth.
 
     A clustering has no reason to name its groups the way the ground truth
-    does, so the two are matched by the assignment that maximises agreement
-    (Hungarian algorithm) before any score is computed. Without this step every
-    score would measure the arbitrary numbering of the clusters.
+    does, so the two are matched before any score is computed by the bijection
+    $\sigma$ maximising the number of pixels on which they agree,
+
+    $$
+    \sigma^{\star} = \arg\max_{\sigma} \sum_{j}
+    \left| \{\hat{y} = j\} \cap \{y = \sigma(j)\} \right| ,
+    $$
+
+    solved exactly as a linear assignment problem (Hungarian algorithm).
+    Without this step every score would measure the arbitrary numbering of the
+    clusters rather than the partition.
 
     Parameters
     ----------
@@ -416,11 +455,22 @@ def clustering_accuracy(prediction: np.ndarray, truth: np.ndarray) -> float:
 
 
 def mean_iou(prediction: np.ndarray, truth: np.ndarray) -> Tuple[np.ndarray, float]:
-    """Intersection over union, per class and averaged, after matching.
+    r"""Intersection over union, per class and averaged, after matching.
+
+    Over the annotated pixels only, and for each ground-truth class $c$,
+
+    $$
+    \mathrm{IoU}_c = \frac{|\{\hat{y} = c\} \cap \{y = c\}|}
+                           {|\{\hat{y} = c\} \cup \{y = c\}|},
+    \qquad
+    \mathrm{mIoU} = \frac{1}{|\mathcal{C}|} \sum_{c \in \mathcal{C}}
+                     \mathrm{IoU}_c .
+    $$
 
     Reported alongside the accuracy because the two disagree in an informative
-    way: accuracy is dominated by the large classes, mIoU is not. A method can
-    win on one and lose on the other, and the memoir says so.
+    way: accuracy is dominated by the large classes, since it counts pixels,
+    while mIoU weights every class equally however small it is. A method can
+    therefore win on one and lose on the other.
     """
     labelled = truth > 0
     classes = np.unique(truth[labelled])
@@ -753,7 +803,27 @@ def spd_kmeans(
     backend: Union[str, Backend] = "numpy",
     verbose: bool = False,
 ) -> Tuple[np.ndarray, float, list]:
-    """K-means on a set of SPD matrices, alternating assignment and re-estimation.
+    r"""K-means on a set of SPD matrices, alternating assignment and re-estimation.
+
+    Same alternation as :func:`riemannian_kmeans`, written to keep the data on
+    the device it already lives on, and offering the three geometries the
+    covariance-clustering literature compares:
+
+    $$
+    \begin{aligned}
+    \texttt{euclid} &: & d^2(A, B) &= \|A - B\|_F^2, &
+      M_j &= \tfrac{1}{|C_j|} \textstyle\sum_{k \in C_j} \Sigma_k, \\
+    \texttt{logeuclid} &: & d^2(A, B) &= \|\log A - \log B\|_F^2, &
+      M_j &= \exp\!\left(\tfrac{1}{|C_j|}
+             \textstyle\sum_{k \in C_j} \log \Sigma_k\right), \\
+    \texttt{riemann} &: & d^2(A, B) &=
+      \left\|\log\!\left(A^{-1/2} B A^{-1/2}\right)\right\|_F^2, &
+      M_j &= \text{Karcher mean of } \{\Sigma_k\}_{k \in C_j}.
+    \end{aligned}
+    $$
+
+    The first two have a closed-form mean; the third does not, and is iterated
+    to ``mean_iterations`` or ``mean_tol``.
 
     Parameters
     ----------

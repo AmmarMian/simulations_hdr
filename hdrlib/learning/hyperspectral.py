@@ -11,9 +11,10 @@
 #   image -> remove the global mean -> PCA to n_features bands
 #         -> sliding window -> one covariance per pixel
 #
-# and it is where the dimensional regime of ch:learning becomes concrete: a
-# 5x5 window gives 25 samples for 5 to 16 bands, so c = d/N sits between 0.2
-# and 0.64. Nowhere near the classical asymptotic regime.
+# and it is where the dimensional regime that motivates the whole comparison
+# becomes concrete: a 5x5 window gives 25 samples for 5 to 16 bands, so the
+# concentration ratio c = p/n sits between 0.2 and 0.64. Nowhere near the
+# classical asymptotic regime, where c would tend to 0.
 
 import os
 from pathlib import Path
@@ -172,7 +173,22 @@ def remove_global_mean(cube: Array, backend: Union[str, Backend] = "numpy") -> A
 def pca_image(
     cube: Array, n_features: int, backend: Union[str, Backend] = "numpy"
 ) -> Array:
-    """Keep the ``n_features`` leading principal components of a cube.
+    r"""Keep the ``n_features`` leading principal components of a cube.
+
+    The spectra are centred and the covariance of the whole scene is
+    diagonalised; each pixel is then written in the basis of the eigenvectors
+    of the $q$ largest eigenvalues:
+
+    $$
+    \widehat{C} = \frac{1}{N} \sum_{k=1}^{N}
+                   (s_k - \bar{s})(s_k - \bar{s})^{\top}
+                 = U \Lambda U^{\top},
+    \qquad
+    \tilde{s}_k = U_{q}^{\top} (s_k - \bar{s}),
+    $$
+
+    with $U_q$ the columns of $U$ belonging to
+    $\lambda_1 \ge \dots \ge \lambda_q$.
 
     A handful of principal directions represent these scenes well, and the
     reduction is what brings the dimension into a range where a small window
@@ -259,7 +275,20 @@ def crop_labels(
 def covariance_per_pixel(
     windows: Array, backend: Union[str, Backend] = "numpy"
 ) -> Array:
-    """Sample covariance of every window, centred on the window's own mean."""
+    r"""Sample covariance of every window, centred on the window's own mean.
+
+    For a window holding the $n = w^2$ spectra $x_1, \dots, x_n$ of a
+    $w \times w$ neighbourhood,
+
+    $$
+    \widehat{\Sigma} = \frac{1}{n} \sum_{k=1}^{n}
+    (x_k - \bar{x})(x_k - \bar{x})^{\top},
+    \qquad \bar{x} = \frac{1}{n} \sum_{k=1}^{n} x_k .
+    $$
+
+    This is the one matrix per pixel that the clustering then works on, and
+    $c = p / w^2$ is the concentration ratio the corrected methods exist for.
+    """
     be = get_backend_module(backend)
     centred = windows - be.mean(windows, axis=-2, keepdims=True)
     return be.swapaxes(centred, -1, -2) @ centred / windows.shape[-2]
