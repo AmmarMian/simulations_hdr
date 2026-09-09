@@ -22,7 +22,7 @@ uv run python 4-deeplearning/batchnorm_cost/main.py
 <a class="src-btn" href="https://github.com/AmmarMian/simulations_hdr/blob/main/4-deeplearning/batchnorm_cost/main.py" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.42 7.42 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg><span>View on GitHub</span></a>
 </div>
 <details class="src-view">
-<summary><span class="src-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>Source code</span><span class="param-alias">357 lines</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg></span></summary>
+<summary><span class="src-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>Source code</span><span class="param-alias">366 lines</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg></span></summary>
 <div class="src-body">
 <p class="src-path">4-deeplearning/batchnorm_cost/main.py</p>
 <div class="highlight"><pre><span></span><span class="c1"># What the hand-written backward of the batch-norm layer costs, and what it saves.</span>
@@ -56,6 +56,7 @@ uv run python 4-deeplearning/batchnorm_cost/main.py
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">hdrlib.core.exporter</span><span class="w"> </span><span class="kn">import</span> <span class="n">save_tikz</span><span class="p">,</span> <span class="n">write_prov_sidecar</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">hdrlib.core.mc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Progress</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">hdrlib.core.plot_style</span><span class="w"> </span><span class="kn">import</span> <span class="n">apply_style</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">yetanotherspdnet.nn.batchnorm</span><span class="w"> </span><span class="kn">import</span> <span class="n">BatchNormSPDMean</span>
@@ -172,6 +173,12 @@ uv run python 4-deeplearning/batchnorm_cost/main.py
 <span class="k">def</span><span class="w"> </span><span class="nf">run_sweep</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Every (mean, differentiation) combination along one axis.&quot;&quot;&quot;</span>
     <span class="n">records</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="c1"># One step per point of the swept axis: the cost grows steeply along it,</span>
+    <span class="c1"># so a finer unit would report a rate that means nothing.</span>
+    <span class="n">progress</span> <span class="o">=</span> <span class="n">Progress</span><span class="p">(</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">storage_path</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">),</span>
+        <span class="n">description</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Sweep over </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;points&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">mean_type</span> <span class="ow">in</span> <span class="n">args</span><span class="o">.</span><span class="n">means</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">use_autograd</span> <span class="ow">in</span> <span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">):</span>
@@ -196,6 +203,8 @@ uv run python 4-deeplearning/batchnorm_cost/main.py
                     <span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span> <span class="n">mean_type</span><span class="o">=</span><span class="n">mean_type</span><span class="p">,</span> <span class="n">use_autograd</span><span class="o">=</span><span class="n">use_autograd</span>
                 <span class="p">)</span>
                 <span class="n">records</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">measurement</span><span class="p">)</span>
+        <span class="n">progress</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+    <span class="n">progress</span><span class="o">.</span><span class="n">done</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">records</span>
 
 

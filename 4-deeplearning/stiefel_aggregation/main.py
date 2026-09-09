@@ -26,6 +26,7 @@ import numpy as np
 import torch
 
 from hdrlib.core.exporter import save_tikz, write_prov_sidecar
+from hdrlib.core.mc import Progress
 from hdrlib.core.plot_style import apply_style
 
 from yetanotherspdnet.functions.stiefel import (
@@ -174,17 +175,25 @@ if __name__ == "__main__":
     generator.manual_seed(args.seed)
 
     results = {}
-    for dimensions in geometries:
-        for n_clients in args.n_clients:
-            gaps, displacements = measure(
-                dimensions, n_clients, args.dispersions, args.n_repeats,
-                generator, device, dtype,
-            )
-            results[(dimensions, n_clients)] = {
-                "gaps": gaps,
-                "displacements": displacements,
-                "order": fitted_order(args.dispersions, gaps, args.floor),
-            }
+    # One step per (geometry, client count): the unit the sweep is written in,
+    # and the one whose cost the user controls through --dimensions and
+    # --n_clients.
+    with Progress(
+        args.storage_path, len(geometries) * len(args.n_clients),
+        description="Geometries x clients", unit="fits",
+    ) as progress:
+        for dimensions in geometries:
+            for n_clients in args.n_clients:
+                gaps, displacements = measure(
+                    dimensions, n_clients, args.dispersions, args.n_repeats,
+                    generator, device, dtype,
+                )
+                results[(dimensions, n_clients)] = {
+                    "gaps": gaps,
+                    "displacements": displacements,
+                    "order": fitted_order(args.dispersions, gaps, args.floor),
+                }
+                progress.step()
 
     fig, axes = plt.subplots(1, 2, figsize=(3.4 * 2, 3.4))
 

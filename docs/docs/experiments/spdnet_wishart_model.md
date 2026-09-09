@@ -22,7 +22,7 @@ uv run python 4-deeplearning/wishart_model/df_sweep.py
 <a class="src-btn" href="https://github.com/AmmarMian/simulations_hdr/blob/main/4-deeplearning/wishart_model/df_sweep.py" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.42 7.42 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg><span>View on GitHub</span></a>
 </div>
 <details class="src-view">
-<summary><span class="src-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>Source code</span><span class="param-alias">187 lines</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg></span></summary>
+<summary><span class="src-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>Source code</span><span class="param-alias">194 lines</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg></span></summary>
 <div class="src-body">
 <p class="src-path">4-deeplearning/wishart_model/df_sweep.py</p>
 <div class="highlight"><pre><span></span><span class="c1"># Does the mean matched to the model win, and by how much?</span>
@@ -54,6 +54,7 @@ uv run python 4-deeplearning/wishart_model/df_sweep.py
 <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">hdrlib.core.mc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Progress</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">hdrlib.core.exporter</span><span class="w"> </span><span class="kn">import</span> <span class="n">save_tikz</span><span class="p">,</span> <span class="n">write_prov_sidecar</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">hdrlib.core.plot_style</span><span class="w"> </span><span class="kn">import</span> <span class="n">apply_style</span>
 
@@ -83,6 +84,10 @@ uv run python 4-deeplearning/wishart_model/df_sweep.py
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;One experiment per (df, model, mean, seed), all through eusipco_2026.&quot;&quot;&quot;</span>
     <span class="n">accuracies</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
     <span class="n">total</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">df</span><span class="p">)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">MODELS</span><span class="p">)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">means</span><span class="p">)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">seeds</span><span class="p">)</span>
+    <span class="n">progress</span> <span class="o">=</span> <span class="n">Progress</span><span class="p">(</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">storage_path</span><span class="p">,</span> <span class="n">total</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;df x model x mean x seed&quot;</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;fits&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="n">done</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="k">for</span> <span class="n">df</span> <span class="ow">in</span> <span class="n">args</span><span class="o">.</span><span class="n">df</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">position</span> <span class="ow">in</span> <span class="n">MODELS</span><span class="p">:</span>
@@ -107,11 +112,13 @@ uv run python 4-deeplearning/wishart_model/df_sweep.py
                     <span class="n">result</span> <span class="o">=</span> <span class="n">run_single_experiment</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">force_cpu</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">cpu</span><span class="p">)</span>
                     <span class="n">accuracies</span><span class="p">[(</span><span class="n">df</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">mean</span><span class="p">)]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s2">&quot;test_acc&quot;</span><span class="p">])</span>
                     <span class="n">done</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="n">progress</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
                     <span class="nb">print</span><span class="p">(</span>
                         <span class="sa">f</span><span class="s2">&quot;  [</span><span class="si">{</span><span class="n">done</span><span class="si">:</span><span class="s2">4d</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">total</span><span class="si">}</span><span class="s2">] df=</span><span class="si">{</span><span class="n">df</span><span class="si">:</span><span class="s2">4d</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">MODELS</span><span class="p">[</span><span class="n">position</span><span class="p">]</span><span class="si">:</span><span class="s2">16s</span><span class="si">}</span><span class="s2"> &quot;</span>
                         <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">mean</span><span class="si">:</span><span class="s2">40s</span><span class="si">}</span><span class="s2"> seed=</span><span class="si">{</span><span class="n">seed</span><span class="si">:</span><span class="s2">5d</span><span class="si">}</span><span class="s2"> acc=</span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;test_acc&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
                         <span class="n">flush</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                     <span class="p">)</span>
+    <span class="n">progress</span><span class="o">.</span><span class="n">done</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">accuracies</span>
 
 

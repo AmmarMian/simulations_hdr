@@ -38,7 +38,7 @@ from matplotlib.ticker import NullFormatter
 
 from hdrlib.core.backend import get_data_on_device, to_numpy
 from hdrlib.core.exporter import save_tikz, write_prov_sidecar
-from hdrlib.core.mc import add_mc_base_args, init_logging, make_mc_parser
+from hdrlib.core.mc import Progress, add_mc_base_args, init_logging, make_mc_parser
 from hdrlib.core.plot_style import apply_style
 from hdrlib.learning import rmt
 
@@ -146,12 +146,15 @@ def one_trial(job, rng_seed, centre, n_axis, args):
     }
 
 
-def sweep(rng_seed, centre, axis_name, axis_values, fixed, args):
+def sweep(rng_seed, centre, axis_name, axis_values, fixed, args, progress=None):
     """One panel: errors of every method over a Monte-Carlo, per axis value.
 
     The trials of every axis value are independent, so the whole panel is one
     flat job list. On the numpy backend it is handed to a process pool; the
     other backends already batch internally and are run in this process.
+
+    ``progress`` is owned by the caller and spans both panels, so that the run
+    reports one monotone count rather than restarting halfway.
     """
     errors = {name: np.zeros((len(axis_values), args.n_trials)) for name in METHODS}
     jobs = [
@@ -170,11 +173,25 @@ def sweep(rng_seed, centre, axis_name, axis_values, fixed, args):
     )
 
     n_workers = args.n_workers or os.cpu_count()
+    # One step per trial. pool.map would only return once every job was done,
+    # which is precisely the hour this experiment takes, so the pool is drained
+    # with imap_unordered instead: same jobs, same results, but each one lands
+    # as it finishes and can be counted. The order is restored below anyway,
+    # since every result carries its own (index, trial).
+    def advance():
+        if progress is not None:
+            progress.step()
+
+    results = []
     if args.backend == "numpy" and n_workers > 1:
         with Pool(n_workers) as pool:
-            results = pool.map(worker, jobs)
+            for result in pool.imap_unordered(worker, jobs):
+                results.append(result)
+                advance()
     else:
-        results = [worker(job) for job in jobs]
+        for job in jobs:
+            results.append(worker(job))
+            advance()
 
     for index, trial, scores in results:
         for name, score in scores.items():
@@ -287,16 +304,25 @@ if __name__ == "__main__":
           f"backend = {args.backend}")
     print("panel 1 — against the number of samples "
           f"(K = {args.n_matrices_fixed}):")
-    errors_samples = sweep(
-        args.seed, centre, "n_samples", args.n_samples,
-        args.n_matrices_fixed, args,
+    # One counter over both panels: two Progress objects would write the same
+    # progress.txt and the second would truncate the first.
+    total_trials = (
+        (len(args.n_samples) + len(args.n_matrices)) * args.n_trials
     )
-    print("panel 2 — against the number of matrices "
-          f"(N = {args.n_samples_fixed}):")
-    errors_matrices = sweep(
-        args.seed + 1, centre, "n_matrices", args.n_matrices,
-        args.n_samples_fixed, args,
-    )
+    with Progress(
+        args.storage_path, total_trials,
+        description="Monte-Carlo trials", unit="trials",
+    ) as progress:
+        errors_samples = sweep(
+            args.seed, centre, "n_samples", args.n_samples,
+            args.n_matrices_fixed, args, progress,
+        )
+        print("panel 2 — against the number of matrices "
+              f"(N = {args.n_samples_fixed}):")
+        errors_matrices = sweep(
+            args.seed + 1, centre, "n_matrices", args.n_matrices,
+            args.n_samples_fixed, args, progress,
+        )
 
     fig, axes = plt.subplots(1, 2, figsize=(6.4, 3.2))
     draw(axes[0], args.n_samples, errors_samples,

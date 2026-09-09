@@ -22,7 +22,7 @@ uv run python 3-learning/frechet_mse/main.py
 <a class="src-btn" href="https://github.com/AmmarMian/simulations_hdr/blob/main/3-learning/frechet_mse/main.py" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.42 7.42 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg><span>View on GitHub</span></a>
 </div>
 <details class="src-view">
-<summary><span class="src-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>Source code</span><span class="param-alias">335 lines</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg></span></summary>
+<summary><span class="src-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>Source code</span><span class="param-alias">361 lines</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg></span></summary>
 <div class="src-body">
 <p class="src-path">3-learning/frechet_mse/main.py</p>
 <div class="highlight"><pre><span></span><span class="c1"># How well is the Fréchet mean of a set of covariances estimated?</span>
@@ -65,7 +65,7 @@ uv run python 3-learning/frechet_mse/main.py
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">hdrlib.core.backend</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_data_on_device</span><span class="p">,</span> <span class="n">to_numpy</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">hdrlib.core.exporter</span><span class="w"> </span><span class="kn">import</span> <span class="n">save_tikz</span><span class="p">,</span> <span class="n">write_prov_sidecar</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">hdrlib.core.mc</span><span class="w"> </span><span class="kn">import</span> <span class="n">add_mc_base_args</span><span class="p">,</span> <span class="n">init_logging</span><span class="p">,</span> <span class="n">make_mc_parser</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">hdrlib.core.mc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Progress</span><span class="p">,</span> <span class="n">add_mc_base_args</span><span class="p">,</span> <span class="n">init_logging</span><span class="p">,</span> <span class="n">make_mc_parser</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">hdrlib.core.plot_style</span><span class="w"> </span><span class="kn">import</span> <span class="n">apply_style</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">hdrlib.learning</span><span class="w"> </span><span class="kn">import</span> <span class="n">rmt</span>
 
@@ -173,12 +173,15 @@ uv run python 3-learning/frechet_mse/main.py
     <span class="p">}</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">sweep</span><span class="p">(</span><span class="n">rng_seed</span><span class="p">,</span> <span class="n">centre</span><span class="p">,</span> <span class="n">axis_name</span><span class="p">,</span> <span class="n">axis_values</span><span class="p">,</span> <span class="n">fixed</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">sweep</span><span class="p">(</span><span class="n">rng_seed</span><span class="p">,</span> <span class="n">centre</span><span class="p">,</span> <span class="n">axis_name</span><span class="p">,</span> <span class="n">axis_values</span><span class="p">,</span> <span class="n">fixed</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">progress</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;One panel: errors of every method over a Monte-Carlo, per axis value.</span>
 
 <span class="sd">    The trials of every axis value are independent, so the whole panel is one</span>
 <span class="sd">    flat job list. On the numpy backend it is handed to a process pool; the</span>
 <span class="sd">    other backends already batch internally and are run in this process.</span>
+
+<span class="sd">    ``progress`` is owned by the caller and spans both panels, so that the run</span>
+<span class="sd">    reports one monotone count rather than restarting halfway.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">errors</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">axis_values</span><span class="p">),</span> <span class="n">args</span><span class="o">.</span><span class="n">n_trials</span><span class="p">))</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">METHODS</span><span class="p">}</span>
     <span class="n">jobs</span> <span class="o">=</span> <span class="p">[</span>
@@ -197,11 +200,25 @@ uv run python 3-learning/frechet_mse/main.py
     <span class="p">)</span>
 
     <span class="n">n_workers</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">n_workers</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">()</span>
+    <span class="c1"># One step per trial. pool.map would only return once every job was done,</span>
+    <span class="c1"># which is precisely the hour this experiment takes, so the pool is drained</span>
+    <span class="c1"># with imap_unordered instead: same jobs, same results, but each one lands</span>
+    <span class="c1"># as it finishes and can be counted. The order is restored below anyway,</span>
+    <span class="c1"># since every result carries its own (index, trial).</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">advance</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">progress</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">progress</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+
+    <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">backend</span> <span class="o">==</span> <span class="s2">&quot;numpy&quot;</span> <span class="ow">and</span> <span class="n">n_workers</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
         <span class="k">with</span> <span class="n">Pool</span><span class="p">(</span><span class="n">n_workers</span><span class="p">)</span> <span class="k">as</span> <span class="n">pool</span><span class="p">:</span>
-            <span class="n">results</span> <span class="o">=</span> <span class="n">pool</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">worker</span><span class="p">,</span> <span class="n">jobs</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">pool</span><span class="o">.</span><span class="n">imap_unordered</span><span class="p">(</span><span class="n">worker</span><span class="p">,</span> <span class="n">jobs</span><span class="p">):</span>
+                <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+                <span class="n">advance</span><span class="p">()</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">results</span> <span class="o">=</span> <span class="p">[</span><span class="n">worker</span><span class="p">(</span><span class="n">job</span><span class="p">)</span> <span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">jobs</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">jobs</span><span class="p">:</span>
+            <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">worker</span><span class="p">(</span><span class="n">job</span><span class="p">))</span>
+            <span class="n">advance</span><span class="p">()</span>
 
     <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">trial</span><span class="p">,</span> <span class="n">scores</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">score</span> <span class="ow">in</span> <span class="n">scores</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -314,16 +331,25 @@ uv run python 3-learning/frechet_mse/main.py
           <span class="sa">f</span><span class="s2">&quot;backend = </span><span class="si">{</span><span class="n">args</span><span class="o">.</span><span class="n">backend</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;panel 1 — against the number of samples &quot;</span>
           <span class="sa">f</span><span class="s2">&quot;(K = </span><span class="si">{</span><span class="n">args</span><span class="o">.</span><span class="n">n_matrices_fixed</span><span class="si">}</span><span class="s2">):&quot;</span><span class="p">)</span>
-    <span class="n">errors_samples</span> <span class="o">=</span> <span class="n">sweep</span><span class="p">(</span>
-        <span class="n">args</span><span class="o">.</span><span class="n">seed</span><span class="p">,</span> <span class="n">centre</span><span class="p">,</span> <span class="s2">&quot;n_samples&quot;</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">n_samples</span><span class="p">,</span>
-        <span class="n">args</span><span class="o">.</span><span class="n">n_matrices_fixed</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span>
+    <span class="c1"># One counter over both panels: two Progress objects would write the same</span>
+    <span class="c1"># progress.txt and the second would truncate the first.</span>
+    <span class="n">total_trials</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">n_samples</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">n_matrices</span><span class="p">))</span> <span class="o">*</span> <span class="n">args</span><span class="o">.</span><span class="n">n_trials</span>
     <span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;panel 2 — against the number of matrices &quot;</span>
-          <span class="sa">f</span><span class="s2">&quot;(N = </span><span class="si">{</span><span class="n">args</span><span class="o">.</span><span class="n">n_samples_fixed</span><span class="si">}</span><span class="s2">):&quot;</span><span class="p">)</span>
-    <span class="n">errors_matrices</span> <span class="o">=</span> <span class="n">sweep</span><span class="p">(</span>
-        <span class="n">args</span><span class="o">.</span><span class="n">seed</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">centre</span><span class="p">,</span> <span class="s2">&quot;n_matrices&quot;</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">n_matrices</span><span class="p">,</span>
-        <span class="n">args</span><span class="o">.</span><span class="n">n_samples_fixed</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span>
-    <span class="p">)</span>
+    <span class="k">with</span> <span class="n">Progress</span><span class="p">(</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">storage_path</span><span class="p">,</span> <span class="n">total_trials</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Monte-Carlo trials&quot;</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;trials&quot;</span><span class="p">,</span>
+    <span class="p">)</span> <span class="k">as</span> <span class="n">progress</span><span class="p">:</span>
+        <span class="n">errors_samples</span> <span class="o">=</span> <span class="n">sweep</span><span class="p">(</span>
+            <span class="n">args</span><span class="o">.</span><span class="n">seed</span><span class="p">,</span> <span class="n">centre</span><span class="p">,</span> <span class="s2">&quot;n_samples&quot;</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">n_samples</span><span class="p">,</span>
+            <span class="n">args</span><span class="o">.</span><span class="n">n_matrices_fixed</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">progress</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;panel 2 — against the number of matrices &quot;</span>
+              <span class="sa">f</span><span class="s2">&quot;(N = </span><span class="si">{</span><span class="n">args</span><span class="o">.</span><span class="n">n_samples_fixed</span><span class="si">}</span><span class="s2">):&quot;</span><span class="p">)</span>
+        <span class="n">errors_matrices</span> <span class="o">=</span> <span class="n">sweep</span><span class="p">(</span>
+            <span class="n">args</span><span class="o">.</span><span class="n">seed</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">centre</span><span class="p">,</span> <span class="s2">&quot;n_matrices&quot;</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">n_matrices</span><span class="p">,</span>
+            <span class="n">args</span><span class="o">.</span><span class="n">n_samples_fixed</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">progress</span><span class="p">,</span>
+        <span class="p">)</span>
 
     <span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">6.4</span><span class="p">,</span> <span class="mf">3.2</span><span class="p">))</span>
     <span class="n">draw</span><span class="p">(</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">args</span><span class="o">.</span><span class="n">n_samples</span><span class="p">,</span> <span class="n">errors_samples</span><span class="p">,</span>

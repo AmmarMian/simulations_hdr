@@ -27,6 +27,7 @@ from collections import defaultdict
 import matplotlib.pyplot as plt
 import numpy as np
 
+from hdrlib.core.mc import Progress
 from hdrlib.core.exporter import save_tikz, write_prov_sidecar
 from hdrlib.core.plot_style import apply_style
 
@@ -56,6 +57,10 @@ def sweep(args):
     """One experiment per (df, model, mean, seed), all through eusipco_2026."""
     accuracies = defaultdict(list)
     total = len(args.df) * len(MODELS) * len(args.means) * len(args.seeds)
+    progress = Progress(
+        args.storage_path, total,
+        description="df x model x mean x seed", unit="fits",
+    )
     done = 0
     for df in args.df:
         for position in MODELS:
@@ -80,11 +85,13 @@ def sweep(args):
                     result = run_single_experiment(config, force_cpu=args.cpu)
                     accuracies[(df, position, mean)].append(result["test_acc"])
                     done += 1
+                    progress.step()
                     print(
                         f"  [{done:4d}/{total}] df={df:4d} {MODELS[position]:16s} "
                         f"{mean:40s} seed={seed:5d} acc={result['test_acc']:.3f}",
                         flush=True,
                     )
+    progress.done()
     return accuracies
 
 

@@ -29,6 +29,7 @@ import numpy as np
 import torch
 
 from hdrlib.core.exporter import save_tikz, write_prov_sidecar
+from hdrlib.core.mc import Progress
 from hdrlib.core.plot_style import apply_style
 
 from yetanotherspdnet.nn.batchnorm import BatchNormSPDMean
@@ -145,6 +146,12 @@ SWEEPS = {
 def run_sweep(name, values, args, device, dtype):
     """Every (mean, differentiation) combination along one axis."""
     records = []
+    # One step per point of the swept axis: the cost grows steeply along it,
+    # so a finer unit would report a rate that means nothing.
+    progress = Progress(
+        args.storage_path, len(values),
+        description=f"Sweep over {name}", unit="points",
+    )
     for value in values:
         for mean_type in args.means:
             for use_autograd in (False, True):
@@ -169,6 +176,8 @@ def run_sweep(name, values, args, device, dtype):
                     value=value, mean_type=mean_type, use_autograd=use_autograd
                 )
                 records.append(measurement)
+        progress.step()
+    progress.done()
     return records
 
 

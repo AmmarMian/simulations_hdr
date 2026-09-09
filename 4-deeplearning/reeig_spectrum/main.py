@@ -33,6 +33,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 
+from hdrlib.core.mc import Progress
 from hdrlib.core.exporter import save_tikz, write_prov_sidecar
 from hdrlib.core.plot_style import apply_style
 
@@ -60,6 +61,12 @@ def sweep(args, device, dtype):
 
     covariances_by_decay = {}
     records = []
+    # One step per (decay, ratio) cell: that is the grid the figure draws, and
+    # n_trials covariances are sampled inside each of them.
+    progress = Progress(
+        args.storage_path, len(args.decays) * len(args.ratios),
+        description="Decay x ratio", unit="cells",
+    )
     for decay in args.decays:
         true_covariance = decaying_covariance(
             args.n_filters, decay, device=device, dtype=dtype
@@ -75,6 +82,8 @@ def sweep(args, device, dtype):
             summary["ratio"] = ratio
             summary["n_pixels"] = n_pixels
             records.append(summary)
+            progress.step()
+    progress.done()
     return covariances_by_decay, records
 
 
