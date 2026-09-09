@@ -9,6 +9,9 @@ tags:
   - online
   - real-data
   - SAR
+params:
+  data-path: data/SAR/Scene_1.npy
+  window-size: 7
 actions:
   - plot:
       name: plot

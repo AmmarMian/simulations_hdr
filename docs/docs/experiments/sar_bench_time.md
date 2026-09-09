@@ -72,35 +72,35 @@ bash 2-detection/sar_experiments/benchmarks/time_benchmark.sh
 
 <span class="c1"># ---- CPU benchmarks ----------------------------------------------------------</span>
 <span class="n">run_benchmark</span> <span class="s2">&quot;cpu_gaussian_no_wavelet&quot;</span> \
-  <span class="s2">&quot;uv run $</span><span class="si">{SCRIPT_GAUSSIAN}</span><span class="s2"> $</span><span class="si">{DATA}</span><span class="s2"> $</span><span class="si">{WINDOW_SIZE}</span><span class="s2"> --backend torch-cpu --quiet&quot;</span>
+  <span class="s2">&quot;uv run $</span><span class="si">{SCRIPT_GAUSSIAN}</span><span class="s2"> --data-path $</span><span class="si">{DATA}</span><span class="s2"> --window-size $</span><span class="si">{WINDOW_SIZE}</span><span class="s2"> --backend torch-cpu --quiet&quot;</span>
 
 <span class="n">run_benchmark</span> <span class="s2">&quot;cpu_gaussian_wavelet&quot;</span> \
-  <span class="s2">&quot;uv run $</span><span class="si">{SCRIPT_GAUSSIAN}</span><span class="s2"> $</span><span class="si">{DATA}</span><span class="s2"> $</span><span class="si">{WINDOW_SIZE}</span><span class="s2"> --backend torch-cpu --wavelet --quiet&quot;</span>
+  <span class="s2">&quot;uv run $</span><span class="si">{SCRIPT_GAUSSIAN}</span><span class="s2"> --data-path $</span><span class="si">{DATA}</span><span class="s2"> --window-size $</span><span class="si">{WINDOW_SIZE}</span><span class="s2"> --backend torch-cpu --wavelet --quiet&quot;</span>
 
 <span class="n">run_benchmark</span> <span class="s2">&quot;cpu_dcg_no_wavelet&quot;</span> \
-  <span class="s2">&quot;uv run $</span><span class="si">{SCRIPT_DCG}</span><span class="s2"> $</span><span class="si">{DATA}</span><span class="s2"> $</span><span class="si">{WINDOW_SIZE}</span><span class="s2"> --backend torch-cpu --iteration-chunk 512 --quiet&quot;</span>
+  <span class="s2">&quot;uv run $</span><span class="si">{SCRIPT_DCG}</span><span class="s2"> --data-path $</span><span class="si">{DATA}</span><span class="s2"> --window-size $</span><span class="si">{WINDOW_SIZE}</span><span class="s2"> --backend torch-cpu --iteration-chunk 512 --quiet&quot;</span>
 
 <span class="n">run_benchmark</span> <span class="s2">&quot;cpu_dcg_wavelet&quot;</span> \
-  <span class="s2">&quot;uv run $</span><span class="si">{SCRIPT_DCG}</span><span class="s2"> $</span><span class="si">{DATA}</span><span class="s2"> $</span><span class="si">{WINDOW_SIZE}</span><span class="s2"> --backend torch-cpu --wavelet --iteration-chunk 512 --quiet&quot;</span>
+  <span class="s2">&quot;uv run $</span><span class="si">{SCRIPT_DCG}</span><span class="s2"> --data-path $</span><span class="si">{DATA}</span><span class="s2"> --window-size $</span><span class="si">{WINDOW_SIZE}</span><span class="s2"> --backend torch-cpu --wavelet --iteration-chunk 512 --quiet&quot;</span>
 
 <span class="n">run_benchmark</span> <span class="s2">&quot;cpu_kronecker_wavelet&quot;</span> \
-  <span class="s2">&quot;uv run $</span><span class="si">{SCRIPT_KRONECKER}</span><span class="s2"> $</span><span class="si">{DATA}</span><span class="s2"> $</span><span class="si">{WINDOW_SIZE}</span><span class="s2"> --backend torch-cpu --wavelet --quiet&quot;</span>
+  <span class="s2">&quot;uv run $</span><span class="si">{SCRIPT_KRONECKER}</span><span class="s2"> --data-path $</span><span class="si">{DATA}</span><span class="s2"> --window-size $</span><span class="si">{WINDOW_SIZE}</span><span class="s2"> --backend torch-cpu --wavelet --quiet&quot;</span>
 
 <span class="c1"># ---- GPU benchmarks ----------------------------------------------------------</span>
 <span class="n">run_benchmark</span> <span class="s2">&quot;gpu_gaussian_no_wavelet&quot;</span> \
-  <span class="s2">&quot;uv run $</span><span class="si">{SCRIPT_GAUSSIAN}</span><span class="s2"> $</span><span class="si">{DATA}</span><span class="s2"> $</span><span class="si">{WINDOW_SIZE}</span><span class="s2"> --backend torch-cuda --splitting (1,1) --quiet&quot;</span>
+  <span class="s2">&quot;uv run $</span><span class="si">{SCRIPT_GAUSSIAN}</span><span class="s2"> --data-path $</span><span class="si">{DATA}</span><span class="s2"> --window-size $</span><span class="si">{WINDOW_SIZE}</span><span class="s2"> --backend torch-cuda --splitting (1,1) --quiet&quot;</span>
 
 <span class="n">run_benchmark</span> <span class="s2">&quot;gpu_gaussian_wavelet&quot;</span> \
-  <span class="s2">&quot;uv run $</span><span class="si">{SCRIPT_GAUSSIAN}</span><span class="s2"> $</span><span class="si">{DATA}</span><span class="s2"> $</span><span class="si">{WINDOW_SIZE}</span><span class="s2"> --backend torch-cuda --wavelet --splitting (1,1) --quiet&quot;</span>
+  <span class="s2">&quot;uv run $</span><span class="si">{SCRIPT_GAUSSIAN}</span><span class="s2"> --data-path $</span><span class="si">{DATA}</span><span class="s2"> --window-size $</span><span class="si">{WINDOW_SIZE}</span><span class="s2"> --backend torch-cuda --wavelet --splitting (1,1) --quiet&quot;</span>
 
 <span class="n">run_benchmark</span> <span class="s2">&quot;gpu_dcg_no_wavelet&quot;</span> \
-  <span class="s2">&quot;uv run $</span><span class="si">{SCRIPT_DCG}</span><span class="s2"> $</span><span class="si">{DATA}</span><span class="s2"> $</span><span class="si">{WINDOW_SIZE}</span><span class="s2"> --backend torch-cuda --splitting (3,3) --iteration-chunk 512 --quiet&quot;</span>
+  <span class="s2">&quot;uv run $</span><span class="si">{SCRIPT_DCG}</span><span class="s2"> --data-path $</span><span class="si">{DATA}</span><span class="s2"> --window-size $</span><span class="si">{WINDOW_SIZE}</span><span class="s2"> --backend torch-cuda --splitting (3,3) --iteration-chunk 512 --quiet&quot;</span>
 
 <span class="n">run_benchmark</span> <span class="s2">&quot;gpu_dcg_wavelet&quot;</span> \
-  <span class="s2">&quot;uv run $</span><span class="si">{SCRIPT_DCG}</span><span class="s2"> $</span><span class="si">{DATA}</span><span class="s2"> $</span><span class="si">{WINDOW_SIZE}</span><span class="s2"> --backend torch-cuda --wavelet --splitting (6,6) --iteration-chunk 512 --quiet&quot;</span>
+  <span class="s2">&quot;uv run $</span><span class="si">{SCRIPT_DCG}</span><span class="s2"> --data-path $</span><span class="si">{DATA}</span><span class="s2"> --window-size $</span><span class="si">{WINDOW_SIZE}</span><span class="s2"> --backend torch-cuda --wavelet --splitting (6,6) --iteration-chunk 512 --quiet&quot;</span>
 
 <span class="n">run_benchmark</span> <span class="s2">&quot;gpu_kronecker_wavelet&quot;</span> \
-  <span class="s2">&quot;uv run $</span><span class="si">{SCRIPT_KRONECKER}</span><span class="s2"> $</span><span class="si">{DATA}</span><span class="s2"> $</span><span class="si">{WINDOW_SIZE}</span><span class="s2"> --backend torch-cuda --wavelet --splitting (6,6) --quiet&quot;</span>
+  <span class="s2">&quot;uv run $</span><span class="si">{SCRIPT_KRONECKER}</span><span class="s2"> --data-path $</span><span class="si">{DATA}</span><span class="s2"> --window-size $</span><span class="si">{WINDOW_SIZE}</span><span class="s2"> --backend torch-cuda --wavelet --splitting (6,6) --quiet&quot;</span>
 
 <span class="n">echo</span> <span class="s2">&quot;&quot;</span>
 <span class="n">echo</span> <span class="s2">&quot;All benchmarks done. Aggregating results and generating chart...&quot;</span>

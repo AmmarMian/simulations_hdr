@@ -46,35 +46,35 @@ run_benchmark() {
 
 # ---- CPU benchmarks ----------------------------------------------------------
 run_benchmark "cpu_gaussian_no_wavelet" \
-  "uv run python ${SCRIPT_GAUSSIAN} ${DATA} ${WINDOW_SIZE} --backend torch-cpu --quiet"
+  "uv run python ${SCRIPT_GAUSSIAN} --data-path ${DATA} --window-size ${WINDOW_SIZE} --backend torch-cpu --quiet"
 
 run_benchmark "cpu_gaussian_wavelet" \
-  "uv run python ${SCRIPT_GAUSSIAN} ${DATA} ${WINDOW_SIZE} --backend torch-cpu --wavelet --quiet"
+  "uv run python ${SCRIPT_GAUSSIAN} --data-path ${DATA} --window-size ${WINDOW_SIZE} --backend torch-cpu --wavelet --quiet"
 
 run_benchmark "cpu_dcg_no_wavelet" \
-  "uv run python ${SCRIPT_DCG} ${DATA} ${WINDOW_SIZE} --backend torch-cpu --quiet"
+  "uv run python ${SCRIPT_DCG} --data-path ${DATA} --window-size ${WINDOW_SIZE} --backend torch-cpu --quiet"
 
 run_benchmark "cpu_dcg_wavelet" \
-  "uv run python ${SCRIPT_DCG} ${DATA} ${WINDOW_SIZE} --backend torch-cpu --wavelet --quiet"
+  "uv run python ${SCRIPT_DCG} --data-path ${DATA} --window-size ${WINDOW_SIZE} --backend torch-cpu --wavelet --quiet"
 
 run_benchmark "cpu_kronecker_wavelet" \
-  "uv run python ${SCRIPT_KRONECKER} ${DATA} ${WINDOW_SIZE} --backend torch-cpu --wavelet --quiet"
+  "uv run python ${SCRIPT_KRONECKER} --data-path ${DATA} --window-size ${WINDOW_SIZE} --backend torch-cpu --wavelet --quiet"
 
 # ---- GPU benchmarks ----------------------------------------------------------
 run_benchmark "gpu_gaussian_no_wavelet" \
-  "uv run python ${SCRIPT_GAUSSIAN} ${DATA} ${WINDOW_SIZE} --backend torch-cuda --splitting (1,1) --quiet"
+  "uv run python ${SCRIPT_GAUSSIAN} --data-path ${DATA} --window-size ${WINDOW_SIZE} --backend torch-cuda --splitting (1,1) --quiet"
 
 run_benchmark "gpu_gaussian_wavelet" \
-  "uv run python ${SCRIPT_GAUSSIAN} ${DATA} ${WINDOW_SIZE} --backend torch-cuda --wavelet --splitting (1,1) --quiet"
+  "uv run python ${SCRIPT_GAUSSIAN} --data-path ${DATA} --window-size ${WINDOW_SIZE} --backend torch-cuda --wavelet --splitting (1,1) --quiet"
 
 run_benchmark "gpu_dcg_no_wavelet" \
-  "uv run python ${SCRIPT_DCG} ${DATA} ${WINDOW_SIZE} --backend torch-cuda --splitting (3,3) --quiet"
+  "uv run python ${SCRIPT_DCG} --data-path ${DATA} --window-size ${WINDOW_SIZE} --backend torch-cuda --splitting (3,3) --quiet"
 
 run_benchmark "gpu_dcg_wavelet" \
-  "uv run python ${SCRIPT_DCG} ${DATA} ${WINDOW_SIZE} --backend torch-cuda --wavelet --splitting (3,3) --quiet"
+  "uv run python ${SCRIPT_DCG} --data-path ${DATA} --window-size ${WINDOW_SIZE} --backend torch-cuda --wavelet --splitting (3,3) --quiet"
 
 run_benchmark "gpu_kronecker_wavelet" \
-  "uv run python ${SCRIPT_KRONECKER} ${DATA} ${WINDOW_SIZE} --backend torch-cuda --wavelet --splitting (3,3) --quiet"
+  "uv run python ${SCRIPT_KRONECKER} --data-path ${DATA} --window-size ${WINDOW_SIZE} --backend torch-cuda --wavelet --splitting (3,3) --quiet"
 
 echo ""
 echo "All benchmarks done. Aggregating results and generating chart..."

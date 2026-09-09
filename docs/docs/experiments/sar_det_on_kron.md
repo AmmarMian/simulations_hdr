@@ -193,13 +193,13 @@ uv run python 2-detection/sar_experiments/compute_detection_real_data/online_kro
 </div>
 <div class="param">
 <div class="param-head">
-<span class="param-flag">data_path</span><span class="param-type">str</span>
+<span class="param-flag">--data-path</span><span class="param-type">str</span><span class="param-default">default <b>data/SAR/Scene_1.npy</b></span>
 </div>
-<p class="param-help">Path to the numpy data file (.npy).</p>
+<p class="param-help">Path to the numpy data file (.npy). The loader resolves the matching *_time_first.npy produced by prepare_data.py.</p>
 </div>
 <div class="param">
 <div class="param-head">
-<span class="param-flag">window_size</span><span class="param-type">int</span>
+<span class="param-flag">--window-size</span><span class="param-type">int</span><span class="param-default">default <b>7</b></span>
 </div>
 <p class="param-help">Sliding window size.</p>
 </div>

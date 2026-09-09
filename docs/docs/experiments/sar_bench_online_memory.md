@@ -69,7 +69,7 @@ bash 2-detection/sar_experiments/benchmarks/memory_benchmark_online.sh
   <span class="n">local</span> <span class="n">html</span><span class="o">=</span><span class="s2">&quot;$</span><span class="si">{RESULTS_DIR}</span><span class="s2">/$</span><span class="si">{label}</span><span class="s2">.html&quot;</span>
 
   <span class="n">uv</span> <span class="n">run</span> <span class="n">python</span> <span class="o">-</span><span class="n">m</span> <span class="n">memray</span> <span class="n">run</span> <span class="o">--</span><span class="n">force</span> <span class="o">-</span><span class="n">o</span> <span class="s2">&quot;$bin&quot;</span> \
-    <span class="s2">&quot;$script&quot;</span> <span class="s2">&quot;$DATA&quot;</span> <span class="s2">&quot;$WINDOW_SIZE&quot;</span> <span class="err">$</span><span class="n">extra_args</span> <span class="o">--</span><span class="n">quiet</span>
+    <span class="s2">&quot;$script&quot;</span> <span class="o">--</span><span class="n">data</span><span class="o">-</span><span class="n">path</span> <span class="s2">&quot;$DATA&quot;</span> <span class="o">--</span><span class="n">window</span><span class="o">-</span><span class="n">size</span> <span class="s2">&quot;$WINDOW_SIZE&quot;</span> <span class="err">$</span><span class="n">extra_args</span> <span class="o">--</span><span class="n">quiet</span>
 
   <span class="n">uv</span> <span class="n">run</span> <span class="n">python</span> <span class="o">-</span><span class="n">m</span> <span class="n">memray</span> <span class="n">flamegraph</span> <span class="o">--</span><span class="n">force</span> <span class="o">-</span><span class="n">o</span> <span class="s2">&quot;$html&quot;</span> <span class="s2">&quot;$bin&quot;</span>
   <span class="n">echo</span> <span class="s2">&quot;  Flamegraph: $html&quot;</span>
@@ -94,7 +94,7 @@ bash 2-detection/sar_experiments/benchmarks/memory_benchmark_online.sh
   <span class="n">echo</span> <span class="s2">&quot;[$CURRENT/$TOTAL] === $label (GPU torch) ===&quot;</span>
 
   <span class="n">local</span> <span class="n">output</span>
-  <span class="n">output</span><span class="o">=</span><span class="err">$</span><span class="p">(</span><span class="n">uv</span> <span class="n">run</span> <span class="n">python</span> <span class="s2">&quot;$script&quot;</span> <span class="s2">&quot;$DATA&quot;</span> <span class="s2">&quot;$WINDOW_SIZE&quot;</span> \
+  <span class="n">output</span><span class="o">=</span><span class="err">$</span><span class="p">(</span><span class="n">uv</span> <span class="n">run</span> <span class="n">python</span> <span class="s2">&quot;$script&quot;</span> <span class="o">--</span><span class="n">data</span><span class="o">-</span><span class="n">path</span> <span class="s2">&quot;$DATA&quot;</span> <span class="o">--</span><span class="n">window</span><span class="o">-</span><span class="n">size</span> <span class="s2">&quot;$WINDOW_SIZE&quot;</span> \
     <span class="o">--</span><span class="n">backend</span> <span class="n">torch</span><span class="o">-</span><span class="n">cuda</span> <span class="err">$</span><span class="n">extra_args</span> <span class="o">--</span><span class="n">quiet</span> <span class="o">--</span><span class="n">report</span><span class="o">-</span><span class="n">memory</span> <span class="mi">2</span><span class="o">&gt;&amp;</span><span class="mi">1</span><span class="p">)</span>
 
   <span class="n">local</span> <span class="n">peak_bytes</span>

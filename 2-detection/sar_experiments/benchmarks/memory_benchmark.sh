@@ -41,7 +41,7 @@ run_cpu_memory() {
   local html="${RESULTS_DIR}/${label}.html"
 
   uv run python -m memray run --force -o "$bin" \
-    "$script" "$DATA" "$WINDOW_SIZE" $extra_args --quiet
+    "$script" --data-path "$DATA" --window-size "$WINDOW_SIZE" $extra_args --quiet
 
   uv run python -m memray flamegraph --force -o "$html" "$bin"
   echo "  Flamegraph: $html"
@@ -68,7 +68,7 @@ run_gpu_memory() {
   echo "[$CURRENT/$TOTAL] === $label (GPU torch) ==="
 
   local output
-  output=$(uv run python "$script" "$DATA" "$WINDOW_SIZE" \
+  output=$(uv run python "$script" --data-path "$DATA" --window-size "$WINDOW_SIZE" \
     --backend torch-cuda $extra_args --quiet --report-memory 2>&1)
 
   local peak_bytes

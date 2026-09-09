@@ -67,10 +67,24 @@ def add_common_args(parser: argparse.ArgumentParser) -> None:
     parser : argparse.ArgumentParser
         The parser to add arguments to.
     """
+    # Options rather than positionals so that qanat can carry them in the
+    # `params:` block of the experiment YAML, which is a mapping of flags to
+    # values and has no way to express a positional argument.
     parser.add_argument(
-        "data_path", type=str, help="Path to the numpy data file (.npy)."
+        "--data-path",
+        dest="data_path",
+        type=str,
+        default="data/SAR/Scene_1.npy",
+        help="Path to the numpy data file (.npy). The loader resolves the "
+             "matching *_time_first.npy produced by prepare_data.py.",
     )
-    parser.add_argument("window_size", type=int, help="Sliding window size.")
+    parser.add_argument(
+        "--window-size",
+        dest="window_size",
+        type=int,
+        default=7,
+        help="Sliding window size.",
+    )
     parser.add_argument(
         "--backend",
         type=str,
