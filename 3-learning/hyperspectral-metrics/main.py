@@ -52,6 +52,7 @@ from hdrlib.core.clustering import (
     SPD_METRICS,
     clustering_accuracy,
     match_labels,
+    reference_mean_iou,
     mean_iou,
     require_double,
     spd_kmeans,
@@ -254,11 +255,13 @@ def main():
         matched = match_labels(segmented, truth)
         accuracy = clustering_accuracy(matched, truth)
         ious, miou = mean_iou(matched, truth)
+        miou_reference = reference_mean_iou(matched, truth)
         elapsed = time.perf_counter() - start
 
         maps[metric] = matched
         scores[metric] = {
             "accuracy": accuracy, "mIoU": miou,
+            "mIoU_reference": miou_reference,
             # Comparable between restarts of one metric, never between metrics:
             # the three measure lengths in different geometries. The ranking of
             # the metrics is the accuracy and the mIoU, which are on the truth.

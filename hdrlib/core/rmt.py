@@ -530,15 +530,18 @@ def _descent(
     one_vec = _ones_like(be, backend, (n_features,), matrices)
 
     if init is None:
-        # The log-Euclidean mean, not the identity. It is closed-form, it costs
-        # one eigendecomposition per matrix, and above all it carries the scale
-        # of the data: starting from the identity on matrices whose eigenvalues
-        # reach 1e8 — ordinary for radiance values — makes the first gradient
-        # enormous and the line search fail before it has begun.
-        logarithms = _logm(be, backend, matrices)
-        mean = _expm(
-            be, backend, be.sum(logarithms, axis=0) / matrices.shape[0]
-        )
+        # The identity, as in the reference implementation. Both descents there
+        # start from it, and because the corrected cost is flat near its
+        # optimum the starting point decides where the iteration settles: with
+        # the log-Euclidean mean instead, the corrected mean lands 4e-2 away
+        # from the reference's, against 7e-6 from here.
+        #
+        # The log-Euclidean mean is the better start on badly scaled data — it
+        # carries the scale, where the identity leaves the first gradient
+        # enormous on matrices whose eigenvalues reach 1e8, as raw radiance
+        # does. Pass it explicitly as ``init`` when that is the situation;
+        # every experiment here normalises the scene first.
+        mean = _eye_like(be, backend, n_features, matrices)
     else:
         mean = init
     history = {"cost": [], "error": []}

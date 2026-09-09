@@ -54,6 +54,7 @@ __all__ = [
     "match_labels",
     "clustering_accuracy",
     "mean_iou",
+    "reference_mean_iou",
 ]
 
 
@@ -333,21 +334,45 @@ def riemannian_kmeans(
 # ── scoring an unsupervised partition ─────────────────────────────────────────
 
 
-def match_labels(prediction: np.ndarray, truth: np.ndarray) -> np.ndarray:
+def match_labels(
+    prediction: np.ndarray, truth: np.ndarray, match_unlabelled: bool = True
+) -> np.ndarray:
     """Relabel a partition to agree as well as possible with a ground truth.
 
     A clustering has no reason to name its groups the way the ground truth
     does, so the two are matched by the assignment that maximises agreement
     (Hungarian algorithm) before any score is computed. Without this step every
     score would measure the arbitrary numbering of the clusters.
+
+    Parameters
+    ----------
+    prediction, truth : ndarray
+    match_unlabelled : bool
+        Whether class 0, the unannotated background, competes for a cluster.
+
+        True reproduces the reference implementation and is the default. It has
+        a consequence worth knowing: on these scenes the background is about
+        half the image, so it wins one of the clusters outright, and since
+        there are as many clusters as annotated classes, one annotated class is
+        then left with no cluster at all and scores an IoU of exactly zero. On
+        Indian Pines that is class 1 for SCM and RMT and class 9 for LW-NL.
+
+        False matches on the annotated pixels only, so every cluster is spent
+        on a class that is actually scored. It raises mIoU by a few thousandths
+        and leaves the ranking of the methods alone.
     """
     from scipy.optimize import linear_sum_assignment
 
-    truth_classes = np.unique(truth)
+    if match_unlabelled:
+        truth_classes = np.unique(truth)
+        scored = np.ones(truth.shape, dtype=bool)
+    else:
+        scored = truth > 0
+        truth_classes = np.unique(truth[scored])
     prediction_classes = np.unique(prediction)
     cost = np.zeros((len(truth_classes), len(prediction_classes)))
     for i, truth_class in enumerate(truth_classes):
-        mask = truth == truth_class
+        mask = (truth == truth_class) & scored
         for j, prediction_class in enumerate(prediction_classes):
             cost[i, j] = -np.sum(prediction[mask] == prediction_class)
 
@@ -380,6 +405,33 @@ def mean_iou(prediction: np.ndarray, truth: np.ndarray) -> Tuple[np.ndarray, flo
         ious.append(intersection / union if union else 0.0)
     ious = np.asarray(ious)
     return ious, float(ious.mean())
+
+
+def reference_mean_iou(prediction: np.ndarray, truth: np.ndarray) -> float:
+    """mIoU as the reference implementation computes it, for comparison.
+
+    Two things differ from :func:`mean_iou`. The prediction is first forced to
+    agree with the ground truth wherever the ground truth is unannotated, and
+    the average is then taken over every class including that background one —
+    whose IoU is consequently close to 1 by construction.
+
+    The result is a number a few hundredths above :func:`mean_iou` on the same
+    partition: about +0.04 on Indian Pines and +0.02 on Salinas, being roughly
+    ``(1 - mIoU) / n_classes``. It shifts every method by nearly the same
+    amount and so changes no ranking, but a figure from this repository cannot
+    be read against a published table without knowing which of the two it is.
+    """
+    forced = prediction.copy()
+    forced[truth == 0] = 0
+    classes = np.union1d(np.unique(forced), np.unique(truth)).astype(np.int64)
+    classes = classes[classes >= 0]
+    within = np.isin(truth, classes)
+    ious = []
+    for cls in classes:
+        intersection = np.sum((forced == cls) & (truth == cls))
+        union = np.sum(((forced == cls) | (truth == cls)) & within)
+        ious.append(intersection / union if union else 0.0)
+    return float(np.mean(ious))
 
 
 # ── K-means on the SPD cone, device-resident ──────────────────────────────────

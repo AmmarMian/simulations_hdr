@@ -246,6 +246,14 @@ def main() -> int:
         ),
         1e-6,
     ))
+    # 1e-3, where the plain mean above is held to 1e-6: the corrected optimum
+    # is flat, so its *position* is not determined to better than about 1e-4
+    # even from the same starting point, while the cost at that position is
+    # matched far tighter. Measured over twelve draws, the port reaches a
+    # strictly lower corrected cost than the reference eight times and a higher
+    # one four times, the two differing by ~1e-6 — neither is the better
+    # minimiser, and the gap between the matrices is the width of the valley.
+    # The quantity the figures plot, the MSE below, agrees to 3e-5.
     passed.append(report(
         "RMT-corrected Fréchet mean",
         relative_error(
@@ -253,7 +261,7 @@ def main() -> int:
                 on_device(data), backend=args.backend)[0]),
             RMT_geometric_mean(data),
         ),
-        1e-4,
+        1e-3,
     ))
 
     # ── layer 6: what the figures actually plot ───────────────────────────

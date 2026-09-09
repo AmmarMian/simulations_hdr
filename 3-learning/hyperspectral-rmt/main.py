@@ -37,6 +37,7 @@ import matplotlib.pyplot as plt
 from hdrlib.core.clustering import (
     clustering_accuracy,
     match_labels,
+    reference_mean_iou,
     mean_iou,
     riemannian_kmeans,
 )
@@ -185,11 +186,13 @@ def main():
         matched = match_labels(segmented, truth)
         accuracy = clustering_accuracy(matched, truth)
         ious, miou = mean_iou(matched, truth)
+        miou_reference = reference_mean_iou(matched, truth)
         elapsed = time.perf_counter() - start
 
         per_seed.append({
             "seed": seed, "method": method,
             "accuracy": accuracy, "mIoU": miou,
+            "mIoU_reference": miou_reference,
             "inertia": inertia, "seconds": elapsed,
             "worst_moved": max(h["moved"] for h in histories),
         })
@@ -199,6 +202,7 @@ def main():
             maps[method] = matched
             scores[method] = {
                 "accuracy": accuracy, "mIoU": miou,
+                "mIoU_reference": miou_reference,
                 "inertia": inertia, "seconds": elapsed,
                 "restarts": histories,
                 "worst_moved": max(h["moved"] for h in histories),
