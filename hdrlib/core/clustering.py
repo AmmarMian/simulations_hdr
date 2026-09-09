@@ -103,10 +103,10 @@ def _plain_centroid_factory(shrinkage: Optional[str]):
         raise ValueError(f"unknown shrinkage {shrinkage!r}")
 
     def centroids(
-        windows, covariances, labels, n_clusters, n_samples, backend, max_iterations
+        windows, covariances, labels, classes, n_samples, backend, max_iterations
     ):
         out = []
-        for cluster in range(n_clusters):
+        for cluster in classes:
             member = labels == cluster
             out.append(
                 frechet_mean_cholesky(
@@ -129,10 +129,10 @@ def _rmt_centroid_factory():
         return scm(windows, backend)
 
     def centroids(
-        windows, covariances, labels, n_clusters, n_samples, backend, max_iterations
+        windows, covariances, labels, classes, n_samples, backend, max_iterations
     ):
         out = []
-        for cluster in range(n_clusters):
+        for cluster in classes:
             member = labels == cluster
             # Warm start on the plain mean of the cluster's SCMs: the corrected
             # descent has no closed-form optimality condition, so a decent
@@ -242,12 +242,15 @@ def riemannian_kmeans(
     revive_empty : bool
         Whether a cluster that empties mid-run is given a point back.
 
-        The reference implementation does not do this — it only redraws the
-        starting partition until every cluster is occupied — so pass False to
-        reproduce it. The cost of False is that an emptied cluster is fatal
-        rather than repaired. The cost of True is subtler: the revived cluster
-        is handed exactly one point, and the corrected mean of a single matrix
-        whitens to the identity, whose eigenvalues are all equal, which is a
+        False reproduces the reference implementation, which keeps one centroid
+        per label that still has members: an emptied cluster ceases to exist
+        and the run finishes with fewer groups than were asked for, silently.
+        On Indian Pines at the reference's own settings this happens — LW-NL
+        loses a cluster on the ninth restart of ten.
+
+        True, the default here, keeps the count by handing the empty cluster
+        one point. That has its own cost: the corrected mean of a single matrix
+        whitens to the identity, whose eigenvalues are all equal, and that is a
         pole of the corrected gradient.
     seed : int
     backend : str or Backend
@@ -291,8 +294,11 @@ def riemannian_kmeans(
     histories = []
     for restart in range(n_init):
         labels = _random_labels(rng, n_points, n_clusters)
+        # Which labels still have members. It stays the full range while empty
+        # clusters are revived, and can only shrink when they are not.
+        classes = np.arange(n_clusters)
         centres = centroid_fn(
-            device_windows, covariances, labels, n_clusters, n_samples, backend,
+            device_windows, covariances, labels, classes, n_samples, backend,
             mean_iterations,
         )
 
@@ -304,28 +310,21 @@ def riemannian_kmeans(
                 ],
                 axis=1,
             )
-            new_labels = distances.argmin(axis=1)
+            new_labels = classes[distances.argmin(axis=1)]
             if revive_empty:
                 new_labels = _revive_empty_clusters(
                     new_labels, distances, n_clusters
                 )
-            elif len(np.unique(new_labels)) < n_clusters:
-                # The reference implementation has no revival: it draws the
-                # starting partition until no cluster is empty and then trusts
-                # argmin. If a cluster empties anyway its centroid would be the
-                # mean of nothing, which is silently NaN and poisons every
-                # distance from then on, so say so instead.
-                empty = sorted(set(range(n_clusters)) - set(np.unique(new_labels)))
-                raise RuntimeError(
-                    f"cluster(s) {empty} emptied at iteration {iteration} of "
-                    f"restart {restart} with revive_empty=False. The centroid "
-                    "of an empty cluster is NaN; rerun with revive_empty=True "
-                    "or a different seed."
-                )
+            else:
+                # The reference keeps one centroid per label that still has
+                # members, so a cluster that empties simply ceases to exist and
+                # the run continues with fewer than n_clusters. Nothing warns:
+                # the partition is just coarser than the one that was asked for.
+                classes = np.unique(new_labels)
             moved = np.mean(new_labels != labels)
             labels = new_labels
             centres = centroid_fn(
-                device_windows, covariances, labels, n_clusters, n_samples,
+                device_windows, covariances, labels, classes, n_samples,
                 backend, mean_iterations,
             )
             if moved <= tol:
@@ -339,7 +338,7 @@ def riemannian_kmeans(
             axis=1,
         )
         inertia = float(
-            sum(distances[labels == c, c].sum() for c in range(n_clusters))
+            sum(distances[labels == c, j].sum() for j, c in enumerate(classes))
         )
         # ``moved`` is the fraction of points that changed cluster on the last
         # round. Reported because hitting the iteration cap is not by itself a
