@@ -115,11 +115,18 @@ def make_ab_toeplitz(
 ) -> tuple[np.ndarray, np.ndarray]:
     """Unit-determinant Toeplitz Kronecker factors, [A]_ij = rho^|i-j|.
 
-    This is the covariance model actually used to produce the figures of
-    Mian et al., Signal Processing 224 (2024) -- the body text of Section 5.1
-    describes random orthogonal factors with condition number 10, but the
-    published figure captions and the released code both use Toeplitz factors.
-    Kept as the default here so the chapter figures match the published ones.
+    This is the covariance model actually used to produce the figures of the
+    reference below: its Section 5.1 describes random orthogonal factors with
+    condition number 10 in the body text, but the published figure captions and
+    the released code both use Toeplitz factors. Kept as the default here so
+    the figures of this repository match the published ones.
+
+    **Reference**
+
+    A. Mian, G. Ginolhac, F. Bouchard and A. Breloy, "Online change detection in
+    SAR time-series with Kronecker product structured scaled Gaussian models",
+    *Signal Processing*, 224:109589, 2024.
+    [doi:10.1016/j.sigpro.2024.109589](https://doi.org/10.1016/j.sigpro.2024.109589)
 
     Parameters
     ----------
@@ -157,11 +164,18 @@ def generate_kronecker_data(
     tau_per_date: bool = False,
     return_tau: bool = False,
 ) -> "np.ndarray | tuple[np.ndarray, np.ndarray]":
-    """Kronecker SIRV data under H0: x_{t,n} ~ CN(0, tau_n * kron(A, B)).
+    r"""Kronecker SIRV data under $H_0$:
 
-    Uses the identity vec_col(M) ~ CN(0, kron(A,B)) when M = L_B @ G @ L_A^T,
-    G ~ CN(0, I_{b×a}). Note the transpose, not the conjugate transpose:
-    M = L_B @ G @ L_A^H would give kron(conj(A), B) instead, which is
+    $$
+    x_{t,n} \sim \mathcal{CN}\!\left(0,
+    \tau_n \, A \otimes B\right).
+    $$
+
+    Uses the identity $\operatorname{vec}(M) \sim
+    \mathcal{CN}(0, A \otimes B)$ when $M = L_B G L_A^{\top}$ with
+    $G \sim \mathcal{CN}(0, I_{b \times a})$. Note the transpose, not the
+    conjugate transpose: $M = L_B G L_A^H$ would give
+    $\overline{A} \otimes B$ instead, which is
     indistinguishable in online-vs-offline comparisons but wrong as soon as
     an estimate is compared to the ground truth A. Texture tau_n ~ Gamma(tau_shape, tau_scale), drawn once
     per sample and held FIXED across dates.

@@ -103,7 +103,8 @@ class SCMEstimator(Estimator):
 def _student_t_m_estimator_function(
     x: Array, df: float = 3, n_features: int = 1, **kwargs
 ):
-    """Student-t mle m-estimator function
+    r"""Student-t MLE M-estimator function,
+    $u(x) = (p + \nu/2) / (x + \nu/2)$.
 
     Parameters
     ----------
@@ -130,15 +131,18 @@ def _huber_m_estimator_function(
     backend_name: Union[str, Backend] = "numpy",
     **kwargs,
 ):
-    r"""Huber M-estimator function as defined for example in
-    > Statistiques des estimateurs robustes pour le traitement du signal et des images
-    > p 16, Ph.d Thesis, Gordana Draskovic
+    r"""Huber M-estimator function, for a threshold $\lambda$ and a real
+    $\beta$:
 
-    It consists of the function defined for a threshold $\lambda$ and a real $\beta$
-    by the equation :
     $$
-    u(x)=\frac{1}{\beta}\min\left(1, \lambda/x\right)
+    u(x) = \frac{1}{\beta} \min\!\left(1, \lambda / x\right).
     $$
+
+    **Reference**
+
+    G. Draskovic, "Statistiques des estimateurs robustes pour le traitement du
+    signal et des images", PhD thesis, CentraleSupelec, Universite Paris-Saclay,
+    2019, p. 16. [theses.fr/2019SACLC069](https://theses.fr/2019SACLC069)
 
     Parameters
     ----------
@@ -171,7 +175,7 @@ def _huber_m_estimator_function(
 
 
 def _tyler_m_estimator_function(x, n_features=1, **kwargs):
-    """Tyler M-estimator function
+    r"""Tyler M-estimator function, $u(x) = p / x$.
 
     Parameters
     ----------
@@ -297,10 +301,28 @@ def fixed_point_m_estimation_centered(
     normalization: Optional[str] = None,
     **kwargs,
 ) -> Array:
-    """Fixed-point algorithm for M-estimators of covariance matrix as defined in:
-    >Ricardo Antonio Maronna.
-    >"Robust $M$-Estimators of Multivariate Location and Scatter." The Annals of Statistics, 4(1) 51-67 January, 1976.
-    >https://doi.org/10.1214/aos/1176343347
+    r"""Fixed-point algorithm for M-estimators of the covariance matrix.
+
+    An M-estimator of scatter is a solution of
+
+    $$
+    \widehat{\Sigma} = \frac{1}{n} \sum_{k=1}^{n}
+    u\!\left(x_k^{\top} \widehat{\Sigma}^{-1} x_k\right) x_k x_k^{\top},
+    $$
+
+    the weight $u$ being what distinguishes one estimator from another: it
+    decides how much a sample far from the current ellipsoid still counts.
+    The equation is solved by iterating its right-hand side,
+
+    $$
+    \Sigma_{t+1} = \frac{1}{n} \sum_{k=1}^{n}
+    u\!\left(x_k^{\top} \Sigma_t^{-1} x_k\right) x_k x_k^{\top},
+    $$
+
+    from $\Sigma_0 = I_p$, until
+    $\|\Sigma_{t+1} - \Sigma_t\|_F / \|\Sigma_t\|_F$ falls under ``tol``.
+    Batched inputs converge independently: a matrix that has met the tolerance
+    stops being updated while the others continue.
 
     Data is assumed to be centered.
 
@@ -504,17 +526,25 @@ def fixed_point_m_estimation_centered(
 # Concrete M-Estimator Classes
 # -----------------------------------------------------------------------
 class TylerEstimator(Estimator):
-    """Tyler's M-estimator of scatter matrix.
+    r"""Tyler's M-estimator of scatter matrix.
 
-    Tyler's estimator is a robust, affine equivariant estimator that is insensitive
-    to the scale of the data. It requires normalization at each iteration since it
-    only estimates shape, not scale.
+    The fixed point of :func:`fixed_point_m_estimation_centered` with the
+    weight
 
-    Reference:
-    > David E. Tyler.
-    > "A Distribution-Free M-Estimator of Multivariate Scatter."
-    > The Annals of Statistics, 15(1) 234-251 March, 1987.
-    > https://doi.org/10.1214/aos/1176350263
+    $$
+    u(x) = \frac{p}{x},
+    $$
+
+    which makes the estimator depend on the directions of the samples alone.
+    It is therefore distribution-free over the whole elliptical family and
+    insensitive to the scale of the data — and, for the same reason, it
+    determines the shape only up to a positive factor, so a normalisation has
+    to be applied at every iteration to pin that factor down.
+
+    **Reference**
+
+    D. E. Tyler, "A distribution-free M-estimator of multivariate scatter", *The Annals of Statistics*, 15(1):234-251, 1987.
+    [doi:10.1214/aos/1176350263](https://doi.org/10.1214/aos/1176350263)
 
     Parameters
     ----------
@@ -617,18 +647,25 @@ class TylerEstimator(Estimator):
 
 
 class StudentTEstimator(Estimator):
-    """Student-t M-estimator of covariance matrix.
+    r"""Student-t M-estimator of covariance matrix.
 
-    The Student-t estimator assumes data follows a multivariate Student-t distribution.
-    It provides robustness to outliers, with the degree of robustness controlled by
-    the degrees of freedom parameter df. Low df (e.g., 3) gives strong robustness
-    and shrinkage, while high df (e.g., 300) approaches Gaussian MLE behavior.
+    Maximum-likelihood estimator under a multivariate Student-t distribution
+    with $\nu$ degrees of freedom, which is the fixed point of
+    :func:`fixed_point_m_estimation_centered` with the weight
 
-    Reference:
-    > Ricardo Antonio Maronna.
-    > "Robust M-Estimators of Multivariate Location and Scatter."
-    > The Annals of Statistics, 4(1) 51-67 January, 1976.
-    > https://doi.org/10.1214/aos/1176343347
+    $$
+    u(x) = \frac{p + \nu / 2}{x + \nu / 2}.
+    $$
+
+    Where Tyler ignores the magnitude of a sample entirely, this one merely
+    discounts it: $\nu$ sets how fast. Low $\nu$ (say 3) gives strong
+    robustness and shrinkage, high $\nu$ (say 300) sends $u(x) \to 1$ and
+    recovers the Gaussian maximum likelihood, that is, the sample covariance.
+
+    **Reference**
+
+    R. A. Maronna, "Robust M-estimators of multivariate location and scatter", *The Annals of Statistics*, 4(1):51-67, 1976.
+    [doi:10.1214/aos/1176343347](https://doi.org/10.1214/aos/1176343347)
 
     Parameters
     ----------
@@ -736,18 +773,25 @@ class StudentTEstimator(Estimator):
 
 
 class HuberEstimator(Estimator):
-    """Huber M-estimator of covariance matrix.
+    r"""Huber M-estimator of covariance matrix.
 
-    The Huber estimator provides a compromise between efficiency and robustness by
-    using a threshold-based weighting scheme. It behaves like the sample covariance
-    for small deviations and downweights large outliers beyond a threshold lambda.
+    A compromise between efficiency and robustness: the fixed point of
+    :func:`fixed_point_m_estimation_centered` with the piecewise weight
 
-    Reference:
-    > Statistiques des estimateurs robustes pour le traitement du signal et des images
-    > p 16, Ph.d Thesis, Gordana Draskovic
+    $$
+    u(x) = \frac{1}{\beta} \min\!\left(1, \frac{\lambda}{x}\right),
+    $$
 
-    The weighting function is:
-    u(x) = (1/beta) * min(1, lambda/x)
+    which leaves a sample alone while its quadratic form stays under the
+    threshold $\lambda$ — there the estimator is the sample covariance — and
+    downweights it as $\lambda / x$ beyond, as Tyler does. Setting
+    $\lambda = \infty$ recovers the sample covariance exactly.
+
+    **Reference**
+
+    G. Draskovic, "Statistiques des estimateurs robustes pour le traitement du
+    signal et des images", PhD thesis, CentraleSupelec, Universite Paris-Saclay,
+    2019, p. 16. [theses.fr/2019SACLC069](https://theses.fr/2019SACLC069)
 
     Parameters
     ----------
@@ -1256,9 +1300,10 @@ def tyler_cost(
 ) -> float:
     r"""Tyler's cost function, evaluated at a single scatter matrix.
 
-    .. math::
-        L(\Sigma) = \log\det\Sigma
-        + \frac{d}{N}\sum_{i=1}^{N}\log\left(x_i^H\Sigma^{-1}x_i\right).
+    $$
+    L(\Sigma) = \log\det\Sigma
+    + \frac{p}{N}\sum_{i=1}^{N}\log\!\left(x_i^H\Sigma^{-1}x_i\right).
+    $$
 
     This is the negative log-likelihood of the angular central Gaussian up to
     an affine transformation, the scaling being chosen so that the fixed-point
@@ -1292,13 +1337,15 @@ def tyler_riemannian_gradient(
 ) -> Array:
     r"""Riemannian gradient of :func:`tyler_cost` for the affine-invariant metric.
 
-    .. math::
-        \mathrm{grad}\,L(\Sigma) = \Sigma
-        - \frac{d}{N}\sum_{i=1}^{N}
-        \frac{x_i x_i^H}{x_i^H\Sigma^{-1}x_i}.
+    $$
+    \operatorname{grad} L(\Sigma) = \Sigma
+    - \frac{p}{N}\sum_{i=1}^{N}
+    \frac{x_i x_i^H}{x_i^H\Sigma^{-1}x_i}.
+    $$
 
-    The conversion from the Euclidean gradient is the congruence
-    ``Sigma @ egrad @ Sigma`` of the chapter, already carried out here: what
+    The conversion from the Euclidean gradient to the Riemannian one for the
+    affine-invariant metric is the congruence
+    $\Sigma \, \nabla L(\Sigma) \, \Sigma$, already carried out here: what
     remains is the difference between the current point and the fixed-point
     map, which is why a unit step recovers Tyler's iteration exactly.
 
@@ -1586,17 +1633,23 @@ def frechet_mean_affine_invariant(
 ) -> Tuple[Array, dict]:
     r"""Fréchet mean of a set of scatter matrices, by Riemannian descent.
 
-    Minimises the Fréchet variance
-    ``F(M) = (1/N) sum_i delta^2(M, Sigma_i)`` for the affine-invariant
-    distance, whose Riemannian gradient is ``-2/N sum_i log_M(Sigma_i)``.
-    The iteration is therefore
+    Minimises the Fréchet variance for the affine-invariant distance,
 
-    .. math::
-        M \leftarrow \exp_M\!\left(
-            \frac{\gamma}{N}\sum_{i=1}^{N}\log_M(\Sigma_i)
-        \right),
+    $$
+    F(M) = \frac{1}{N}\sum_{i=1}^{N} \delta^2(M, \Sigma_i),
+    \qquad
+    \operatorname{grad} F(M) = -\frac{2}{N}\sum_{i=1}^{N} \log_M(\Sigma_i),
+    $$
 
-    a gradient step of length ``gamma / 2``. The initial point is the
+    so that the iteration is
+
+    $$
+    M \leftarrow \exp_M\!\left(
+        \frac{\gamma}{N}\sum_{i=1}^{N}\log_M(\Sigma_i)
+    \right),
+    $$
+
+    a gradient step of length $\gamma / 2$. The initial point is the
     log-Euclidean mean, which is exact when the matrices commute and a good
     starting guess otherwise.
 

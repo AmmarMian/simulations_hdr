@@ -184,10 +184,20 @@ def sample_uniform_sphere(
 # ---------------------------------------------------------------------------
 
 class EllipticalDistribution(ABC):
-    """Base class for a real elliptical distribution in dimension ``d``.
+    r"""Base class for a real elliptical distribution in dimension $d$.
 
-    Subclasses describe the law of the modular variate ``Q``, the only thing
-    distinguishing two elliptical distributions that share a scatter matrix.
+    Every such distribution admits the stochastic representation
+
+    $$
+    x = \mu + \sqrt{Q}\, \Xi^{1/2} u,
+    \qquad u \sim \mathcal{U}\!\left(\mathbb{S}^{d-1}\right),
+    $$
+
+    with $\Xi$ the scatter matrix and $Q \perp u$ the modular variate, whose
+    density is $p_Q(q) \propto q^{d/2 - 1} g(q)$ for the density generator
+    $g$. Subclasses therefore only describe the law of $Q$: it is the only
+    thing distinguishing two elliptical distributions that share a scatter
+    matrix.
 
     Parameters
     ----------
@@ -270,11 +280,11 @@ class EllipticalDistribution(ABC):
 
 
 class CompoundGaussian(EllipticalDistribution):
-    """Elliptical distribution written as ``x = mu + sqrt(tau) z``.
+    r"""Elliptical distribution written as ``x = mu + sqrt(tau) z``.
 
     Subclasses give the texture ``tau`` twice: as a backend-side sampler for
     draws, and as a frozen ``scipy.stats`` law for the host-side quantiles.
-    The modular variate factorises as ``Q = tau * chi2_d``.
+    The modular variate factorises as $Q = \tau \, \chi^2_d$.
     """
 
     @abstractmethod
@@ -315,7 +325,7 @@ class CompoundGaussian(EllipticalDistribution):
 
 
 class GaussianDistribution(EllipticalDistribution):
-    """Gaussian: ``g(t) = exp(-t/2)``, modular variate ``Q ~ chi2_d``."""
+    r"""Gaussian: $g(t) = e^{-t/2}$, modular variate $Q \sim \chi^2_d$."""
 
     label = "gaussienne"
 
@@ -336,11 +346,15 @@ class GaussianDistribution(EllipticalDistribution):
 
 
 class StudentTDistribution(CompoundGaussian):
-    """Student t with ``dof`` degrees of freedom.
+    r"""Student t with $\nu$ = ``dof`` degrees of freedom.
 
-    ``g(t) = (1 + t/nu)^{-(d+nu)/2}``, obtained for the inverse-gamma texture
-    ``tau = nu / w`` with ``w ~ chi2_nu``.  The second-order moment exists only
-    for ``nu > 2``.
+    $$
+    g(t) = \left(1 + \frac{t}{\nu}\right)^{-(d + \nu)/2},
+    $$
+
+    obtained for the inverse-gamma texture $\tau = \nu / w$ with
+    $w \sim \chi^2_{\nu}$. The second-order moment exists only for
+    $\nu > 2$.
     """
 
     label = "t de Student"
@@ -377,10 +391,16 @@ class StudentTDistribution(CompoundGaussian):
 
 
 class KDistribution(CompoundGaussian):
-    """K-distribution with texture shape ``dof``.
+    r"""K-distribution with texture shape $\nu$ = ``dof``.
 
-    Gamma texture with unit mean, ``tau ~ Gamma(nu, 1/nu)``.  The density
-    generator involves a modified Bessel function of the second kind.
+    Gamma texture of unit mean, $\tau \sim \Gamma(\nu, 1/\nu)$, for which
+    the density generator involves a modified Bessel function of the second
+    kind:
+
+    $$
+    g(t) = t^{a/2} K_a\!\left(\sqrt{2 \nu t}\right),
+    \qquad a = \nu - \frac{d}{2} .
+    $$
     """
 
     label = "K"
@@ -411,11 +431,12 @@ class KDistribution(CompoundGaussian):
 
 
 class GeneralizedGaussianDistribution(EllipticalDistribution):
-    """Generalized Gaussian: ``g(t) = exp(-t^s / (2b))``.
+    r"""Generalized Gaussian: $g(t) = \exp\!\left(-t^s / (2b)\right)$.
 
     Not written as a compound-Gaussian here: the modular variate is available
-    in closed form, since ``Q = u^{1/s}`` with ``u ~ Gamma(d/(2s), 2b)``.
-    ``s = 1, b = 1`` recovers the Gaussian; ``s < 1`` gives heavier tails.
+    in closed form, since $Q = u^{1/s}$ with
+    $u \sim \Gamma\!\left(d / (2s),\, 2b\right)$. Taking $s = 1$, $b = 1$
+    recovers the Gaussian; $s < 1$ gives heavier tails.
     """
 
     label = "gaussienne généralisée"
@@ -517,14 +538,19 @@ def isodensity_ellipse(
     probability: float,
     n_points: int = 300,
 ) -> np.ndarray:
-    """Centered isodensity curve enclosing a given probability mass.
+    r"""Centered isodensity curve enclosing a given probability mass.
 
     Host-side plotting helper: the curve is a small numpy array regardless of
     the distribution's backend.
 
-    Because the d.d.p depends on the data only through the quadratic form, the
-    curve is the ellipse ``{x : x^T Xi^{-1} x = q}`` where ``q`` is the
-    corresponding quantile of the modular variate.
+    Because the density depends on the data only through the quadratic form,
+    the curve is the ellipse
+
+    $$
+    \left\{ x \;:\; x^{\top} \Xi^{-1} x = q \right\},
+    $$
+
+    $q$ being the corresponding quantile of the modular variate.
 
     Returns
     -------
@@ -554,11 +580,13 @@ def isodensity_ellipse(
 # and complex conventions, so estimation.TylerEstimator applies unchanged.
 
 def student_t_weight_real(x, df: float = 3, n_features: int = 1, **kwargs):
-    r"""Real Student-t maximum-likelihood weight, ``u(t) = (d + nu) / (t + nu)``.
+    r"""Real Student-t maximum-likelihood weight,
+    $u(t) = (d + \nu) / (t + \nu)$.
 
-    Derived from ``u(t) = -2 g'(t)/g(t)`` with the real generator
-    ``g(t) = (1 + t/nu)^{-(d+nu)/2}``.  The complex counterpart in
-    ``hdrlib.core.estimation`` reads ``(p + nu/2)/(t + nu/2)`` instead, because
+    Derived from $u(t) = -2 g'(t) / g(t)$ with the real generator
+    $g(t) = (1 + t/\nu)^{-(d+\nu)/2}$. The complex counterpart in
+    ``hdrlib.core.estimation`` reads $(p + \nu/2)/(t + \nu/2)$ instead,
+    because
     both the generator and the factor relating ``u`` to ``g'/g`` differ; the
     two are genuinely distinct functions, not a reparametrisation.
 
@@ -583,23 +611,31 @@ def student_t_weight_real(x, df: float = 3, n_features: int = 1, **kwargs):
 
 
 def gaussian_weight(x, **kwargs):
-    """Gaussian weight, ``u(t) = 1`` — the fixed point is then the SCM."""
+    r"""Gaussian weight, $u(t) = 1$ — the fixed point is then the SCM."""
     return np.ones_like(np.asarray(x))
 
 
 def generalized_gaussian_weight_real(x, shape: float = 0.5, scale: float = 1.0, **kwargs):
-    r"""Generalized Gaussian weight, ``u(t) = s t^{s-1} / b``.
+    r"""Generalized Gaussian weight, $u(t) = s\, t^{s-1} / b$.
 
-    From ``u(t) = -2 g'(t)/g(t)`` with ``g(t) = exp(-t^s/(2b))``.
+    From $u(t) = -2 g'(t) / g(t)$ with
+    $g(t) = \exp\!\left(-t^s / (2b)\right)$.
     """
     return shape * np.asarray(x) ** (shape - 1) / scale
 
 
 def k_distribution_weight_real(x, df: float = 2, n_features: int = 1, **kwargs):
-    r"""K-distribution weight, ``u(t) = c K_{a-1}(c sqrt t) / (sqrt t K_a(c sqrt t))``.
+    r"""K-distribution weight,
 
-    With ``a = nu - d/2`` and ``c = sqrt(2 nu)``, obtained from
-    ``u(t) = -2 g'(t)/g(t)`` using ``K_a'(z) = -K_{a-1}(z) - (a/z) K_a(z)``.
+    $$
+    u(t) = \frac{c\, K_{a-1}\!\left(c \sqrt{t}\right)}
+                 {\sqrt{t}\, K_a\!\left(c \sqrt{t}\right)},
+    \qquad a = \nu - \frac{d}{2},
+    \qquad c = \sqrt{2 \nu} .
+    $$
+
+    Obtained from $u(t) = -2 g'(t) / g(t)$ using
+    $K_a'(z) = -K_{a-1}(z) - (a/z) K_a(z)$.
 
     Unlike the other weights this one needs scipy's Bessel function, so it is
     numpy-only; the fixed-point engine still runs on any backend when given one

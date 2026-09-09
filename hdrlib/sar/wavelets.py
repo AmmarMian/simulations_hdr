@@ -19,7 +19,13 @@ DEFAULT_AZIMUTH_RESOLUTION = 0.6  # m
 
 
 def gbellmf(x, a, b, c):
-    """Generalized Bell function fuzzy membership generator.
+    r"""Generalized Bell function fuzzy membership generator.
+
+    $$
+    y(x) = \frac{1}{1 + \left| (x - c) / a \right|^{2b}} ,
+    $$
+
+    a bump centred on $c$, of half-width $a$, whose edges steepen with $b$.
 
     Parameters
     ----------
@@ -35,7 +41,7 @@ def gbellmf(x, a, b, c):
     Returns
     -------
     array
-        y(x) = 1 / (1 + |[(x - c) / a]|^{2b})
+        Membership value at each point of ``x``.
     """
     return 1.0 / (1.0 + np.abs((x - c) / a) ** (2 * b))
 

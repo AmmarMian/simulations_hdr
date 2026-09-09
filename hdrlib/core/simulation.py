@@ -45,7 +45,11 @@ def generate_gaussian_data(
     Sigma_true: np.ndarray,
     seed: int = 0,
 ) -> np.ndarray:
-    """Complex Gaussian data under H0: X_{t,n} ~ CN(0, Sigma_true) i.i.d.
+    r"""Complex Gaussian data under $H_0$, i.i.d. across dates and samples:
+
+    $$
+    x_{t,n} \sim \mathcal{CN}\!\left(0, \Sigma\right).
+    $$
 
     Returns
     -------
@@ -68,10 +72,17 @@ def generate_dcg_data(
     tau_shape: float = 1.0,
     tau_scale: float = 1.0,
 ) -> np.ndarray:
-    """Complex DCG (SIRV) data under H0: X_{t,n} = sqrt(tau_n) * z, z ~ CN(0, Sigma_true).
+    r"""Complex deterministic compound-Gaussian (SIRV) data under $H_0$:
 
-    tau_n ~ Gamma(tau_shape, tau_scale) per sample, constant across dates — matching the
-    MatAndText null hypothesis tested by DeterministicCompoundGaussianGLRT.
+    $$
+    x_{t,n} = \sqrt{\tau_n}\, z_{t,n},
+    \qquad z_{t,n} \sim \mathcal{CN}\!\left(0, \Sigma\right),
+    \qquad \tau_n \sim \Gamma(\text{shape}, \text{scale}).
+    $$
+
+    The texture is drawn once per sample and held constant across the dates,
+    which is what the MatAndText null hypothesis of
+    :class:`~hdrlib.sar.detectors.ScaleAndShapeGLRT` asserts.
 
     Returns
     -------

@@ -47,15 +47,25 @@ class OnlineDCGDetectorState:
 
 
 class OnlineDCGDetector(OnlineDetector):
-    """Online Date-Class Gaussian change point detector.
+    r"""Online scaled-Gaussian change point detector.
 
-    Uses a generalized likelihood ratio test (GLRT) to detect changes in the
-    scaled Gaussian model parameters over time.
+    Generalized likelihood ratio test between a single set of parameters
+    shared by every date and one set per date:
 
-    H0: Single (Sigma, tau) estimate pooled across all dates
-    H1: Separate (Sigma_t, tau_t) estimate per date
+    $$
+    \Lambda = 2 \left[
+      \log L\!\left(x \,\middle|\, \widehat{\Sigma}_0,
+                      \widehat{\tau}_0 \right)
+      - \sum_{t=1}^{T} \log L\!\left(x_t \,\middle|\,
+                      \widehat{\Sigma}_t, \widehat{\tau}_t \right)
+    \right],
+    $$
 
-    Test statistic: GLRT = 2 * [log L(data | H0_pooled) - sum_t log L(data_t | H1_t)]
+    where under $H_0$ a single $(\Sigma, \tau)$ is pooled across all dates
+    and under $H_1$ each date carries its own. What makes the detector
+    *online* is that the $H_0$ estimate is refreshed by one Riemannian
+    gradient step per new date rather than recomputed from the whole
+    time-series.
 
     Parameters
     ----------
@@ -334,16 +344,26 @@ class OnlineKroneckerDetectorState:
 
 
 class OnlineKroneckerDetector(OnlineDetector):
-    """Online Kronecker structured scaled Gaussian change point detector.
+    r"""Online Kronecker-structured scaled Gaussian change point detector.
 
-    Uses a GLRT to detect changes in the Kronecker covariance structure
-    kron(A, B) and textures tau over time.
+    The test of :class:`OnlineDCGDetector`, with the covariance constrained to
+    $\Sigma = A \otimes B$:
 
-    H0: Single (A, B) shared across all dates, updated via stochastic natural
-        gradient on SHPD(a) x SHPD(b) x SPV(N) with Fisher Information Metric.
-    H1: Separate (A_t, B_t) per date estimated via the Kronecker MM algorithm.
+    $$
+    \Lambda = 2 \left[
+      \log L\!\left(x \,\middle|\, \widehat{A}_0, \widehat{B}_0,
+                      \widehat{\tau}_0 \right)
+      - \sum_{t=1}^{T} \log L\!\left(x_t \,\middle|\,
+                      \widehat{A}_t, \widehat{B}_t, \widehat{\tau}_t
+                      \right)
+    \right].
+    $$
 
-    Test statistic: GLRT = 2 * [log L(data | H0_pooled) - sum_t log L(data_t | H1_t)]
+    Under $H_0$ a single $(A, B)$ is shared across all dates and updated by a
+    stochastic natural gradient step on
+    $\mathcal{SH}^{++}(a) \times \mathcal{SH}^{++}(b) \times
+    (\mathbb{R}^{+})^{N}$ with the Fisher information metric; under $H_1$
+    each date is estimated on its own by the Kronecker MM algorithm.
 
     Parameters
     ----------

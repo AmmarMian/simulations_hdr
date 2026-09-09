@@ -1,9 +1,10 @@
 # Intrinsic Cramer-Rao bounds and Riemannian error measures for the Kronecker
 # structured scaled Gaussian model.
 #
-# Reference: A. Mian, G. Ginolhac, F. Bouchard, A. Breloy, "Online change
+# Reference: A. Mian, G. Ginolhac, F. Bouchard and A. Breloy, "Online change
 # detection in SAR time-series with Kronecker product structured scaled
-# Gaussian models", Signal Processing 224 (2024), Propositions 2 and 4.
+# Gaussian models", Signal Processing, 224:109589, 2024,
+# doi:10.1016/j.sigpro.2024.109589 -- Propositions 2 and 4.
 #
 # Two conventions in that paper need care, and are resolved here in favour of
 # the dimension count, which is what the released code also implements:

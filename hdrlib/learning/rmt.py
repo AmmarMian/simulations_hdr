@@ -721,6 +721,14 @@ def rmt_frechet_mean(
     Wants float64: the gradient divides by differences of eigenvalues, which
     single precision cannot carry — see :func:`require_double`.
 
+    **Reference**
+
+    F. Bouchard, A. Mian, M. Tiomoko, G. Ginolhac and F. Pascal, "Random matrix
+    theory improved Fréchet mean of symmetric positive definite matrices",
+    *Proceedings of the 41st International Conference on Machine Learning*,
+    PMLR 235:4403-4415, 2024.
+    [arXiv:2405.06558](https://arxiv.org/abs/2405.06558)
+
     Parameters
     ----------
     data : Array of shape (n_matrices, n_samples, n_features)
@@ -735,14 +743,6 @@ def rmt_frechet_mean(
     -------
     mean : Array of shape (n_features, n_features)
     history : dict with lists ``cost`` and ``error``
-
-    **Reference**
-
-    F. Bouchard, A. Mian, M. Tiomoko, G. Ginolhac and F. Pascal, "Random matrix
-    theory improved Fréchet mean of symmetric positive definite matrices",
-    *Proceedings of the 41st International Conference on Machine Learning*,
-    PMLR 235:4403-4415, 2024.
-    [arXiv:2405.06558](https://arxiv.org/abs/2405.06558)
     """
     be = get_backend_module(backend)
     require_double(data, "rmt_frechet_mean")

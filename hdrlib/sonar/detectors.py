@@ -103,11 +103,23 @@ def _mimo_mf_stat(x: Array, M_inv: Array, P: Array, be) -> Array:
 # ---------------------------------------------------------------------------
 
 class MNMFGlrt(Detector):
-    """Two-array MSG GLRT (M-NMF-G) for known covariance M.
+    r"""Two-array MSG GLRT (M-NMF-G) for known covariance $M$.
 
-    L_G = (ŝ_{1_0}·ŝ_{2_0}) / (ŝ_{1_1}·ŝ_{2_1})
+    $$
+    L_G = \frac{\widehat{s}_{1,0}\, \widehat{s}_{2,0}}
+               {\widehat{s}_{1,1}\, \widehat{s}_{2,1}},
+    $$
 
-    where H0/H1 scale products use M⁻¹ and R⁻¹ = M⁻¹ - D⁻¹ respectively.
+    the scale estimates of the two hypotheses being formed with $M^{-1}$
+    under $H_0$ and with
+
+    $$
+    R^{-1} = M^{-1} - D^{-1},
+    \qquad
+    D^{-1} = M^{-1} P \left(P^H M^{-1} P\right)^{-1} P^H M^{-1},
+    $$
+
+    under $H_1$, where $P$ carries the steering vectors of the two arrays.
 
     Parameters
     ----------
@@ -172,12 +184,20 @@ class MNMFGlrt(Detector):
 # ---------------------------------------------------------------------------
 
 class MNMFRao(Detector):
-    """Two-array MSG Rao test (M-NMF-R) for known covariance M.
+    r"""Two-array MSG Rao test (M-NMF-R) for known covariance $M$.
 
-    L_R = 2 x^H C̃₀⁻¹ P (P^H C̃₀⁻¹ P)⁻¹ P^H C̃₀⁻¹ x
-        = 2 u^H D⁻¹ u,   u = Σ̂₀⁻¹ x = [x1/ŝ₁ ; x2/ŝ₂]
+    $$
+    L_R = 2\, x^H \widetilde{C}_0^{-1} P
+          \left(P^H \widetilde{C}_0^{-1} P\right)^{-1}
+          P^H \widetilde{C}_0^{-1} x
+        = 2\, u^H D^{-1} u,
+    $$
 
-    where D⁻¹ = M⁻¹P(P^H M⁻¹P)⁻¹P^H M⁻¹.
+    with $u = \widehat{\Sigma}_0^{-1} x =
+    \left[x_1 / \widehat{s}_1 \;;\; x_2 / \widehat{s}_2\right]$ and
+    $D^{-1} = M^{-1} P \left(P^H M^{-1} P\right)^{-1} P^H M^{-1}$. Only the
+    $H_0$ scales are needed, which is what makes the Rao test cheaper than the
+    GLRT.
 
     Parameters
     ----------
@@ -231,10 +251,17 @@ class MNMFRao(Detector):
 # ---------------------------------------------------------------------------
 
 class MNMFIndependent(Detector):
-    """GLRT assuming independent arrays (M-NMF-I / MIMO ANMF).
+    r"""GLRT assuming independent arrays (M-NMF-I / MIMO ANMF).
 
-    L_G = ∏_i (1 - NMF_i)^{-m}
-    Returned as the log-statistic: -m Σ_i log(1 - NMF_i).
+    $$
+    L_G = \prod_{i} \left(1 - \mathrm{NMF}_i\right)^{-m},
+    $$
+
+    returned as the log-statistic
+    $-m \sum_i \log\left(1 - \mathrm{NMF}_i\right)$, each
+    $\mathrm{NMF}_i$ being the single-array statistic of
+    :class:`NMFSingleArray`. Ignoring the coupling between the two arrays is
+    exactly the approximation this detector is here to measure the cost of.
 
     Parameters
     ----------
@@ -312,10 +339,17 @@ class MNMFIndependent(Detector):
 # ---------------------------------------------------------------------------
 
 class NMFSingleArray(Detector):
-    """Single-array Normalised Matched Filter for array *array_idx* ∈ {0,1}.
+    r"""Single-array Normalised Matched Filter for array ``array_idx``.
 
-    NMF_i = |p_i^H M_{ii}^{-1} x_i|² / (q_i · x_i^H M_{ii}^{-1} x_i)
-    where q_i = p_i^H M_{ii}^{-1} p_i.
+    $$
+    \mathrm{NMF}_i = \frac{\left| p_i^H M_{ii}^{-1} x_i \right|^2}
+                           {q_i \; x_i^H M_{ii}^{-1} x_i},
+    \qquad q_i = p_i^H M_{ii}^{-1} p_i .
+    $$
+
+    Normalising by the energy of the observation is what makes the statistic
+    invariant to the texture, and so constant-false-alarm-rate under the
+    scaled Gaussian model.
 
     Parameters
     ----------

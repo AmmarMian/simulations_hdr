@@ -293,6 +293,13 @@ class OnlineKroneckerEstimator:
     algorithm; subsequent calls each apply one Riemannian natural gradient
     step with Armijo backtracking.
 
+    **Reference**
+
+    A. Mian, G. Ginolhac, F. Bouchard and A. Breloy, "Online change detection in
+    SAR time-series with Kronecker product structured scaled Gaussian models",
+    *Signal Processing*, 224:109589, 2024.
+    [doi:10.1016/j.sigpro.2024.109589](https://doi.org/10.1016/j.sigpro.2024.109589)
+
     Parameters
     ----------
     a, b : int
@@ -303,7 +310,7 @@ class OnlineKroneckerEstimator:
         "armijo" — backtracking line search at each update (default, and what
         the online detectors have always used).
         "fixed"  — no line search: step alpha_0 / t, the schedule of equation
-        (19) of Mian et al. (2024), for which statistical efficiency is proved.
+        (19) of the paper below, for which statistical efficiency is proved.
         Beware the normalisation: _rgrad_kronecker_scaled_gaussian returns the
         gradient of the paper divided by p * n_samples, so the paper's optimal
         alpha_0 = 1 / (p * n) corresponds to alpha_0 = 1.0 here. That is the

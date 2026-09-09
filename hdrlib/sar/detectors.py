@@ -385,18 +385,32 @@ class DeterministicCompoundGaussianGLRT(Detector):
         iteration_chunk_size: Optional[int] = None,
         init: Optional[Array] = None,
     ) -> None:
-        """GLRT for testing equality of scale and shape in a deterministic
+        r"""GLRT for testing equality of scale and shape in a deterministic
         compound Gaussian (SIRV) model.
 
-        Under H0, a single shape matrix Σ_0 and per-sample textures τ_n are
-        shared across all T dates (MatAndText model). Under H1, each date t has
-        its own shape Σ_t and textures τ_{n,t} (independent Tyler estimates).
+        Under $H_0$ a single shape matrix $\Sigma_0$ and per-sample textures
+        $\tau_n$ are shared across all $T$ dates (the MatAndText model); under
+        $H_1$ each date $t$ has its own shape $\Sigma_t$ and textures
+        $\tau_{n,t}$, estimated independently by Tyler. The generalised
+        likelihood ratio then reduces to
 
-        The log-statistic is:
-            λ = T·N·log|Σ_0| - N·Σ_t log|Σ_t|
-              + T·p·Σ_n log(τ̂_0n) - p·Σ_t Σ_n log(τ̂_{tn})
+        $$
+        \lambda = T N \log \left| \widehat{\Sigma}_0 \right|
+        - N \sum_{t=1}^{T} \log \left| \widehat{\Sigma}_t \right|
+        + T p \sum_{n=1}^{N} \log \widehat{\tau}_{0,n}
+        - p \sum_{t=1}^{T} \sum_{n=1}^{N} \log \widehat{\tau}_{t,n},
+        $$
 
-        Reference: Mian et al., WCCM 2019.
+        with $p$ the number of channels and $N$ the number of secondary
+        samples. Only determinants and textures survive: the quadratic forms
+        of the two hypotheses cancel, which is what makes the statistic cheap.
+
+        **Reference**
+
+        A. Mian, G. Ginolhac, J.-P. Ovarlez and A. M. Atto, "New robust
+        statistics for change detection in time series of multivariate SAR
+        images", *IEEE Transactions on Signal Processing*, 67(2):520-534, 2019.
+        [doi:10.1109/TSP.2018.2883011](https://doi.org/10.1109/TSP.2018.2883011)
 
         Parameters
         ----------
@@ -509,18 +523,31 @@ class ScaleAndShapeKroneckerGLRT(Detector):
         iter_max: int = 30,
         verbosity: bool = False,
     ) -> None:
-        """GLRT for testing a change in scale or shape in a deterministic SIRV
-        model with Kronecker-structured covariance kron(A, B).
+        r"""GLRT for testing a change in scale or shape in a deterministic SIRV
+        model with Kronecker-structured covariance $A \otimes B$.
 
-        Under H0 a single (A_0, B_0) is shared across all T dates with
-        per-sample textures tau_n. Under H1 each date has its own (A_t, B_t)
-        and per-sample textures tau_{t,n}.
+        Under $H_0$ a single pair $(A_0, B_0)$ is shared across all $T$ dates,
+        with per-sample textures $\tau_n$; under $H_1$ each date has its own
+        $(A_t, B_t)$ and textures $\tau_{t,n}$. The statistic is that of
+        :class:`ScaleAndShapeGLRT`, but the identity
 
-        The log-statistic exploits log|kron(A,B)| = b*log|A| + a*log|B| to
-        avoid ever materialising the full p×p Kronecker product.
+        $$
+        \log \left| A \otimes B \right| = b \log |A| + a \log |B|,
+        \qquad A \in \mathbb{C}^{a \times a},\;
+                B \in \mathbb{C}^{b \times b},\; p = ab,
+        $$
 
-        Reference: Mian et al., based on Sun/Babu/Palomar MM algorithm,
-        IEEE TSP 2016.
+        lets every determinant be read off the two factors, so the full
+        $p \times p$ Kronecker product is never materialised. The factors
+        themselves are estimated by the majorization-minimization iteration of
+        the reference below.
+
+        **Reference**
+
+        Y. Sun, P. Babu and D. P. Palomar, "Robust estimation of structured
+        covariance matrix for heavy-tailed elliptical distributions", *IEEE
+        Transactions on Signal Processing*, 64(14):3576-3590, 2016.
+        [doi:10.1109/TSP.2016.2546222](https://doi.org/10.1109/TSP.2016.2546222)
 
         Parameters
         ----------

@@ -1,5 +1,8 @@
 # Kronecker-structured covariance estimation via MM algorithm
-# Reference: Sun, Babu, Palomar, IEEE TSP 2016
+# Reference: Y. Sun, P. Babu and D. P. Palomar, "Robust estimation of
+# structured covariance matrix for heavy-tailed elliptical distributions",
+# IEEE Transactions on Signal Processing, 64(14):3576-3590, 2016.
+# doi:10.1109/TSP.2016.2546222
 # Author: Ammar Mian
 
 from typing import Tuple
@@ -504,9 +507,16 @@ def kronecker_riemannian_gd_h0(
     This is the batch counterpart of OnlineKroneckerEstimator: same manifold,
     same Fisher metric, same gradient, but the gradient is averaged over all T
     dates at every iteration and an Armijo line search sets the step.  It is
-    the "GD" reference of Mian et al. (2024), against which the recursive
+    the "GD" reference of the paper below, against which the recursive
     estimator is compared; kronecker_mm_h0 targets the same MLE by a different
     algorithm and can be used instead.
+
+    **Reference**
+
+    A. Mian, G. Ginolhac, F. Bouchard and A. Breloy, "Online change detection in
+    SAR time-series with Kronecker product structured scaled Gaussian models",
+    *Signal Processing*, 224:109589, 2024.
+    [doi:10.1016/j.sigpro.2024.109589](https://doi.org/10.1016/j.sigpro.2024.109589)
 
     Parameters
     ----------

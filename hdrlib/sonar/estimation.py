@@ -28,17 +28,32 @@ def two_array_tyler(
     backend_name: Union[str, Backend] = "numpy",
     return_history: bool = False,
 ) -> Array:
-    """Two-array Tyler MLE fixed-point for MSG covariance estimation.
+    r"""Two-array Tyler MLE fixed-point for MSG covariance estimation.
 
-    Solves:
-        M̂ = (1/K) Σ_k T̂_k⁻¹ x_k x_k^H T̂_k⁻¹
+    Solves
 
-    where T̂_k = diag(√τ̂_{1k}, √τ̂_{2k}) ⊗ I_m and the textures are:
-        τ̂_{1k} = t1 + √(t1/t2) · t12
-        τ̂_{2k} = t2 + √(t2/t1) · t12
-        t1 = x_{1k}^H M̂_{11}⁻¹ x_{1k} / m
-        t2 = x_{2k}^H M̂_{22}⁻¹ x_{2k} / m
-        t12 = Re(x_{1k}^H M̂_{12}⁻¹ x_{2k}) / m
+    $$
+    \widehat{M} = \frac{1}{K} \sum_{k=1}^{K}
+    \widehat{T}_k^{-1} x_k x_k^H \widehat{T}_k^{-1},
+    \qquad
+    \widehat{T}_k = \operatorname{diag}\!\left(
+        \sqrt{\widehat{\tau}_{1k}}, \sqrt{\widehat{\tau}_{2k}}
+    \right) \otimes I_m,
+    $$
+
+    the two textures of a snapshot being coupled through the cross term:
+
+    $$
+    \begin{aligned}
+    \widehat{\tau}_{1k} &= t_1 + \sqrt{t_1 / t_2}\; t_{12}, &
+    t_1 &= x_{1k}^H \widehat{M}_{11}^{-1} x_{1k} / m, \\
+    \widehat{\tau}_{2k} &= t_2 + \sqrt{t_2 / t_1}\; t_{12}, &
+    t_2 &= x_{2k}^H \widehat{M}_{22}^{-1} x_{2k} / m, \\
+    & &
+    t_{12} &= \operatorname{Re}\!\left(
+        x_{1k}^H \widehat{M}_{12}^{-1} x_{2k}\right) / m .
+    \end{aligned}
+    $$
 
     The estimate is determinant-normalised to det(M̂) = 1 at each step,
     following TylerMIMO.m; see the comment in the loop for why trace
