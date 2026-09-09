@@ -164,18 +164,23 @@ def generate_kronecker_data(
     tau_per_date: bool = False,
     return_tau: bool = False,
 ) -> "np.ndarray | tuple[np.ndarray, np.ndarray]":
-    r"""Kronecker SIRV data under $H_0$:
+    r"""Kronecker SIRV data under $\mathcal{H}_0$:
 
     $$
-    x_{t,n} \sim \mathcal{CN}\!\left(0,
-    \tau_n \, A \otimes B\right).
+    \boldsymbol{x}_{t,k} \sim \mathcal{CN}\!\left(\boldsymbol{0},
+    \tau_k \, \boldsymbol{A} \otimes \boldsymbol{B}\right),
+    \qquad \boldsymbol{A} \in \mathbb{C}^{a \times a}, \;
+           \boldsymbol{B} \in \mathbb{C}^{b \times b}, \; d = ab .
     $$
 
-    Uses the identity $\operatorname{vec}(M) \sim
-    \mathcal{CN}(0, A \otimes B)$ when $M = L_B G L_A^{\top}$ with
-    $G \sim \mathcal{CN}(0, I_{b \times a})$. Note the transpose, not the
-    conjugate transpose: $M = L_B G L_A^H$ would give
-    $\overline{A} \otimes B$ instead, which is
+    Uses the identity $\operatorname{vec}(\boldsymbol{M}) \sim
+    \mathcal{CN}(\boldsymbol{0}, \boldsymbol{A} \otimes \boldsymbol{B})$ when
+    $\boldsymbol{M} = \boldsymbol{L}_B \boldsymbol{G}
+    \boldsymbol{L}_A^{\mathrm{T}}$ with $\boldsymbol{G} \sim
+    \mathcal{CN}(\boldsymbol{0}, \boldsymbol{I}_{b \times a})$. Note the
+    transpose, not the conjugate transpose: $\boldsymbol{M} = \boldsymbol{L}_B
+    \boldsymbol{G} \boldsymbol{L}_A^{\mathrm{H}}$ would give
+    $\overline{\boldsymbol{A}} \otimes \boldsymbol{B}$ instead, which is
     indistinguishable in online-vs-offline comparisons but wrong as soon as
     an estimate is compared to the ground truth A. Texture tau_n ~ Gamma(tau_shape, tau_scale), drawn once
     per sample and held FIXED across dates.

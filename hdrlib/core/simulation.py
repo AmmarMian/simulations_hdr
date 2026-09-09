@@ -45,10 +45,12 @@ def generate_gaussian_data(
     Sigma_true: np.ndarray,
     seed: int = 0,
 ) -> np.ndarray:
-    r"""Complex Gaussian data under $H_0$, i.i.d. across dates and samples:
+    r"""Complex Gaussian data under $\mathcal{H}_0$, i.i.d. across dates and samples:
 
     $$
-    x_{t,n} \sim \mathcal{CN}\!\left(0, \Sigma\right).
+    \boldsymbol{x}_{t,k} \sim
+    \mathcal{CN}\!\left(\boldsymbol{0}, \boldsymbol{\Sigma}\right),
+    \qquad t \in \{1,\dots,T\}, \; k \in \{1,\dots,N\}.
     $$
 
     Returns
@@ -72,12 +74,13 @@ def generate_dcg_data(
     tau_shape: float = 1.0,
     tau_scale: float = 1.0,
 ) -> np.ndarray:
-    r"""Complex deterministic compound-Gaussian (SIRV) data under $H_0$:
+    r"""Complex deterministic compound-Gaussian (SIRV) data under $\mathcal{H}_0$:
 
     $$
-    x_{t,n} = \sqrt{\tau_n}\, z_{t,n},
-    \qquad z_{t,n} \sim \mathcal{CN}\!\left(0, \Sigma\right),
-    \qquad \tau_n \sim \Gamma(\text{shape}, \text{scale}).
+    \boldsymbol{x}_{t,k} = \sqrt{\tau_k}\, \boldsymbol{z}_{t,k},
+    \qquad \boldsymbol{z}_{t,k} \sim
+      \mathcal{CN}\!\left(\boldsymbol{0}, \boldsymbol{\Sigma}\right),
+    \qquad \tau_k \sim \mathcal{G}(\text{shape}, \text{scale}).
     $$
 
     The texture is drawn once per sample and held constant across the dates,

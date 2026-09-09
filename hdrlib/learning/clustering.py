@@ -64,14 +64,18 @@ def squared_fisher_distance(
     r"""Squared affine-invariant distance from one SPD matrix to a set of them.
 
     $$
-    \frac{1}{p}\,\delta^2(M, \Sigma)
-    = \frac{1}{p} \left\| \log\!\left(M^{-1/2} \Sigma M^{-1/2}\right)
-      \right\|_F^2
-    = \frac{1}{p} \sum_{i=1}^{p} \log^2 \lambda_i,
+    \frac{1}{d}\,\delta^2\!\left(\boldsymbol{\Sigma}_0,
+                                 \boldsymbol{\Sigma}\right)
+    = \frac{1}{d} \left\| \operatorname{logm}\!\left(
+      \boldsymbol{\Sigma}_0^{-1/2} \boldsymbol{\Sigma}
+      \boldsymbol{\Sigma}_0^{-1/2}\right) \right\|_{\mathbb{F}}^2
+    = \frac{1}{d} \sum_{i=1}^{d} \log^2 \lambda_i,
     $$
 
-    the $\lambda_i$ being the eigenvalues of $M^{-1}\Sigma$, computed here as
-    those of $L^{-1} \Sigma L^{-\top}$ with $L$ the Cholesky factor of $M$.
+    the $\lambda_i$ being the eigenvalues of
+    $\boldsymbol{\Sigma}_0^{-1}\boldsymbol{\Sigma}$, computed here as those of
+    $\boldsymbol{L}^{-1} \boldsymbol{\Sigma} \boldsymbol{L}^{-\mathrm{T}}$
+    with $\boldsymbol{L}$ the Cholesky factor of $\boldsymbol{\Sigma}_0$.
 
     Normalised by the dimension, like
     :func:`~hdrlib.learning.rmt.rmt_corrected_squared_distance`, which it is
@@ -235,23 +239,32 @@ def riemannian_kmeans(
     r"""K-means on the cone, alternating assignment and Fréchet re-estimation.
 
     Lloyd's algorithm with the Euclidean distance and arithmetic mean replaced
-    by a distance on the SPD cone and the Fréchet mean it induces. From a
-    random partition, the two steps alternate until the labels settle:
+    by a distance on the SPD cone and the Fréchet mean it induces. Writing
+    $\mathsf{C}_c$ for the $c$-th group and
+    $\overline{\boldsymbol{\Sigma}}^{(c)}$ for its centroid, the two steps
+    alternate from a random partition until the labels settle:
 
     $$
-    \ell_k \leftarrow \arg\min_{j} \; d^2\!\left(\Sigma_k, M_j\right),
+    \mathsf{C}_c \leftarrow \left\{ k \;:\;
+      c = \operatorname*{arg\,min}_{c'} \;
+      \rho^2\!\left(\boldsymbol{\Sigma}_k,
+                    \overline{\boldsymbol{\Sigma}}^{(c')}\right) \right\},
     \qquad
-    M_j \leftarrow \arg\min_{M \succ 0} \sum_{k \,:\, \ell_k = j}
-    d^2\!\left(\Sigma_k, M\right),
+    \overline{\boldsymbol{\Sigma}}^{(c)} \leftarrow
+      \operatorname*{arg\,min}_{\boldsymbol{\Sigma} \in \mathcal{S}_d^{++}}
+      \sum_{k \in \mathsf{C}_c}
+      \rho^2\!\left(\boldsymbol{\Sigma}_k, \boldsymbol{\Sigma}\right),
     $$
 
     and the restart kept is the one of least inertia
-    $\sum_k d^2(\Sigma_k, M_{\ell_k})$.
+    $\sum_c \sum_{k \in \mathsf{C}_c} \rho^2(\boldsymbol{\Sigma}_k,
+    \overline{\boldsymbol{\Sigma}}^{(c)})$.
 
-    Only $d^2$ changes between the four methods. ``SCM``, ``LW`` and ``LW-NL``
-    regularise each covariance first and then use the plain distance
-    :func:`squared_fisher_distance`; ``RMT`` leaves the covariances alone and
-    uses the corrected
+    Only the divergence $\rho^2$ changes between the four methods. ``SCM``,
+    ``LW`` and ``LW-NL`` regularise each covariance first and then use the
+    affine-invariant $\delta^2$ of :func:`squared_fisher_distance`; ``RMT``
+    leaves the covariances alone and uses the corrected
+    $\widehat{\delta}^2$ of
     :func:`~hdrlib.learning.rmt.rmt_corrected_squared_distance` instead.
 
     Parameters
@@ -398,11 +411,11 @@ def match_labels(
 
     A clustering has no reason to name its groups the way the ground truth
     does, so the two are matched before any score is computed by the bijection
-    $\sigma$ maximising the number of pixels on which they agree,
+    $\pi$ maximising the number of pixels on which they agree,
 
     $$
-    \sigma^{\star} = \arg\max_{\sigma} \sum_{j}
-    \left| \{\hat{y} = j\} \cap \{y = \sigma(j)\} \right| ,
+    \pi^{\star} = \operatorname*{arg\,max}_{\pi} \sum_{c}
+    \left| \{\widehat{y} = c\} \cap \{y = \pi(c)\} \right| ,
     $$
 
     solved exactly as a linear assignment problem (Hungarian algorithm).
@@ -460,12 +473,13 @@ def mean_iou(prediction: np.ndarray, truth: np.ndarray) -> Tuple[np.ndarray, flo
     Over the annotated pixels only, and for each ground-truth class $c$,
 
     $$
-    \mathrm{IoU}_c = \frac{|\{\hat{y} = c\} \cap \{y = c\}|}
-                           {|\{\hat{y} = c\} \cup \{y = c\}|},
+    \mathrm{IoU}_c = \frac{|\{\widehat{y} = c\} \cap \{y = c\}|}
+                          {|\{\widehat{y} = c\} \cup \{y = c\}|},
     \qquad
-    \mathrm{mIoU} = \frac{1}{|\mathcal{C}|} \sum_{c \in \mathcal{C}}
-                     \mathrm{IoU}_c .
+    \mathrm{mIoU} = \frac{1}{K} \sum_{c=1}^{K} \mathrm{IoU}_c ,
     $$
+
+    $K$ being the number of annotated classes.
 
     Reported alongside the accuracy because the two disagree in an informative
     way: accuracy is dominated by the large classes, since it counts pixels,
@@ -807,18 +821,30 @@ def spd_kmeans(
 
     Same alternation as :func:`riemannian_kmeans`, written to keep the data on
     the device it already lives on, and offering the three geometries the
-    covariance-clustering literature compares:
+    covariance-clustering literature compares. Writing $\mathsf{C}_c$ for a
+    group and $\overline{\boldsymbol{\Sigma}}^{(c)}$ for its centroid:
 
     $$
     \begin{aligned}
-    \texttt{euclid} &: & d^2(A, B) &= \|A - B\|_F^2, &
-      M_j &= \tfrac{1}{|C_j|} \textstyle\sum_{k \in C_j} \Sigma_k, \\
-    \texttt{logeuclid} &: & d^2(A, B) &= \|\log A - \log B\|_F^2, &
-      M_j &= \exp\!\left(\tfrac{1}{|C_j|}
-             \textstyle\sum_{k \in C_j} \log \Sigma_k\right), \\
-    \texttt{riemann} &: & d^2(A, B) &=
-      \left\|\log\!\left(A^{-1/2} B A^{-1/2}\right)\right\|_F^2, &
-      M_j &= \text{Karcher mean of } \{\Sigma_k\}_{k \in C_j}.
+    \texttt{euclid} &: &
+      \rho^2(\boldsymbol{A}, \boldsymbol{B}) &=
+        \|\boldsymbol{A} - \boldsymbol{B}\|_{\mathbb{F}}^2, &
+      \overline{\boldsymbol{\Sigma}}^{(c)} &=
+        \tfrac{1}{|\mathsf{C}_c|} \textstyle\sum_{k \in \mathsf{C}_c}
+        \boldsymbol{\Sigma}_k, \\
+    \texttt{logeuclid} &: &
+      \rho^2(\boldsymbol{A}, \boldsymbol{B}) &=
+        \|\operatorname{logm} \boldsymbol{A}
+          - \operatorname{logm} \boldsymbol{B}\|_{\mathbb{F}}^2, &
+      \overline{\boldsymbol{\Sigma}}^{(c)} &=
+        \operatorname{expm}\!\left(\tfrac{1}{|\mathsf{C}_c|}
+        \textstyle\sum_{k \in \mathsf{C}_c}
+        \operatorname{logm} \boldsymbol{\Sigma}_k\right), \\
+    \texttt{riemann} &: &
+      \rho^2(\boldsymbol{A}, \boldsymbol{B}) &= \delta^2(\boldsymbol{A},
+        \boldsymbol{B}), &
+      \overline{\boldsymbol{\Sigma}}^{(c)} &=
+        \text{Karcher mean of } \{\boldsymbol{\Sigma}_k\}_{k \in \mathsf{C}_c}.
     \end{aligned}
     $$
 

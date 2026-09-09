@@ -13,7 +13,7 @@
 #
 # and it is where the dimensional regime that motivates the whole comparison
 # becomes concrete: a 5x5 window gives 25 samples for 5 to 16 bands, so the
-# concentration ratio c = p/n sits between 0.2 and 0.64. Nowhere near the
+# concentration ratio c = d/N sits between 0.2 and 0.64. Nowhere near the
 # classical asymptotic regime, where c would tend to 0.
 
 import os
@@ -177,18 +177,21 @@ def pca_image(
 
     The spectra are centred and the covariance of the whole scene is
     diagonalised; each pixel is then written in the basis of the eigenvectors
-    of the $q$ largest eigenvalues:
+    of the $d$ largest eigenvalues:
 
     $$
-    \widehat{C} = \frac{1}{N} \sum_{k=1}^{N}
-                   (s_k - \bar{s})(s_k - \bar{s})^{\top}
-                 = U \Lambda U^{\top},
+    \widehat{\boldsymbol{\Sigma}} = \frac{1}{N} \sum_{k=1}^{N}
+      (\boldsymbol{x}_k - \boldsymbol{\mu})
+      (\boldsymbol{x}_k - \boldsymbol{\mu})^{\mathrm{T}}
+      = \boldsymbol{U} \boldsymbol{\Lambda} \boldsymbol{U}^{\mathrm{T}},
     \qquad
-    \tilde{s}_k = U_{q}^{\top} (s_k - \bar{s}),
+    \widetilde{\boldsymbol{x}}_k =
+      \boldsymbol{U}_{d}^{\mathrm{T}} (\boldsymbol{x}_k - \boldsymbol{\mu}),
     $$
 
-    with $U_q$ the columns of $U$ belonging to
-    $\lambda_1 \ge \dots \ge \lambda_q$.
+    with $N$ the number of pixels of the scene and $\boldsymbol{U}_d$ the
+    columns of $\boldsymbol{U}$ belonging to
+    $\lambda_1 \ge \dots \ge \lambda_d$.
 
     A handful of principal directions represent these scenes well, and the
     reduction is what brings the dimension into a range where a small window
@@ -277,17 +280,19 @@ def covariance_per_pixel(
 ) -> Array:
     r"""Sample covariance of every window, centred on the window's own mean.
 
-    For a window holding the $n = w^2$ spectra $x_1, \dots, x_n$ of a
-    $w \times w$ neighbourhood,
+    For a window holding the $N = w^2$ spectra
+    $\boldsymbol{x}_1, \dots, \boldsymbol{x}_N$ of a $w \times w$
+    neighbourhood,
 
     $$
-    \widehat{\Sigma} = \frac{1}{n} \sum_{k=1}^{n}
-    (x_k - \bar{x})(x_k - \bar{x})^{\top},
-    \qquad \bar{x} = \frac{1}{n} \sum_{k=1}^{n} x_k .
+    \widehat{\boldsymbol{\Sigma}} = \frac{1}{N} \sum_{k=1}^{N}
+    (\boldsymbol{x}_k - \boldsymbol{\mu})
+    (\boldsymbol{x}_k - \boldsymbol{\mu})^{\mathrm{T}},
+    \qquad \boldsymbol{\mu} = \frac{1}{N} \sum_{k=1}^{N} \boldsymbol{x}_k .
     $$
 
     This is the one matrix per pixel that the clustering then works on, and
-    $c = p / w^2$ is the concentration ratio the corrected methods exist for.
+    $c = d / w^2$ is the concentration ratio the corrected methods exist for.
     """
     be = get_backend_module(backend)
     centred = windows - be.mean(windows, axis=-2, keepdims=True)

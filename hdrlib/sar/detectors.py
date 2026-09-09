@@ -388,22 +388,26 @@ class DeterministicCompoundGaussianGLRT(Detector):
         r"""GLRT for testing equality of scale and shape in a deterministic
         compound Gaussian (SIRV) model.
 
-        Under $H_0$ a single shape matrix $\Sigma_0$ and per-sample textures
-        $\tau_n$ are shared across all $T$ dates (the MatAndText model); under
-        $H_1$ each date $t$ has its own shape $\Sigma_t$ and textures
-        $\tau_{n,t}$, estimated independently by Tyler. The generalised
-        likelihood ratio then reduces to
+        Under $\mathcal{H}_0$ a single shape matrix $\boldsymbol{\Sigma}_0$ and
+        per-sample textures $\tau_k$ are shared across all $T$ dates (the
+        MatAndText model); under $\mathcal{H}_1$ each date $t$ has its own
+        shape $\boldsymbol{\Sigma}_t$ and textures $\tau_{t,k}$, estimated
+        independently by Tyler. The generalised likelihood ratio then reduces
+        to
 
         $$
-        \lambda = T N \log \left| \widehat{\Sigma}_0 \right|
-        - N \sum_{t=1}^{T} \log \left| \widehat{\Sigma}_t \right|
-        + T p \sum_{n=1}^{N} \log \widehat{\tau}_{0,n}
-        - p \sum_{t=1}^{T} \sum_{n=1}^{N} \log \widehat{\tau}_{t,n},
+        \hat{\Lambda} = T N \log \operatorname{det}
+          \widehat{\boldsymbol{\Sigma}}_0
+        - N \sum_{t=1}^{T} \log \operatorname{det}
+          \widehat{\boldsymbol{\Sigma}}_t
+        + T d \sum_{k=1}^{N} \log \widehat{\tau}_{0,k}
+        - d \sum_{t=1}^{T} \sum_{k=1}^{N} \log \widehat{\tau}_{t,k},
         $$
 
-        with $p$ the number of channels and $N$ the number of secondary
+        with $d$ the number of channels and $N$ the number of secondary
         samples. Only determinants and textures survive: the quadratic forms
-        of the two hypotheses cancel, which is what makes the statistic cheap.
+        of the two hypotheses cancel, which is what makes the statistic
+        cheap.
 
         **Reference**
 
@@ -526,19 +530,22 @@ class ScaleAndShapeKroneckerGLRT(Detector):
         r"""GLRT for testing a change in scale or shape in a deterministic SIRV
         model with Kronecker-structured covariance $A \otimes B$.
 
-        Under $H_0$ a single pair $(A_0, B_0)$ is shared across all $T$ dates,
-        with per-sample textures $\tau_n$; under $H_1$ each date has its own
-        $(A_t, B_t)$ and textures $\tau_{t,n}$. The statistic is that of
-        :class:`ScaleAndShapeGLRT`, but the identity
+        Under $\mathcal{H}_0$ a single pair $(\boldsymbol{A}_0,
+        \boldsymbol{B}_0)$ is shared across all $T$ dates, with per-sample
+        textures $\tau_k$; under $\mathcal{H}_1$ each date has its own
+        $(\boldsymbol{A}_t, \boldsymbol{B}_t)$ and textures $\tau_{t,k}$. The
+        statistic is that of :class:`ScaleAndShapeGLRT`, but the identity
 
         $$
-        \log \left| A \otimes B \right| = b \log |A| + a \log |B|,
-        \qquad A \in \mathbb{C}^{a \times a},\;
-                B \in \mathbb{C}^{b \times b},\; p = ab,
+        \log \operatorname{det}\left(\boldsymbol{A} \otimes \boldsymbol{B}
+        \right) = b \log \operatorname{det} \boldsymbol{A}
+                + a \log \operatorname{det} \boldsymbol{B},
+        \qquad \boldsymbol{A} \in \mathbb{C}^{a \times a},\;
+               \boldsymbol{B} \in \mathbb{C}^{b \times b},\; d = ab,
         $$
 
         lets every determinant be read off the two factors, so the full
-        $p \times p$ Kronecker product is never materialised. The factors
+        $d \times d$ Kronecker product is never materialised. The factors
         themselves are estimated by the majorization-minimization iteration of
         the reference below.
 

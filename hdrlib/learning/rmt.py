@@ -135,18 +135,20 @@ def _cholesky_and_inverse(be, matrix: Array) -> Tuple[Array, Array]:
 def scm(data: Array, backend: Union[str, Backend] = "numpy") -> Array:
     r"""Sample covariance matrices of ``(..., n_samples, n_features)`` data.
 
-    For $n$ samples $x_1,\dots,x_n \in \mathbb{R}^p$ stacked as the rows of
-    $X$,
+    For $N$ samples $\boldsymbol{x}_1,\dots,\boldsymbol{x}_N \in \mathbb{R}^d$
+    stacked as the rows of $\boldsymbol{X}$,
 
     $$
-    \widehat{\Sigma} = \frac{1}{n} X^{\top} X
-                       = \frac{1}{n} \sum_{k=1}^{n} x_k x_k^{\top}.
+    \widehat{\boldsymbol{\Sigma}}
+      = \frac{1}{N} \boldsymbol{X}^{\mathrm{T}} \boldsymbol{X}
+      = \frac{1}{N} \sum_{k=1}^{N}
+        \boldsymbol{x}_k \boldsymbol{x}_k^{\mathrm{T}}.
     $$
 
     Data is assumed centred, as in the reference implementation: the mean is
     known to be zero by construction in the simulations, and subtracting an
     estimated one would change the effective sample size and hence the
-    concentration ratio $c = p/n$.
+    concentration ratio $c = d/N$.
     """
     be = get_backend_module(backend)
     return be.swapaxes(data, -1, -2) @ data / data.shape[-2]
@@ -155,26 +157,31 @@ def scm(data: Array, backend: Union[str, Backend] = "numpy") -> Array:
 def ledoit_wolf_linear(data: Array, backend: Union[str, Backend] = "numpy") -> Array:
     r"""Linear shrinkage of the sample covariance towards a scaled identity.
 
-    The estimator pulls $\widehat{\Sigma}$ towards the sphere of the same
-    trace,
+    The estimator pulls $\widehat{\boldsymbol{\Sigma}}$ towards the target
+    $\boldsymbol{T} = \mu \boldsymbol{I}_d$ of the same trace,
 
     $$
-    \widehat{\Sigma}_{\mathrm{LW}} = \rho\, \mu I_p + (1 - \rho)\,
-    \widehat{\Sigma}, \qquad \mu = \frac{1}{p}\operatorname{tr}
-    \widehat{\Sigma},
+    \widehat{\boldsymbol{\Sigma}}_{\mathrm{lw}}
+      = \alpha\, \boldsymbol{T} + (1 - \alpha)\,
+        \widehat{\boldsymbol{\Sigma}},
+    \qquad
+    \mu = \frac{1}{d} \operatorname{Tr}\!\left\{
+          \widehat{\boldsymbol{\Sigma}} \right\},
     $$
 
     by the intensity that minimises the expected squared Frobenius error,
     estimated from the data as
 
     $$
-    \rho = \min\!\left(\frac{\beta^2}{\delta^2},\, 1\right),
+    \alpha = \min\!\left(\frac{b^2}{a^2},\, 1\right),
     \qquad
-    \delta^2 = \frac{1}{p}\left\| \widehat{\Sigma} - \mu I_p
-                \right\|_F^2,
+    a^2 = \frac{1}{d}\left\| \widehat{\boldsymbol{\Sigma}} - \boldsymbol{T}
+          \right\|_{\mathbb{F}}^2,
     \qquad
-    \beta^2 = \frac{1}{p\,n^2} \sum_{k=1}^{n}
-              \left\| x_k x_k^{\top} - \widehat{\Sigma} \right\|_F^2 .
+    b^2 = \frac{1}{d\,N^2} \sum_{k=1}^{N}
+          \left\| \boldsymbol{x}_k \boldsymbol{x}_k^{\mathrm{T}}
+                  - \widehat{\boldsymbol{\Sigma}}
+          \right\|_{\mathbb{F}}^2 .
     $$
 
     Centred variant: the data of these simulations is known to have zero mean
@@ -217,20 +224,22 @@ def oas(data: Array, backend: Union[str, Backend] = "numpy") -> Array:
     iterating the oracle solution under a Gaussian assumption:
 
     $$
-    \widehat{\Sigma}_{\mathrm{OAS}} = \rho\, \mu I_p + (1 - \rho)\,
-    \widehat{\Sigma},
+    \widehat{\boldsymbol{\Sigma}}_{\mathrm{oas}}
+      = \alpha\, \mu \boldsymbol{I}_d + (1 - \alpha)\,
+        \widehat{\boldsymbol{\Sigma}},
     \qquad
-    \rho = \min\!\left(
-        \frac{\alpha + \mu^2}{(n + 1)\left(\alpha - \mu^2 / p\right)},
+    \alpha = \min\!\left(
+        \frac{s + \mu^2}{(N + 1)\left(s - \mu^2 / d\right)},
         \, 1 \right),
     $$
 
-    where $\mu = \frac{1}{p}\operatorname{tr}\widehat{\Sigma}$ and
-    $\alpha = \frac{1}{p^2}\operatorname{tr}\!\left(
-    \widehat{\Sigma}^2\right)$.
+    where $\mu = \frac{1}{d}\operatorname{Tr}\!\left\{
+    \widehat{\boldsymbol{\Sigma}}\right\}$ and
+    $s = \frac{1}{d^2}\operatorname{Tr}\!\left\{
+    \widehat{\boldsymbol{\Sigma}}^2\right\}$.
 
     Note that two formulations circulate: the one printed in the original
-    paper, and the one in common use, which drops its $(1 - 2/p)$ factors.
+    paper, and the one in common use, which drops its $(1 - 2/d)$ factors.
     The second is implemented here, since it is the one every published
     comparison actually plots.
 
@@ -328,22 +337,23 @@ def analytical_shrinkage(
 ) -> Array:
     r"""Analytical non-linear shrinkage of the sample eigenvalues.
 
-    The eigenvectors of $\widehat{\Sigma}$ are kept and each eigenvalue
-    $\lambda_i$ is shrunk on its own, by the amount random matrix theory says
-    it is inflated by:
+    The eigenvectors of $\widehat{\boldsymbol{\Sigma}}$ are kept and each
+    eigenvalue $\lambda_i$ is shrunk on its own, by the amount random matrix
+    theory says it is inflated by:
 
     $$
     \widetilde{\lambda}_i = \frac{\lambda_i}
     {\left[\pi c\, \lambda_i\, \widehat{f}(\lambda_i)\right]^2
      + \left[1 - c - \pi c\, \lambda_i\,
-       \mathcal{H}\widehat{f}(\lambda_i)\right]^2},
-    \qquad c = \frac{p}{n},
+       \mathsf{H}\widehat{f}(\lambda_i)\right]^2},
+    \qquad c = \frac{d}{N},
     $$
 
     where $\widehat{f}$ is an Epanechnikov kernel estimate of the limiting
-    spectral density, with the variable bandwidth $h_i = n^{-1/3}\lambda_i$,
-    and $\mathcal{H}\widehat{f}$ its Hilbert transform. The returned matrix is
-    $U \operatorname{diag}(\widetilde{\lambda}) U^{\top}$.
+    spectral density, with the variable bandwidth $h_i = N^{-1/3}\lambda_i$,
+    and $\mathsf{H}\widehat{f}$ its Hilbert transform. The returned matrix is
+    $\boldsymbol{U} \operatorname{diag}(\widetilde{\boldsymbol{\lambda}})
+    \boldsymbol{U}^{\mathrm{T}}$.
 
     The matrix is symmetric by construction, so the decomposition is ``eigh``:
     real eigenvalues, already ascending.
@@ -693,27 +703,31 @@ def rmt_frechet_mean(
     r"""Fréchet mean of the *true* covariances behind a set of data matrices.
 
     Given $K$ data matrices drawn from unknown covariances
-    $\Sigma_1, \dots, \Sigma_K$, the quantity of interest is the
-    affine-invariant barycentre of those covariances,
+    $\boldsymbol{\Sigma}_1, \dots, \boldsymbol{\Sigma}_K$, the quantity of
+    interest is the affine-invariant barycentre of those covariances,
 
     $$
-    M^{\star} = \arg\min_{M \succ 0} \frac{1}{K} \sum_{k=1}^{K}
-    \delta^2\!\left(M, \Sigma_k\right),
+    \overline{\boldsymbol{\Sigma}}
+      = \operatorname*{arg\,min}_{\boldsymbol{\Sigma} \in \mathcal{S}_d^{++}}
+        \frac{1}{K} \sum_{k=1}^{K}
+        \delta^2\!\left(\boldsymbol{\Sigma}, \boldsymbol{\Sigma}_k\right),
     $$
 
     which cannot be evaluated, since only the sample covariances
-    $\widehat{\Sigma}_k$ are observed. Substituting them —
-    $\frac{1}{K}\sum_k \delta^2(M, \widehat{\Sigma}_k)$, which is what
-    :func:`frechet_mean_cholesky` minimises — is biased as soon as the
-    concentration ratio $c = p/n$ is not small. This function minimises
+    $\widehat{\boldsymbol{\Sigma}}_k$ are observed. Substituting them —
+    which is what :func:`frechet_mean_cholesky` minimises — is biased as soon
+    as the concentration ratio $c = d/N$ is not small. This function minimises
     instead
 
     $$
-    \widehat{M} = \arg\min_{M \succ 0} \frac{1}{K} \sum_{k=1}^{K}
-    \widehat{\delta^2}\!\left(M, \Sigma_k\right),
+    \overline{\boldsymbol{\Sigma}}_{\mathrm{rmt}}
+      = \operatorname*{arg\,min}_{\boldsymbol{\Sigma} \in \mathcal{S}_d^{++}}
+        \frac{1}{K} \sum_{k=1}^{K}
+        \widehat{\delta}^2\!\left(\boldsymbol{\Sigma},
+                                  \boldsymbol{\Sigma}_k\right),
     $$
 
-    with $\widehat{\delta^2}$ the consistent estimator of
+    with $\widehat{\delta}$ the consistent estimator of
     :func:`rmt_corrected_squared_distance`. The minimisation is a Riemannian
     steepest descent with backtracking, started from the identity and carried
     out in the coordinates of the Cholesky factor of the current iterate.
@@ -776,11 +790,15 @@ def frechet_mean_cholesky(
     The uncorrected barycentre of the matrices it is given,
 
     $$
-    \widehat{M} = \arg\min_{M \succ 0} \frac{1}{K} \sum_{k=1}^{K}
-    \delta^2\!\left(M, \Sigma_k\right),
+    \overline{\boldsymbol{\Sigma}}
+      = \operatorname*{arg\,min}_{\boldsymbol{\Sigma} \in \mathcal{S}_d^{++}}
+        \frac{1}{K} \sum_{k=1}^{K}
+        \delta^2\!\left(\boldsymbol{\Sigma}, \boldsymbol{\Sigma}_k\right),
     \qquad
-    \delta^2(A, B) = \left\| \log\!\left(A^{-1/2} B A^{-1/2}\right)
-                      \right\|_F^2 .
+    \delta^2(\boldsymbol{A}, \boldsymbol{B})
+      = \left\| \operatorname{logm}\!\left(
+        \boldsymbol{A}^{-1/2} \boldsymbol{B} \boldsymbol{A}^{-1/2}\right)
+        \right\|_{\mathbb{F}}^2 .
     $$
 
     ``hdrlib.core.estimation.frechet_mean_affine_invariant`` computes the same
@@ -810,29 +828,36 @@ def rmt_corrected_squared_distance(
     r"""Corrected squared Fisher distance between a fixed SPD matrix and SCMs.
 
     The affine-invariant distance between two SPD matrices, normalised here by
-    the dimension so that it stays $O(1)$ as $p$ grows, is
+    the dimension so that it stays $\mathcal{O}(1)$ as $d$ grows, is
 
     $$
-    \frac{1}{p}\,\delta^2(M, \Sigma)
-    = \frac{1}{p} \left\| \log\!\left(M^{-1/2} \Sigma M^{-1/2}\right)
-      \right\|_F^2 .
+    \frac{1}{d}\,\delta^2\!\left(\boldsymbol{\Sigma}_0,
+                                 \boldsymbol{\Sigma}\right)
+    = \frac{1}{d} \left\| \operatorname{logm}\!\left(
+      \boldsymbol{\Sigma}_0^{-1/2} \boldsymbol{\Sigma}
+      \boldsymbol{\Sigma}_0^{-1/2}\right)
+      \right\|_{\mathbb{F}}^2 .
     $$
 
-    Replacing $\Sigma$ by its sample covariance leaves an $O(1)$ bias when the
-    concentration ratio $c = p/n$ is not small. This function returns instead a
-    consistent estimate of $\frac{1}{p}\delta^2(M, \Sigma_k)$ built from the
-    observed $\widehat{\Sigma}_k$. Writing $L$ for the Cholesky factor of
-    ``reference``, $\lambda_1, \dots, \lambda_p$ for the eigenvalues of
-    $L^{-1} \widehat{\Sigma}_k L^{-\top}$, and $z_1, \dots, z_p$ for those of
-    $\operatorname{diag}(\lambda) -
-    \frac{1}{n}\sqrt{\lambda}\sqrt{\lambda}^{\top}$, the estimator is
+    Replacing $\boldsymbol{\Sigma}$ by its sample covariance leaves an
+    $\mathcal{O}(1)$ bias when the concentration ratio $c = d/N$ is not small.
+    This function returns instead a consistent estimate of
+    $\frac{1}{d}\delta^2(\boldsymbol{\Sigma}_0, \boldsymbol{\Sigma}_k)$ built
+    from the observed $\widehat{\boldsymbol{\Sigma}}_k$. Writing
+    $\boldsymbol{L}$ for the Cholesky factor of ``reference``,
+    $\lambda_1, \dots, \lambda_d$ for the eigenvalues of
+    $\boldsymbol{L}^{-1} \widehat{\boldsymbol{\Sigma}}_k
+    \boldsymbol{L}^{-\mathrm{T}}$, and $z_1, \dots, z_d$ for those of
+    $\operatorname{diag}(\boldsymbol{\lambda}) -
+    \frac{1}{N}\sqrt{\boldsymbol{\lambda}}
+    \sqrt{\boldsymbol{\lambda}}^{\mathrm{T}}$, the estimator is
 
     $$
     \begin{aligned}
-    \widehat{\delta^2}
-    &= \frac{1}{p} \sum_{i} \log^2 \lambda_i
-     + \frac{2}{p} \sum_{i} \log \lambda_i
-     - \frac{2}{p} \sum_{i,j} (\lambda_i - z_i)\, Q_{ij} \\
+    \widehat{\delta}^2
+    &= \frac{1}{d} \sum_{i} \log^2 \lambda_i
+     + \frac{2}{d} \sum_{i} \log \lambda_i
+     - \frac{2}{d} \sum_{i,j} (\lambda_i - z_i)\, Q_{ij} \\
     &\quad - \left(\tfrac{1}{c} - 1\right) \log^2 (1 - c)
      - 2 \left(\tfrac{1}{c} - 1\right) \sum_{i} (\lambda_i - z_i)
        \frac{\log \lambda_i}{\lambda_i},
@@ -844,12 +869,13 @@ def rmt_corrected_squared_distance(
     $$
     Q_{ij} = \frac{\lambda_i \log(\lambda_i / \lambda_j)
                     - (\lambda_i - \lambda_j)
-                    + \tfrac{1}{2}\delta_{ij}}
-                   {(\lambda_i - \lambda_j)^2 + \lambda_i \delta_{ij}} .
+                    + \tfrac{1}{2}\mathbb{1}_{i=j}}
+                   {(\lambda_i - \lambda_j)^2
+                    + \lambda_i \mathbb{1}_{i=j}} .
     $$
 
-    The $\delta_{ij}$ terms are not regularisations: on the diagonal they make
-    $Q_{ii}$ evaluate the limit of the off-diagonal expression as
+    The $\mathbb{1}_{i=j}$ terms are not regularisations: on the diagonal they
+    make $Q_{ii}$ evaluate the limit of the off-diagonal expression as
     $\lambda_j \to \lambda_i$ rather than $0/0$.
 
     **Reference**

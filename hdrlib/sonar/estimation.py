@@ -33,25 +33,30 @@ def two_array_tyler(
     Solves
 
     $$
-    \widehat{M} = \frac{1}{K} \sum_{k=1}^{K}
-    \widehat{T}_k^{-1} x_k x_k^H \widehat{T}_k^{-1},
+    \widetilde{\boldsymbol{S}} = \frac{1}{N} \sum_{k=1}^{N}
+      \boldsymbol{\Delta}_k^{-1} \boldsymbol{x}_k
+      \boldsymbol{x}_k^{\mathrm{H}} \boldsymbol{\Delta}_k^{-1},
     \qquad
-    \widehat{T}_k = \operatorname{diag}\!\left(
+    \boldsymbol{\Delta}_k = \operatorname{diag}\!\left(
         \sqrt{\widehat{\tau}_{1k}}, \sqrt{\widehat{\tau}_{2k}}
-    \right) \otimes I_m,
+    \right) \otimes \boldsymbol{I}_m,
     $$
 
-    the two textures of a snapshot being coupled through the cross term:
+    with $N$ secondary snapshots and $m$ sensors per array, the two textures
+    of a snapshot being coupled through the cross term:
 
     $$
     \begin{aligned}
     \widehat{\tau}_{1k} &= t_1 + \sqrt{t_1 / t_2}\; t_{12}, &
-    t_1 &= x_{1k}^H \widehat{M}_{11}^{-1} x_{1k} / m, \\
+    t_1 &= \boldsymbol{x}_{1k}^{\mathrm{H}}
+           \widetilde{\boldsymbol{S}}_{11}^{-1} \boldsymbol{x}_{1k} / m, \\
     \widehat{\tau}_{2k} &= t_2 + \sqrt{t_2 / t_1}\; t_{12}, &
-    t_2 &= x_{2k}^H \widehat{M}_{22}^{-1} x_{2k} / m, \\
+    t_2 &= \boldsymbol{x}_{2k}^{\mathrm{H}}
+           \widetilde{\boldsymbol{S}}_{22}^{-1} \boldsymbol{x}_{2k} / m, \\
     & &
     t_{12} &= \operatorname{Re}\!\left(
-        x_{1k}^H \widehat{M}_{12}^{-1} x_{2k}\right) / m .
+      \boldsymbol{x}_{1k}^{\mathrm{H}} \widetilde{\boldsymbol{S}}_{12}^{-1}
+      \boldsymbol{x}_{2k}\right) / m .
     \end{aligned}
     $$
 

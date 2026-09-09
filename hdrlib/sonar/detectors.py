@@ -103,23 +103,29 @@ def _mimo_mf_stat(x: Array, M_inv: Array, P: Array, be) -> Array:
 # ---------------------------------------------------------------------------
 
 class MNMFGlrt(Detector):
-    r"""Two-array MSG GLRT (M-NMF-G) for known covariance $M$.
+    r"""Two-array MSG GLRT (M-NMF-G) for known scatter matrix
+    $\boldsymbol{S}$.
 
     $$
-    L_G = \frac{\widehat{s}_{1,0}\, \widehat{s}_{2,0}}
-               {\widehat{s}_{1,1}\, \widehat{s}_{2,1}},
+    \hat{\Lambda}_{\mathrm{glrt}} =
+      \frac{\widehat{\sigma}_{1,0}\, \widehat{\sigma}_{2,0}}
+           {\widehat{\sigma}_{1,1}\, \widehat{\sigma}_{2,1}},
     $$
 
-    the scale estimates of the two hypotheses being formed with $M^{-1}$
-    under $H_0$ and with
+    the scale estimates of the two hypotheses being formed with
+    $\boldsymbol{S}^{-1}$ under $\mathcal{H}_0$ and with
 
     $$
-    R^{-1} = M^{-1} - D^{-1},
+    \boldsymbol{R}^{-1} = \boldsymbol{S}^{-1} - \boldsymbol{D}^{-1},
     \qquad
-    D^{-1} = M^{-1} P \left(P^H M^{-1} P\right)^{-1} P^H M^{-1},
+    \boldsymbol{D}^{-1} = \boldsymbol{S}^{-1} \boldsymbol{P}
+      \left(\boldsymbol{P}^{\mathrm{H}} \boldsymbol{S}^{-1}
+      \boldsymbol{P}\right)^{-1} \boldsymbol{P}^{\mathrm{H}}
+      \boldsymbol{S}^{-1},
     $$
 
-    under $H_1$, where $P$ carries the steering vectors of the two arrays.
+    under $\mathcal{H}_1$, where $\boldsymbol{P}$ is the block-diagonal
+    matrix of the steering vectors of the two arrays.
 
     Parameters
     ----------
@@ -184,20 +190,27 @@ class MNMFGlrt(Detector):
 # ---------------------------------------------------------------------------
 
 class MNMFRao(Detector):
-    r"""Two-array MSG Rao test (M-NMF-R) for known covariance $M$.
+    r"""Two-array MSG Rao test (M-NMF-R) for known scatter matrix
+    $\boldsymbol{S}$.
 
     $$
-    L_R = 2\, x^H \widetilde{C}_0^{-1} P
-          \left(P^H \widetilde{C}_0^{-1} P\right)^{-1}
-          P^H \widetilde{C}_0^{-1} x
-        = 2\, u^H D^{-1} u,
+    \hat{\Lambda}_{\mathrm{rao}} =
+      2\, \boldsymbol{x}^{\mathrm{H}} \widetilde{\boldsymbol{C}}_0^{-1}
+      \boldsymbol{P} \left(\boldsymbol{P}^{\mathrm{H}}
+      \widetilde{\boldsymbol{C}}_0^{-1} \boldsymbol{P}\right)^{-1}
+      \boldsymbol{P}^{\mathrm{H}} \widetilde{\boldsymbol{C}}_0^{-1}
+      \boldsymbol{x}
+      = 2\, \boldsymbol{v}^{\mathrm{H}} \boldsymbol{D}^{-1} \boldsymbol{v},
     $$
 
-    with $u = \widehat{\Sigma}_0^{-1} x =
-    \left[x_1 / \widehat{s}_1 \;;\; x_2 / \widehat{s}_2\right]$ and
-    $D^{-1} = M^{-1} P \left(P^H M^{-1} P\right)^{-1} P^H M^{-1}$. Only the
-    $H_0$ scales are needed, which is what makes the Rao test cheaper than the
-    GLRT.
+    with $\boldsymbol{v} = \boldsymbol{\Delta}_0^{-1} \boldsymbol{x} =
+    \left[\boldsymbol{x}_1 / \widehat{\sigma}_1 \;;\;
+          \boldsymbol{x}_2 / \widehat{\sigma}_2\right]$ and
+    $\boldsymbol{D}^{-1} = \boldsymbol{S}^{-1} \boldsymbol{P}
+    \left(\boldsymbol{P}^{\mathrm{H}} \boldsymbol{S}^{-1}
+    \boldsymbol{P}\right)^{-1} \boldsymbol{P}^{\mathrm{H}}
+    \boldsymbol{S}^{-1}$. Only the $\mathcal{H}_0$ scales are needed, which
+    is what makes the Rao test cheaper than the GLRT.
 
     Parameters
     ----------
@@ -254,12 +267,14 @@ class MNMFIndependent(Detector):
     r"""GLRT assuming independent arrays (M-NMF-I / MIMO ANMF).
 
     $$
-    L_G = \prod_{i} \left(1 - \mathrm{NMF}_i\right)^{-m},
+    \hat{\Lambda}_{\mathrm{anmf}} =
+      \prod_{a} \left(1 - \mathrm{NMF}_a\right)^{-m},
     $$
 
     returned as the log-statistic
-    $-m \sum_i \log\left(1 - \mathrm{NMF}_i\right)$, each
-    $\mathrm{NMF}_i$ being the single-array statistic of
+    $-m \sum_a \log\left(1 - \mathrm{NMF}_a\right)$, $m$ being the number of
+    sensors per array and each $\mathrm{NMF}_a$ the single-array statistic
+    of
     :class:`NMFSingleArray`. Ignoring the coupling between the two arrays is
     exactly the approximation this detector is here to measure the cost of.
 
@@ -342,10 +357,15 @@ class NMFSingleArray(Detector):
     r"""Single-array Normalised Matched Filter for array ``array_idx``.
 
     $$
-    \mathrm{NMF}_i = \frac{\left| p_i^H M_{ii}^{-1} x_i \right|^2}
-                           {q_i \; x_i^H M_{ii}^{-1} x_i},
-    \qquad q_i = p_i^H M_{ii}^{-1} p_i .
+    \mathrm{NMF}_a = \frac{\left| \boldsymbol{p}_a^{\mathrm{H}}
+                     \boldsymbol{S}_{aa}^{-1} \boldsymbol{x}_a \right|^2}
+                    {q_a \; \boldsymbol{x}_a^{\mathrm{H}}
+                     \boldsymbol{S}_{aa}^{-1} \boldsymbol{x}_a},
+    \qquad q_a = \boldsymbol{p}_a^{\mathrm{H}} \boldsymbol{S}_{aa}^{-1}
+                 \boldsymbol{p}_a ,
     $$
+
+    $a$ indexing the two arrays.
 
     Normalising by the energy of the observation is what makes the statistic
     invariant to the texture, and so constant-false-alarm-rate under the

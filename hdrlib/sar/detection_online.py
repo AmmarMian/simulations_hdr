@@ -53,17 +53,18 @@ class OnlineDCGDetector(OnlineDetector):
     shared by every date and one set per date:
 
     $$
-    \Lambda = 2 \left[
-      \log L\!\left(x \,\middle|\, \widehat{\Sigma}_0,
-                      \widehat{\tau}_0 \right)
-      - \sum_{t=1}^{T} \log L\!\left(x_t \,\middle|\,
-                      \widehat{\Sigma}_t, \widehat{\tau}_t \right)
+    \hat{\Lambda} = 2 \left[
+      \ell\!\left(\boldsymbol{X} \,\middle|\,
+        \widehat{\boldsymbol{\Sigma}}_0, \widehat{\boldsymbol{\tau}}_0 \right)
+      - \sum_{t=1}^{T} \ell\!\left(\boldsymbol{X}_t \,\middle|\,
+        \widehat{\boldsymbol{\Sigma}}_t, \widehat{\boldsymbol{\tau}}_t \right)
     \right],
     $$
 
-    where under $H_0$ a single $(\Sigma, \tau)$ is pooled across all dates
-    and under $H_1$ each date carries its own. What makes the detector
-    *online* is that the $H_0$ estimate is refreshed by one Riemannian
+    where $\ell$ is the log-likelihood, under $\mathcal{H}_0$ a single
+    $(\boldsymbol{\Sigma}, \boldsymbol{\tau})$ is pooled across all dates and
+    under $\mathcal{H}_1$ each date carries its own. What makes the detector
+    *online* is that the $\mathcal{H}_0$ estimate is refreshed by one Riemannian
     gradient step per new date rather than recomputed from the whole
     time-series.
 
@@ -350,20 +351,21 @@ class OnlineKroneckerDetector(OnlineDetector):
     $\Sigma = A \otimes B$:
 
     $$
-    \Lambda = 2 \left[
-      \log L\!\left(x \,\middle|\, \widehat{A}_0, \widehat{B}_0,
-                      \widehat{\tau}_0 \right)
-      - \sum_{t=1}^{T} \log L\!\left(x_t \,\middle|\,
-                      \widehat{A}_t, \widehat{B}_t, \widehat{\tau}_t
-                      \right)
+    \hat{\Lambda} = 2 \left[
+      \ell\!\left(\boldsymbol{X} \,\middle|\, \widehat{\boldsymbol{A}}_0,
+        \widehat{\boldsymbol{B}}_0, \widehat{\boldsymbol{\tau}}_0 \right)
+      - \sum_{t=1}^{T} \ell\!\left(\boldsymbol{X}_t \,\middle|\,
+        \widehat{\boldsymbol{A}}_t, \widehat{\boldsymbol{B}}_t,
+        \widehat{\boldsymbol{\tau}}_t \right)
     \right].
     $$
 
-    Under $H_0$ a single $(A, B)$ is shared across all dates and updated by a
-    stochastic natural gradient step on
-    $\mathcal{SH}^{++}(a) \times \mathcal{SH}^{++}(b) \times
-    (\mathbb{R}^{+})^{N}$ with the Fisher information metric; under $H_1$
-    each date is estimated on its own by the Kronecker MM algorithm.
+    Under $\mathcal{H}_0$ a single $(\boldsymbol{A}, \boldsymbol{B})$ is
+    shared across all dates and updated by a stochastic natural gradient step
+    on $\widetilde{\mathcal{H}}_a^{++} \times \widetilde{\mathcal{H}}_b^{++}
+    \times (\mathbb{R}_*^+)^{N}$ with the Fisher information metric; under
+    $\mathcal{H}_1$ each date is estimated on its own by the Kronecker MM
+    algorithm.
 
     Parameters
     ----------

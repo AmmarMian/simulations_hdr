@@ -19,7 +19,7 @@ python -m eusipco_2026.simulation --wishart-inverse --cpu --n-jobs 8
 ```
 
 **This directory adds one axis only**, which that grid does not sweep: the
-degrees of freedom. As $df$ grows, the law concentrates around its scale matrix
+degrees of freedom. As $\nu$ grows, the law concentrates around its scale matrix
 and the choice of mean must matter less and less. The mechanism then appears as
 a **gradient** rather than as two points — which is what makes it a statement
 about the model rather than about one particular setting.
@@ -27,7 +27,7 @@ about the model rather than about one particular setting.
 Everything else is reused: `run_single_experiment` from `eusipco_2026` does the
 generation, the training and the evaluation. This file only sweeps and plots.
 
-## The original grid's result ($df = 64$, $64\times64$ matrices)
+## The original grid's result ($\nu = 64$, $64\times64$ matrices)
 
 | mean | Wishart data | inverse Wishart data |
 |---|---|---|
@@ -67,4 +67,5 @@ uv pip install --no-deps git+https://github.com/Yet-Another-Research-Organisatio
 python df_sweep.py
 ```
 
-`--df 64 96 160 320 640` by default; $df$ must exceed `matrix_size - 1`.
+`--df 64 96 160 320 640` by default; the degrees of freedom $\nu$ must
+exceed `matrix_size - 1`.

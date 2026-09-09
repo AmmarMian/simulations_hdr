@@ -9,12 +9,12 @@ measures what ReEig does to the spectrum and what that buys backpropagation.
 Backpropagating through a spectral layer multiplies the incoming error by the
 Loewner matrix
 
-$$\mathbf{G}_{ij} = \frac{h(\lambda_i)-h(\lambda_j)}{\lambda_i-\lambda_j}.$$
+$$\boldsymbol{G}_{ij} = \frac{h(\lambda_i)-h(\lambda_j)}{\lambda_i-\lambda_j}.$$
 
 For $h=\log$, the mean value theorem gives
-$|\mathbf{G}_{ij}| \le 1/\min(\lambda_i,\lambda_j)$, so
+$|\boldsymbol{G}_{ij}| \le 1/\min(\lambda_i,\lambda_j)$, so
 
-$$\max_{ij}|\mathbf{G}_{ij}| = 1/\lambda_{\min}.$$
+$$\max_{ij}|\boldsymbol{G}_{ij}| = 1/\lambda_{\min}.$$
 
 The instability of the eigenvalue-decomposition gradient is therefore governed
 by the **smallest** eigenvalue and by nothing else. A ReEig layer with
@@ -27,16 +27,16 @@ the gradient.
 
 | | script | data |
 |---|---|---|
-| mechanism, sweep over $(N_{pix}/N_{filter}, \text{decay})$ | `main.py` | simulated |
+| mechanism, sweep over $(M/d, \text{decay})$ | `main.py` | simulated |
 | what it gives on real datasets, sweep over $\varepsilon$ | `real_data.py` | HDM05 / HyperLeaf / Rices90 |
 
 `main.py` models covariance pooling for what it is — a sample covariance over
-$N_{pix}$ positions for $N_{filter}$ channels — and sweeps two axes, because
-the two count independently: the sampling ratio says how far the empirical
+$M$ pixels for $d$ filters — and sweeps two axes, because the two count
+independently: the sampling ratio says how far the empirical
 spectrum falls below the true one, the decay says where the true one already
 was.
 
-## Result (simulated, `--n_trials 100`, $N_{filter}=256$, $\varepsilon=10^{-4}$)
+## Result (simulated, `--n_trials 100`, $d=256$, $\varepsilon=10^{-4}$)
 
 | decay | ratio | $\lambda_{\min}$ | cond. | % clipped | Loewner | + ReEig |
 |---|---|---|---|---|---|---|
@@ -47,7 +47,7 @@ was.
 Three things to take away:
 
 1. **Below ratio 1 the matrix is singular** — centring caps its rank at
-   $N_{pix}-1$ — and LogEig is not defined at all, whatever the decay. This is
+   $M-1$ — and LogEig is not defined at all, whatever the decay. This is
    not poor conditioning, it is an absent value.
 2. **At the paper's operating point** (ratio $\approx 3$) and at the
    conditioning of the datasets involved ($\sim 10^6$; HDM05 is quoted at

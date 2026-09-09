@@ -4,8 +4,8 @@ Serves the federated-aggregation section. No data, no training: 2 seconds.
 
 ## Why
 
-The claim is that the two aggregations agree to within $O(\varepsilon^2)$ when
-the local weights stay $O(\varepsilon)$ from the global iterate. The intended
+The claim is that the two aggregations agree to within $\mathcal{O}(\varepsilon^2)$ when
+the local weights stay $\mathcal{O}(\varepsilon)$ from the global iterate. The intended
 support was the EEG validation curves, "which show superimposed trajectories".
 Superimposed trajectories establish that the two schemes agree; they do not
 measure **to what order**, and it is the order that decides whether the
@@ -14,7 +14,7 @@ iterate) is a trade-off or a free choice.
 
 ## Result
 
-Order fitted on $\log\lVert\mathrm{projavg}-\mathrm{rlavg}\rVert_F$ against
+Order fitted on $\log\lVert\mathrm{projavg}-\mathrm{rlavg}\rVert_{\mathbb{F}}$ against
 $\log\varepsilon$, above the rounding floor:
 
 | geometry | $K=2$ | $K=8$ | $K=32$ |
@@ -35,9 +35,9 @@ not "close", they are indistinguishable.
 
 Two options:
 
-1. state the result as $O(\varepsilon^3)$ — which then requires redoing the two
+1. state the result as $\mathcal{O}(\varepsilon^3)$ — which then requires redoing the two
    lines of algebra, the second-order term having to cancel;
-2. keep $O(\varepsilon^2)$, which is correct, and say that the bound is met
+2. keep $\mathcal{O}(\varepsilon^2)$, which is correct, and say that the bound is met
    with margin, measurement in support.
 
 The second is the safer one as long as the cancellation of the second-order

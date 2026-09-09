@@ -2,12 +2,12 @@
 #
 # Everything here follows the stochastic representation
 #
-#     x = mu + sqrt(Q) * Xi^{1/2} u,     u ~ Uniform(S^{d-1}),
+#     x = mu + sqrt(R) * S^{1/2} u,     u ~ Uniform(S^{d-1}),
 #
-# where the modular variate Q carries the whole dependence on the density
-# generator g, with density  p_Q(q) ∝ q^{d/2-1} g(q).  A distribution therefore
-# only has to say how to draw Q; the sampler and the isodensity geometry are
-# shared.
+# where the modular variate R carries the whole dependence on the density
+# generator g, with density f_R(r) ∝ r^{d/2-1} g(r).  A distribution
+# therefore only has to say how to draw R; the sampler and the isodensity
+# geometry are shared.
 #
 # Backend policy, matching the rest of hdrlib:
 #   * everything that produces *arrays* (draws) goes through the primitives of
@@ -189,15 +189,18 @@ class EllipticalDistribution(ABC):
     Every such distribution admits the stochastic representation
 
     $$
-    x = \mu + \sqrt{Q}\, \Xi^{1/2} u,
-    \qquad u \sim \mathcal{U}\!\left(\mathbb{S}^{d-1}\right),
+    \boldsymbol{x} = \boldsymbol{\mu}
+      + \sqrt{\mathcal{R}}\, \boldsymbol{S}^{1/2} \boldsymbol{u},
+    \qquad \boldsymbol{u} \sim
+      \mathcal{U}\!\left(\mathbb{S}^{d-1}\right),
     $$
 
-    with $\Xi$ the scatter matrix and $Q \perp u$ the modular variate, whose
-    density is $p_Q(q) \propto q^{d/2 - 1} g(q)$ for the density generator
-    $g$. Subclasses therefore only describe the law of $Q$: it is the only
-    thing distinguishing two elliptical distributions that share a scatter
-    matrix.
+    with $\boldsymbol{S}$ the scatter matrix and
+    $\mathcal{R} \perp \boldsymbol{u}$ the modular variate, whose density is
+    $f_{\mathcal{R}}(r) \propto r^{d/2 - 1} g(r)$ for the density generator
+    $g$. Subclasses therefore only describe the law of $\mathcal{R}$: it is
+    the only thing distinguishing two elliptical distributions that share a
+    scatter matrix.
 
     Parameters
     ----------
@@ -284,7 +287,7 @@ class CompoundGaussian(EllipticalDistribution):
 
     Subclasses give the texture ``tau`` twice: as a backend-side sampler for
     draws, and as a frozen ``scipy.stats`` law for the host-side quantiles.
-    The modular variate factorises as $Q = \tau \, \chi^2_d$.
+    The modular variate factorises as $\mathcal{R} = \tau \, \chi^2_d$.
     """
 
     @abstractmethod
@@ -325,7 +328,8 @@ class CompoundGaussian(EllipticalDistribution):
 
 
 class GaussianDistribution(EllipticalDistribution):
-    r"""Gaussian: $g(t) = e^{-t/2}$, modular variate $Q \sim \chi^2_d$."""
+    r"""Gaussian: $g(t) = e^{-t/2}$, modular variate
+    $\mathcal{R} \sim \chi^2_d$."""
 
     label = "gaussienne"
 
@@ -393,9 +397,9 @@ class StudentTDistribution(CompoundGaussian):
 class KDistribution(CompoundGaussian):
     r"""K-distribution with texture shape $\nu$ = ``dof``.
 
-    Gamma texture of unit mean, $\tau \sim \Gamma(\nu, 1/\nu)$, for which
-    the density generator involves a modified Bessel function of the second
-    kind:
+    Gamma texture of unit mean, $\tau \sim \mathcal{G}(\nu, 1/\nu)$, for
+    which the density generator involves a modified Bessel function of the
+    second kind:
 
     $$
     g(t) = t^{a/2} K_a\!\left(\sqrt{2 \nu t}\right),
@@ -434,9 +438,9 @@ class GeneralizedGaussianDistribution(EllipticalDistribution):
     r"""Generalized Gaussian: $g(t) = \exp\!\left(-t^s / (2b)\right)$.
 
     Not written as a compound-Gaussian here: the modular variate is available
-    in closed form, since $Q = u^{1/s}$ with
-    $u \sim \Gamma\!\left(d / (2s),\, 2b\right)$. Taking $s = 1$, $b = 1$
-    recovers the Gaussian; $s < 1$ gives heavier tails.
+    in closed form, since $\mathcal{R} = w^{1/s}$ with
+    $w \sim \mathcal{G}\!\left(d / (2s),\, 2b\right)$. Taking $s = 1$,
+    $b = 1$ recovers the Gaussian; $s < 1$ gives heavier tails.
     """
 
     label = "gaussienne généralisée"
@@ -547,10 +551,12 @@ def isodensity_ellipse(
     the curve is the ellipse
 
     $$
-    \left\{ x \;:\; x^{\top} \Xi^{-1} x = q \right\},
+    \left\{ \boldsymbol{x} \;:\; \boldsymbol{x}^{\mathrm{T}}
+    \boldsymbol{S}^{-1} \boldsymbol{x} = r \right\},
     $$
 
-    $q$ being the corresponding quantile of the modular variate.
+    $r$ being the corresponding quantile of the modular variate
+    $\mathcal{R}$.
 
     Returns
     -------
@@ -585,7 +591,7 @@ def student_t_weight_real(x, df: float = 3, n_features: int = 1, **kwargs):
 
     Derived from $u(t) = -2 g'(t) / g(t)$ with the real generator
     $g(t) = (1 + t/\nu)^{-(d+\nu)/2}$. The complex counterpart in
-    ``hdrlib.core.estimation`` reads $(p + \nu/2)/(t + \nu/2)$ instead,
+    ``hdrlib.core.estimation`` reads $(d + \nu/2)/(t + \nu/2)$ instead,
     because
     both the generator and the factor relating ``u`` to ``g'/g`` differ; the
     two are genuinely distinct functions, not a reparametrisation.

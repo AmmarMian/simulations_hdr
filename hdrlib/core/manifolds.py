@@ -454,11 +454,15 @@ class HermitianPositiveDefinite(Manifold):
         self.be = get_backend_module(backend_name)
 
     def inner(self, x: Array, u: Array, v: Array) -> Array:
-        r"""Affine-invariant inner product on the tangent space at $x$:
+        r"""Affine-invariant metric on the tangent space at
+        $\boldsymbol{\Sigma}$:
 
         $$
-        \langle u, v \rangle_x =
-        \operatorname{tr}\!\left(x^{-1} u \, x^{-1} v^H\right).
+        \left\langle \boldsymbol{\zeta}, \boldsymbol{\eta}
+        \right\rangle_{\boldsymbol{\Sigma}} =
+        \operatorname{Tr}\!\left\{ \boldsymbol{\Sigma}^{-1}
+        \boldsymbol{\zeta} \, \boldsymbol{\Sigma}^{-1}
+        \boldsymbol{\eta}^{\mathrm{H}} \right\}.
         $$
         """
         sol_u = self.be.linalg.solve(x, u)
@@ -472,10 +476,14 @@ class HermitianPositiveDefinite(Manifold):
         )
 
     def norm(self, x: Array, u: Array) -> Array:
-        r"""Norm of a tangent vector, through the Cholesky factor $x = L L^H$:
+        r"""Norm of a tangent vector, through the Cholesky factor
+        $\boldsymbol{\Sigma} = \boldsymbol{L} \boldsymbol{L}^{\mathrm{H}}$:
 
         $$
-        \|u\|_x = \left\| L^{-1} u \, L^{-H} \right\|_F .
+        \left\lVert \boldsymbol{\zeta}
+        \right\rVert_{\boldsymbol{\Sigma}} =
+        \left\lVert \boldsymbol{L}^{-1} \boldsymbol{\zeta} \,
+        \boldsymbol{L}^{-\mathrm{H}} \right\rVert_{\mathbb{F}} .
         $$
         """
         c = self.be.linalg.cholesky(x)
@@ -488,16 +496,20 @@ class HermitianPositiveDefinite(Manifold):
         return multiherm(u, self.backend_name)
 
     def egrad2rgrad(self, x: Array, egrad: Array) -> Array:
-        r"""Euclidean to Riemannian gradient, $\operatorname{grad} f(x) =
-        x \, \nabla f(x) \, x$, symmetrised."""
+        r"""Euclidean to Riemannian gradient,
+        $\operatorname{grad} f(\boldsymbol{\Sigma}) = \boldsymbol{\Sigma} \,
+        \nabla f(\boldsymbol{\Sigma}) \, \boldsymbol{\Sigma}$,
+        symmetrised."""
         return x @ multiherm(egrad, self.backend_name) @ x
 
     def exp(self, x: Array, u: Array) -> Array:
         r"""Exponential map of the affine-invariant metric:
 
         $$
-        \exp_x(u) = x^{1/2}
-        \exp\!\left(x^{-1/2} u \, x^{-1/2}\right) x^{1/2} .
+        \exp_{\boldsymbol{\Sigma}}(\boldsymbol{\zeta}) =
+        \boldsymbol{\Sigma}^{1/2} \operatorname{expm}\!\left(
+        \boldsymbol{\Sigma}^{-1/2} \boldsymbol{\zeta} \,
+        \boldsymbol{\Sigma}^{-1/2}\right) \boldsymbol{\Sigma}^{1/2} .
         $$
 
         where X = x.
@@ -526,8 +538,10 @@ class HermitianPositiveDefinite(Manifold):
         r"""Logarithmic map, the inverse of :meth:`exp`:
 
         $$
-        \log_x(y) = x^{1/2}
-        \log\!\left(x^{-1/2} y \, x^{-1/2}\right) x^{1/2} .
+        \log_{\boldsymbol{\Sigma}_1}(\boldsymbol{\Sigma}_2) =
+        \boldsymbol{\Sigma}_1^{1/2} \operatorname{logm}\!\left(
+        \boldsymbol{\Sigma}_1^{-1/2} \boldsymbol{\Sigma}_2 \,
+        \boldsymbol{\Sigma}_1^{-1/2}\right) \boldsymbol{\Sigma}_1^{1/2} .
         $$
         """
         x_sqrt, x_isqrt = sqrtm_invsqrtm_psd(x, self.backend_name)
@@ -544,8 +558,10 @@ class HermitianPositiveDefinite(Manifold):
         r"""Affine-invariant distance, computed through a Cholesky factor:
 
         $$
-        \delta(x, y) = \left\| \log\!\left(x^{-1/2} y \, x^{-1/2}\right)
-        \right\|_F .
+        \delta(\boldsymbol{\Sigma}_1, \boldsymbol{\Sigma}_2) =
+        \left\lVert \operatorname{logm}\!\left(
+        \boldsymbol{\Sigma}_1^{-1/2} \boldsymbol{\Sigma}_2 \,
+        \boldsymbol{\Sigma}_1^{-1/2}\right) \right\rVert_{\mathbb{F}} .
         $$
         """
         c = self.be.linalg.cholesky(x)
@@ -592,7 +608,10 @@ class HermitianPositiveDefinite(Manifold):
         return u
 
     def retr(self, x: Array, u: Array) -> Array:
-        r"""Second-order retraction, $R_x(u) = x + u + \tfrac{1}{2} u x^{-1} u$,
+        r"""Second-order retraction,
+        $\mathcal{R}_{\boldsymbol{\Sigma}}(\boldsymbol{\zeta}) =
+        \boldsymbol{\Sigma} + \boldsymbol{\zeta} + \tfrac{1}{2}
+        \boldsymbol{\zeta} \boldsymbol{\Sigma}^{-1} \boldsymbol{\zeta}$,
         which agrees with :meth:`exp` to second order and costs no
         eigendecomposition."""
         return x + u + 0.5 * u @ self.be.linalg.solve(x, u)
@@ -642,12 +661,14 @@ class SpecialHermitianPositiveDefinite(Manifold):
         trace term.
 
         $$
-        T_x = \left\{ u = u^H \;:\;
-        \operatorname{tr}\!\left(x^{-1} u\right) = 0 \right\},
+        \mathrm{T}_{\boldsymbol{\Sigma}} = \left\{
+        \boldsymbol{\zeta} = \boldsymbol{\zeta}^{\mathrm{H}} \;:\;
+        \operatorname{Tr}\!\left\{ \boldsymbol{\Sigma}^{-1}
+        \boldsymbol{\zeta} \right\} = 0 \right\},
         $$
 
         the trace condition being the derivative of the constraint
-        $\det x = 1$.
+        $\operatorname{det} \boldsymbol{\Sigma} = 1$.
         """
         u = multiherm(u, self.backend_name)
         # Compute trace of x^{-1} @ u
@@ -734,13 +755,16 @@ class StrictlyPositiveVectors(Manifold):
         self.be = get_backend_module(backend_name)
 
     def inner(self, x: Array, u: Array, v: Array) -> Array:
-        r"""Fisher inner product,
-        $\langle u, v \rangle_x = \sum_i u_i v_i / x_i^2$."""
+        r"""Fisher metric on the cone of positive vectors,
+        $\left\langle \boldsymbol{\zeta}, \boldsymbol{\eta}
+        \right\rangle_{\boldsymbol{\tau}} =
+        \sum_i \zeta_i \eta_i / \tau_i^2$."""
         return self.be.sum((u * v) / (x * x), axis=-1)
 
     def norm(self, x: Array, u: Array) -> Array:
         r"""Norm induced by :meth:`inner`,
-        $\|u\|_x = \left(\sum_i u_i^2 / x_i^2\right)^{1/2}$."""
+        $\left\lVert \boldsymbol{\zeta} \right\rVert_{\boldsymbol{\tau}} =
+        \left(\sum_i \zeta_i^2 / \tau_i^2\right)^{1/2}$."""
         return self.be.sqrt(self.be.sum((u * u) / (x * x), axis=-1))
 
     def proj(self, x: Array, u: Array) -> Array:
@@ -749,8 +773,9 @@ class StrictlyPositiveVectors(Manifold):
 
     def egrad2rgrad(self, x: Array, egrad: Array) -> Array:
         r"""Euclidean to Riemannian gradient,
-        $\operatorname{grad} f(x) = x^2 \odot \nabla f(x)$, the inverse of the
-        metric applied entrywise."""
+        $\operatorname{grad} f(\boldsymbol{\tau}) = \boldsymbol{\tau}^2 \odot
+        \nabla f(\boldsymbol{\tau})$, the inverse of the metric applied
+        entrywise."""
         return egrad * x * x
 
     def exp(self, x: Array, u: Array) -> Array:

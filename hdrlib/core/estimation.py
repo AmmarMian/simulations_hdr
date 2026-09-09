@@ -104,7 +104,7 @@ def _student_t_m_estimator_function(
     x: Array, df: float = 3, n_features: int = 1, **kwargs
 ):
     r"""Student-t MLE M-estimator function,
-    $u(x) = (p + \nu/2) / (x + \nu/2)$.
+    $u(t) = (d + \nu/2) / (t + \nu/2)$.
 
     Parameters
     ----------
@@ -131,11 +131,11 @@ def _huber_m_estimator_function(
     backend_name: Union[str, Backend] = "numpy",
     **kwargs,
 ):
-    r"""Huber M-estimator function, for a threshold $\lambda$ and a real
-    $\beta$:
+    r"""Huber M-estimator function, for a threshold $\gamma$ (``lbda``) and a
+    real $\beta$:
 
     $$
-    u(x) = \frac{1}{\beta} \min\!\left(1, \lambda / x\right).
+    u(t) = \frac{1}{\beta} \min\!\left(1, \gamma / t\right).
     $$
 
     **Reference**
@@ -175,7 +175,7 @@ def _huber_m_estimator_function(
 
 
 def _tyler_m_estimator_function(x, n_features=1, **kwargs):
-    r"""Tyler M-estimator function, $u(x) = p / x$.
+    r"""Tyler M-estimator function, $u(t) = d / t$.
 
     Parameters
     ----------
@@ -306,8 +306,10 @@ def fixed_point_m_estimation_centered(
     An M-estimator of scatter is a solution of
 
     $$
-    \widehat{\Sigma} = \frac{1}{n} \sum_{k=1}^{n}
-    u\!\left(x_k^{\top} \widehat{\Sigma}^{-1} x_k\right) x_k x_k^{\top},
+    \widetilde{\boldsymbol{S}} = \frac{1}{N} \sum_{k=1}^{N}
+    u\!\left(\boldsymbol{x}_k^{\mathrm{T}}
+             \widetilde{\boldsymbol{S}}^{-1} \boldsymbol{x}_k\right)
+    \boldsymbol{x}_k \boldsymbol{x}_k^{\mathrm{T}},
     $$
 
     the weight $u$ being what distinguishes one estimator from another: it
@@ -315,12 +317,16 @@ def fixed_point_m_estimation_centered(
     The equation is solved by iterating its right-hand side,
 
     $$
-    \Sigma_{t+1} = \frac{1}{n} \sum_{k=1}^{n}
-    u\!\left(x_k^{\top} \Sigma_t^{-1} x_k\right) x_k x_k^{\top},
+    \widetilde{\boldsymbol{S}}_{n+1} = \frac{1}{N} \sum_{k=1}^{N}
+    u\!\left(\boldsymbol{x}_k^{\mathrm{T}}
+             \widetilde{\boldsymbol{S}}_{n}^{-1} \boldsymbol{x}_k\right)
+    \boldsymbol{x}_k \boldsymbol{x}_k^{\mathrm{T}},
     $$
 
-    from $\Sigma_0 = I_p$, until
-    $\|\Sigma_{t+1} - \Sigma_t\|_F / \|\Sigma_t\|_F$ falls under ``tol``.
+    from $\widetilde{\boldsymbol{S}}_0 = \boldsymbol{I}_d$, until
+    $\|\widetilde{\boldsymbol{S}}_{n+1} - \widetilde{\boldsymbol{S}}_n
+    \|_{\mathbb{F}} / \|\widetilde{\boldsymbol{S}}_n\|_{\mathbb{F}}$ falls
+    under ``tol``.
     Batched inputs converge independently: a matrix that has met the tolerance
     stops being updated while the others continue.
 
@@ -532,7 +538,7 @@ class TylerEstimator(Estimator):
     weight
 
     $$
-    u(x) = \frac{p}{x},
+    u(t) = \frac{d}{t},
     $$
 
     which makes the estimator depend on the directions of the samples alone.
@@ -654,7 +660,7 @@ class StudentTEstimator(Estimator):
     :func:`fixed_point_m_estimation_centered` with the weight
 
     $$
-    u(x) = \frac{p + \nu / 2}{x + \nu / 2}.
+    u(t) = \frac{d + \nu / 2}{t + \nu / 2}.
     $$
 
     Where Tyler ignores the magnitude of a sample entirely, this one merely
@@ -779,13 +785,15 @@ class HuberEstimator(Estimator):
     :func:`fixed_point_m_estimation_centered` with the piecewise weight
 
     $$
-    u(x) = \frac{1}{\beta} \min\!\left(1, \frac{\lambda}{x}\right),
+    u(t) = \frac{1}{\beta} \min\!\left(1, \frac{\gamma}{t}\right),
     $$
 
     which leaves a sample alone while its quadratic form stays under the
-    threshold $\lambda$ — there the estimator is the sample covariance — and
-    downweights it as $\lambda / x$ beyond, as Tyler does. Setting
-    $\lambda = \infty$ recovers the sample covariance exactly.
+    threshold $\gamma$ — there the estimator is the sample covariance — and
+    downweights it as $\gamma / t$ beyond, as Tyler does. Setting
+    $\gamma = \infty$ recovers the sample covariance exactly. ($\gamma$ is
+    ``lbda`` in the signature; the symbol $\lambda$ is reserved for
+    eigenvalues.)
 
     **Reference**
 
@@ -1301,8 +1309,11 @@ def tyler_cost(
     r"""Tyler's cost function, evaluated at a single scatter matrix.
 
     $$
-    L(\Sigma) = \log\det\Sigma
-    + \frac{p}{N}\sum_{i=1}^{N}\log\!\left(x_i^H\Sigma^{-1}x_i\right).
+    \mathcal{L}(\boldsymbol{\Sigma}) =
+      \log \operatorname{det} \boldsymbol{\Sigma}
+      + \frac{d}{N}\sum_{k=1}^{N}\log\!\left(
+        \boldsymbol{x}_k^{\mathrm{H}} \boldsymbol{\Sigma}^{-1}
+        \boldsymbol{x}_k\right).
     $$
 
     This is the negative log-likelihood of the angular central Gaussian up to
@@ -1338,14 +1349,18 @@ def tyler_riemannian_gradient(
     r"""Riemannian gradient of :func:`tyler_cost` for the affine-invariant metric.
 
     $$
-    \operatorname{grad} L(\Sigma) = \Sigma
-    - \frac{p}{N}\sum_{i=1}^{N}
-    \frac{x_i x_i^H}{x_i^H\Sigma^{-1}x_i}.
+    \operatorname{grad} \mathcal{L}(\boldsymbol{\Sigma}) =
+      \boldsymbol{\Sigma}
+      - \frac{d}{N}\sum_{k=1}^{N}
+        \frac{\boldsymbol{x}_k \boldsymbol{x}_k^{\mathrm{H}}}
+             {\boldsymbol{x}_k^{\mathrm{H}} \boldsymbol{\Sigma}^{-1}
+              \boldsymbol{x}_k}.
     $$
 
     The conversion from the Euclidean gradient to the Riemannian one for the
     affine-invariant metric is the congruence
-    $\Sigma \, \nabla L(\Sigma) \, \Sigma$, already carried out here: what
+    $\boldsymbol{\Sigma} \, \nabla \mathcal{L}(\boldsymbol{\Sigma}) \,
+    \boldsymbol{\Sigma}$, already carried out here: what
     remains is the difference between the current point and the fixed-point
     map, which is why a unit step recovers Tyler's iteration exactly.
 
@@ -1636,22 +1651,27 @@ def frechet_mean_affine_invariant(
     Minimises the Fréchet variance for the affine-invariant distance,
 
     $$
-    F(M) = \frac{1}{N}\sum_{i=1}^{N} \delta^2(M, \Sigma_i),
+    F(\boldsymbol{\Sigma}) = \frac{1}{K}\sum_{k=1}^{K}
+      \delta^2(\boldsymbol{\Sigma}, \boldsymbol{\Sigma}_k),
     \qquad
-    \operatorname{grad} F(M) = -\frac{2}{N}\sum_{i=1}^{N} \log_M(\Sigma_i),
+    \operatorname{grad} F(\boldsymbol{\Sigma}) = -\frac{2}{K}
+      \sum_{k=1}^{K} \log_{\boldsymbol{\Sigma}}(\boldsymbol{\Sigma}_k),
     $$
 
-    so that the iteration is
+    so that the iteration on the running mean
+    $\overline{\boldsymbol{\Sigma}}$ is
 
     $$
-    M \leftarrow \exp_M\!\left(
-        \frac{\gamma}{N}\sum_{i=1}^{N}\log_M(\Sigma_i)
-    \right),
+    \overline{\boldsymbol{\Sigma}} \leftarrow
+      \exp_{\overline{\boldsymbol{\Sigma}}}\!\left(
+        \frac{\eta}{K}\sum_{k=1}^{K}
+        \log_{\overline{\boldsymbol{\Sigma}}}(\boldsymbol{\Sigma}_k)
+      \right),
     $$
 
-    a gradient step of length $\gamma / 2$. The initial point is the
-    log-Euclidean mean, which is exact when the matrices commute and a good
-    starting guess otherwise.
+    a gradient step of length $\eta / 2$, $K$ being the number of matrices
+    averaged. The initial point is the log-Euclidean mean, which is exact when
+    the matrices commute and a good starting guess otherwise.
 
     Parameters
     ----------
@@ -1662,7 +1682,7 @@ def frechet_mean_affine_invariant(
     tol : float, optional
         Stop when the norm of the mean logarithm falls below this value.
     step : float, optional
-        ``gamma`` above. One is the usual choice and converges in a handful of
+        $\eta$ above. One is the usual choice and converges in a handful of
         iterations on well-conditioned sets.
     backend_name : str or Backend, optional
 
