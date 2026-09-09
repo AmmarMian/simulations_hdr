@@ -1,27 +1,17 @@
-# Vérifications de session (2026-08-26)
+# Session checks
 
-Scripts jetables qui étayent `../NOTE-reproduction.md`. Ce ne sont **pas** des
-expériences qanat : pas d'export, pas de `make_mc_parser`. À réécrire au format
-du dépôt si les figures correspondantes sont retenues.
+Throwaway scripts backing `../NOTE-reproduction.md`. These are **not** qanat
+experiments: no export, no `make_mc_parser`. To be rewritten in the
+repository's format if the corresponding figures are kept.
 
-Prérequis (cf. §7 de la note — l'installation du paquet est cassée) :
-
-```sh
-uv venv .venv --python 3.11
-VIRTUAL_ENV=$PWD/.venv uv pip install torch scipy
-git clone https://github.com/Yet-Another-Research-Organisation/yetanotherspdnet
-export PYTHONPATH=$PWD/yetanotherspdnet/src
-```
-
-| Script | Ce qu'il montre | Note |
+| Script | What it shows | Note |
 |---|---|---|
-| `smoke.py` | les deux chemins de gradient (`use_autograd`) tournent pour les 5 moyennes ; temps par passage | §6 |
-| `iso.py` | le désaccord manuel/autograd est localisé dans `Whitening` / `CongruenceSPD`, sur le gradient de la **matrice** seulement | §8 |
-| `equiv.py` | `||projavg - rlavg||_F` en fonction de ε sur `St(40,20)` : pente 3 | §4 |
+| `smoke.py` | both gradient paths (`use_autograd`) run for the 5 means; time per pass | §6 |
+| `iso.py` | the manual/autograd disagreement is localised in `Whitening` / `CongruenceSPD`, on the **matrix** gradient only | §8 |
+| `equiv.py` | `\|\|projavg - rlavg\|\|_F` against ε on `St(40,20)`: slope 3 | §4 |
 
-La grille Wishart / Wishart inverse (§3) n'a pas de script ici : elle se relance
-telle quelle depuis `eusipco_2026`, après avoir repointé la dépendance
-`dev_yetanotherspdnet` vers le dépôt public.
+The Wishart / inverse Wishart grid (§3) has no script here: it re-runs as it
+stands from `eusipco_2026`.
 
 ```sh
 python -m eusipco_2026.simulation --wishart-inverse --cpu --n-jobs 8 --output-dir results/wi

@@ -1,105 +1,87 @@
-# L'effet de ReEig sur le spectre
+# What ReEig does to the spectrum
 
-Sert `rem:spdnet-covpool-regime` et `rem:spdnet-reeig-retrecissement` du
-chapitre `ch:spdnet`. Remplace la figure GPR abandonnée (§5 de
-`../NOTE-reproduction.md`) : elle ne prétend rien sur la performance en
-classification, elle mesure ce que ReEig fait au spectre et ce que ça achète à
-la rétropropagation.
+Serves the two remarks on the covariance-pooling regime and on ReEig as
+spectral shrinkage. It makes no claim about classification performance: it
+measures what ReEig does to the spectrum and what that buys backpropagation.
 
-## L'énoncé
+## The statement
 
-Rétropropager à travers une couche spectrale multiplie l'erreur entrante par la
-matrice de Loewner de `prop:spdnet-diffm`,
+Backpropagating through a spectral layer multiplies the incoming error by the
+Loewner matrix
 
 $$\mathbf{G}_{ij} = \frac{h(\lambda_i)-h(\lambda_j)}{\lambda_i-\lambda_j}.$$
 
-Pour $h=\log$, le théorème des accroissements finis donne
-$|\mathbf{G}_{ij}| \le 1/\min(\lambda_i,\lambda_j)$, donc
+For $h=\log$, the mean value theorem gives
+$|\mathbf{G}_{ij}| \le 1/\min(\lambda_i,\lambda_j)$, so
 
 $$\max_{ij}|\mathbf{G}_{ij}| = 1/\lambda_{\min}.$$
 
-L'instabilité de `prop:spdnet-gradevd` est donc gouvernée par la **plus petite**
-valeur propre, et par rien d'autre. Une couche ReEig de seuil $\varepsilon$
-impose $\lambda_{\min}\ge\varepsilon$, donc **borne le facteur par
-$1/\varepsilon$**. C'est le sens précis dans lequel ReEig est un rétrécissement
-spectral : elle paie un biais sur les petites valeurs propres pour acheter une
-borne sur le gradient.
+The instability of the eigenvalue-decomposition gradient is therefore governed
+by the **smallest** eigenvalue and by nothing else. A ReEig layer with
+threshold $\varepsilon$ imposes $\lambda_{\min}\ge\varepsilon$, and so **bounds
+the factor by $1/\varepsilon$**. That is the precise sense in which ReEig is a
+spectral shrinkage: it pays a bias on the small eigenvalues to buy a bound on
+the gradient.
 
-## Ce qui est mesuré
+## What is measured
 
-| | script | données |
+| | script | data |
 |---|---|---|
-| mécanisme, balayage $(N_{pix}/N_{filtre}, \text{décroissance})$ | `main.py` | simulées |
-| ce que ça donne sur les jeux du chapitre, balayage $\varepsilon$ | `real_data.py` | HDM05 / HyperLeaf / Rices90 |
+| mechanism, sweep over $(N_{pix}/N_{filter}, \text{decay})$ | `main.py` | simulated |
+| what it gives on real datasets, sweep over $\varepsilon$ | `real_data.py` | HDM05 / HyperLeaf / Rices90 |
 
-`main.py` modélise `eq:spdnet-covpool` pour ce qu'elle est — une covariance
-empirique sur $N_{pix}$ positions pour $N_{filtre}$ canaux — et balaie deux
-axes, parce que les deux comptent indépendamment : le ratio d'échantillonnage
-dit de combien le spectre empirique tombe sous le vrai, la décroissance dit où
-le vrai était déjà.
+`main.py` models covariance pooling for what it is — a sample covariance over
+$N_{pix}$ positions for $N_{filter}$ channels — and sweeps two axes, because
+the two count independently: the sampling ratio says how far the empirical
+spectrum falls below the true one, the decay says where the true one already
+was.
 
-## Résultat (simulé, `--n_trials 100`, $N_{filtre}=256$, $\varepsilon=10^{-4}$)
+## Result (simulated, `--n_trials 100`, $N_{filter}=256$, $\varepsilon=10^{-4}$)
 
-| décroissance | ratio | $\lambda_{\min}$ | cond. | % écrêtées | Loewner | + ReEig |
+| decay | ratio | $\lambda_{\min}$ | cond. | % clipped | Loewner | + ReEig |
 |---|---|---|---|---|---|---|
-| $10^2$ | 3 | 4,7e-03 | 2,7e+02 | 0,0 % | 2,1e+02 | 2,1e+02 |
-| $10^6$ | 0,75 | −3,1e-18 | **singulière** | 43,0 % | **non défini** | 1,0e+04 |
-| $10^6$ | 3 | 5,9e-07 | 1,8e+06 | 35,2 % | 1,7e+06 | **1,0e+04** |
+| $10^2$ | 3 | 4.7e-03 | 2.7e+02 | 0.0 % | 2.1e+02 | 2.1e+02 |
+| $10^6$ | 0.75 | −3.1e-18 | **singular** | 43.0 % | **undefined** | 1.0e+04 |
+| $10^6$ | 3 | 5.9e-07 | 1.8e+06 | 35.2 % | 1.7e+06 | **1.0e+04** |
 
-Trois choses à retenir :
+Three things to take away:
 
-1. **Sous le ratio 1, la matrice est singulière** — le centrage de
-   `eq:spdnet-covpool` plafonne son rang à $N_{pix}-1$ — et LogEig n'est pas
-   défini du tout, quelle que soit la décroissance. Ce n'est pas un mauvais
-   conditionnement, c'est une absence de valeur.
-2. **Au point de fonctionnement de l'article** (ratio $\approx 3$) et au
-   conditionnement des données du chapitre ($\sim 10^6$ ; HDM05 est annoncé à
-   $9{,}1\times10^5$), ReEig écrête **un tiers du spectre** et divise le
-   facteur de Loewner par **170**.
-3. **À décroissance faible, ReEig ne fait rien** (0 % d'écrêtage). L'affirmation
-   du chapitre selon laquelle ReEig est une nécessité et non un raffinement est
-   donc vraie *du fait de la décroissance spectrale des données*, pas du régime
-   dimensionnel seul. À dire dans ces termes.
+1. **Below ratio 1 the matrix is singular** — centring caps its rank at
+   $N_{pix}-1$ — and LogEig is not defined at all, whatever the decay. This is
+   not poor conditioning, it is an absent value.
+2. **At the paper's operating point** (ratio $\approx 3$) and at the
+   conditioning of the datasets involved ($\sim 10^6$; HDM05 is quoted at
+   $9.1\times10^5$), ReEig clips **a third of the spectrum** and divides the
+   Loewner factor by **170**.
+3. **At low decay, ReEig does nothing** (0 % clipped). The claim that ReEig is
+   a necessity rather than a refinement is therefore true *because of the
+   spectral decay of the data*, not because of the dimensional regime alone.
+   It should be stated in those terms.
 
-## Lancer
-
-```sh
-uv sync                     # depuis la racine de simulations_hdr
-```
-
-`yetanotherspdnet` n'est pas encore une dépendance du dépôt et son installation
-amont est cassée (cf. §7 de `../NOTE-reproduction.md`). En attendant que le
-correctif soit fusionné :
+## Running it
 
 ```sh
-export PYTHONPATH=$HOME/Research/HDR/yetanotherspdnet/src
-# ou, une fois la branche fusionnee :
-#   uv pip install git+https://github.com/Yet-Another-Research-Organisation/yetanotherspdnet.git
+uv sync                     # from the root of simulations_hdr
+python main.py --n_trials 100                     # simulated figure
+python main.py --device cuda --n_trials 1000      # on GPU
 ```
 
-Puis, depuis ce répertoire :
+**MPS is refused explicitly** by `common.py`: no float64, and `linalg.eigh` is
+not implemented there, so every spectral layer would fall back to the CPU one
+operation at a time. Measured: 0.388 s against 0.364 s in pure CPU. Use CPU or
+CUDA.
 
-```sh
-python main.py --n_trials 100                     # figure simulée
-python main.py --device cuda --n_trials 1000      # sur GPU
-```
+### Real data
 
-**MPS est refusé explicitement** par `common.py` : pas de float64, et
-`linalg.eigh` n'y est pas implémenté, donc chaque couche spectrale retomberait
-sur le CPU une opération à la fois. Mesuré : 0,388 s contre 0,364 s en CPU pur.
-CPU ou CUDA.
-
-### Données réelles
-
-`real_data.py` n'a **pas pu être exécuté** ici (les jeux ne sont pas sur cette
-machine). Vérifier d'abord qu'il tourne, sans aucune donnée :
+`real_data.py` has **not been run** here (the datasets are not on this
+machine). Check first that it runs, with no data at all:
 
 ```sh
 python real_data.py --self-test
 ```
 
-puis, sur une machine qui les a — il faut aussi `spdnet-datasets`, que le dépôt
-n'installe pas :
+then, on a machine that has them — `spdnet-datasets` is also needed, and the
+repository does not install it:
 
 ```sh
 uv pip install git+https://github.com/Yet-Another-Research-Organisation/spdnet-datasets.git
@@ -107,12 +89,12 @@ python real_data.py --dataset hdm05 --data-root "$DATA_ROOT/HDM05" \
                     --scaling-factor 190.0 --device cuda
 ```
 
-Le script recoupe le conditionnement qu'il mesure avec celui annoncé dans le
-chapitre et signale un écart, sur la dimension comme sur le conditionnement.
+The script cross-checks the conditioning it measures against the published one
+and reports a discrepancy, on the dimension as well as on the conditioning.
 
-**Attention au facteur d'échelle.** $\varepsilon$ est un seuil *absolu*, donc
-non invariant d'échelle : les configs de `sigpro_2026` appliquent un
-`scaling_factor` (190,0 pour HDM05), et multiplier les matrices par une
-constante multiplie le spectre sans déplacer $\varepsilon$. Un pourcentage de
-valeurs propres écrêtées ne se lit qu'en regard de l'échelle du spectre, que le
-script affiche à côté.
+**Mind the scaling factor.** $\varepsilon$ is an *absolute* threshold, hence
+not scale invariant: the published configurations apply a `scaling_factor`
+(190.0 for HDM05), and multiplying the matrices by a constant multiplies the
+spectrum without moving $\varepsilon$. A percentage of clipped eigenvalues can
+only be read against the scale of the spectrum, which the script prints
+alongside.

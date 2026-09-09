@@ -1,67 +1,66 @@
-# Erreur d'estimation de la moyenne de Fréchet
+# Estimation error of the Fréchet mean
 
-Sert la figure d'eqm de `sec:learning-frechet`. Aucune donnée réelle.
+Serves the MSE figure. No real data.
 
-## Ce que ça mesure
+## What it measures
 
-La moyenne de Fréchet d'un ensemble de covariances est ce que calcule tout
-classifieur au plus proche centroïde et tout $K$-moyennes riemannien. En
-pratique on n'a pas les covariances vraies mais leurs estimées, dans le régime
-où $d$ et $N$ sont comparables : la moyenne de Fréchet des scm est alors
-biaisée.
+The Fréchet mean of a set of covariances is what every nearest-centroid
+classifier and every Riemannian $K$-means computes. In practice the true
+covariances are not available, only their estimates, in the regime where $d$
+and $N$ are comparable — and there the Fréchet mean of the SCMs is biased.
 
-Cinq estimateurs, deux balayages :
+Five estimators, two sweeps:
 
 | | |
 |---|---|
-| `SCM` | moyenne de Fréchet des covariances empiriques |
-| `LW`, `OAS` | des covariances rétrécies linéairement |
-| `LW-NL` | des covariances rétrécies non linéairement |
-| `RMT` | moyenne corrigée par la théorie des matrices aléatoires |
+| `SCM` | Fréchet mean of the sample covariances |
+| `LW`, `OAS` | of the linearly shrunk covariances |
+| `LW-NL` | of the non-linearly shrunk covariances |
+| `RMT` | mean corrected by random matrix theory |
 
-Les quatre premières régularisent chaque covariance **avant** de moyenner ; la
-dernière corrige la **distance** que la moyenne minimise. Ce n'est pas le même
-geste, et c'est ce que la figure sépare.
+The first four regularise each covariance **before** averaging; the last
+corrects the **distance** the average minimises. These are not the same
+gesture, and separating them is the point of the figure.
 
-## Les deux panneaux
+## The two panels
 
-**Contre le nombre d'échantillons $N$** ($K = 10$) : l'écart se referme quand
-$N$ croît — 8,1 dB de gain à $N = 65$, 2,2 dB à $N = 300$. Signature d'un biais
-de régime, pas d'une variance.
+**Against the number of samples $N$** ($K = 10$): the gap closes as $N$ grows —
+8.1 dB of gain at $N = 65$, 2.2 dB at $N = 300$. The signature of a
+regime-induced bias, not of a variance.
 
-**Contre le nombre de matrices $K$** ($N = 128$) : l'écart s'*ouvre*. La scm
-plafonne (12,7 dB à $K = 3$, 8,2 dB à $K = 100$, l'essentiel acquis dès
-$K = 20$) pendant que la moyenne corrigée continue de descendre jusqu'à
-−4,3 dB. Moyenner réduit la variance, pas le biais : celui-ci est commun à
-toutes les scm et survit intact à la moyenne.
+**Against the number of matrices $K$** ($N = 128$): the gap *widens*. The SCM
+plateaus (12.7 dB at $K = 3$, 8.2 dB at $K = 100$, most of it reached by
+$K = 20$) while the corrected mean keeps descending to −4.3 dB. Averaging
+reduces variance, not bias: the bias is common to every SCM and survives the
+average intact.
 
-C'est le second panneau qui porte l'argument, et c'est celui que l'intuition
-rate.
+The second panel is the one that carries the argument, and the one intuition
+gets wrong.
 
-## Lancer
+## Running it
 
 ```sh
 uv run qanat experiment run learning_frechet_mse --n_features 64 --n-trials 100
 ```
 
-Une cinquantaine de minutes sur dix cœurs ; le point $K = 100$ domine le coût.
-Les tirages sont indépendants et distribués sur un pool (`--n-workers`), et
-chacun est graine par `(indice de l'axe, tirage)` : un point peut être rejoué
-seul sans replayer le balayage.
+About fifty minutes on ten cores; the $K = 100$ point dominates the cost. The
+trials are independent and spread over a pool (`--n-workers`), each seeded by
+`(axis index, trial)`, so a single point can be replayed without replaying the
+whole sweep.
 
-## Contraintes
+## Constraints
 
-**float64 obligatoire.** Le gradient corrigé divise par des différences de
-valeurs propres, et plusieurs termes sont construits pour qu'une entrée
-diagonale évalue la limite finie d'une expression qui vaut 0/0 ailleurs. En
-simple précision ces termes perdent tous leurs chiffres significatifs sans rien
-signaler : la descente rend quand même une matrice, et elle est fausse.
-`hdrlib.learning.rmt.require_double` refuse donc de démarrer.
+**float64 is mandatory.** The corrected gradient divides by differences of
+eigenvalues, and several of its terms are built so that a diagonal entry
+evaluates the finite limit of an expression that is $0/0$ elsewhere. In single
+precision those terms lose every significant digit without reporting anything:
+the descent still returns a matrix, and it is wrong.
+`hdrlib.learning.rmt.require_double` therefore refuses to start.
 
-Conséquence pratique : **`torch-mps` ne peut pas exécuter ce code**, Metal
-n'ayant pas de float64. Sur Apple Silicon, utiliser `--backend torch-cpu`.
+The practical consequence is that **`torch-mps` cannot run this code**, Metal
+having no float64. On Apple Silicon, use `--backend torch-cpu`.
 
-## Convention d'affichage
+## Display convention
 
-Les décibels sont des `10*log10(eqm)`, la convention de puissance, qui est la
-bonne pour une erreur quadratique.
+Decibels are `10*log10(mse)` — the power convention, which is the right one for
+a squared error.

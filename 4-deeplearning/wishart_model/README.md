@@ -1,74 +1,70 @@
-# La moyenne accordée au modèle gagne-t-elle, et de combien ?
+# Does the mean matched to the model win, and by how much?
 
-Sert `prop:spdnet-moyennes-frechet` et le bloc
-`% TODO texte --- LE POINT CENTRAL` de `sec:spdnet-batchnorm-moyennes`.
-Aucune donnée réelle.
+Serves the central point of the section on means in batch normalisation. No
+real data.
 
-## Pourquoi
+## Why
 
-La proposition identifie chaque moyenne à la moyenne de Fréchet d'une géométrie
-ou d'une divergence : arithmétique ↔ KL à gauche (Wishart), harmonique ↔ KL à
-droite (Wishart inverse), GAH ↔ KL symétrisée. Le chapitre veut en faire **un
-énoncé de modélisation**, pas une curiosité numérique. Or le seul appui prévu
-aujourd'hui est les tableaux de F1 sur trois jeux réels : un argument
-*indirect*, sur des données dont on ne connaît pas la loi.
+Each mean is identified with the Fréchet mean of a geometry or of a divergence:
+arithmetic ↔ left KL (Wishart), harmonic ↔ right KL (inverse Wishart), GAH ↔
+symmetrised KL. The intent is to make this **a modelling statement**, not a
+numerical curiosity. But the only support available so far is F1 tables on
+three real datasets: an *indirect* argument, on data whose law is unknown.
 
-La grille `wishart-inverse` de `eusipco_2026` teste l'énoncé **frontalement** :
-on tire d'un Wishart, puis d'un Wishart inverse, et on regarde quelle moyenne
-gagne. Elle se relance telle quelle (voir `../NOTE-reproduction.md` §3) :
+The `wishart-inverse` grid tests the statement **head-on**: draw from a
+Wishart, then from an inverse Wishart, and see which mean wins.
 
 ```sh
 python -m eusipco_2026.simulation --wishart-inverse --cpu --n-jobs 8
 ```
 
-**Ce répertoire n'ajoute qu'un axe** que cette grille ne balaie pas : les degrés
-de liberté. Quand $df$ grandit, la loi se concentre autour de sa matrice
-d'échelle et le choix de moyenne doit compter de moins en moins. Le mécanisme
-apparaît alors comme un **gradient** et non comme deux points — c'est ce qui en
-fait un énoncé sur le modèle, et non sur un réglage particulier.
+**This directory adds one axis only**, which that grid does not sweep: the
+degrees of freedom. As $df$ grows, the law concentrates around its scale matrix
+and the choice of mean must matter less and less. The mechanism then appears as
+a **gradient** rather than as two points — which is what makes it a statement
+about the model rather than about one particular setting.
 
-Tout le reste est réutilisé : `run_single_experiment` de `eusipco_2026` fait la
-génération, l'entraînement et l'évaluation. Ce fichier ne fait que balayer et
-tracer.
+Everything else is reused: `run_single_experiment` from `eusipco_2026` does the
+generation, the training and the evaluation. This file only sweeps and plots.
 
-## Le résultat de la grille d'origine ($df = 64$, matrices $64\times64$)
+## The original grid's result ($df = 64$, $64\times64$ matrices)
 
-| moyenne | données Wishart | données Wishart inverse |
+| mean | Wishart data | inverse Wishart data |
 |---|---|---|
-| arithmétique (KL gauche) | **90,6 % ± 4,2** | 55,3 % ± 22,1 |
-| harmonique (KL droite) | 46,1 % ± 8,5 | **88,9 % ± 5,7** |
-| \textsc{gah} (KL symétrisée) | 76,7 % ± 5,6 | 81,4 % ± 5,9 |
-| \textsc{armagnac} (GAH adaptative) | 86,7 % ± 2,3 | 87,2 % ± 6,2 |
-| géométrique (affine invariante) | 90,0 % ± 4,9 | 88,1 % ± 5,3 |
+| arithmetic (left KL) | **90.6 % ± 4.2** | 55.3 % ± 22.1 |
+| harmonic (right KL) | 46.1 % ± 8.5 | **88.9 % ± 5.7** |
+| GAH (symmetrised KL) | 76.7 % ± 5.6 | 81.4 % ± 5.9 |
+| ARMAGNAC (adaptive GAH) | 86.7 % ± 2.3 | 87.2 % ± 6.2 |
+| geometric (affine invariant) | 90.0 % ± 4.9 | 88.1 % ± 5.3 |
 
-La moyenne accordée au modèle gagne, l'opposée s'effondre — et l'écart-type de
-22 % sur l'arithmétique en Wishart inverse dit la même chose autrement : sous
-mauvais modèle, l'apprentissage n'est même plus reproductible d'une graine à
-l'autre.
+The mean matched to the model wins and the opposite one collapses — and the
+22 % standard deviation of the arithmetic mean on inverse Wishart data says the
+same thing another way: under the wrong model, training is not even
+reproducible from one seed to the next.
 
-## Deux réserves d'honnêteté, à respecter dans le texte
+## Two caveats to respect
 
-1. Sur ces données, **la moyenne géométrique est la meilleure des cinq à peu
-   près partout** (90,0 / 88,1). Cette figure ne dit donc *pas* « GAH bat la
-   géométrique » — elle dit « la moyenne accordée au modèle gagne, les moyennes
-   symétriques sont robustes au modèle ». C'est un énoncé plus fort et plus
-   défendable. L'argument « la géométrique n'est jamais la meilleure » reste ce
-   qu'il est : un fait **des trois jeux réels**, à garder dans le volet 2 et à
-   ne surtout pas mélanger avec celle-ci. Bien séparées, les deux se
-   renforcent : la simulation établit le mécanisme, le réel montre que sur ces
-   données-là l'hypothèse gaussienne n'est pas la bonne.
-2. Les matrices d'échelle des classes diffèrent par une perturbation de 25 % :
-   la séparation entre classes est un **réglage**, pas une propriété. Le dire.
+1. On this data, **the geometric mean is the best of the five almost
+   everywhere** (90.0 / 88.1). So this figure does *not* say "GAH beats the
+   geometric mean" — it says "the mean matched to the model wins, and the
+   symmetric means are robust to the model". That is a stronger and more
+   defensible statement. The claim that "the geometric mean is never the best"
+   remains what it is: a fact **about the three real datasets**, to be kept
+   separate and on no account mixed with this one. Kept apart, the two
+   reinforce each other: the simulation establishes the mechanism, the real
+   data shows that on those datasets the Gaussian assumption is not the right
+   one.
+2. The scale matrices of the classes differ by a 25 % perturbation: the
+   separation between classes is a **setting**, not a property. Say so.
 
-## Lancer
+## Running it
 
-`eusipco_2026` et `spdnet-datasets` ne sont pas des dépendances de ce dépôt :
+`eusipco_2026` and `spdnet-datasets` are not dependencies of this repository:
 
 ```sh
 uv pip install git+https://github.com/Yet-Another-Research-Organisation/spdnet-datasets.git
 uv pip install --no-deps git+https://github.com/Yet-Another-Research-Organisation/eusipco_2026.git
-export PYTHONPATH=$HOME/Research/HDR/yetanotherspdnet/src   # cf. ../NOTE-reproduction.md §7
 python df_sweep.py
 ```
 
-`--df 64 96 160 320 640` par défaut ; $df$ doit dépasser `matrix_size - 1`.
+`--df 64 96 160 320 640` by default; $df$ must exceed `matrix_size - 1`.

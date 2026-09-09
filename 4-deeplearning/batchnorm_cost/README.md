@@ -1,86 +1,84 @@
-# Ce que coûte la rétropropagation manuelle de la couche de normalisation
+# What manual backpropagation through the normalisation layer costs
 
-Volet 1 de `sec:spdnet-batchnorm-resultats` (`ch:spdnet`). Aucune donnée.
+Part 1 of the batch-normalisation results. No data.
 
-**Ce n'est pas une reproduction mais une réécriture** : aucun des cinq dépôts
-SPDnet ne contient de code de mesure de temps ou de mémoire. Les trois figures
-coût/mémoire de `PREP26b` ont été produites par du code jamais versionné.
+**This is a rewrite, not a reproduction**: none of the five SPDnet
+repositories contains any timing or memory measurement code. The three
+cost/memory figures of the paper were produced by code that was never
+committed.
 
-## La mesure de mémoire
+## Measuring memory
 
-L'article mesure `torch.cuda.max_memory_allocated`, qui exige un GPU et mêle la
-quantité d'intérêt au comportement de l'allocateur. Ce que
-`prop:spdnet-grad-geo` prédit est plus étroit et exactement mesurable : la
-différentiation automatique doit **retenir les $\Niterm$ itérées** du point fixe
-`eq:spdnet-geometrique-iteration`, là où la formule manuelle recalcule.
+The paper measures `torch.cuda.max_memory_allocated`, which needs a GPU and
+mixes the quantity of interest with the allocator's behaviour. What the theory
+predicts is narrower and exactly measurable: automatic differentiation has to
+**retain the $n$ iterates** of the fixed point, where the manual formula
+recomputes.
 
-`torch.autograd.graph.saved_tensors_hooks` intercepte chaque tenseur que le
-graphe garde en vie ; en sommer les tailles mesure précisément cela, sur
-n'importe quel matériel, et c'est directement attribuable. Le pic de
-l'allocateur est relevé en plus sous CUDA, pour comparaison avec l'article.
+`torch.autograd.graph.saved_tensors_hooks` intercepts every tensor the graph
+keeps alive; summing their sizes measures precisely that, on any hardware, and
+it is directly attributable. The allocator peak is recorded as well under CUDA,
+for comparison with the paper.
 
-## Le mécanisme, isolé (`--sweep iterations`, hors article)
+## The mechanism, isolated (`--sweep iterations`, not in the paper)
 
-Le balayage qui explique les trois autres. Matrices 64, batch 64, moyenne
-géométrique :
+The sweep that explains the other three. 64×64 matrices, batch 64, geometric
+mean:
 
-| $\Niterm$ | manuel | autograd | rapport |
+| iterations $n$ | manual | autograd | ratio |
 |---|---|---|---|
-| 1 | 5,47 Mio | 7,49 Mio | 1,37× |
-| 5 | 7,05 Mio | 18,64 Mio | 2,64× |
-| 20 | 20,72 Mio | 60,38 Mio | **2,91×** |
+| 1 | 5.47 MiB | 7.49 MiB | 1.37× |
+| 5 | 7.05 MiB | 18.64 MiB | 2.64× |
+| 20 | 20.72 MiB | 60.38 MiB | **2.91×** |
 
-Le facteur 2 annoncé dans le chapitre est le régime à peu d'itérations ; il
-croît avec $\Niterm$, ce qui **est** l'énoncé de `prop:spdnet-grad-geo` — deux
-équations de Sylvester *par itération* pour la moyenne géométrique, contre deux
-en tout pour GAH.
+The factor of 2 usually quoted is the few-iterations regime; it grows with $n$,
+which **is** the statement being made — two Sylvester equations *per iteration*
+for the geometric mean, against two in total for GAH.
 
-## Les trois figures de l'article
+## The paper's three figures
 
-`--sweep size` (batch 64), `--sweep batch` (matrices 64), `--sweep depth`
-(matrices 64, batch 64). Extraits, CPU float64, conditionnement $10^5$ :
+`--sweep size` (batch 64), `--sweep batch` (64×64 matrices), `--sweep depth`
+(64×64 matrices, batch 64). Extracts, CPU float64, condition number $10^5$:
 
-| balayage | point | moyenne | mém. manuel | mém. autograd | rapport |
+| sweep | point | mean | mem. manual | mem. autograd | ratio |
 |---|---|---|---|---|---|
-| taille | 512 | géométrique | 461,5 Mio | 1115,7 Mio | 2,42× |
-| taille | 512 | GAH | 312,0 Mio | 404,7 Mio | 1,30× |
-| batch | 512 | géométrique | 54,4 Mio | 134,9 Mio | 2,48× |
-| profondeur | 32 | géométrique | 280,5 Mio | 873,7 Mio | **3,12×** |
-| profondeur | 32 | GAH | 70,8 Mio | 144,1 Mio | 2,04× |
+| size | 512 | geometric | 461.5 MiB | 1115.7 MiB | 2.42× |
+| size | 512 | GAH | 312.0 MiB | 404.7 MiB | 1.30× |
+| batch | 512 | geometric | 54.4 MiB | 134.9 MiB | 2.48× |
+| depth | 32 | geometric | 280.5 MiB | 873.7 MiB | **3.12×** |
+| depth | 32 | GAH | 70.8 MiB | 144.1 MiB | 2.04× |
 
-Le rapport **croît avec les trois paramètres**, comme l'annonce le chapitre, et
-il est systématiquement plus élevé pour la moyenne géométrique que pour GAH —
-c'est le point fixe déroulé qui le porte.
+The ratio **grows with all three parameters**, as expected, and it is
+systematically higher for the geometric mean than for GAH — the unrolled fixed
+point is what carries it.
 
-## Le temps : à ne pas survendre
+## Time: not to be oversold
 
-Le bloc `% TODO` du chapitre demande de « le dire franchement ». Mesuré :
+Measured:
 
-| balayage | point | moyenne | t manuel | t autograd |
+| sweep | point | mean | t manual | t autograd |
 |---|---|---|---|---|
-| taille | 512 | géométrique | 6001 ms | 6153 ms |
-| taille | 512 | GAH | 753 ms | 909 ms |
-| profondeur | 32 | géométrique | 2684 ms | 2767 ms |
+| size | 512 | geometric | 6001 ms | 6153 ms |
+| size | 512 | GAH | 753 ms | 909 ms |
+| depth | 32 | geometric | 2684 ms | 2767 ms |
 
-Les temps sont **comparables**, à quelques pour cent près, et l'écart va parfois
-dans un sens parfois dans l'autre. **L'argument est la mémoire et la robustesse
-numérique, pas la vitesse.** Le gain de temps que rapporte l'article sur données
-réelles (temps divisé par 2 à 5) vient du choix de moyenne — GAH est un ordre de
-grandeur plus rapide que la géométrique, ici comme là-bas — et non de la
-dérivation manuelle.
+The timings are **comparable**, to within a few percent, and the gap goes one
+way as often as the other. **The argument is memory and numerical robustness,
+not speed.** The speed-up the paper reports on real data (2× to 5×) comes from
+the choice of mean — GAH is an order of magnitude faster than the geometric
+one, here as there — and not from the manual derivation.
 
-## Lancer
+## Running it
 
 ```sh
-export PYTHONPATH=$HOME/Research/HDR/yetanotherspdnet/src   # cf. ../NOTE-reproduction.md §7
 python main.py --sweep size   --n_repeats 5
 python main.py --sweep batch  --n_repeats 5
 python main.py --sweep depth  --n_repeats 5
 python main.py --sweep iterations --n_repeats 5
 ```
 
-`--device cuda` ajoute le pic d'allocateur à côté de la mémoire retenue. MPS est
-refusé (pas de float64, pas de `linalg.eigh`).
+`--device cuda` adds the allocator peak next to the retained memory. MPS is
+refused (no float64, no `linalg.eigh`).
 
-Les chiffres ci-dessus sont à `--n_repeats 3` sur CPU ; les mémoires sont
-déterministes, les temps sont à relancer sur la machine de mesure.
+The numbers above are at `--n_repeats 3` on CPU; the memory figures are
+deterministic, the timings need re-running on the measurement machine.

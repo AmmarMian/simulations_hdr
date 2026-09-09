@@ -1,90 +1,88 @@
-# Partitionnement hyperspectral : ce que la géométrie apporte
+# Hyperspectral clustering: what the geometry buys
 
-Reprend le protocole de l'exemple `image-radar` de pyRiemann — même scène, même
-fenêtre, même estimateur — sans pyRiemann, et sur le device.
+Follows the protocol of pyRiemann's `image-radar` example — same scene, same
+window, same estimator — without pyRiemann, and on the device.
 
-## La question
+## The question
 
-L'expérience voisine (`3-learning/hyperspectral-rmt`) demande si la correction
-RMT survit en aval. Celle-ci pose la question antérieure : **avant toute
-correction, quelle part du gain tient à la métrique ?** Même scène, mêmes
-fenêtres, mêmes covariances, même alternance — seule change la géométrie dans
-laquelle les centroïdes sont des moyennes.
+The neighbouring experiment (`3-learning/hyperspectral-rmt`) asks whether the
+RMT correction survives downstream. This one asks the prior question: **before
+any correction, how much of the gain is due to the metric?** Same scene, same
+windows, same covariances, same alternation — only the geometry in which the
+centroids are means changes.
 
-| métrique | centroïde | forme close | coût |
+| metric | centroid | closed form | cost |
 |---|---|---|---|
-| `euclid` | moyenne arithmétique des covariances | oui | un produit matriciel |
-| `logeuclid` | moyenne des logarithmes matriciels | oui | N décompositions, **une fois** |
-| `riemann` | moyenne de Karcher (affine-invariante) | non | N·K décompositions **par itération** |
+| `euclid` | arithmetic mean of the covariances | yes | one matrix product |
+| `logeuclid` | mean of the matrix logarithms | yes | N decompositions, **once** |
+| `riemann` | Karcher mean (affine-invariant) | no | N·K decompositions **per iteration** |
 
-`logeuclid` n'est pas dans l'exemple pyRiemann. Il est ajouté parce qu'il coûte
-presque rien une fois les logarithmes en cache et qu'il sépare deux effets que
-`euclid` contre `riemann` confond : respecter la positivité des valeurs propres,
-et être invariant par transformation affine.
+`logeuclid` is not in the pyRiemann example. It is added because it costs
+almost nothing once the logarithms are cached, and because it separates two
+effects that `euclid` against `riemann` conflates: respecting the positivity of
+the eigenvalues, and being invariant under affine transformation.
 
-## Le pipeline
+## The pipeline
 
 ```
-scène → retrait de la moyenne globale → normalisation d'échelle
-      → ACP à n_features bandes → fenêtre glissante → une covariance par pixel
-      → K-moyennes (euclid | logeuclid | riemann) → comparaison à la vérité terrain
+scene → remove the global mean → scale normalisation
+      → PCA to n_features bands → sliding window → one covariance per pixel
+      → K-means (euclid | logeuclid | riemann) → comparison against the ground truth
 ```
 
-Une fenêtre 5×5 sur 5 composantes donne **25 échantillons pour 5 variables**,
-soit $c = 0{,}2$ : beaucoup de matrices, chacune mal estimée. C'est le régime que
-la correction de l'expérience voisine vise ; ici il sert de décor, pas de sujet.
+A 5×5 window on 5 components gives **25 samples for 5 variables**, so
+$c = 0.2$: many matrices, each of them poorly estimated. That is the regime the
+neighbouring experiment's correction targets; here it is the setting, not the
+subject.
 
-## Tout sur le device
+## Everything on the device
 
-Le cube traverse le bus une fois, les étiquettes reviennent une fois. Entre les
-deux, `hdrlib.learning.clustering.spd_kmeans` ne relit que deux scalaires par
-itération — la fraction de points qui ont changé de groupe, qui décide de
-l'arrêt, et l'inertie, qui choisit le meilleur redémarrage. Ce sont des branches
-du programme : elles doivent devenir des nombres Python.
+The cube crosses the bus once and the labels come back once. In between,
+`hdrlib.learning.clustering.spd_kmeans` reads back only two scalars per
+iteration — the fraction of points that changed group, which decides when to
+stop, and the inertia, which picks the best restart. Those are branches of the
+program: they have to become Python numbers.
 
-Ce qui rend cela possible, c'est l'absence de correction. Aucune des trois
-métriques n'a besoin des échantillons dont la covariance est issue, donc les
-covariances sont formées **une fois**, avant les redémarrages, et les fenêtres
-sont libérées avant que la boucle ne commence — 108 Mo rendus contre 22 Mo
-gardés sur Salinas. L'expérience voisine ne peut pas faire cela : la moyenne
-corrigée relit les échantillons.
+What makes this possible is the absence of a correction. None of the three
+metrics needs the samples the covariance came from, so the covariances are
+formed **once**, before the restarts, and the windows are freed before the loop
+begins — 108 MB released against 22 MB kept on Salinas. The neighbouring
+experiment cannot do this: the corrected mean reads the samples again.
 
-L'affectation est groupée sur les centroïdes plutôt que bouclée, et la
-ré-estimation est un produit contre une matrice d'appartenance one-hot, qui
-moyenne les K groupes d'un coup. Le détail sordide : aucune primitive de
-`scatter` n'est commune à numpy, torch, cupy et jax — un produit matriciel, si.
+Assignment is batched over the centroids rather than looped, and re-estimation
+is a product against a one-hot membership matrix, which averages the K groups
+at once. The sordid detail: no `scatter` primitive is common to numpy, torch,
+cupy and jax — a matrix product is.
 
-## float64, obligatoire
+## float64, mandatory
 
-Les trois métriques finissent sur les valeurs propres d'une covariance 5×5
-estimée sur 25 échantillons, et deux d'entre elles en prennent le logarithme. En
-float32 le signe de la plus petite valeur propre n'est pas fiable, et son
-logarithme est soit un grand négatif soit un NaN — silencieusement. La
-vérification est faite après le transfert, pas avant : c'est le transfert qui
-dégrade.
+All three metrics end up on the eigenvalues of a 5×5 covariance estimated from
+25 samples, and two of them take the logarithm. In float32 the sign of the
+smallest eigenvalue is not reliable, and its logarithm is either a large
+negative number or a NaN — silently. The check is made after the transfer, not
+before: it is the transfer that degrades.
 
-Conséquences : pas de `torch-mps` (Metal n'a pas le float64, et
-`get_data_on_device` rétrograde sans rien dire), et **pas de `jax-*` non plus** —
-rien dans ce dépôt n'appelle `jax.config.update("jax_enable_x64", True)`, donc
-JAX calculerait tout en simple précision sans même un avertissement. Le backend
-les refuse explicitement.
+Consequences: no `torch-mps` (Metal has no float64, and `get_data_on_device`
+downgrades without saying so), and **no `jax-*` either** — nothing in this
+repository calls `jax.config.update("jax_enable_x64", True)`, so JAX would
+compute the whole thing in single precision without even a warning. The backend
+refuses them explicitly.
 
-## Lancer
+## Running it
 
 ```sh
 uv run qanat experiment run learning_hyperspectral_metrics --scene salinas --backend torch-cuda
 uv run qanat experiment run learning_hyperspectral_metrics --scene indianpines --backend torch-cuda --n_init 20
 ```
 
-## Lire les scores
+## Reading the scores
 
-`scores.json` contient les temps **et** la description de la carte. Les deux se
-lisent ensemble : le float64 tourne à la moitié du float32 sur une carte de
-centre de calcul et au soixante-quatrième sur une carte de station de travail.
-`riemann` est limité par les décompositions propres, les deux métriques plates
-par les produits matriciels — donc le *classement par le temps* est autant une
-propriété de la carte que de la méthode.
+`scores.json` holds the timings **and** the description of the card. The two
+are read together: float64 runs at half the float32 rate on a datacentre card
+and at a sixty-fourth of it on a workstation card. `riemann` is bound by
+eigendecompositions, the two flat metrics by matrix products — so the *ranking
+by time* is as much a property of the card as of the method.
 
-L'inertie compare les redémarrages d'**une** métrique et rien d'autre : les trois
-mesurent des longueurs dans des géométries différentes. Le classement des
-métriques, c'est l'exactitude et la mIoU, qui sont sur la vérité terrain.
+Inertia compares the restarts of **one** metric and nothing else: the three
+measure lengths in different geometries. What ranks the metrics is the accuracy
+and the mIoU, which are against the ground truth.

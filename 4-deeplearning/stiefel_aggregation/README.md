@@ -1,61 +1,58 @@
-# À quel ordre projavg et rlavg coïncident-elles ?
+# To what order do projavg and rlavg agree?
 
-Sert `prop:spdnet-federe-equivalence` et `sec:spdnet-federe-agregation` du
-chapitre `ch:spdnet`. Aucune donnée, aucun entraînement : 2 secondes.
+Serves the federated-aggregation section. No data, no training: 2 seconds.
 
-## Pourquoi
+## Why
 
-La proposition du chapitre affirme que les deux agrégations coïncident à
-$O(\varepsilon^2)$ près quand les poids locaux restent à $O(\varepsilon)$ de
-l'itérée globale. Le texte prévoit de l'appuyer sur les courbes de validation
-EEG, « qui montrent des trajectoires superposées ». Des trajectoires superposées
-établissent que les deux schémas s'accordent ; elles ne mesurent pas **à quel
-ordre**, et c'est l'ordre qui décide si la recommandation du chapitre
-(`projavg`, moins de constantes, pas besoin de garder l'itérée précédente) est
-un arbitrage ou un choix sans contrepartie.
+The claim is that the two aggregations agree to within $O(\varepsilon^2)$ when
+the local weights stay $O(\varepsilon)$ from the global iterate. The intended
+support was the EEG validation curves, "which show superimposed trajectories".
+Superimposed trajectories establish that the two schemes agree; they do not
+measure **to what order**, and it is the order that decides whether the
+recommendation (`projavg`: fewer constants, no need to keep the previous
+iterate) is a trade-off or a free choice.
 
-## Résultat
+## Result
 
-Ordre ajusté sur $\log\lVert\mathrm{projavg}-\mathrm{rlavg}\rVert_F$ contre
-$\log\varepsilon$, au-dessus du plancher d'arrondi :
+Order fitted on $\log\lVert\mathrm{projavg}-\mathrm{rlavg}\rVert_F$ against
+$\log\varepsilon$, above the rounding floor:
 
-| géométrie | $K=2$ | $K=8$ | $K=32$ |
+| geometry | $K=2$ | $K=8$ | $K=32$ |
 |---|---|---|---|
-| $\mathrm{St}(40,20)$ | 2,98 | 2,99 | 2,99 |
-| $\mathrm{St}(128,32)$ | 2,99 | 2,99 | 3,00 |
-| $\mathrm{St}(64,60)$ | 2,99 | 2,99 | 3,00 |
+| $\mathrm{St}(40,20)$ | 2.98 | 2.99 | 2.99 |
+| $\mathrm{St}(128,32)$ | 2.99 | 2.99 | 3.00 |
+| $\mathrm{St}(64,60)$ | 2.99 | 2.99 | 3.00 |
 
-**L'ordre est trois, pas deux**, et il l'est sur les neuf configurations. La
-proposition est vraie et conservatrice.
+**The order is three, not two**, on all nine configurations. The claim is true
+and conservative.
 
-Le chiffre à retenir pour le texte : à une dispersion de $10^{-2}$ entre
-clients, l'écart entre les deux agrégations vaut $\sim 10^{-6}$ fois le
-déplacement de l'agrégat lui-même. À l'échelle où le fédéré travaille, les deux
-schémas ne sont pas « proches », ils sont indiscernables.
+The number to keep: at a dispersion of $10^{-2}$ between clients, the gap
+between the two aggregations is $\sim 10^{-6}$ times the displacement of the
+aggregate itself. At the scale federated learning works at, the two schemes are
+not "close", they are indistinguishable.
 
-## Conséquence pour le chapitre
+## Consequence
 
-Deux options, à trancher :
+Two options:
 
-1. corriger l'énoncé de `prop:spdnet-federe-equivalence` en $O(\varepsilon^3)$ —
-   il faut alors refaire les deux lignes de calcul du bloc `% TODO texte`, le
-   terme d'ordre deux devant s'annuler ;
-2. garder $O(\varepsilon^2)$, qui est correct, et dire dans le texte que la
-   borne est atteinte avec marge, mesure à l'appui.
+1. state the result as $O(\varepsilon^3)$ — which then requires redoing the two
+   lines of algebra, the second-order term having to cancel;
+2. keep $O(\varepsilon^2)$, which is correct, and say that the bound is met
+   with margin, measurement in support.
 
-La seconde est la plus sûre tant que l'annulation du terme d'ordre deux n'est
-pas établie au tableau. Ce script mesure, il ne démontre pas.
+The second is the safer one as long as the cancellation of the second-order
+term has not been established on paper. This script measures, it does not
+prove.
 
-## Lancer
+## Running it
 
 ```sh
-export PYTHONPATH=$HOME/Research/HDR/yetanotherspdnet/src   # cf. ../NOTE-reproduction.md §7
 python main.py --n_repeats 20
 ```
 
-Options : `--dimensions 40 20 --dimensions 128 32` (répéter le drapeau),
+Options: `--dimensions 40 20 --dimensions 128 32` (repeat the flag),
 `--n_clients 2 8 32`, `--dispersions`, `--device cuda`.
 
-Les dispersions s'arrêtent à $10^{-4}$ : en deçà, l'écart atteint le plancher
-d'arrondi du float64 (~$10^{-14}$) et cesse de porter un exposant. C'est
-`--floor` qui écarte ces points de l'ajustement.
+The dispersions stop at $10^{-4}$: below that the gap reaches the float64
+rounding floor (~$10^{-14}$) and stops carrying an exponent. `--floor` is what
+keeps those points out of the fit.
