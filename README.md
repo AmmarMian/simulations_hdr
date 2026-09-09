@@ -36,7 +36,7 @@ Needs Python ≥ 3.12, [uv](https://docs.astral.sh/uv/) and
 ```sh
 git clone https://github.com/AmmarMian/simulations_hdr
 cd simulations_hdr
-uv sync                      # environment, including qanat
+uv sync --extra chapters     # environment for all four chapters, including qanat
 just init-qanat              # create the local experiment database
 just register-experiments    # register the 40 experiments with qanat
 ```
@@ -54,8 +54,9 @@ uv run qanat experiment run learning_marchenko_pastur
 uv run qanat experiment status learning_marchenko_pastur
 ```
 
-`just --list` shows every recipe. Optional GPU backends are extras
-(`uv sync --extra cupy`, `--extra jax-cuda`); see
+`just --list` shows every recipe. Extras come on two axes that compose: one per
+chapter (`--extra context`, `detection`, `learning`, `deeplearning`) and one per
+GPU backend (`--extra cupy`, `--extra jax-cuda`); see
 [Getting started](https://ammarmian.fr/simulations_hdr/getting-started/)
 for the full matrix and for how the chapters differ.
 

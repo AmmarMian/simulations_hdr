@@ -52,18 +52,29 @@ curl -sSf https://just.systems/install.sh | bash -s -- --to ~/.local/bin
 
 The last one needs `~/.local/bin` on your `PATH`.
 
-Then the environment. Each chapter declares its own extras, so install only what you need:
+Then the environment. Extras come on two independent axes — which chapter you want to
+run, and which hardware you want to run it on — so install only what you need:
 
 ```sh
-# base (numpy, torch-cpu, scipy — and qanat)
+# base: what hdrlib itself imports (numpy, scipy, matplotlib, torch-cpu) plus qanat
 uv sync
 
-# chapter 2 — optional compute backends
-uv sync --extra cupy        # NVIDIA CUDA
-uv sync --extra jax         # JAX CPU
-uv sync --extra jax-cuda    # JAX CUDA
-uv sync --extra jax-metal   # Apple Silicon
+# by chapter
+uv sync --extra context        # 1 · Context
+uv sync --extra detection      # 2 · Detection
+uv sync --extra learning       # 3 · Learning
+uv sync --extra deeplearning   # 4 · Deep Learning
+uv sync --extra chapters       # all four
+
+# by hardware — numpy and torch-cpu need nothing extra
+uv sync --extra cupy           # NVIDIA CUDA
+uv sync --extra jax            # JAX CPU
+uv sync --extra jax-cuda       # JAX CUDA
+uv sync --extra jax-metal      # Apple Silicon
 ```
+
+The two axes compose: `uv sync --extra learning --extra cupy` gives chapter 3 on a
+CUDA card.
 
 `uv sync` installs qanat along with everything else — it comes from git rather than PyPI,
 which `[tool.uv.sources]` in `pyproject.toml` takes care of. The environment lands in

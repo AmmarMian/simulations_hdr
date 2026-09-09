@@ -11,32 +11,51 @@ version = "0.1.0"
 description = "Simulations and figures for an HDR dissertation on covariance matrices: from multivariate statistics to deep learning."
 readme = "README.md"
 requires-python = ">=3.12"
+# What `import hdrlib` itself needs, plus the runner. Anything a single
+# chapter needs and the library does not lives in that chapter's extra below.
 dependencies = [
-    "ipdb>=0.13.13",
-    "ipython>=9.4.0",
     "matplot2tikz>=0.5.3",
     "matplotlib>=3.10.3",
-    "memray>=1.19.3",
     "numpy>=2.3.2",
-    "pandas>=2.3.1",
-    "pip>=25.1.1",
-    "pyqt6>=6.9.1",
-    "pytest>=8.3.4",
     "qanat",
     "rich>=14.1.0",
-    "ruff>=0.15.12",
     "scipy>=1.16.1",
-    "yetanotherspdnet",
     "torch>=2.9.0",
 ]
 
-# Optional extras — not installed by default (platform / hardware specific).
-# Install with:
-#   uv sync --extra jax          # JAX CPU-only
-#   uv sync --extra jax-cuda     # JAX with CUDA 12 GPU support
-#   uv sync --extra jax-metal    # Apple Silicon GPU
-#   uv sync --extra cupy         # NVIDIA CUDA (adjust suffix for your driver)
+# Two independent axes of extras: which chapter you want to run, and which
+# hardware you want to run it on. They compose --
+#   uv sync --extra learning --extra cupy
+#
+# Chapters. `--extra chapters` takes all four.
+#   uv sync --extra context        # 1 -- context
+#   uv sync --extra detection      # 2 -- detection
+#   uv sync --extra learning       # 3 -- learning
+#   uv sync --extra deeplearning   # 4 -- deep learning
+#
+# Hardware. numpy and torch-cpu need nothing extra.
+#   uv sync --extra jax            # JAX CPU-only
+#   uv sync --extra jax-cuda       # JAX with CUDA 12 GPU support
+#   uv sync --extra jax-metal      # Apple Silicon GPU
+#   uv sync --extra cupy           # NVIDIA CUDA (adjust suffix for your driver)
 [project.optional-dependencies]
+context = [
+    "plotly>=6.8.0",
+]
+detection = [
+    "plotly>=6.8.0",
+    # action_add_to_docs.py assembles the detection-map contact sheets.
+    "pillow>=10.0",
+]
+learning = [
+    "plotly>=6.8.0",
+]
+deeplearning = [
+    "yetanotherspdnet",
+]
+chapters = [
+    "simulations[context,detection,learning,deeplearning]",
+]
 jax = [
     "jax>=0.4",
     "jaxlib>=0.4",
@@ -82,10 +101,15 @@ reference = [
     "pymanopt>=2.2.0",
     "scikit-learn>=1.5",
 ]
+# Installed by default by `uv sync`; never shipped to a consumer of hdrlib.
 dev = [
     "hatchling>=1.0",
     "mkdocs>=1.6.1",
     "mkdocstrings[python]>=1.0.4",
-    "plotly>=6.8.0",
+    # The docs generator and register_latex.py read the experiment YAMLs.
     "pyyaml>=6.0.3",
+    # docs/scripts/example_viz.py builds the plotly figures of the docs.
+    "plotly>=6.8.0",
+    "pytest>=8.3.4",
+    "ruff>=0.15.12",
 ]

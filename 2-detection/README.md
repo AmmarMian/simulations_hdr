@@ -5,12 +5,13 @@ Code to reproduce the results of chapter 2.
 ## Installation
 
 ```sh
-uv sync                                  # base deps (numpy, torch-cpu, scipy…)
-uv sync --extra cupy                     # CuPy / CUDA GPU
-uv sync --extra jax                      # JAX CPU
-uv sync --extra jax-cuda                 # JAX CUDA GPU
-uv sync --extra cupy --extra jax         # combine extras freely
+uv sync --extra detection                # this chapter, CPU
+uv sync --extra detection --extra cupy   # CuPy / CUDA GPU
+uv sync --extra detection --extra jax    # JAX CPU
+uv sync --extra detection --extra jax-cuda
 ```
+
+The chapter extra and the hardware extra are independent and compose freely.
 
 ## Data
 
