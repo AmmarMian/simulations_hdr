@@ -123,6 +123,12 @@ def main():
         help="Iteration budget of one Fréchet mean.",
     )
     parser.add_argument(
+        "--no-revive-empty", action="store_false", dest="revive_empty",
+        help="Do not give a point back to a cluster that empties mid-run. This "
+             "is what the reference implementation does; an emptied cluster "
+             "then stops the run rather than being repaired.",
+    )
+    parser.add_argument(
         "--seeds", type=str, nargs="+", default=None,
         help="Repeat the whole comparison on several starting partitions and "
              "report the mean and spread across them; defaults to the single "
@@ -178,6 +184,7 @@ def main():
         labels, inertia, histories = riemannian_kmeans(
             windows, n_classes, method=method, n_init=args.n_init,
             max_iter=args.max_iter, mean_iterations=args.mean_iterations,
+            revive_empty=args.revive_empty,
             seed=seed, backend=args.backend, verbose=True,
         )
         segmented = unvectorize_labels(

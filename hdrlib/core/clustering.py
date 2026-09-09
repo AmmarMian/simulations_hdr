@@ -216,6 +216,7 @@ def riemannian_kmeans(
     max_iter: int = 100,
     tol: float = 1e-3,
     mean_iterations: int = 50,
+    revive_empty: bool = True,
     seed: int = 42,
     backend: Union[str, Backend] = "numpy",
     verbose: bool = False,
@@ -238,6 +239,16 @@ def riemannian_kmeans(
         Stop when fewer than ``tol`` of the points change cluster.
     mean_iterations : int
         Iteration budget of one Fréchet mean.
+    revive_empty : bool
+        Whether a cluster that empties mid-run is given a point back.
+
+        The reference implementation does not do this — it only redraws the
+        starting partition until every cluster is occupied — so pass False to
+        reproduce it. The cost of False is that an emptied cluster is fatal
+        rather than repaired. The cost of True is subtler: the revived cluster
+        is handed exactly one point, and the corrected mean of a single matrix
+        whitens to the identity, whose eigenvalues are all equal, which is a
+        pole of the corrected gradient.
     seed : int
     backend : str or Backend
     verbose : bool
@@ -294,7 +305,23 @@ def riemannian_kmeans(
                 axis=1,
             )
             new_labels = distances.argmin(axis=1)
-            new_labels = _revive_empty_clusters(new_labels, distances, n_clusters)
+            if revive_empty:
+                new_labels = _revive_empty_clusters(
+                    new_labels, distances, n_clusters
+                )
+            elif len(np.unique(new_labels)) < n_clusters:
+                # The reference implementation has no revival: it draws the
+                # starting partition until no cluster is empty and then trusts
+                # argmin. If a cluster empties anyway its centroid would be the
+                # mean of nothing, which is silently NaN and poisons every
+                # distance from then on, so say so instead.
+                empty = sorted(set(range(n_clusters)) - set(np.unique(new_labels)))
+                raise RuntimeError(
+                    f"cluster(s) {empty} emptied at iteration {iteration} of "
+                    f"restart {restart} with revive_empty=False. The centroid "
+                    "of an empty cluster is NaN; rerun with revive_empty=True "
+                    "or a different seed."
+                )
             moved = np.mean(new_labels != labels)
             labels = new_labels
             centres = centroid_fn(
