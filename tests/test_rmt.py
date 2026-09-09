@@ -222,23 +222,57 @@ def test_corrected_distance_separates_populations():
     assert d_near.mean() < d_far.mean()
 
 
-def test_corrected_distance_is_degenerate_on_a_degenerate_spectrum():
-    """Documents a real limitation rather than pretending it isn't there.
+def test_corrected_distance_survives_a_degenerate_spectrum():
+    """A whitened spectrum with repeated eigenvalues used to give NaN.
 
-    The correction divides by ``(λi − λj)²`` off the diagonal, so a whitened
-    matrix whose eigenvalues coincide gives 0/0. Comparing a matrix with itself
-    — or with any multiple of itself — whitens to a multiple of the identity and
-    hits it exactly. Estimated covariances are never degenerate to that
-    precision (the test above covers real ones), but the reflexivity a distance
-    would normally be expected to satisfy cannot be asserted here, and pinning
-    it stops someone "fixing" the NaN by accident and calling it converged.
+    The correction divides by ``(λi − λj)²`` off the diagonal, so two
+    coincident eigenvalues are a 0/0. Comparing a matrix with itself — or with
+    any multiple of itself — whitens to a multiple of the identity and hits it
+    exactly, which is what a K-means cluster of one member does on every
+    re-estimation. ``_separate_eigenvalues`` pushes the spectrum apart by a
+    measured hair first, so the value is finite.
+
+    The value is *not* asserted to be zero: this is a bias-corrected estimator
+    of the distance to the unknown covariance behind the SCM, not a metric on
+    the SCMs, so it has no reason to vanish on the diagonal.
     """
     one = spd(count=1)[0]
-    with np.errstate(invalid="ignore", divide="ignore"):
-        same = rmt_corrected_squared_distance(one, one[None], 40, "numpy")
-        scaled = rmt_corrected_squared_distance(one, 2.0 * one[None], 40, "numpy")
-    assert not np.isfinite(same[0]) or abs(same[0]) > 1.0
-    assert not np.isfinite(scaled[0]) or abs(scaled[0]) > 1.0
+    same = rmt_corrected_squared_distance(one, one[None], 40, "numpy")
+    scaled = rmt_corrected_squared_distance(one, 2.0 * one[None], 40, "numpy")
+    assert np.isfinite(same[0])
+    assert np.isfinite(scaled[0])
+
+
+def test_separation_leaves_a_separated_spectrum_untouched():
+    """The guard must be inert on ordinary data, bit for bit.
+
+    Every result computed before the guard existed has to stay reproducible,
+    so a spectrum whose gaps already exceed the floor comes back identical
+    rather than merely close.
+    """
+    from hdrlib.core.backend import get_backend_module
+    from hdrlib.learning.rmt import _separate_eigenvalues
+
+    be = get_backend_module("numpy")
+    rng = np.random.default_rng(0)
+    for n_features in (5, 16):
+        spectrum = np.sort(rng.uniform(0.5, 5.0, size=(500, n_features)), axis=-1)
+        out = _separate_eigenvalues(be, "numpy", spectrum, n_features)
+        assert np.array_equal(out, spectrum)
+
+
+def test_corrected_mean_of_a_single_matrix_is_finite():
+    """A cluster of one is what empty-cluster revival creates.
+
+    Its corrected mean whitens to the identity, every eigenvalue equal, which
+    is the worst case for the pole above. This is the path that made
+    ``revive_empty=True`` produce NaN centroids.
+    """
+    rng = np.random.default_rng(1)
+    data = rng.standard_normal((1, 40, 5))
+    mean, history = rmt_frechet_mean(data, backend="numpy")
+    assert np.all(np.isfinite(mean))
+    assert np.all(np.isfinite(history["cost"]))
 
 
 @cuda

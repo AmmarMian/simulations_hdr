@@ -34,6 +34,7 @@ from ..core.backend import (
     Array,
     Backend,
     batched_eigh,
+    concatenate,
     get_backend_module,
     get_data_on_device,
     require_double as _require_double,
@@ -404,6 +405,52 @@ def analytical_shrinkage(
     )
 
 
+# Minimum spacing imposed on the eigenvalues before the corrected gradient is
+# formed, relative to the largest of them. The gradient contains several
+# expressions that are 0/0 between two *equal* eigenvalues -- individually
+# singular, though their sum is finite, because the cost is an analytic
+# symmetric function of the spectrum. Rather than take that limit in closed
+# form, the spectrum is separated by a hair and the exact gradient of the
+# separated spectrum is returned.
+#
+# The value is cbrt(machine epsilon), the usual balance for a difference that
+# cancels to second order, and it is measured rather than assumed. On a 5x5
+# whitened SCM at c = 1/8, moving two eigenvalues apart by a relative eps:
+#
+#     eps      1e-4     1e-5     1e-6     1e-7     1e-8     1e-9     1e-12
+#     grad  0.169777 0.170380 0.170435 0.170131 0.183957 2.91e+00 6.65e-02
+#
+# converged to six digits at 1e-6 and destroyed by cancellation below 1e-8.
+_EIGENVALUE_FLOOR = float(np.cbrt(np.finfo(np.float64).eps))
+
+
+def _separate_eigenvalues(
+    be, backend, eigenvalues: Array, n_features: int
+) -> Array:
+    """Push apart eigenvalues that coincide, leaving separated ones alone.
+
+    ``batched_eigh`` returns them ascending and positive, so the largest is the
+    last and imposing a minimum gap is a running maximum: each eigenvalue is
+    raised to at least its predecessor plus ``_EIGENVALUE_FLOOR`` times the
+    scale of the spectrum. A spectrum already separated by more than that comes
+    back bit-for-bit unchanged, which is what keeps the ordinary case -- and
+    every result computed so far -- exactly as it was.
+
+    The loop runs over the dimension (5 to 16 here), not over the matrices: one
+    pass can only push a gap one position along, and a whole spectrum could in
+    principle be constant.
+    """
+    scale = eigenvalues[..., -1:]
+    gap = _EIGENVALUE_FLOOR * scale
+    separated = eigenvalues
+    for _ in range(n_features - 1):
+        raised = be.maximum(separated[..., 1:], separated[..., :-1] + gap)
+        separated = concatenate(
+            backend, [separated[..., :1], raised], axis=-1
+        )
+    return separated
+
+
 # ── the corrected cost and its gradient ───────────────────────────────────────
 
 
@@ -426,7 +473,9 @@ def _rmt_cost_grad(
     Nothing here is simplified: the expressions look redundant in places
     (``mat**3 + multi_eye``, ``mat**2 - 4*diagL**2``) but each of those
     additions is what makes a diagonal entry evaluate a finite limit instead of
-    0/0.
+    0/0. Those additions handle the *diagonal* only; two distinct positions
+    carrying the same eigenvalue hit the same 0/0 off the diagonal, which is
+    what :func:`_separate_eigenvalues` is for.
     """
     eye = _eye_like(be, backend, n_features, transformed)
     multi_eye = be.broadcast_to(eye, transformed.shape)
@@ -434,6 +483,10 @@ def _rmt_cost_grad(
     ones_mat = _ones_like(be, backend, (n_features, n_features), transformed)
 
     eigenvalues, eigenvectors = batched_eigh(backend, transformed)
+    # Coincident eigenvalues are a pole of several terms below. See
+    # _separate_eigenvalues: without this a single-matrix cluster, whose
+    # whitened SCM is the identity, returns a NaN gradient.
+    eigenvalues = _separate_eigenvalues(be, backend, eigenvalues, n_features)
     root = be.sqrt(eigenvalues)
     inverse = 1 / eigenvalues
     logarithm = be.log(eigenvalues)
@@ -899,6 +952,11 @@ def rmt_corrected_squared_distance(
     one_vec = _ones_like(be, backend, (n_features,), transformed)
 
     eigenvalues = batched_eigh(backend, transformed)[0]
+    # Same pole as in _rmt_cost_grad: the correction divides by
+    # (lambda_i - lambda_j)^2 off the diagonal, so two coincident eigenvalues
+    # give 0/0. Comparing a matrix with itself whitens to the identity and hits
+    # it exactly.
+    eigenvalues = _separate_eigenvalues(be, backend, eigenvalues, n_features)
     root = be.sqrt(eigenvalues)
     inverse = 1 / eigenvalues
     logarithm = be.log(eigenvalues)
