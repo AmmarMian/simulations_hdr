@@ -578,9 +578,16 @@ def _write_exp_page(exp: dict, chapter: "tuple[str, str] | None" = None) -> None
             f"{cmd_prefix} {exe}",
             "```",
             "",
-            _source_block(exe),
-            "",
         ]
+        # The recorded command line, commit and date. This is a property of the
+        # experiment's last staged run, not of any one figure, so it is emitted
+        # here rather than inside Results: an experiment can have provenance
+        # without having an interactive figure, and it used to lose the panel
+        # entirely in that case.
+        recorded = _render_parameters(name, params)
+        if recorded:
+            lines += [recorded, ""]
+        lines += [_source_block(exe), ""]
 
     if params:
         lines += ["## Parameters", "", _param_cards(params), ""]
@@ -592,7 +599,6 @@ def _write_exp_page(exp: dict, chapter: "tuple[str, str] | None" = None) -> None
         lines += ["## Results", ""]
         for stem, label in figures:
             fig_title = f"{name} — {label}" if label else name
-            marginnote = _render_parameters(name, params)
             logs = _load_run_logs(stem)
             log_blocks = ""
             for kind in ("stdout", "stderr"):
@@ -606,7 +612,6 @@ def _write_exp_page(exp: dict, chapter: "tuple[str, str] | None" = None) -> None
                     f'</details>\n'
                 )
             lines += [
-                marginnote +
                 '<div class="exp-result-card">\n'
                 f'<div class="plotly-wrap" '
                 f'data-src="../../assets/data/{stem}.json" '

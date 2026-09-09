@@ -1273,21 +1273,39 @@ details.exp-log[open] > summary::before, details.exp-params[open] > summary::bef
   padding: 0 2px;
 }
 .margin-toggle { display: none; }
-.sidenote, .marginnote {
+
+/* A sidenote is a footnote: hidden until its number is clicked. */
+.sidenote {
   display: none;
   font-family: var(--font-ui);
   font-size: 13.5px;
   line-height: 1.6;
   color: var(--muted);
 }
-.margin-toggle:checked + .sidenote,
-.margin-toggle:checked + .marginnote {
+.margin-toggle:checked + .sidenote {
   display: block;
   margin: 12px 0;
   padding: 12px 14px;
   background: var(--card-2);
   border-left: 2px solid var(--accent-line);
   border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+/* A marginnote is not a footnote. The experiment pages use it for the run
+   panel — the commit, the date and the command line a figure was made with —
+   which has no number to click and must be visible on arrival. It used to
+   share the rule above and was therefore never displayed at all. */
+.marginnote {
+  display: block;
+  margin: 12px 0;
+  padding: 12px 14px;
+  background: var(--card-2);
+  border-left: 2px solid var(--accent-line);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-family: var(--font-ui);
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--muted);
 }
 .mn-label {
   display: block;
@@ -1302,7 +1320,7 @@ details.exp-log[open] > summary::before, details.exp-params[open] > summary::bef
 .mn-default { color: var(--body2); }
 .marginnote code { font-size: 11.5px; }
 
-/* ── Terminal blocks (kitchen sink) ──────────────────────── */
+/* ── Terminal blocks ─────────────────────────────────────── */
 .terminal {
   border: 1px solid var(--line);
   border-radius: var(--radius);

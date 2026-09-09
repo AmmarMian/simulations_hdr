@@ -86,4 +86,3 @@ nav:
           - "estimation": api/sonar/estimation.md
           - "simulation": api/sonar/simulation.md
           - "mc": api/sonar/mc.md
-  - Kitchen Sink: kitchen-sink.md
